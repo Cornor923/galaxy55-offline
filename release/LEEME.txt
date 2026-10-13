@@ -1,0 +1,74 @@
+GALAXY 55 - versión offline recompilada (NO PROBADA)
+=====================================================
+
+Qué es
+------
+Galaxy 55 fue un juego de exploración espacial en Flash de Motion Twin (alpha, 2012):
+vuelas en una nave, aterrizas en planetas generados al azar, minas bloques y
+construyes con un sistema de crafteo en 3D.
+
+Este archivo (Galaxy55_offline.swf) es el cliente 3D recompilado a partir del código
+fuente que Motion Twin publicó en github.com/motion-twin/WebGamesArchives, con ajustes
+para que arranque sin servidor (modo local, planeta generado en tu propio equipo).
+
+Cómo abrirlo
+------------
+1. Usa Adobe Flash Player standalone (el "projector"), no Ruffle: el juego usa Stage3D,
+   que Ruffle no soporta.
+2. Abre el programa, menú  Archivo > Abrir  y elige Galaxy55_offline.swf.
+   (También puedes arrastrar el archivo a la ventana del reproductor.)
+3. Necesitas una tarjeta gráfica con aceleración 3D. La primera carga genera el planeta
+   y puede tardar un rato.
+
+Mapa estelar
+------------
+Al abrir el juego aparece primero el mapa del sector (la parte "explorador" del original).
+Vuela con la nave hasta un sistema, luego a un planeta y pulsa "Aterrizar". El sector y los
+planetas se generan al azar en cada arranque. Para volver al mapa y viajar a otro planeta,
+cierra y reabre el juego (el ordenador de la nave te lo recuerda).
+
+Controles (leídos del código, no comprobados en pantalla)
+---------------------------------------------------------
+  Flechas / WASD (ZQSD en teclado francés)   moverse
+  Espacio o Ctrl                             jetpack
+  E, Shift o clic izquierdo*                 acción (minar / usar)
+  0-9                                        elegir ranura del inventario
+  Tab, H, T, F                               interfaz y ayudas
+  M / RePág / NumPad +                       campo de visión más ancho (4° por pulsación)
+  N / AvPág / NumPad -                       campo de visión más cerrado
+  R o Supr                                   soltar el bloque elegido
+  F11 o Enter                                pantalla completa + cámara con el ratón
+                                             (ratón bloqueado: se mira moviéndolo, sin hacer clic)
+  Esc                                        salir de pantalla completa
+  Clic en la ventana                         entra a pantalla completa con el RATON BLOQUEADO
+                                             (como Minecraft): la camara sigue al raton sin limites.
+  Esc                                        sale de pantalla completa y libera el raton
+  Clic izquierdo (raton bloqueado)           accion: minar / colocar el bloque elegido
+  Rueda del raton                            cambiar de ranura del inventario
+  F11 / Enter                                alternar pantalla completa bloqueada
+
+  * Si el bloqueo no esta disponible, se usa un modo de respaldo en ventana (el cursor en
+    el borde sigue girando la camara).
+
+Avisos importantes
+------------------
+* El bloqueo de ratón (F11/Enter) lo añadí yo y tampoco está probado. Si no funciona, el
+  modo original de arrastrar con clic sigue disponible.
+* Compila sin errores, pero no pude ejecutarlo: no hay Flash Player en el entorno donde
+  lo preparé. Puede fallar al arrancar, verse mal o ir lento. Si lo abres y pasa algo,
+  cuéntalo (pantalla negra, mensaje de error, etc.) y se puede seguir corrigiendo.
+* Es un alpha cancelado: faltan cosas y hay errores del propio juego.
+* Idioma: Galaxy55_offline.swf está en español y Galaxy55_offline_en.swf en inglés. Los nombres
+  de bloques son los oficiales de Motion Twin, sacados de client_es.swf / client_en.swf. Los
+  datos de bloques y biomas se regeneraron a partir de la hoja data.ods original, porque la
+  herramienta original de Motion Twin no se publicó. En la versión inglesa original algunos
+  bloques (bioma ácido, hielo...) ya salían en francés.
+* Se sustituyeron por versiones vacías las partes que hablaban con el servidor, el sistema
+  antitrampas y las llamadas a JavaScript del navegador.
+
+Licencia
+--------
+El código original es de Motion Twin y se publicó con licencia Creative Commons
+Atribución-NoComercial-CompartirIgual 4.0 (CC BY-NC-SA 4.0). Esta versión modificada se
+comparte bajo los mismos términos: sin uso comercial y citando a Motion Twin.
+https://creativecommons.org/licenses/by-nc-sa/4.0/
