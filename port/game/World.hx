@@ -34,6 +34,8 @@ class World {
 	var phase = 0;
 	var chunk = 0;
 	var meshes = new Array<h3d.scene.Mesh>();
+	static inline var VIEW_RADIUS = 180.;
+	var meshExtra = new Array<Array<h3d.scene.Mesh>>();
 	var meshCx = new Array<Float>();
 	var meshCy = new Array<Float>();
 	var curCx = 0.;
@@ -89,6 +91,10 @@ class World {
 			m.remove();
 			m.primitive.dispose();
 		}
+		for( ex in meshExtra )
+			if( ex != null )
+				for( c in ex ) if( c != null ) c.remove();
+		meshExtra = [];
 		meshes = [];
 		meshCx = [];
 		meshCy = [];
@@ -231,10 +237,37 @@ class World {
 		wrapX = x;
 		wrapY = y;
 		var s = size;
+		var r = VIEW_RADIUS + CSIZE;
+		var r2 = r * r;
+		// con el mundo mas pequeno que el alcance de la niebla hacen falta copias vecinas
+		var extra = s * 0.5 < VIEW_RADIUS;
+		if( extra && meshExtra.length < meshes.length )
+			while( meshExtra.length < meshes.length ) meshExtra.push(null);
 		for( i in 0...meshes.length ) {
 			var m = meshes[i];
-			m.x = s * Math.round((x - meshCx[i]) / s);
-			m.y = s * Math.round((y - meshCy[i]) / s);
+			var bx = Math.round((x - meshCx[i]) / s), by = Math.round((y - meshCy[i]) / s);
+			m.x = s * bx;
+			m.y = s * by;
+			if( !extra ) continue;
+			var ex = meshExtra[i];
+			var k = 0;
+			for( oy in -1...2 )
+				for( ox in -1...2 ) {
+					if( ox == 0 && oy == 0 ) continue;
+					var dx = meshCx[i] + s * (bx + ox) - x, dy = meshCy[i] + s * (by + oy) - y;
+					var show = dx * dx + dy * dy < r2;
+					var c = ex != null ? ex[k] : null;
+					if( show && c == null ) {
+						if( ex == null ) ex = meshExtra[i] = [for( _ in 0...8 ) null];
+						c = ex[k] = new h3d.scene.Mesh(m.primitive, m.material, root);
+					}
+					if( c != null ) {
+						c.visible = show;
+						c.x = s * (bx + ox);
+						c.y = s * (by + oy);
+					}
+					k++;
+				}
 		}
 	}
 

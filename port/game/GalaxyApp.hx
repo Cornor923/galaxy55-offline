@@ -127,6 +127,7 @@ class GalaxyApp extends hxd.App {
 	var shotFrames = 30;
 	var demoSaves = false;
 	var shotBiome : String = null;
+	var shotAt : Array<Float> = null; // --at=x,y,yaw[,pitch,z]: coloca al jugador para la captura
 
 	// formulario de nueva partida
 	var nName : TextField;
