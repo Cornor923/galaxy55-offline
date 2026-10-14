@@ -68,6 +68,10 @@ Trabajo en la rama `port-hashlink` (commits locales, nada subido). `main` conser
      3. Las hojas del abeto (`BWinterLeaves`, "Touffe de sapin") sueltan material. En los datos originales no tienen `BFNoDrop` ni `BFDropChance`, así que según `DataGen.hx` sí se recogían; el usuario recuerda que no. Comprobarlo en el juego Flash (reproductor en `Downloads\ruffle...\flashplayer_32_sa_debug.exe`) antes de cambiar nada.
      4. No se pueden romper las cosas colgadas de los árboles (estalactitas/colgantes, `BFDetail`, p. ej. `BIceStalactite*`, enredaderas) ni la planta del suelo: `GameView.blocking()` descarta los `BFDetail`. El original sí los apuntaba (se rompen con la mano vacía).
      5. Hay bloques blancos en el bioma de invierno (cubos de color blanco liso, sin textura): mirar qué bloque es (¿casilla de color de `Atlas`, p. ej. `BCascadeSource`/`BIce`, o `BWinterWall`?).
+     6. La curvatura del planeta se nota demasiado (`curve = 2/tamaño` en `World`/`Sky.FogShader`); reducirla un poco (valor o opción) y comparar con el original.
+     7. Los cristales verdes que sueltan las plantas (cargas, `BTSprite`: `BYellowCharge`, `BBlueCharge`, `BBonusCharge`...) se ven demasiado anchos al caer: en el original son sprites que miran a la cámara (`Builder.addBufferBlock`, caso `BTSprite`), no la cruz de modelo que dibuja `Drops`/`IconMesh`.
+     8. El agua se congela al tocar hielo: el usuario lo mencionó "por cierto"; confirmar si es lo esperado (en `Process.onSet` solo `BFreezer` congela) o un fallo, y portar la lógica al hacer el agua.
+     9. La capa 0 (roca madre, mirada desde abajo) se ve como un plano liso lila con un círculo oscuro: revisar texturas y luz de `BBedrock` en `z=0`.
    - **Ver en la mano el bloque elegido** (el original dibuja el bloque en `Render.hx`, `drawBlock(block, curLight)` con `curLight` suavizado; hoy solo se ve en la barra).
    - **Opción de calidad** (distancia de dibujado, caras de las hojas) para PC lentas; el valor por defecto sigue siendo la mejor calidad.
    - Vida, daño, curación, oxígeno y lava; bloques activables, cofres, `BFTransform`; sonido; partículas al romper; planeta Shed y Ciudad muerta completos.
