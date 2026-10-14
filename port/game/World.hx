@@ -58,6 +58,9 @@ class World {
 		gen.alloc(BMinAluminium);
 		for( s in bd.soils ) gen.alloc(s);
 		gen.startGenerate(biome);
+		// como Builder.init: los modelos sin BFSize usan su propia caja para las colisiones
+		for( b in Block.all )
+			if( b.model != null && b.size == null ) b.size = Models.get(b.model).box;
 		genStarted = haxe.Timer.stamp();
 	}
 
@@ -172,8 +175,29 @@ class World {
 		return z + 1;
 	}
 
-	public function spawnPoint() : { x : Float, y : Float, z : Float } {
-		var x = size >> 1, y = size >> 1;
+	/** celdas libres de colision a partir de z (cabe el jugador: 3 bloques de alto) */
+	function free( x : Int, y : Int, z : Int ) : Bool {
+		for( k in 0...3 ) {
+			var id = voxel(x, y, z + k);
+			if( id != 0 && gen.blocks[id].collide ) return false;
+		}
+		return true;
+	}
+
+	public function spawnPoint(): { x : Float, y : Float, z : Float } {
+		// busca en espiral desde el centro una columna cuyo punto mas alto sea suelo firme (no hojas ni modelos)
+		var cx = size >> 1, cy = size >> 1;
+		for( r in 0...40 )
+			for( dy in -r...r + 1 )
+				for( dx in -r...r + 1 ) {
+					if( Math.abs(dx) != r && Math.abs(dy) != r ) continue;
+					var x = cx + dx, y = cy + dy;
+					var top = topCollide(x, y) - 1;
+					var b = block(x, y, top);
+					if( b != null && b.type == BTFull && !b.hasFlag(BFIsLava) && free(x, y, top + 1) )
+						return { x : x + 0.5, y : y + 0.5, z : top + 1.01 };
+				}
+		var x = cx, y = cy;
 		var z = HEIGHT - 1;
 		while( z > 1 && !opaque(x, y, z) ) z--;
 		return { x : x + 0.5, y : y + 0.5, z : z + 1.01 };
@@ -199,6 +223,32 @@ class World {
 		m.idx.push(b); m.idx.push(b + 1); m.idx.push(b + 2);
 		m.idx.push(b); m.idx.push(b + 2); m.idx.push(b + 3);
 		faces++;
+	}
+
+	/** modelos de Builder.hx (plantas en cruz, planos, columnas, cajas): se copia la geometria del original */
+	function addModel( m : MeshBuf, b : Block, x : Int, y : Int, z : Int ) {
+		var mk = b.model != null ? b.model : MCross;
+		var md = Models.get(mk);
+		var v = md.v;
+		var n = Std.int(v.length / 24);
+		for( q in 0...n ) {
+			var sel = Std.int(v[q * 24 + 3]);
+			var tile = !md.multi || sel == 0 ? b.tlr : (sel == 1 ? b.tu : b.td);
+			if( tile < 0 || tile >= 0xFFF ) continue;
+			var tx = tile & 63, ty = tile >> 6;
+			var base = m.pts.length;
+			for( k in 0...4 ) {
+				var o = q * 24 + k * 6;
+				var u = v[o + 3];
+				var s = v[o + 5];
+				m.pts.push(new h3d.col.Point(x + v[o], y + v[o + 1], z + v[o + 2]));
+				m.uvs.push(new h3d.prim.UV(tx / 64 + (1 - TE) / 128 + (u - Std.int(u)), ty / 64 + (1 - TE) / 128 + v[o + 4]));
+				m.cols.push(new h3d.col.Point(s, s, s));
+			}
+			m.idx.push(base); m.idx.push(base + 1); m.idx.push(base + 2);
+			m.idx.push(base + 2); m.idx.push(base + 1); m.idx.push(base + 3);
+			faces++;
+		}
 	}
 
 	function emitMesh( m : MeshBuf, kind : Int ) {
@@ -302,6 +352,27 @@ class World {
 						if( al ? openAlpha(x + 1, y, z) : open(x + 1, y, z) ) addQuad(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx);
 						if( al ? openAlpha(x, y - 1, z) : open(x, y - 1, z) ) addQuad(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy);
 						if( al ? openAlpha(x, y + 1, z) : open(x, y + 1, z) ) addQuad(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy);
+					case BTModel, BTModel2Side, BTSprite:
+						addModel(alphaBuf, b, fx, fy, fz);
+					case BTReduced:
+						if( b.size != null ) {
+							var s = b.size;
+							var x1 = fx + s.x1, y1 = fy + s.y1, z1 = fz + s.z1, x2 = fx + s.x2, y2 = fy + s.y2, z2 = fz + s.z2;
+							addQuad(solidBuf, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su);
+							addQuad(solidBuf, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd);
+							addQuad(solidBuf, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx);
+							addQuad(solidBuf, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx);
+							addQuad(solidBuf, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy);
+							addQuad(solidBuf, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy);
+						}
+					case BTExtended:
+						// caras con texturas distintas empaquetadas de a 12 bits (BFTextures)
+						addQuad(solidBuf, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu & 0xFFF, su);
+						addQuad(solidBuf, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td & 0xFFF, sd);
+						addQuad(solidBuf, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr & 0xFFF, sx);
+						addQuad(solidBuf, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr >> 12, sx);
+						addQuad(solidBuf, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tu >> 12, sy);
+						addQuad(solidBuf, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.td >> 12, sy);
 					default:
 					}
 				}

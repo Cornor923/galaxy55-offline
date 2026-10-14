@@ -141,6 +141,7 @@ class GalaxyApp extends hxd.App {
 			else if( StringTools.startsWith(a, "--screen=") ) shotScreen = a.substr(9);
 			else if( StringTools.startsWith(a, "--frames=") ) shotFrames = Std.parseInt(a.substr(9));
 			else if( a == "--demo-saves" ) demoSaves = true;
+			else if( StringTools.startsWith(a, "--at=") ) shotAt = a.substr(5).split(",").map(Std.parseFloat);
 			else if( StringTools.startsWith(a, "--bgbiome=") ) shotBiome = a.substr(10);
 			else if( StringTools.startsWith(a, "--lang=") ) Lang.setCode(a.substr(7));
 		}
@@ -1112,6 +1113,13 @@ class GalaxyApp extends hxd.App {
 		}
 		if( state == Playing && shotStage == 1 ) {
 			shotStage = 2;
+			if( shotAt != null && shotAt.length >= 3 ) {
+				game.px = shotAt[0];
+				game.py = shotAt[1];
+				game.yaw = shotAt[2];
+				if( shotAt.length > 3 ) game.pitch = shotAt[3];
+				game.pz = shotAt.length > 4 ? shotAt[4] : game.world.topCollide(Std.int(game.px), Std.int(game.py)) + 0.01;
+			}
 			if( shotScreen == "phys" ) {
 				physTest();
 				Sys.exit(0);
