@@ -1,6 +1,21 @@
 import Common;
 import SaveData.SaveInfo;
 
+/** Bloque apuntado: (x,y,z) el bloque que se golpea, (tx,ty,tz) la celda libre delante de el, (hx,hy,hz) el punto de impacto. */
+typedef Select = {
+	var x : Int;
+	var y : Int;
+	var z : Int;
+	var b : Block;
+	var tx : Int;
+	var ty : Int;
+	var tz : Int;
+	var hx : Float;
+	var hy : Float;
+	var hz : Float;
+	var power : Float;
+}
+
 /**
 	Una partida en curso: el jugador en primera persona sobre un World.
 
@@ -25,6 +40,19 @@ class GameView {
 	public var yaw = 0.;
 	public var pitch = 0.;
 	public var playSeconds = 0.;
+
+	// excavar y colocar (Game.checkAction)
+	public var inv(default, null) : Inv;
+	public var select : Select;
+	public var laserActive = false;
+	public var canBreak = true;
+	public var laserCharge : Null<ChargeKind>;
+	public var miningPower = 1.0;
+	var actionPause = 0.;
+	var actionWait = false;
+	var armed = false;
+	var drops : Drops;
+	var fx : Fx;
 
 	// estado fisico (Hero)
 	public var gravity = 0.;
@@ -54,11 +82,14 @@ class GameView {
 	public inline function onGround() return standingBlock != null;
 	var s3d : h3d.scene.Scene;
 
-	public function new( s3d : h3d.scene.Scene, world : World, info : SaveInfo ) {
+	public function new( s3d : h3d.scene.Scene, world : World, info : SaveInfo, atlas : h3d.mat.Texture ) {
 		this.s3d = s3d;
 		this.world = world;
 		this.info = info;
 		playSeconds = info.playSeconds;
+		inv = new Inv(info.inv != null ? Inv.copy(info.inv) : Inv.defaults());
+		drops = new Drops(world, atlas);
+		fx = new Fx(world, atlas);
 		if( info.px < 0 ) {
 			var s = world.spawnPoint();
 			px = s.x;
@@ -84,6 +115,8 @@ class GameView {
 		info.pitch = pitch;
 		info.fly = false;
 		info.playSeconds = playSeconds;
+		info.inv = Inv.copy(inv.inv);
+		info.edits = world.editsFlat();
 		return info;
 	}
 
@@ -199,10 +232,29 @@ class GameView {
 		if( debugJet ) useJetpack = true;
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateBobbing(realDt * 60);
+		updateAction(tmod, controls, pad);
+		world.flush();
+		drops.update(this, tmod);
+		fx.update(this, realDt, tmod);
+	}
+
+	/** vuelve a exigir soltar el boton antes de actuar (al volver de un menu) */
+	public function releaseAction() {
+		armed = false;
+		laserActive = false;
+	}
+
+	public function dispose() {
+		fx.dispose();
+		drops.dispose();
 	}
 
 	/** solo para pruebas automaticas: mantiene el jetpack pulsado */
 	public var debugJet = false;
+	/** solo para pruebas automaticas: mantiene pulsado el boton de excavar/colocar */
+	public var debugAction = false;
+	/** solo para pruebas: finge que el bloque no se puede romper (para ver el efecto) */
+	public var debugDeny = false;
 
 	/** Un fotograma de fisica con varios pasos pequenos, como el original (tmod: 1 = 1/32 s). */
 	public function stepPhysics( tmod : Float, speed : Float, strafe : Float, useJetpack : Bool ) {
@@ -412,6 +464,189 @@ class GameView {
 		py = clampPos(py);
 
 		if( walkingSlow || pushPower == old || dist > speed * dt * 0.5 ) pushPower = 0;
+	}
+
+	// ---------------------------------------------------------------- excavar y colocar
+
+	inline function wrapI( v : Int ) : Int {
+		var s = world.size;
+		return v < 0 ? v + s : (v >= s ? v - s : v);
+	}
+
+	inline function blocking( b : Block ) : Bool {
+		return !b.hasProp(PLiquid) && !b.hasFlag(BFDetail);
+	}
+
+	/**
+	 * Primer bloque que toca el rayo del centro de la pantalla (alcance 7). Igual que Render.pick del original, la altura
+	 * se corrige con la curvatura del planeta (z + r2 * curve), porque lo que se ve esta curvado.
+	 */
+	function pick() : Select {
+		var cp = Math.cos(pitch);
+		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
+		var ex = px, ey = py, ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
+		var curve = 2.0 / world.size;
+		var lx = 0, ly = 0, lz = 0, have = false;
+		var t = 0.;
+		while( t < 7.0 ) {
+			t += 0.02;
+			var hx = dx * t, hy = dy * t;
+			var x = ex + hx, y = ey + hy, z = ez + dz * t + (hx * hx + hy * hy) * curve;
+			var ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+			if( have && ix == lx && iy == ly && iz == lz ) continue;
+			var b = world.block(ix, iy, iz);
+			if( b != null && blocking(b) ) {
+				if( !have || iz >= World.HEIGHT - 1 || iz < 1 ) return null;
+				return { x : wrapI(ix), y : wrapI(iy), z : iz, b : b, tx : wrapI(lx), ty : wrapI(ly), tz : lz, hx : x, hy : y, hz : z, power : 0. };
+			}
+			lx = ix;
+			ly = iy;
+			lz = iz;
+			have = true;
+		}
+		return null;
+	}
+
+	function updateAction( tmod : Float, controls : Bool, pad : hxd.Pad ) {
+		var K = hxd.Key;
+		var held = false, forceEmpty = false;
+		if( controls ) {
+			held = K.isDown(K.MOUSE_LEFT) || K.isDown(K.E) || K.isDown(K.SHIFT);
+			if( pad != null ) {
+				var rt = pad.isDown(pad.config.RT), lt = pad.isDown(pad.config.LT);
+				if( rt || lt ) held = true;
+				forceEmpty = rt && !lt;
+			}
+			// casillas: 1 = excavador, 2..9 y 0 = bloques; TAB = excavador (Game.checkKeys)
+			for( i in 0...10 )
+				if( K.isPressed(K.NUMBER_0 + ((i + 1) % 10)) && inv.inv.t.length >= i ) inv.select(i);
+			if( K.isPressed(K.TAB) ) inv.select(0);
+			if( (K.isPressed(K.R) || K.isPressed(K.DELETE)) && inv.getCurrentBlock() != null ) dropCurrent();
+		}
+		if( debugAction ) {
+			held = true;
+			armed = true;
+		}
+		var hand = forceEmpty ? null : inv.getCurrentBlock();
+		if( !held ) {
+			armed = true;
+			actionWait = false;
+		}
+		laserActive = controls && held && armed && !actionWait;
+		if( actionPause > 0 ) actionPause -= tmod;
+
+		// seleccion (Game.update: no se puede apuntar a la propia celda ni a la de encima)
+		var prev = select;
+		var s = controls || select != null || debugAction ? pick() : null;
+		if( s != null ) {
+			var cx = hand == null ? s.x : s.tx, cy = hand == null ? s.y : s.ty, cz = hand == null ? s.z : s.tz;
+			if( cx == Std.int(px) && cy == Std.int(py) && (cz == Std.int(pz) || cz == Std.int(pz) + 1) ) s = null;
+		}
+		if( s != null && prev != null && prev.x == s.x && prev.y == s.y && prev.z == s.z && prev.b == s.b ) {
+			// misma celda: se conserva lo acumulado
+			prev.hx = s.hx;
+			prev.hy = s.hy;
+			prev.hz = s.hz;
+			prev.tx = s.tx;
+			prev.ty = s.ty;
+			prev.tz = s.tz;
+			s = prev;
+		}
+		select = s;
+
+		if( !laserActive ) {
+			if( select != null ) select.power = 0;
+			return;
+		}
+		if( select == null ) return;
+		if( hand == null ) mine(tmod) else place(hand);
+	}
+
+	/** Game.checkAction con la mano vacia: acumula potencia segun la dureza del bloque (requiredPower) y las cargas. */
+	function mine( tmod : Float ) {
+		var s = select;
+		var b = s.b;
+		var matter = b.matter;
+		var req = b.requiredPower != null ? b.requiredPower : matter.requiredPower;
+		if( req == null ) req = 1;
+		var power = 1.0;
+		laserCharge = null;
+		if( matter.quickBreaks != null )
+			for( c in matter.quickBreaks )
+				if( inv.hasCharge(c.c) ) {
+					power *= c.v;
+					laserCharge = c.c;
+					break;
+				}
+		if( req > 0 && (!matter.hasProp(PRequireCharge) || laserCharge != null) ) {
+			canBreak = true;
+			if( actionPause > 0 ) {
+				if( s.power == 0 ) s.power = 1e-8;
+				return;
+			}
+			s.power += miningPower * power / (req * 40);
+		} else
+			canBreak = false;
+		if( debugDeny ) canBreak = false;
+		actionPause = 1;
+		if( s.power < 1 || debugDeny ) return;
+		if( laserCharge != null ) inv.useCharge(laserCharge);
+		breakBlock(s.x, s.y, s.z, b);
+		select = null;
+	}
+
+	/** Game.checkAction con un bloque en la mano: se coloca si algo lo sujeta (anclas e imanes). */
+	function place( hand : Block ) {
+		var s = select;
+		var put = hand.getFlip(yaw);
+		var x = s.tx, y = s.ty, z = s.tz;
+		var ok = false;
+		var tmp : Block;
+		if( !ok && hand.canPut(Up) && (tmp = world.block(x, y, z + 1)) != null && tmp.hasMagnet(Down) ) ok = true;
+		if( !ok && hand.canPut(Down) && (tmp = world.block(x, y, z - 1)) != null && tmp.hasMagnet(Up) ) ok = true;
+		if( !ok && hand.canPut(LeftRight) ) {
+			if( (tmp = world.block(x + 1, y, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
+			else if( (tmp = world.block(x - 1, y, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
+			else if( (tmp = world.block(x, y - 1, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
+			else if( (tmp = world.block(x, y + 1, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
+		}
+		if( !ok || actionPause > 0 ) return;
+		actionPause = 15;
+		if( !inv.useCurrentBlock() ) return;
+		// si era el ultimo bloque, hay que soltar el boton antes de seguir (evita excavar sin querer)
+		if( inv.getCurrentBlock() == null ) actionWait = true;
+		world.setBlock(x, y, z, put);
+		select = null;
+	}
+
+	/** Game.blockBreak: suelta lo que corresponda (con su probabilidad) y quita el bloque. */
+	public function breakBlock( x : Int, y : Int, z : Int, b : Block ) {
+		var get = b.getDrop();
+		if( get != null ) {
+			var chance = b.getMain().getDropChance();
+			for( i in 0...get.count ) {
+				if( Std.random(100) >= chance ) continue;
+				drops.add(x + 0.5, y + 0.5, z + 0.5, get.b);
+			}
+		}
+		world.setBlock(x, y, z, null);
+	}
+
+	/** Game.dropCurrent: tira la pila de la casilla elegida delante del jugador. */
+	function dropCurrent() {
+		var index = inv.blockIndex - 1;
+		var s = inv.drop(index);
+		if( s == null ) return;
+		var d = drops.add(px + Math.cos(yaw), py + Math.sin(yaw), pz + 1.2, Block.all[s.k]);
+		d.n = s.n;
+		d.vx = Math.cos(yaw) * 0.3;
+		d.vy = Math.sin(yaw) * 0.3;
+		d.active = false;
+	}
+
+	/** rueda del raton */
+	public function scrollInventory( delta : Int ) {
+		inv.scroll(delta);
 	}
 
 	// ---------------------------------------------------------------- camara

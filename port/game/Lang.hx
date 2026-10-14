@@ -52,7 +52,7 @@ class Lang {
 		"loading" => ["Generando el planeta...", "Generating the planet...", "Génération de la planète..."],
 		"loading.mesh" => ["Construyendo el terreno...", "Building the terrain...", "Construction du terrain..."],
 		"hint.menu" => ["Flechas: elegir     Intro: aceptar     Esc: volver", "Arrows: select     Enter: accept     Esc: back", "Fleches : choisir     Entree : valider     Echap : retour"],
-		"hud.help" => ["WASD mover   Espacio saltar y jetpack   X caminar despacio   H casco   Esc pausa", "WASD move   Space jump and jetpack   X walk slowly   H helmet   Esc pause", "WASD bouger   Espace sauter et jetpack   X marcher lentement   H casque   Échap pause"],
+		"hud.help" => ["WASD mover   Espacio saltar y jetpack   X caminar despacio   H casco   Esc pausa\nClic / E / Mayus excavar o colocar   1-0 / rueda elegir casilla   Tab excavador   R tirar", "WASD move   Space jump and jetpack   X walk slowly   H helmet   Esc pause\nClick / E / Shift dig or place   1-0 / wheel pick slot   Tab digger   R drop", "WASD bouger   Espace sauter et jetpack   X marcher lentement   H casque   Échap pause\nClic / E / Maj creuser ou poser   1-0 / molette choisir   Tab pelle   R jeter"],
 		"mode.walk" => ["CAMINAR", "WALK", "MARCHE"],
 		"mode.fly" => ["VUELO", "FLY", "VOL"],
 		"gen.error" => ["No se pudo generar este planeta", "This planet could not be generated", "Impossible de générer cette planète"],

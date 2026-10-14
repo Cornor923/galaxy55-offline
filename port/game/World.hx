@@ -51,12 +51,26 @@ class World {
 	var idTag : Array<Int>;
 	var sunP : Float;
 	var sunF : Float;
+	var lightIdx : Array<Int>;
+	var lightInfos : Array<{ p : Int, f : Float, pw : Float }>;
+	var mask : haxe.io.Bytes;
+	var useMask = false;
+	/** cambios del jugador sobre el terreno: celda -> indice global de bloque (0 = aire); se guardan con la partida */
+	public var editMap = new Map<Int, Int>();
+	var savedEdits : Array<Int>;
+	var chunkMeshes : Array<Array<Int>>;
+	var curList : Array<Int>;
+	var immediate = new Array<Int>();
+	var pendingRelight = new Array<Int>();
+	var lightChunks = new Array<Int>();
 
-	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false ) {
+	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int> ) {
+		this.savedEdits = savedEdits;
 		this.seed = seed;
 		this.biomeName = biomeName;
 		this.atlas = atlas;
 		size = sizeChunks << Const.BITS;
+		chunkMeshes = [for( i in 0...sizeChunks * sizeChunks * 64 ) null];
 		root = new h3d.scene.Object(parent);
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
 		sky = new Sky(root, biome, menuFog);
@@ -84,7 +98,11 @@ class World {
 		if( phase == 0 ) {
 			if( !gen.process(Std.int(budgetMs)) ) {
 				bytes = gen.getBytes().b;
+				initLightTables();
+				applySaved();
+				var tl = haxe.Timer.stamp();
 				computeLight();
+				if( Sys.args().indexOf("--lighttime") >= 0 ) Sys.println("luz " + size + ": " + Std.int((haxe.Timer.stamp() - tl) * 1000) + " ms");
 				phase = 1;
 			}
 			return progress = (phase == 0 ? gen.progress * 0.75 : 0.75);
@@ -103,7 +121,9 @@ class World {
 	}
 
 	public function dispose() {
-		sky.dispose();		for( m in meshes ) {
+		sky.dispose();
+		for( m in meshes ) {
+			if( m == null ) continue;
 			m.remove();
 			m.primitive.dispose();
 		}
@@ -371,9 +391,218 @@ class World {
 	}
 
 	inline function spread( q : Int, l : Int, next : Array<Int> ) {
-		if( light.get(q) < l && idTag[bytes.get(q)] < NOLIGHT ) {
+		if( light.get(q) < l && idTag[bytes.get(q)] < NOLIGHT && (!useMask || mask.get(q >> ZBITS) != 0) ) {
 			light.set(q, l);
 			next.push(q);
+		}
+	}
+
+	// ---------------------------------------------------------------- edicion
+
+	inline function wrapC( v : Int ) : Int {
+		return v < 0 ? v + size : (v >= size ? v - size : v);
+	}
+
+	function initLightTables() {
+		idTag = [];
+		lightIdx = [];
+		lightInfos = [];
+		for( i in 0...gen.blocks.length ) registerId(i);
+	}
+
+	/** tablas de tipo y de luz de un id local de bloque */
+	function registerId( id : Int ) {
+		while( idTag.length <= id ) idTag.push(0);
+		while( lightIdx.length <= id ) lightIdx.push(-1);
+		var b = gen.blocks[id];
+		idTag[id] = b == null ? 0 : Type.enumIndex(b.type);
+		lightIdx[id] = -1;
+		if( b != null && b.special != null )
+			switch( b.special ) {
+			case BFLight(p, f):
+				var ip = Std.int(p);
+				if( ip > 15 ) ip = 15;
+				lightIdx[id] = lightInfos.length;
+				lightInfos.push({ p : ip, f : f == null ? 1.0 : f, pw : p });
+			default:
+			}
+	}
+
+	/** id local (de este planeta) de un bloque global; lo da de alta si el mundo no lo tenia */
+	public function localId( b : Block ) : Int {
+		if( b == null ) return 0;
+		var id = gen.alloc(b.k);
+		for( i in idTag.length...gen.blocks.length ) registerId(i);
+		return id > 255 ? 0 : id;
+	}
+
+	function applySaved() {
+		if( savedEdits == null ) return;
+		var i = 0;
+		while( i + 1 < savedEdits.length ) {
+			var key = savedEdits[i], gi = savedEdits[i + 1];
+			i += 2;
+			var b = gi == 0 ? null : Block.all[gi];
+			bytes.set(key, localId(b));
+			editMap.set(key, gi);
+		}
+		savedEdits = null;
+	}
+
+	/** cambios para guardar: pares [celda, bloque, celda, bloque, ...] */
+	public function editsFlat() : Array<Int> {
+		var out = [];
+		for( k in editMap.keys() ) {
+			out.push(k);
+			out.push(editMap.get(k));
+		}
+		return out;
+	}
+
+	/** Cambia un bloque (null = aire). El trozo se rehace al momento; la luz y los vecinos, en los siguientes fotogramas. */
+	public function setBlock( x : Int, y : Int, z : Int, b : Block ) : Void {
+		x = wrapC(x);
+		y = wrapC(y);
+		if( z < 1 || z >= HEIGHT - 1 ) return;
+		var key = ((x + y * size) << ZBITS) | z;
+		bytes.set(key, localId(b));
+		editMap.set(key, b == null ? 0 : b.index);
+		var n = size >> 4;
+		for( dy in -1...2 )
+			for( dx in -1...2 ) {
+				var c = wrapC(x + dx) >> 4, d = wrapC(y + dy) >> 4;
+				var id = c + d * n;
+				if( immediate.indexOf(id) < 0 ) immediate.push(id);
+			}
+		pendingRelight.push(key);
+	}
+
+	/** Procesa lo pendiente tras editar: trozos inmediatos, una zona de luz y unos pocos trozos por fotograma. */
+	public function flush() {
+		var n = size >> 4;
+		while( immediate.length > 0 ) {
+			var id = immediate.pop();
+			buildChunk(id % n, Std.int(id / n));
+		}
+		if( pendingRelight.length > 0 ) {
+			var key = pendingRelight.shift();
+			var col = key >> ZBITS;
+			var x = col % size, y = Std.int(col / size);
+			relightRegion(x, y, 12);
+			// los trozos que cubre la zona (esquinas y centro incluidos)
+			for( cy in (y - 12) >> 4...((y + 12) >> 4) + 1 )
+				for( cx in (x - 12) >> 4...((x + 12) >> 4) + 1 ) {
+					var wx = cx < 0 ? cx + n : (cx >= n ? cx - n : cx);
+					var wy = cy < 0 ? cy + n : (cy >= n ? cy - n : cy);
+					var id = wx + wy * n;
+					if( lightChunks.indexOf(id) < 0 ) lightChunks.push(id);
+				}
+		}
+		var k = 0;
+		while( lightChunks.length > 0 && k < 2 ) {
+			var id = lightChunks.shift();
+			buildChunk(id % n, Std.int(id / n));
+			k++;
+		}
+	}
+
+	public inline function hasPending() : Bool {
+		return immediate.length > 0 || pendingRelight.length > 0 || lightChunks.length > 0;
+	}
+
+	/** Recalcula la luz de una zona (radio rIn) usando las fuentes de una zona mayor, como el original pero local. */
+	function relightRegion( cx : Int, cy : Int, rIn : Int ) {
+		var rOut = rIn + 16;
+		if( rOut * 2 + 1 >= size ) {
+			computeLight();
+			return;
+		}
+		var span = rOut * 2 + 1;
+		if( mask == null ) mask = haxe.io.Bytes.alloc(size * size);
+		var saved = haxe.io.Bytes.alloc(span * span * HEIGHT);
+		var cols = new Array<Int>();
+		for( dy in -rOut...rOut + 1 )
+			for( dx in -rOut...rOut + 1 ) {
+				var col = wrapC(cx + dx) + wrapC(cy + dy) * size;
+				cols.push(col);
+				mask.set(col, 1);
+			}
+		for( i in 0...cols.length ) {
+			var base = cols[i] << ZBITS;
+			saved.blit(i * HEIGHT, light, base, HEIGHT);
+			light.fill(base, HEIGHT, 0);
+		}
+		useMask = true;
+		var lmax = Std.int(sunP);
+		var lsun = Std.int(sunP - sunF);
+		if( lsun < 0 ) lsun = 0;
+		var seeds = new Array<Int>();
+		for( col in cols ) sunColumn(col, lmax, lsun, seeds);
+		flood(seeds, sunP - sunF * 2, sunF);
+		for( col in cols ) {
+			var base = col << ZBITS;
+			for( z in 1...HEIGHT ) {
+				var p = base | z;
+				var li = lightIdx[bytes.get(p)];
+				if( li < 0 ) continue;
+				var info = lightInfos[li];
+				if( light.get(p) >= info.p ) continue;
+				light.set(p, info.p);
+				flood([p], info.pw - info.f, info.f);
+			}
+		}
+		useMask = false;
+		for( i in 0...cols.length ) {
+			var dx = i % span - rOut, dy = Std.int(i / span) - rOut;
+			if( dx > rIn || dx < -rIn || dy > rIn || dy < -rIn )
+				light.blit(cols[i] << ZBITS, saved, i * HEIGHT, HEIGHT);
+			mask.set(cols[i], 0);
+		}
+	}
+
+	/** luz de sol de una columna (misma logica que computeLight, para una zona) */
+	function sunColumn( col : Int, lmax : Int, lsun : Int, seeds : Array<Int> ) {
+		var x = col % size, y = Std.int(col / size);
+		var base = col << ZBITS;
+		var cxm = x == 0 ? col + size - 1 : col - 1;
+		var cym = y == 0 ? col + size * (size - 1) : col - size;
+		var okx = !useMask || mask.get(cxm) != 0;
+		var oky = !useMask || mask.get(cym) != 0;
+		var z = HEIGHT - 1;
+		while( z >= 0 ) {
+			var p = base | z;
+			var t = idTag[bytes.get(p)];
+			if( t != 0 ) {
+				if( t < NOLIGHT ) {
+					light.set(p, lsun);
+					seeds.push(p);
+				}
+				break;
+			}
+			light.set(p, lmax);
+			if( okx ) {
+				var q = (cxm << ZBITS) | z;
+				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+					light.set(q, lsun);
+					seeds.push(q);
+				}
+			}
+			if( oky ) {
+				var q = (cym << ZBITS) | z;
+				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+					light.set(q, lsun);
+					seeds.push(q);
+				}
+			}
+			z--;
+		}
+		while( z > 0 ) {
+			var p = base | z;
+			if( idTag[bytes.get(p)] < NOLIGHT && ((okx && isSunAir((cxm << ZBITS) | z, lmax)) || (oky && isSunAir((cym << ZBITS) | z, lmax))) ) {
+				light.set(p, lsun);
+				seeds.push(p);
+			}
+			z--;
 		}
 	}
 
@@ -497,6 +726,7 @@ class World {
 			mat.mainPass.setPassName("alpha");
 		}
 		meshes.push(new h3d.scene.Mesh(poly, mat, root));
+		if( curList != null ) curList.push(meshes.length - 1);
 		meshCx.push(curCx);
 		meshCy.push(curCy);
 	}
@@ -518,6 +748,7 @@ class World {
 			while( meshExtra.length < meshes.length ) meshExtra.push(null);
 		for( i in 0...meshes.length ) {
 			var m = meshes[i];
+			if( m == null ) continue;
 			var bx = Math.round((x - meshCx[i]) / s), by = Math.round((y - meshCy[i]) / s);
 			m.x = s * bx;
 			m.y = s * by;
@@ -549,6 +780,25 @@ class World {
 		var alphaBuf = new MeshBuf();
 		var waterBuf = new MeshBuf();
 		var blendBuf = new MeshBuf();
+		// si el trozo ya existia (edicion), se quitan sus mallas antiguas
+		var cid = cx + cy * (size >> 4);
+		var old = chunkMeshes[cid];
+		if( old != null )
+			for( i in old ) {
+				var om = meshes[i];
+				if( om == null ) continue;
+				var ex = i < meshExtra.length ? meshExtra[i] : null;
+				if( ex != null ) {
+					for( c in ex ) if( c != null ) c.remove();
+					meshExtra[i] = null;
+				}
+				om.remove();
+				om.primitive.dispose();
+				meshes[i] = null;
+			}
+		curList = [];
+		chunkMeshes[cid] = curList;
+		wrapX = -1e9;
 		curCx = cx * CSIZE + CSIZE * 0.5;
 		curCy = cy * CSIZE + CSIZE * 0.5;
 

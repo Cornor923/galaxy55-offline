@@ -15,6 +15,10 @@ typedef SaveInfo = {
 	var yaw : Float;
 	var pitch : Float;
 	var fly : Bool;
+	/** inventario (null = el inicial del original) */
+	@:optional var inv : Protocol.InventoryInfos;
+	/** cambios del terreno: pares [celda, bloque global] */
+	@:optional var edits : Array<Int>;
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
@@ -38,8 +42,24 @@ class SaveData {
 		var now = Date.now().getTime();
 		return {
 			version : VERSION, id : newId(), name : name, seed : seed, biome : biome, sizeChunks : sizeChunks,
-			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false,
+			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : Inv.defaults(), edits : [],
 		};
+	}
+
+	/** inventario guardado; si falta o esta mal formado se usa el inicial */
+	static function readInv( o : Dynamic ) : Protocol.InventoryInfos {
+		try {
+			if( o == null || o.t == null ) return Inv.defaults();
+			var inv : Protocol.InventoryInfos = { maxWeight : o.maxWeight != null ? o.maxWeight : 64, t : [], charges : [] };
+			for( s in (o.t : Array<Dynamic>) )
+				inv.t.push(s == null ? null : { k : Std.int(s.k), n : Std.int(s.n) });
+			if( o.charges != null )
+				for( c in (o.charges : Array<Dynamic>) )
+					inv.charges.push({ c : Std.int(c.c), n : Std.int(c.n) });
+			return inv;
+		} catch( e : Dynamic ) {
+			return Inv.defaults();
+		}
 	}
 
 	public static function jsonPath( id : String ) return dir() + "/" + id + ".json";
@@ -67,6 +87,7 @@ class SaveData {
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true,
+					inv : readInv(o.inv), edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 			};
 		} catch( e : Dynamic ) {
 			return null;

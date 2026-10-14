@@ -104,6 +104,8 @@ class GalaxyApp extends hxd.App {
 	var hud : h2d.Text;
 	var jetGlow : h2d.Bitmap;
 	var jetBar : h2d.Graphics;
+	var invBar : InvBar;
+	var cross : h2d.Graphics;
 
 	// casco (Game.hudOn, render.hud[H_HELMET]): posicion en pixeles de la imagen de 1024x1024
 	var helmet : h2d.Bitmap;
@@ -127,6 +129,9 @@ class GalaxyApp extends hxd.App {
 	var shotFrames = 30;
 	var demoSaves = false;
 	var shotBiome : String = null;
+	var shotCont = false;
+	var shotN = 20;
+	var shotSlot = 2;
 	var shotAt : Array<Float> = null; // --at=x,y,yaw[,pitch,z]: coloca al jugador para la captura
 
 	// formulario de nueva partida
@@ -141,6 +146,8 @@ class GalaxyApp extends hxd.App {
 			else if( StringTools.startsWith(a, "--screen=") ) shotScreen = a.substr(9);
 			else if( StringTools.startsWith(a, "--frames=") ) shotFrames = Std.parseInt(a.substr(9));
 			else if( a == "--demo-saves" ) demoSaves = true;
+			else if( StringTools.startsWith(a, "--n=") ) shotN = Std.parseInt(a.substr(4));
+			else if( StringTools.startsWith(a, "--slot=") ) shotSlot = Std.parseInt(a.substr(7));
 			else if( StringTools.startsWith(a, "--at=") ) shotAt = a.substr(5).split(",").map(Std.parseFloat);
 			else if( StringTools.startsWith(a, "--bgbiome=") ) shotBiome = a.substr(10);
 			else if( StringTools.startsWith(a, "--lang=") ) Lang.setCode(a.substr(7));
@@ -182,7 +189,19 @@ class GalaxyApp extends hxd.App {
 		jetBar.y = H - 25;
 		jetBar.alpha = 0.9;
 		jetBar.visible = false;
-		hud = Theme.text(s2d, "", 1.8, 0xFFFFFF, 14, 10);
+		// mira cian que aparece al excavar (Interface.cross: lineas de 7 px, alfa 0.4)
+		cross = new h2d.Graphics(s2d);
+		cross.lineStyle(1, 0x00FFFF, 1);
+		cross.moveTo(0, -7);
+		cross.lineTo(0, 7);
+		cross.moveTo(-7, 0);
+		cross.lineTo(7, 0);
+		cross.x = Std.int(W * 0.5);
+		cross.y = Std.int(H * 0.5);
+		cross.alpha = 0.4;
+		cross.visible = false;
+		hxd.Window.getInstance().addEventTarget(onWindowEvent);
+		hud = Theme.text(s2d, "", 1.8, 0xFFFFFF, 14, 74);
 		hud.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
 		hud.visible = false;
 		toast = Theme.text(s2d, "", 2.4, Theme.ACCENT, 0, 640);
@@ -524,7 +543,7 @@ class GalaxyApp extends hxd.App {
 		clearUi();
 		hud.visible = false;
 		loadInfo = info;
-		loadWorld = new World(info.seed, info.biome, info.sizeChunks, s3d, atlas);
+		loadWorld = new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits);
 		loadWorld.root.visible = false;
 		showLoading(Lang.t("loading"));
 	}
@@ -536,7 +555,8 @@ class GalaxyApp extends hxd.App {
 			Sys.println("mundo " + loadWorld.biomeName + ": " + loadWorld.faces + " caras, spawn z=" + loadWorld.spawnPoint().z);
 			Sys.println(loadWorld.debugStats());
 		}
-		game = new GameView(s3d, loadWorld, loadInfo);
+		game = new GameView(s3d, loadWorld, loadInfo, atlas);
+		invBar = new InvBar(s2d, game.inv, atlas, W);
 		loadWorld = null;
 		ui.removeChildren();
 		bar = null;
@@ -555,6 +575,7 @@ class GalaxyApp extends hxd.App {
 		ui.removeChildren();
 		screens = new Map();
 		dim.tile = h2d.Tile.fromColor(0x000000, W, H, 0.0);
+		game.releaseAction();
 		state = Playing;
 		hud.visible = true;
 		captureMouse(true);
@@ -571,6 +592,11 @@ class GalaxyApp extends hxd.App {
 
 	function toMainMenu() {
 		saveGame(false);
+		game.dispose();
+		if( invBar != null ) {
+			invBar.remove();
+			invBar = null;
+		}
 		game.world.dispose();
 		game = null;
 		ui.removeChildren();
@@ -589,6 +615,12 @@ class GalaxyApp extends hxd.App {
 		captured = on;
 		if( game != null ) game.mouseLook = on;
 		hxd.Window.getInstance().mouseMode = on ? Relative(onMouse, true) : Absolute;
+	}
+
+	/** rueda del raton: cambia de casilla (en el original, bajar la rueda pasa a la siguiente) */
+	function onWindowEvent( e : hxd.Event ) {
+		if( e.kind == EWheel && game != null && state == Playing )
+			game.scrollInventory(e.wheelDelta > 0 ? -1 : 1);
 	}
 
 	function onMouse( e : hxd.Event ) {
@@ -798,10 +830,14 @@ class GalaxyApp extends hxd.App {
 				updateHelmet(dt, p);
 				layoutHelmet();
 				updateJetHud(p);
+					if( invBar != null ) invBar.update(dt);
 			}
 		} else if( state == Paused && game != null ) {
 			game.updateCamera();
 		}
+
+		if( invBar != null ) invBar.visible = state == Playing || state == Paused;
+		cross.visible = state == Playing && game != null && game.laserActive;
 
 		if( modal != null && modal.parent != null ) modal.update(dt, pad);
 		else {
@@ -1106,9 +1142,14 @@ class GalaxyApp extends hxd.App {
 		if( shotPath == null ) return;
 		// menus: esperar a que el planeta de fondo este listo y sacar la captura
 		if( state == Menu && shotStage == 0 && frames > shotFrames ) {
-			if( shotScreen == "game" || shotScreen == "pause" || shotScreen == "phys" || shotScreen == "jet" ) {
+			if( shotScreen == "game" || shotScreen == "pause" || shotScreen == "phys" || shotScreen == "jet" || shotScreen == "mine" || shotScreen == "place" || shotScreen == "cont" ) {
 				shotStage = 1;
-				var info = SaveData.create("Prueba", 1234, shotBiome != null ? shotBiome : "BIAutumn", 1);
+				if( shotScreen == "cont" ) {
+					// carga la partida mas reciente (prueba de guardado)
+					shotCont = true;
+					shotScreen = "mine";
+				}
+				var info = shotCont ? SaveData.list()[0] : SaveData.create("Prueba", 1234, shotBiome != null ? shotBiome : "BIAutumn", 1);
 				startGame(info);
 				return;
 			}
@@ -1132,6 +1173,13 @@ class GalaxyApp extends hxd.App {
 				shotFrames = frames + 45;
 				return;
 			}
+			if( shotScreen == "mine" || shotScreen == "place" ) {
+				game.inv.select(shotScreen == "mine" ? 0 : shotSlot);
+				game.debugAction = !shotCont;
+				game.debugDeny = Sys.args().indexOf("--deny") >= 0;
+				shotFrames = frames + shotN;
+				return;
+			}
 			if( shotScreen == "pause" ) {
 				pause();
 				shotFrames = frames + 6;
@@ -1139,6 +1187,13 @@ class GalaxyApp extends hxd.App {
 				shotFrames = frames + 6;
 		}
 		if( shotStage == 2 && frames > shotFrames && (state == Playing || state == Paused) ) {
+			if( shotScreen == "mine" || shotScreen == "place" ) {
+				if( Sys.args().indexOf("--save") >= 0 ) saveGame(false);
+				var n = 0;
+				for( k in game.world.editMap.keys() ) n++;
+				var items = [for( s in game.inv.inv.t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n];
+				Sys.println("ediciones: " + n + "  inventario: " + items.join(" ") + "  select: " + (game.select == null ? "ninguno" : game.select.b.k + " poder=" + game.select.power));
+			}
 			capture(shotPath);
 		}
 	}
