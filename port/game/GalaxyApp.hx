@@ -106,6 +106,7 @@ class GalaxyApp extends hxd.App {
 	var jetBar : h2d.Graphics;
 	var invBar : InvBar;
 	var cross : h2d.Graphics;
+	var fadeRect : h2d.Bitmap;
 
 	// casco (Game.hudOn, render.hud[H_HELMET]): posicion en pixeles de la imagen de 1024x1024
 	var helmet : h2d.Bitmap;
@@ -193,6 +194,10 @@ class GalaxyApp extends hxd.App {
 		jetBar.alpha = 0.9;
 		jetBar.visible = false;
 		// mira cian que aparece al excavar (Interface.cross: lineas de 7 px, alfa 0.4)
+		// fundido blanco del teletransporte (Hero.enteringShip -> fades)
+		fadeRect = new h2d.Bitmap(h2d.Tile.fromColor(0xFFFFFF, W, H), s2d);
+		fadeRect.alpha = 0;
+		fadeRect.visible = false;
 		cross = new h2d.Graphics(s2d);
 		cross.lineStyle(1, 0x00FFFF, 1);
 		cross.moveTo(0, -7);
@@ -276,6 +281,7 @@ class GalaxyApp extends hxd.App {
 				case "load": buildLoad();
 				case "options": buildOptions();
 				case "pause": buildPause();
+				case "computer": buildComputer();
 				default: null;
 			}
 			screens.set(name, s);
@@ -494,6 +500,39 @@ class GalaxyApp extends hxd.App {
 		return s;
 	}
 
+	/** Ordenador de a bordo (Game.openComputerMenu): despegar, modificar la nave, comerciar. Por ahora solo se puede cerrar. */
+	function buildComputer() : Screen {
+		var s = panelFor(640, 480, Lang.t("computer.title"));
+		var x = (W - 540) * 0.5;
+		var y = 215.;
+		var takeoff = new Button(s, Lang.t("computer.takeoff"));
+		var edit = new Button(s, Lang.t("computer.edit"));
+		var trade = new Button(s, Lang.t("computer.trade"));
+		var close = new Button(s, Lang.t("computer.close"));
+		s.add(takeoff, x, y);
+		s.add(edit, x, y + 62);
+		s.add(trade, x, y + 124);
+		s.add(close, x, y + 200);
+		var soon = function() {
+			resume();
+			showToast(Lang.t("computer.soon"));
+		};
+		takeoff.onActivate = soon;
+		edit.onActivate = soon;
+		trade.onActivate = soon;
+		close.onActivate = function() resume();
+		s.onBack = function() resume();
+		return s;
+	}
+
+	function openComputer() {
+		if( state != Playing ) return;
+		state = Paused;
+		captureMouse(false);
+		hud.visible = false;
+		show("computer");
+	}
+
 	function buildPause() : Screen {
 		var s = panelFor(560, 520, Lang.t("pause.title"));
 		var x = (W - 460) * 0.5;
@@ -564,6 +603,7 @@ class GalaxyApp extends hxd.App {
 		}
 		game = new GameView(s3d, loadWorld, loadInfo, atlas);
 		invBar = new InvBar(s2d, game.inv, atlas, W);
+		game.onComputer = openComputer;
 		loadWorld = null;
 		ui.removeChildren();
 		bar = null;
@@ -872,6 +912,9 @@ class GalaxyApp extends hxd.App {
 
 		if( invBar != null ) invBar.visible = state == Playing || state == Paused;
 		cross.visible = state == Playing && game != null && game.laserActive;
+		var fade = (state == Playing || state == Paused) && game != null ? Math.min(0.999, game.enteringShip) : 0.;
+		fadeRect.visible = fade > 0;
+		fadeRect.alpha = fade;
 
 		if( modal != null && modal.parent != null ) modal.update(dt, pad);
 		else {
@@ -1209,7 +1252,8 @@ class GalaxyApp extends hxd.App {
 			}
 			if( shotScreen == "mine" || shotScreen == "place" ) {
 				game.inv.select(shotScreen == "mine" ? 0 : shotSlot);
-				game.debugAction = !shotCont;
+				game.debugAction = !shotCont && Sys.args().indexOf("--tele") < 0;
+				if( Sys.args().indexOf("--tele") >= 0 ) game.debugTele = 1;
 				game.debugDeny = Sys.args().indexOf("--deny") >= 0;
 				shotFrames = frames + shotN;
 				return;

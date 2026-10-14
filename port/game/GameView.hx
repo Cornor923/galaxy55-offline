@@ -51,10 +51,15 @@ class GameView {
 	/** modo creativo (anadido nuestro): bloques sin limite, rotura instantanea y jetpack infinito */
 	public var creative(default, null) = false;
 	var actionPause = 0.;
+	var activatePending : Select;
 	var actionWait = false;
 	var armed = false;
 	var drops : Drops;
 	var fx : Fx;
+	/** la nave: el jugador empieza dentro y baja al planeta por el teletransportador (Game.placeShip) */
+	public var ship(default, null) : Ship;
+	/** progreso del teletransporte (Hero.enteringShip): -1 = recien llegado, 0..1.5 = entrando; a 1.5 se transporta */
+	public var enteringShip = -1.;
 
 	// estado fisico (Hero)
 	public var gravity = 0.;
@@ -101,12 +106,10 @@ class GameView {
 			}
 		drops = new Drops(world, atlas);
 		fx = new Fx(world, atlas);
+		ship = new Ship(world, atlas, s3d);
 		if( info.px < 0 ) {
-			var s = world.spawnPoint();
-			px = s.x;
-			py = s.y;
-			pz = s.z;
-			yaw = Math.PI * 0.25;
+			// partida nueva: se empieza dentro de la nave, encima del teletransportador
+			gotoShip(true);
 			pitch = -0.25;
 		} else {
 			px = info.px;
@@ -243,6 +246,12 @@ class GameView {
 		if( debugJet ) useJetpack = true;
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateBobbing(realDt * 60);
+		ship.update(this, tmod);
+		if( debugTele > 0 ) {
+			// solo pruebas: se aparta del teletransportador y vuelve a el para probar el teletransporte
+			debugTele++;
+			if( debugTele == 6 ) enteringShip = 0; // como si se hubiera apartado y vuelto a pisar la plataforma
+		}
 		updateAction(tmod, controls, pad);
 		world.flush();
 		drops.update(this, tmod);
@@ -256,6 +265,7 @@ class GameView {
 	}
 
 	public function dispose() {
+		ship.dispose();
 		fx.dispose();
 		drops.dispose();
 	}
@@ -264,6 +274,7 @@ class GameView {
 	public var debugJet = false;
 	/** solo para pruebas automaticas: mantiene pulsado el boton de excavar/colocar */
 	public var debugAction = false;
+	public var debugTele = 0;
 	/** solo para pruebas: finge que el bloque no se puede romper (para ver el efecto) */
 	public var debugDeny = false;
 
@@ -478,6 +489,54 @@ class GameView {
 		if( walkingSlow || pushPower == old || dist > speed * dt * 0.5 ) pushPower = 0;
 	}
 
+	// ---------------------------------------------------------------- la nave
+
+	/** distancia con signo en un planeta que da la vuelta (AbstractGame.realDist) */
+	public function wrapDist( d : Float ) : Float {
+		var s = world.size;
+		d %= s;
+		if( (d < 0 ? -d : d) > s * 0.5 ) d += d < 0 ? s : -s;
+		return d;
+	}
+
+	/** Hero.gotoShip: aparece en la nave (encima del teletransportador) o en el suelo, bajo ella */
+	public function gotoShip( inside : Bool ) {
+		enteringShip = -1;
+		px = ship.x + 0.5;
+		py = ship.y + 0.5;
+		pz = inside ? ship.start.z : ship.z;
+		gravity = 0;
+		oldSpeedX = oldSpeedY = 0;
+		// se mira hacia donde no haya pared
+		for( i in 0...4 ) {
+			var a = i * Math.PI / 2;
+			if( !collide(px + Math.cos(a), py + Math.sin(a), pz + 1.5) ) {
+				yaw = a;
+				break;
+			}
+		}
+	}
+
+	/** se llama al activar el ordenador de a bordo */
+	public dynamic function onComputer() {}
+
+	/** ShipLogic.activateBlock y Process.toggle: ordenador de a bordo y bloques que se abren o cierran (puertas) */
+	function activateBlock( x : Int, y : Int, z : Int, b : Block ) {
+		if( b.activable != null ) {
+			var ok = switch( b.activable ) {
+				case WEverywhere: true;
+				case WInShip: z >= World.SHIP_Z;
+				case WOnPlanet: z < World.SHIP_Z;
+			};
+			if( !ok ) return;
+			switch( b.k ) {
+			case BShipComputer: onComputer();
+			default:
+			}
+		} else if( b.toggle != null )
+			world.setBlock(x, y, z, b.toggle);
+	}
+
 	// ---------------------------------------------------------------- excavar y colocar
 
 	inline function wrapI( v : Int ) : Int {
@@ -508,7 +567,12 @@ class GameView {
 			if( have && ix == lx && iy == ly && iz == lz ) continue;
 			var b = world.block(ix, iy, iz);
 			if( b != null && blocking(b) ) {
-				if( !have || iz >= World.HEIGHT - 1 || iz < 1 ) return null;
+				if( !have || iz < 1 ) return null;
+				if( iz >= World.SHIP_Z ) {
+					// en la nave solo se puede apuntar a lo que se activa (puertas, ordenador); el casco no se toca (ShipLogic.checkSelect)
+					if( b.activable == null && b.toggle == null ) return null;
+				} else if( iz >= World.HEIGHT - 1 )
+					return null;
 				return { x : wrapI(ix), y : wrapI(iy), z : iz, b : b, tx : wrapI(lx), ty : wrapI(ly), tz : lz, hx : x, hy : y, hz : z, power : 0. };
 			}
 			lx = ix;
@@ -567,6 +631,11 @@ class GameView {
 		select = s;
 
 		if( !laserActive ) {
+			if( activatePending != null ) {
+				var a = activatePending;
+				activatePending = null;
+				if( a == select ) activateBlock(a.x, a.y, a.z, a.b);
+			}
 			if( select != null ) select.power = 0;
 			return;
 		}
@@ -578,6 +647,12 @@ class GameView {
 	function mine( tmod : Float ) {
 		var s = select;
 		var b = s.b;
+		// bloques que se activan (ordenador, puertas): no se rompen; al soltar el boton se activan (Game.checkToggle)
+		if( b.activable != null || b.toggle != null ) {
+			if( s.power == 0 ) s.power = 1e-8;
+			activatePending = s;
+			return;
+		}
 		var matter = b.matter;
 		var req = b.requiredPower != null ? b.requiredPower : matter.requiredPower;
 		if( req == null ) req = 1;
@@ -614,6 +689,7 @@ class GameView {
 	function place( hand : Block ) {
 		var s = select;
 		var put = hand.getFlip(yaw);
+		if( s.tz >= World.SHIP_Z ) return; // el casco de la nave no se edita aqui (eso es el hangar)
 		var x = s.tx, y = s.ty, z = s.tz;
 		var ok = false;
 		var tmp : Block;

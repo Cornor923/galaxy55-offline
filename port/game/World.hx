@@ -64,7 +64,19 @@ class World {
 	var pendingRelight = new Array<Int>();
 	var lightChunks = new Array<Int>();
 
-	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int> ) {
+	// la nave (ShipLogic/Level.extra del original): un volumen de 128x128x128 colgado sobre el planeta, desde z = SHIP_Z
+	public static inline var SHIP_Z = 130;
+	/** la nave de este planeta (solo en el mundo del planeta) */
+	public var ship : World;
+	/** desplazamiento (x, y) de la nave respecto al planeta: celda de la nave + desplazamiento = posicion en el planeta */
+	public var shipDX = 0;
+	public var shipDY = 0;
+	/** true en el mundo de la nave: no da la vuelta y usa el cielo del planeta */
+	public var isShip(default, null) = false;
+	var wraps = true;
+	var ownSky = true;
+
+	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int>, ?shipData : ShipData.ShipDataInfo, ?sharedSky : Sky ) {
 		this.savedEdits = savedEdits;
 		this.seed = seed;
 		this.biomeName = biomeName;
@@ -73,8 +85,14 @@ class World {
 		chunkMeshes = [for( i in 0...sizeChunks * sizeChunks * 64 ) null];
 		root = new h3d.scene.Object(parent);
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
-		sky = new Sky(root, biome, menuFog);
-		sky.fog.curve = 2.0 / size; // curvatura del planeta, igual que AbstractGame: curve = 2 / totalSize
+		// la nave comparte el cielo (niebla y curvatura) del planeta
+		if( sharedSky != null ) {
+			sky = sharedSky;
+			ownSky = false;
+		} else {
+			sky = new Sky(root, biome, menuFog);
+			sky.fog.curve = 2.0 / size; // curvatura del planeta, igual que AbstractGame: curve = 2 / totalSize
+		}
 		gen = new gen.DetailsGenerator(size, seed);
 		var bd = Data.getBiome(biome);
 		sunP = bd.sunPower;
@@ -83,7 +101,8 @@ class World {
 		gen.alloc(BMinIron);
 		gen.alloc(BMinAluminium);
 		for( s in bd.soils ) gen.alloc(s);
-		gen.startGenerate(biome);
+		if( shipData == null ) gen.startGenerate(biome);
+		else initShip(shipData);
 		// como Builder.init: los modelos sin BFSize usan su propia caja para las colisiones
 		for( b in Block.all )
 			if( b.model != null && b.size == null ) b.size = Models.get(b.model).box;
@@ -95,6 +114,11 @@ class World {
 	/** Avanza la carga durante budgetMs milisegundos; devuelve el progreso de 0 a 1. */
 	public function step( budgetMs : Float ) : Float {
 		var t0 = haxe.Timer.stamp();
+		if( phase == 0 && isShip ) {
+			computeLight();
+			phase = 1;
+			return progress = 0.75;
+		}
 		if( phase == 0 ) {
 			if( !gen.process(Std.int(budgetMs)) ) {
 				bytes = gen.getBytes().b;
@@ -121,7 +145,8 @@ class World {
 	}
 
 	public function dispose() {
-		sky.dispose();
+		if( ship != null ) ship.dispose();
+		if( ownSky ) sky.dispose();
 		for( m in meshes ) {
 			if( m == null ) continue;
 			m.remove();
@@ -185,12 +210,19 @@ class World {
 
 	/** bloque en una celda (null si es aire) */
 	public function block( x : Int, y : Int, z : Int ) : Block {
+		if( z >= SHIP_Z ) return shipBlock(x, y, z);
 		var id = voxel(x, y, z);
 		return id <= 0 ? null : gen.blocks[id];
 	}
 
 	/** Igual que Level.collide del original: consulta de un punto, con la caja de los bloques parciales. */
 	public function collidePoint( x : Float, y : Float, z : Float ) : Bool {
+		if( z >= SHIP_Z ) {
+			if( ship == null ) return false;
+			var lx = shipLocal(x, shipDX), ly = shipLocal(y, shipDY);
+			if( lx >= ship.size || ly >= ship.size ) return false;
+			return ship.collidePoint(lx, ly, z - SHIP_Z);
+		}
 		var ix = Math.floor(x), iy = Math.floor(y), iz = Std.int(z);
 		if( z < 0 || iz >= HEIGHT ) return false;
 		var id = voxel(ix, iy, iz);
@@ -256,6 +288,10 @@ class World {
 
 	/** luz de una celda (el mundo da la vuelta; por encima del techo es luz de sol plena) */
 	public function lightAt( x : Int, y : Int, z : Int ) : Int {
+		if( z >= SHIP_Z && ship != null ) {
+			var lx = Std.int(shipLocal(x, shipDX)), ly = Std.int(shipLocal(y, shipDY));
+			return lx >= ship.size || ly >= ship.size ? 0 : ship.lightAt(lx, ly, z - SHIP_Z);
+		}
 		if( z < 0 ) return 0;
 		if( z >= HEIGHT ) return Std.int(sunP);
 		if( x < 0 ) x += size else if( x >= size ) x -= size;
@@ -398,6 +434,71 @@ class World {
 		}
 	}
 
+	// ---------------------------------------------------------------- nave
+
+	function initShip( d : ShipData.ShipDataInfo ) {
+		isShip = true;
+		wraps = false;
+		bytes = haxe.io.Bytes.alloc(size * size * HEIGHT);
+		initLightTables();
+		for( c in d.cells )
+			bytes.set(((c.x + c.y * size) << ZBITS) | c.z, localId(Block.all[c.id]));
+	}
+
+	/** coordenada de la nave que corresponde a una del planeta (el planeta da la vuelta) */
+	function shipLocal( v : Float, d : Int ) : Float {
+		var l = (v - d) % size;
+		if( l < 0 ) l += size;
+		return l;
+	}
+
+	function shipBlock( x : Int, y : Int, z : Int ) : Block {
+		if( ship == null ) return null;
+		var lx = Std.int(shipLocal(x, shipDX)), ly = Std.int(shipLocal(y, shipDY));
+		if( lx >= ship.size || ly >= ship.size ) return null;
+		return ship.block(lx, ly, z - SHIP_Z);
+	}
+
+	/** Level.getStartPlace del original: un sitio de tierra llana fuera del agua donde aterriza la nave (fijo por semilla) */
+	public function startPlace( rnd : mt.Rand ) : { x : Int, y : Int, z : Int } {
+		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
+		var binf = Data.getBiome(biome);
+		var water = gen.getWaterInfos().level;
+		var soil = Block.get(binf.soils[1]);
+		var through = new Map<Int, Bool>();
+		for( b in binf.startThrough ) through.set(Block.get(b).index, true);
+		var ntry = 10000;
+		while( --ntry > 0 ) {
+			var x = rnd.random(size - 2) + 1;
+			var y = rnd.random(size - 2) + 1;
+			var z = HEIGHT - 1;
+			while( z > water ) {
+				var b = block(x, y, z);
+				if( b != null && !through.exists(b.index) ) break;
+				z--;
+			}
+			if( z <= water ) continue;
+			if( !block(x, y, z).isSame(soil) ) continue;
+			z++;
+			if( !freePlace(x, y, z) ) continue;
+			return { x : x, y : y, z : z };
+		}
+		return null;
+	}
+
+	/** casi plano: pocos huecos alrededor (Level.freePlace) */
+	function freePlace( x : Int, y : Int, z : Int ) : Bool {
+		var count = 0;
+		for( dx in -1...2 )
+			for( dy in -1...2 )
+				if( block(x + dx, y + dy, z) != null ) count++;
+		z--;
+		for( dx in -1...2 )
+			for( dy in -1...2 )
+				if( block(x + dx, y + dy, z) == null ) count++;
+		return count < 3;
+	}
+
 	// ---------------------------------------------------------------- edicion
 
 	inline function wrapC( v : Int ) : Int {
@@ -462,6 +563,11 @@ class World {
 
 	/** Cambia un bloque (null = aire). El trozo se rehace al momento; la luz y los vecinos, en los siguientes fotogramas. */
 	public function setBlock( x : Int, y : Int, z : Int, b : Block ) : Void {
+		if( z >= SHIP_Z ) {
+			// la nave tiene su propio volumen
+			if( ship != null ) ship.setBlock(Std.int(shipLocal(x, shipDX)), Std.int(shipLocal(y, shipDY)), z - SHIP_Z, b);
+			return;
+		}
 		x = wrapC(x);
 		y = wrapC(y);
 		if( z < 1 || z >= HEIGHT - 1 ) return;
@@ -773,7 +879,7 @@ class World {
 	 * mas cercana a la camara, asi no hay borde del mundo y el horizonte sigue siendo terreno.
 	 */
 	public function updateWrap( x : Float, y : Float ) {
-		if( x == wrapX && y == wrapY ) return;
+		if( !wraps || (x == wrapX && y == wrapY) ) return;
 		wrapX = x;
 		wrapY = y;
 		var s = size;
