@@ -28,8 +28,6 @@ class World {
 	public var progress(default, null) = 0.;
 	public var root(default, null) : h3d.scene.Object;
 	public var sky(default, null) : Sky;
-	var snow : Snow;
-
 	var gen : gen.DetailsGenerator;
 	var bytes : haxe.io.Bytes;
 	var atlas : h3d.mat.Texture;
@@ -45,9 +43,7 @@ class World {
 		size = sizeChunks << Const.BITS;
 		root = new h3d.scene.Object(parent);
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
-		sky = new Sky(root, biome, menuFog);
-		if( biomeName == "BIWinterPeaks" ) snow = new Snow(root);
-		gen = new gen.DetailsGenerator(size, seed);
+		sky = new Sky(root, biome, menuFog);		gen = new gen.DetailsGenerator(size, seed);
 		var bd = Data.getBiome(biome);
 		gen.alloc(bd.water);
 		gen.alloc(BMinIron);
@@ -83,9 +79,7 @@ class World {
 	}
 
 	public function dispose() {
-		sky.dispose();
-		if( snow != null ) snow.dispose();
-		for( m in meshes ) {
+		sky.dispose();		for( m in meshes ) {
 			m.remove();
 			m.primitive.dispose();
 		}

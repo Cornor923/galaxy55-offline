@@ -83,6 +83,12 @@ class GalaxyApp extends hxd.App {
 	var bgFadeT = 0.;
 	var bgCamZ = -1.;
 	var bgPhase = 0.;
+	var bgAlt = new Array<Float>();
+	var bgCx = 64.;
+	var bgCy = 64.;
+	var bgR = 38.;
+	var snow : Snow;
+	var snowPrevOk = false;
 	var loadWorld : World;
 	var loadInfo : SaveInfo;
 	var game : GameView;
@@ -150,6 +156,7 @@ class GalaxyApp extends hxd.App {
 		atlas.mipMap = None;
 
 		dim = new h2d.Bitmap(h2d.Tile.fromColor(0x000000, W, H, 0.0), s2d);
+		snow = new Snow(s2d, W, H);
 		ui = new h2d.Object(s2d);
 		hud = Theme.text(s2d, "", 1.8, 0xFFFFFF, 14, 10);
 		hud.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
@@ -668,6 +675,20 @@ class GalaxyApp extends hxd.App {
 			if( toastTime <= 0 ) toast.visible = false;
 		}
 
+		// nieve (solo bioma de invierno): sigue el giro de la camara
+		var winter = false;
+		if( (state == Playing || state == Paused) && game != null )
+			winter = game.world.biomeName == "BIWinterPeaks";
+		else if( (state == Menu || state == Loading) && bgIndex < bgWorlds.length )
+			winter = bgWorlds[bgIndex].biomeName == "BIWinterPeaks";
+		snow.visible = winter && dim.alpha < 0.5;
+		if( snow.visible ) {
+			var c = s3d.camera;
+			var vx = c.target.x - c.pos.x, vy = c.target.y - c.pos.y, vz = c.target.z - c.pos.z;
+			var len = Math.sqrt(vx * vx + vy * vy + vz * vz);
+			if( len > 1e-6 ) snow.update(dt, Math.atan2(vy, vx), Math.asin(vz / len), c.fovY);
+		}
+
 		testShot();
 	}
 
@@ -706,6 +727,84 @@ class GalaxyApp extends hxd.App {
 		for( k in 0...bgWorlds.length ) bgWorlds[k].root.visible = (k == i);
 		bgCamZ = -1;
 		bgPhase = Math.random() * 6.28;
+		bgComputeAlt(bgWorlds[i]);
+	}
+
+	/**
+		Altura de la camara a lo largo de la ruta circular, calculada de una vez: maximo del relieve
+		(copas incluidas) en una ventana que anticipa los obstaculos, y luego suavizada. Asi la camara
+		va siempre por encima de todo, sin subir y bajar al pasar sobre cada arbol.
+	**/
+	function bgComputeAlt( w : World ) {
+		// se prueban varias rutas y se elige la mas baja y llana (menos montanas por encima)
+		var s = w.size;
+		var cands = [[0.5, 0.5, 0.2], [0.5, 0.5, 0.3], [0.5, 0.5, 0.4], [0.4, 0.4, 0.2], [0.6, 0.4, 0.2], [0.4, 0.6, 0.2], [0.6, 0.6, 0.2], [0.4, 0.4, 0.3], [0.6, 0.4, 0.3], [0.4, 0.6, 0.3], [0.6, 0.6, 0.3]];
+		var best : Array<Float> = null;
+		var bestScore = 1e18;
+		for( c in cands ) {
+			var tab = bgPathAlt(w, s * c[0], s * c[1], s * c[2]);
+			var total = 0., mx = 0.;
+			for( i in 0...tab.length ) {
+				total += Math.abs(tab[(i + 1) % tab.length] - tab[i]);
+				if( tab[i] > mx ) mx = tab[i];
+			}
+			var score = 0.5 * mx + 2.5 * total;
+			if( score < bestScore ) {
+				bestScore = score;
+				best = tab;
+				bgCx = s * c[0];
+				bgCy = s * c[1];
+				bgR = s * c[2];
+			}
+		}
+		bgAlt = best;
+		if( shotPath != null ) {
+			var lo = 1e9, hi = -1e9, maxStep = 0.;
+			for( i in 0...bgAlt.length ) {
+				if( bgAlt[i] < lo ) lo = bgAlt[i];
+				if( bgAlt[i] > hi ) hi = bgAlt[i];
+				var d = Math.abs(bgAlt[(i + 1) % bgAlt.length] - bgAlt[i]);
+				if( d > maxStep ) maxStep = d;
+			}
+			var spacing = 2 * Math.PI * bgR / bgAlt.length;
+			Sys.println("ruta de camara " + w.biomeName + ": radio " + Std.int(bgR) + ", altura " + Std.int(lo) + "-" + Std.int(hi) + ", pendiente maxima " + (Math.round(maxStep / spacing * 100) / 100));
+		}
+	}
+
+	/** Tabla de alturas (180 muestras) para una ruta circular. */
+	function bgPathAlt( w : World, cx : Float, cy : Float, r : Float ) : Array<Float> {
+		var M = 180;
+		var raw = new Array<Float>();
+		for( i in 0...M ) {
+			var a = i / M * Math.PI * 2;
+			var x = Std.int(cx + Math.cos(a) * r), y = Std.int(cy + Math.sin(a) * r);
+			var top = 0;
+			for( dx in -3...4 )
+				for( dy in -3...4 ) {
+					var hh = w.topCollide(x + dx * 2, y + dy * 2);
+					if( hh > top ) top = hh;
+				}
+			raw.push(top);
+		}
+		var cur = new Array<Float>();
+		for( i in 0...M ) {
+			var m = 0.;
+			for( k in -24...25 ) {
+				var v = raw[(i + k + M * 2) % M];
+				if( v > m ) m = v;
+			}
+			cur.push(m);
+		}
+		for( pass in 0...3 ) {
+			var next = new Array<Float>();
+			for( i in 0...M ) {
+				var sum = 0.;
+				for( k in -12...13 ) sum += cur[(i + k + M * 2) % M];
+				next.push(sum / 25);
+			}
+			cur = next;
+		}
+		return [for( v in cur ) v + 9];
 	}
 
 	function bgUpdate( dt : Float ) {
@@ -757,20 +856,18 @@ class GalaxyApp extends hxd.App {
 		if( bgIndex >= bgWorlds.length ) return;
 		var w = bgWorlds[bgIndex];
 		if( !w.isReady() ) return;
-		bgPhase += dt * 0.11;
+		if( bgAlt.length == 0 ) return;
+		// velocidad lenta y constante (unos 2.5 bloques por segundo)
+		bgPhase += dt * 0.065;
 		var s = w.size;
-		var cx = s * 0.5, cy = s * 0.5, r = s * 0.3;
-		var x = cx + Math.cos(bgPhase) * r, y = cy + Math.sin(bgPhase) * r;
-		// altura: por encima de lo mas alto en los alrededores (copas incluidas)
-		var top = 0;
-		for( dx in -2...3 )
-			for( dy in -2...3 ) {
-				var h = w.topCollide(Std.int(x) + dx * 2, Std.int(y) + dy * 2);
-				if( h > top ) top = h;
-			}
-		var target = top + 8.0;
-		if( bgCamZ < 0 ) bgCamZ = target;
-		bgCamZ += (target - bgCamZ) * Math.min(1, dt * 1.6);
+		var x = bgCx + Math.cos(bgPhase) * bgR, y = bgCy + Math.sin(bgPhase) * bgR;
+		// altura interpolada de la tabla precalculada
+		var f = bgPhase / (Math.PI * 2);
+		f -= Math.floor(f);
+		var fi = f * bgAlt.length;
+		var i0 = Std.int(fi) % bgAlt.length, i1 = (i0 + 1) % bgAlt.length;
+		var t = fi - Std.int(fi);
+		bgCamZ = bgAlt[i0] * (1 - t) + bgAlt[i1] * t;
 		var yaw = bgPhase + Math.PI * 0.5 + 0.5;
 		var pitch = -0.17;
 		var c = s3d.camera;

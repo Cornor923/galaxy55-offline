@@ -1,40 +1,98 @@
-import h3d.parts.GpuParticles;
+import h2d.SpriteBatch;
 
 /**
-	Nieve que cae alrededor de la camara (anadido de este port: el juego original no la tiene).
-	Usa las particulas en GPU de Heaps en modo CameraBounds: los copos quedan fijos en el mundo
-	mientras la camara se mueve, y se reciclan alrededor de ella.
+	Nieve en pantalla (anadido de este port: el juego original no la tiene).
+
+	Son copos 2D que caen por la pantalla en varias capas de profundidad. Cuando la camara gira, los
+	copos se desplazan como si estuvieran fijos en el mundo (compensan el giro de yaw y pitch), asi no
+	"corren" al mover el raton. Se dibuja debajo de los menus y del HUD.
 **/
 class Snow {
 
-	var parts : GpuParticles;
+	static inline var N = 320;
 
-	public function new( parent : h3d.scene.Object ) {
-		parts = new GpuParticles(parent);
-		parts.volumeBounds = h3d.col.Bounds.fromValues(-18, -18, -10, 36, 36, 20);
-		var g = parts.addGroup();
-		g.name = "snow";
-		g.emitMode = CameraBounds;
-		g.emitDist = 1;
-		g.nparts = 9000;
-		g.life = 4;
-		g.lifeRand = 0.35;
-		g.size = 0.16;
-		g.sizeRand = 0.5;
-		g.speed = 0.8;
-		g.speedRand = 0.5;
-		g.gravity = 0.5;
-		g.fadeIn = 0.05;
-		g.fadeOut = 0.15;
-		g.texture = h3d.mat.Texture.fromColor(0xFFFFFF);
-		// sin iluminacion: los copos se ven blancos y no grisaceos
-		for( m in parts.getMaterials() ) {
-			m.shadows = false;
-			m.mainPass.enableLights = false;
+	var batch : SpriteBatch;
+	var els = new Array<BatchElement>();
+	var depth = new Array<Float>();
+	var phase = new Array<Float>();
+	var freq = new Array<Float>();
+	var w : Float;
+	var h : Float;
+	var prevYaw = 0.;
+	var prevPitch = 0.;
+	var started = false;
+
+	public var visible(get, set) : Bool;
+
+	public function new( parent : h2d.Object, w : Int, h : Int ) {
+		this.w = w;
+		this.h = h;
+		batch = new SpriteBatch(h2d.Tile.fromColor(0xFFFFFF, 1, 1), parent);
+		batch.hasRotationScale = true;
+		batch.visible = false;
+		for( i in 0...N ) {
+			var e = new BatchElement(batch.tile);
+			// capas: abundantes y pequenas al fondo, pocas y grandes delante
+			var d = Math.pow(Math.random(), 1.6);
+			depth.push(d);
+			phase.push(Math.random() * 6.28);
+			freq.push(0.5 + Math.random() * 1.0);
+			e.x = Math.random() * w;
+			e.y = Math.random() * h;
+			var s = 2 + 6 * d;
+			e.scaleX = s;
+			e.scaleY = s;
+			e.alpha = 0.5 + 0.5 * d;
+			batch.add(e);
+			els.push(e);
+		}
+	}
+
+	function get_visible() return batch.visible;
+
+	function set_visible( v : Bool ) {
+		if( v && !batch.visible ) started = false;
+		return batch.visible = v;
+	}
+
+	/** yaw/pitch en radianes (de la camara), fovY en grados. */
+	public function update( dt : Float, yaw : Float, pitch : Float, fovY : Float ) {
+		if( !batch.visible ) return;
+		var dyaw = 0., dpitch = 0.;
+		if( started ) {
+			dyaw = yaw - prevYaw;
+			while( dyaw > Math.PI ) dyaw -= Math.PI * 2;
+			while( dyaw < -Math.PI ) dyaw += Math.PI * 2;
+			dpitch = pitch - prevPitch;
+		}
+		started = true;
+		prevYaw = yaw;
+		prevPitch = pitch;
+
+		// pixeles por radian en el centro de la pantalla
+		var f = (h * 0.5) / Math.tan(fovY * Math.PI / 360);
+		var sx = -dyaw * f;
+		var sy = dpitch * f;
+		for( i in 0...N ) {
+			var e = els[i];
+			var d = depth[i];
+			phase[i] += dt * freq[i];
+			e.x += sx + Math.sin(phase[i]) * (10 + 22 * d) * dt;
+			e.y += sy + (45 + 150 * d) * dt;
+			// al salir por un borde reaparece por el opuesto
+			if( e.y > h + 8 ) {
+				e.y -= h + 16;
+				e.x = Math.random() * w;
+			} else if( e.y < -8 ) {
+				e.y += h + 16;
+				e.x = Math.random() * w;
+			}
+			if( e.x > w + 8 ) e.x -= w + 16;
+			else if( e.x < -8 ) e.x += w + 16;
 		}
 	}
 
 	public function dispose() {
-		parts.remove();
+		batch.remove();
 	}
 }
