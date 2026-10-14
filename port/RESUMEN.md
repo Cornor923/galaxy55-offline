@@ -62,6 +62,12 @@ Trabajo en la rama `port-hashlink` (commits locales, nada subido). `main` conser
      como cascada y lava, cubrir/descubrir hierba, plantas que se rompen al quitar el suelo; hay que portar `Process.onSet` entero),
      luego niveles de altura al estilo Minecraft (cada paso lateral baja la altura de la superficie; la columna que cae va llena)
      y una textura de agua animada.
+   - **Fallos a corregir (avisados por el usuario, en el bioma de invierno y al excavar):**
+     1. Al romper un bloque el original hacía una animación de partículas (`render.parts.doBreak`, `Particles.hx`); falta.
+     2. El bloque suelto en el suelo gira demasiado rápido (`Drops.hx`, `setRotation(d.time * 6)`); copiar la rotación de `Render` para `Dummy`.
+     3. Las hojas del abeto (`BWinterLeaves`, "Touffe de sapin") sueltan material. En los datos originales no tienen `BFNoDrop` ni `BFDropChance`, así que según `DataGen.hx` sí se recogían; el usuario recuerda que no. Comprobarlo en el juego Flash (reproductor en `Downloads\ruffle...\flashplayer_32_sa_debug.exe`) antes de cambiar nada.
+     4. No se pueden romper las cosas colgadas de los árboles (estalactitas/colgantes, `BFDetail`, p. ej. `BIceStalactite*`, enredaderas) ni la planta del suelo: `GameView.blocking()` descarta los `BFDetail`. El original sí los apuntaba (se rompen con la mano vacía).
+     5. Hay bloques blancos en el bioma de invierno (cubos de color blanco liso, sin textura): mirar qué bloque es (¿casilla de color de `Atlas`, p. ej. `BCascadeSource`/`BIce`, o `BWinterWall`?).
    - **Ver en la mano el bloque elegido** (el original dibuja el bloque en `Render.hx`, `drawBlock(block, curLight)` con `curLight` suavizado; hoy solo se ve en la barra).
    - **Opción de calidad** (distancia de dibujado, caras de las hojas) para PC lentas; el valor por defecto sigue siendo la mejor calidad.
    - Vida, daño, curación, oxígeno y lava; bloques activables, cofres, `BFTransform`; sonido; partículas al romper; planeta Shed y Ciudad muerta completos.
