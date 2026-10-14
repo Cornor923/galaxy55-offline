@@ -85,6 +85,8 @@ class InvBar extends h2d.Object {
 			var b = Block.all[s.k];
 			var bm = new h2d.Bitmap(Icons.get(b, atlas), slot);
 			bm.setScale(45 / Icons.SIZE);
+			// el icono (45 px) se centra sobre el rombo (40 px): el centro de la base del cubo cae en (20, 30)
+			bm.x = -2.5;
 			if( i == changed && !first ) { bump = i; bumpTime = 0.45; }
 			var max = b.getMax(inv.inv.maxWeight);
 			var tf = Theme.text(slot, "" + s.n, 1.0, s.n >= max ? 0xF08080 : 0xE0E0E0, 0, 32);
