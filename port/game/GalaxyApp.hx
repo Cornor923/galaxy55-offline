@@ -555,6 +555,8 @@ class GalaxyApp extends hxd.App {
 		captureMouse(true);
 	}
 
+	var pausedThisFrame = false;
+
 	function pause() {
 		state = Paused;
 		captureMouse(false);
@@ -774,7 +776,7 @@ class GalaxyApp extends hxd.App {
 
 		if( state == Playing && game != null ) {
 			var K = hxd.Key;
-			if( K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start)) ) pause();
+			if( K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start)) ) { pause(); pausedThisFrame = true; }
 			else {
 				game.update(dt, true, pad);
 				game.updateCamera();
@@ -799,7 +801,8 @@ class GalaxyApp extends hxd.App {
 		if( modal != null && modal.parent != null ) modal.update(dt, pad);
 		else {
 			modal = null;
-			if( current != null && state != Loading && state != Boot ) current.update(dt, pad);
+			if( current != null && state != Loading && state != Boot && !pausedThisFrame ) current.update(dt, pad);
+			pausedThisFrame = false;
 		}
 
 		if( toastTime > 0 ) {

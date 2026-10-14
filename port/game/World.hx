@@ -100,7 +100,22 @@ class World {
 	/** true si la cara contra este voxel se ve (aire o bloque que deja pasar la luz) */
 	inline function open( x : Int, y : Int, z : Int ) : Bool {
 		var id = voxel(x, y, z);
-		return id == 0 || gen.btrans[id];
+		return id == 0 || tagOf(id) != BTFull;
+	}
+
+	/** como Builder.hx del original: los bloques con alfa (hielo, cristal) dejan ver las caras de lo que hay detras */
+	inline function openAlpha( x : Int, y : Int, z : Int ) : Bool {
+		var id = voxel(x, y, z);
+		if( id == 0 ) return true;
+		var t = tagOf(id);
+		return t != BTFull && t != BTAlpha;
+	}
+
+	/** tipo de bloque a efectos de mallado (las hojas sin BFNoOptimize cuentan como bloque lleno, igual que el original) */
+	function tagOf( id : Int ) : BlockType {
+		var b = gen.blocks[id];
+		if( b.type == BTTransp && !b.hasFlag(BFNoOptimize) ) return BTFull;
+		return b.type;
 	}
 
 	/** bloque con el que se choca: usa el atributo collide del original (hojas si, agua y detalles no) */
@@ -219,12 +234,13 @@ class World {
 							addQuad(waterBuf, [fx, fy, fz + 0.9, fx + 1, fy, fz + 0.9, fx + 1, fy + 1, fz + 0.9, fx, fy + 1, fz + 0.9], b.tu, su);
 					case BTFull, BTAlpha, BTTransp:
 						var m = b.type == BTFull ? solidBuf : alphaBuf;
-						if( open(x, y, z + 1) ) addQuad(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su);
-						if( open(x, y, z - 1) ) addQuad(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd);
-						if( open(x - 1, y, z) ) addQuad(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr, sx);
-						if( open(x + 1, y, z) ) addQuad(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx);
-						if( open(x, y - 1, z) ) addQuad(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy);
-						if( open(x, y + 1, z) ) addQuad(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy);
+						var al = b.type == BTAlpha;
+						if( al ? openAlpha(x, y, z + 1) : open(x, y, z + 1) ) addQuad(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su);
+						if( al ? openAlpha(x, y, z - 1) : open(x, y, z - 1) ) addQuad(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd);
+						if( al ? openAlpha(x - 1, y, z) : open(x - 1, y, z) ) addQuad(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr, sx);
+						if( al ? openAlpha(x + 1, y, z) : open(x + 1, y, z) ) addQuad(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx);
+						if( al ? openAlpha(x, y - 1, z) : open(x, y - 1, z) ) addQuad(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy);
+						if( al ? openAlpha(x, y + 1, z) : open(x, y + 1, z) ) addQuad(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy);
 					default:
 					}
 				}
