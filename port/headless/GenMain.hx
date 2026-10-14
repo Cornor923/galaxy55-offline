@@ -12,6 +12,9 @@ class GenMain {
 		{ seed : 99, biome : "BIMars", size : 2 },
 		{ seed : 7, biome : "BIMoon", size : 2 },
 		{ seed : 4242, biome : "BIWinterPeaks", size : 2 },
+		{ seed : 1234, biome : "BIDeadCity", size : 1 },
+		{ seed : 77, biome : "BIDeadCity", size : 2 },
+		{ seed : 31, biome : "BIAcidForest", size : 2 },
 		{ seed : 5, biome : "BIShed", size : 3 },
 	];
 

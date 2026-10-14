@@ -164,9 +164,8 @@ class GalaxyApp extends hxd.App {
 		engine.backgroundColor = 0xFF05070D;
 
 		var png = sys.io.File.getBytes("src/G55/fla/client/gfx/texture.png");
-		atlas = hxd.res.Any.fromBytes("texture.png", png).toTexture();
-		atlas.filter = Nearest;
-		atlas.mipMap = None;
+		// atlas con los parches del original (colores planos BFColor, opacidades BFAlpha)
+		atlas = Atlas.build(png);
 
 		dim = new h2d.Bitmap(h2d.Tile.fromColor(0x000000, W, H, 0.0), s2d);
 		snow = new Snow(s2d);
@@ -533,6 +532,10 @@ class GalaxyApp extends hxd.App {
 	function finishLoading() {
 		bgDisposeAll();
 		loadWorld.root.visible = true;
+		if( shotPath != null ) {
+			Sys.println("mundo " + loadWorld.biomeName + ": " + loadWorld.faces + " caras, spawn z=" + loadWorld.spawnPoint().z);
+			Sys.println(loadWorld.debugStats());
+		}
 		game = new GameView(s3d, loadWorld, loadInfo);
 		loadWorld = null;
 		ui.removeChildren();

@@ -216,6 +216,21 @@ class World {
 
 	// ---------------------------------------------------------------- luz
 
+	/** diagnostico: recuento de celdas por bloque y tipo (solo para pruebas) */
+	public function debugStats() : String {
+		var counts = new Map<Int, Int>();
+		for( i in 0...bytes.length ) {
+			var id = bytes.get(i);
+			if( id != 0 ) counts.set(id, (counts.exists(id) ? counts.get(id) : 0) + 1);
+		}
+		var s = "";
+		for( id in counts.keys() ) {
+			var b = gen.blocks[id];
+			s += id + ":" + (b == null ? "null" : Std.string(b.k) + "/" + Std.string(b.type)) + "=" + counts.get(id) + " ";
+		}
+		return s;
+	}
+
 	/** luz de una celda (el mundo da la vuelta; por encima del techo es luz de sol plena) */
 	public function lightAt( x : Int, y : Int, z : Int ) : Int {
 		if( z < 0 ) return 0;
@@ -467,6 +482,11 @@ class World {
 			// bloques con alfa (hojas): se descartan los pixeles transparentes
 			mat.textureShader.killAlpha = true;
 			mat.textureShader.killAlphaThreshold = 0.5;
+		} else if( kind == 3 ) {
+			// hielo, cristal, liquidos con alfa: mezcla con el alfa de la propia textura (el original usa AlphaShader)
+			mat.blendMode = Alpha;
+			mat.mainPass.depthWrite = false;
+			mat.mainPass.setPassName("alpha");
 		} else if( kind == 2 ) {
 			// agua: translucida y sin escribir profundidad
 			mat.blendMode = Alpha;
@@ -526,6 +546,7 @@ class World {
 		var solidBuf = new MeshBuf();
 		var alphaBuf = new MeshBuf();
 		var waterBuf = new MeshBuf();
+		var blendBuf = new MeshBuf();
 		curCx = cx * CSIZE + CSIZE * 0.5;
 		curCy = cy * CSIZE + CSIZE * 0.5;
 
@@ -546,7 +567,7 @@ class World {
 						if( voxel(x, y, z + 1) == 0 )
 							addQuadL(waterBuf, [fx, fy, fz + 0.9, fx + 1, fy, fz + 0.9, fx + 1, fy + 1, fz + 0.9, fx, fy + 1, fz + 0.9], b.tu, su, neg, 0, 0, 1, x, y, z);
 					case BTFull, BTAlpha, BTTransp:
-						var m = b.type == BTFull ? solidBuf : alphaBuf;
+						var m = b.type == BTFull ? solidBuf : (b.type == BTAlpha ? blendBuf : alphaBuf);
 						var al = b.type == BTAlpha;
 						if( al ? openAlpha(x, y, z + 1) : open(x, y, z + 1) ) addQuadL(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su, neg, 0, 0, 1, x, y, z);
 						if( al ? openAlpha(x, y, z - 1) : open(x, y, z - 1) ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
@@ -583,5 +604,6 @@ class World {
 		emitMesh(solidBuf, 0);
 		emitMesh(alphaBuf, 1);
 		emitMesh(waterBuf, 2);
+		emitMesh(blendBuf, 3);
 	}
 }
