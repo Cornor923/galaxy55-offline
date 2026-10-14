@@ -18,6 +18,7 @@ class Fx {
 	var overlayBlock : Block;
 	var denied : h3d.scene.Mesh;
 	var beam : h3d.scene.Mesh;
+	var beamRoot : h3d.scene.Object;
 	var beamUv : h3d.shader.UVDelta;
 	var beamTex : Array<h3d.mat.Texture>;
 	var beamId = -1;
@@ -81,13 +82,15 @@ class Fx {
 		mat.mainPass.enableLights = false;
 		mat.mainPass.culling = None;
 		mat.blendMode = Add;
-		mat.mainPass.depthWrite = false;
+		// como el original (PolyTexShader.zScale = 0): el rayo siempre se ve, nada lo tapa
+		mat.mainPass.depth(false, Always);
 		mat.mainPass.setPassName("alpha");
 		beamUv = new h3d.shader.UVDelta();
 		mat.mainPass.addShader(beamUv);
-		mat.mainPass.addShader(world.sky.fog);
-		beam = new h3d.scene.Mesh(poly, mat, root);
-		beam.visible = false;
+		// el padre orienta y escala el rayo; el hijo gira sobre su propio eje (rotate() de Heaps gira sobre el eje X del mundo)
+		beamRoot = new h3d.scene.Object(root);
+		beam = new h3d.scene.Mesh(poly, mat, beamRoot);
+		beamRoot.visible = false;
 	}
 
 	function blendMaterial() : h3d.mat.Material {
@@ -121,7 +124,7 @@ class Fx {
 			box.visible = false;
 			overlay_hide();
 			denied.visible = false;
-			beam.visible = false;
+			beamRoot.visible = false;
 			return;
 		}
 
@@ -196,10 +199,13 @@ class Fx {
 				ez + fwd.z * 1.0 + right.z * 0.8 + down.z * 0.8 - g.bobY / 50
 			);
 			var end = new h3d.Vector(near(sel.hx, g.px), near(sel.hy, g.py), sel.hz);
+			// lo que se ve esta curvado (el planeta es redondo): el rayo termina donde se ve el impacto, no en su altura real
+			var edx = end.x - g.px, edy = end.y - g.py;
+			end.z -= (edx * edx + edy * edy) * (2.0 / world.size);
 			var d = end.sub(start);
 			var len = d.length();
 			if( len < 0.05 ) {
-				beam.visible = false;
+				beamRoot.visible = false;
 			} else {
 				var rspeed = 3., tspeed = 1.;
 				switch( id ) {
@@ -208,19 +214,19 @@ class Fx {
 				case 2: tspeed = 2; rspeed = 5;
 				case 3: tspeed = 2; rspeed = 5;
 				}
-				beam.visible = true;
-				beam.setPosition(start.x, start.y, start.z);
-				beam.setDirection(d);
-				beam.rotate(rspeed * time / 32, 0, 0);
-				beam.scaleX = len;
-				beam.scaleY = 0.2;
-				beam.scaleZ = 0.2;
+				beamRoot.visible = true;
+				beamRoot.setPosition(start.x, start.y, start.z);
+				beamRoot.setDirection(d);
+				beam.setRotation(rspeed * time / 32, 0, 0);
+				beamRoot.scaleX = len;
+				beamRoot.scaleY = 0.2;
+				beamRoot.scaleZ = 0.2;
 				var tscale = len / 2;
 				beamUv.uvScale.set(tscale, 1);
 				beamUv.uvDelta.set(-tspeed * time / 32 / tscale, 0);
 			}
 		} else
-			beam.visible = false;
+			beamRoot.visible = false;
 	}
 
 	function overlay_hide( drop = false ) {
@@ -239,6 +245,6 @@ class Fx {
 		overlay_hide(true);
 		box.remove();
 		denied.remove();
-		beam.remove();
+		beamRoot.remove();
 	}
 }
