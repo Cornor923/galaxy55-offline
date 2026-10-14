@@ -5,6 +5,9 @@ o tienes información, abre un *issue*.
 
 ## Falta arreglar
 
+- **No hay partida guardada (lo más importante que falta):** al cerrar el juego se pierde todo. El sector se genera
+  al azar en cada arranque, así que no puedes volver a un planeta anterior, y la nave editada, el inventario y los
+  créditos solo viven mientras el juego está abierto.
 - **Fuga de memoria pequeña:** quedan unos **27 MB sin liberar por cada viaje** entre planetas (los objetos
   `Game`, `Level`, `Generator` y `Api` siguen vivos y no se ha encontrado qué los retiene). Tras muchísimos viajes
   seguidos conviene reiniciar el juego.
@@ -12,8 +15,6 @@ o tienes información, abre un *issue*.
   de la tarjeta gráfica (ya mitigado), pero **no se pudo reproducir**, así que no está confirmado que esté resuelto.
 - **Bucle de chunks:** se vio una subida a ~20 000 chunks reconstruidos en menos de un minuto. Se blindó el cálculo
   del nivel del mar como posible causa, pero **no se confirmó**. Si te pasa, pulsa **F** (panel de FPS) y guarda `flashlog.txt`.
-- **Nave y créditos no se guardan en disco:** la nave editada y los créditos de la tienda solo viven mientras el
-  juego está abierto.
 - **Heaps y `format`:** no se pudieron comparar con sus commits de 2012; puede haber más diferencias que las dos
   anotadas en `libs/LEEME.txt`.
 

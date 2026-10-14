@@ -16,6 +16,7 @@ idénticos a los de `release/`.
 - Apareces **dentro de tu nave**, y la nave aterriza en **un punto fijo por planeta** (distinto en cada uno).
 - Al despegar, el mapa estelar empieza junto al planeta del que sales y dibuja tu nave editada.
 - Los cambios del terreno se guardan **por planeta** mientras el juego está abierto (antes se borraban al cambiar).
+  **Al cerrar el juego no se guarda nada todavía** (ver [PENDIENTES.md](PENDIENTES.md)).
 - Tamaños de planeta pequeño / normal / grande (128 / 256 / 384).
 
 **Mando** (tipo Xbox, calibrado con un mando real): moverse, mirar, romper (RT), colocar (LT), jetpack, inventario,

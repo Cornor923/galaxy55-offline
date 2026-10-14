@@ -62,6 +62,13 @@ planetas por escanear con el contador naranja de planetas libres por sistema; ta
 - Posible bucle de reconstrucción de chunks por el nivel del mar (blindado; **no confirmado** que fuera la causa).
 - Acentos rotos en los nombres de bloques al compilar en Windows.
 
+## Guardado: todavía no hay partida guardada
+
+**Al cerrar el juego se pierde todo.** Cada vez que lo abres, el sector y los planetas se generan de nuevo al azar,
+así que no vuelves a ningún planeta anterior. Mientras el juego está abierto sí se conservan: el terreno que
+cambiaste en cada planeta, la nave editada, el inventario y los créditos de la tienda. Guardar todo eso en disco
+(nave, créditos, inventario y qué planetas tienes) es lo siguiente que falta; está en [PENDIENTES.md](PENDIENTES.md).
+
 ## Lo que NO está probado
 
 - Comprar en la tienda y usar la tienda con mando; la opción Y del menú con mando.
