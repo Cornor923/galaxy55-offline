@@ -36,4 +36,4 @@ documentación de la sesión). Desde la raíz del repo:
 
 - El cielo, el degradado y la niebla usan los colores originales de cada bioma. Las estrellas son de este port.
 - La nieve del bioma de invierno es un añadido de este port: el original no la tiene. Los copos están fijos en el mundo y se ocultan detrás del terreno.
-- Todavía faltan: modelos (plantas, cristales), romper y colocar bloques, sonido, tienda y nave.
+- Todavia faltan: recetas del sintetizador, tienda, hangar, mapa de exploracion, agua que fluye, sonido y bloque en la mano. Ver RESUMEN.md.

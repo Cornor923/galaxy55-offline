@@ -1,5 +1,32 @@
 # Galaxy 55 — versión offline recompilada
 
+> ## Importante: ahora hay dos versiones
+>
+> **Esta es la versión nativa (por defecto):** una aplicación de escritorio para Windows, sin Flash, hecha con
+> Haxe 4 + Heaps + HashLink. Para jugar, mira [`port/LEEME.md`](port/LEEME.md) (doble clic en `port/jugar.bat`
+> tras compilarla, o sigue las instrucciones de ese archivo).
+>
+> **La versión Flash sigue aquí, intacta.** No se ha borrado nada: el código (`src/`, `libs/`), los SWF
+> (`release/`) y todo lo descrito más abajo en este README siguen funcionando igual.
+> Si prefieres la versión Flash tal como estaba, está guardada en:
+> - la etiqueta [`flash-version`](../../tree/flash-version),
+> - y la rama [`flash`](../../tree/flash).
+>
+> **Esta versión nativa tiene errores conocidos.** Es un trabajo en curso, probado sobre todo con capturas
+> y pruebas automáticas, no por muchas personas en una partida larga. Sabemos, entre otros, que:
+> - al romper un bloque no hay animación de partículas y los bloques sueltos giran demasiado rápido;
+> - las cosas colgadas de los árboles y las plantas del suelo no se pueden romper;
+> - hay bloques blancos lisos en el bioma de invierno y la capa 0 se ve rara desde abajo;
+> - la curvatura del planeta se nota más de la cuenta y los cristales sueltos se ven demasiado anchos;
+> - las hojas del abeto sueltan material y puede que no deban, y el agua no se mueve ni fluye;
+> - de la nave solo funcionan el teletransportador, el ordenador (sin despegar ni tienda), las puertas y
+>   poner bloques sobre el sintetizador; faltan las recetas, el hangar y el mapa de exploración;
+> - el bloque elegido no se ve en la mano, y no hay sonido.
+>
+> La lista completa y al día está en [`port/RESUMEN.md`](port/RESUMEN.md) (sección «Pendiente»).
+> Si algo de esto te estorba, la versión Flash es la más completa hoy.
+
+
 Galaxy 55 fue un juego web de Flash (alpha, 2012) de **Motion Twin**: exploración espacial, planetas
 generados al azar y un sistema de bloques ("kubes") y crafteo en 3D. Se cerró y su servidor ya no existe.
 
