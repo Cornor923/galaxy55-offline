@@ -27,6 +27,44 @@ class Models {
 		return d;
 	}
 
+	/**
+	 * Puerta abierta (Macro.getModel + Builder.load/flip): door.md = 1 byte, numero de vertices (entero de 32 bits) y 6 decimales por
+	 * vertice (x, y, z, u, v, sombra). La variante Y es la X con los ejes cambiados y el orden de cada cara corregido.
+	 */
+	static function loadDoor( flip : Bool ) : { v : Array<Float>, box : { x1 : Float, y1 : Float, z1 : Float, x2 : Float, y2 : Float, z2 : Float } } {
+		var i = new haxe.io.BytesInput(sys.io.File.getBytes("src/G55/fla/client/gfx/door.md"));
+		i.readByte();
+		var count = i.readInt32();
+		var raw = [for( _ in 0...count * 6 ) i.readFloat()];
+		var out = new Array<Float>();
+		if( !flip )
+			out = raw;
+		else {
+			// cada cara son 4 vertices: se emiten en el orden 0, 2, 1, 3 con x e y intercambiados
+			for( q in 0...Std.int(count / 4) )
+				for( k in [0, 2, 1, 3] ) {
+					var o = (q * 4 + k) * 6;
+					out.push(raw[o + 1]);
+					out.push(raw[o]);
+					out.push(raw[o + 2]);
+					out.push(raw[o + 3]);
+					out.push(raw[o + 4]);
+					out.push(raw[o + 5]);
+				}
+		}
+		var x1 = 1., y1 = 1., z1 = 1., x2 = 0., y2 = 0., z2 = 0.;
+		for( k in 0...Std.int(out.length / 6) ) {
+			var x = out[k * 6], y = out[k * 6 + 1], z = out[k * 6 + 2];
+			if( x < x1 ) x1 = x;
+			if( y < y1 ) y1 = y;
+			if( z < z1 ) z1 = z;
+			if( x > x2 ) x2 = x;
+			if( y > y2 ) y2 = y;
+			if( z > z2 ) z2 = z;
+		}
+		return { v : out, box : { x1 : x1, y1 : y1, z1 : z1, x2 : x2, y2 : y2, z2 : z2 } };
+	}
+
 	static function build( m : BlockModel ) : ModelData {
 		var v = new Array<Float>();
 		var multi = false;
@@ -174,8 +212,10 @@ class Models {
 			}
 			multi = true;
 		case MDoorOpenX, MDoorOpenY:
-			// la geometria de la puerta esta en un archivo binario (door.md); pendiente con la nave
-			size = { x1 : 0., y1 : 0., z1 : 0., x2 : 1., y2 : 1., z2 : 1. };
+			var door = loadDoor(m == MDoorOpenY);
+			for( f in door.v ) v.push(f);
+			size = door.box;
+			// (la caja sale del propio modelo)
 		case MCrossSquare:
 			addVert(0.25, 0, 0, 0, 0);
 			addVert(0.25, 0, 1, 0, 1);

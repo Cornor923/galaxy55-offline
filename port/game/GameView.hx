@@ -247,6 +247,16 @@ class GameView {
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateBobbing(realDt * 60);
 		ship.update(this, tmod);
+		if( debugDoorFrames > 0 && ++debugDoorFrames == 12 ) {
+			// solo pruebas: abre la puerta de la nave que hay cerca del teletransportador
+			if( Sys.args().indexOf("--computer") >= 0 ) onComputer();
+			var dz = Std.int(ship.start.z);
+			var db =world.block(ship.x - 3, ship.y + 3, dz);
+			Sys.println("puerta: " + (db == null ? "ninguna" : db.k + " toggle=" + (db.toggle == null ? "null" : "" + db.toggle.k)));
+			activateBlock(ship.x - 3, ship.y + 3, dz, db);
+			var da = world.block(ship.x - 3, ship.y + 3, dz);
+			Sys.println("despues: " + (da == null ? "ninguna" : "" + da.k));
+		}
 		if( debugTele > 0 ) {
 			// solo pruebas: se aparta del teletransportador y vuelve a el para probar el teletransporte
 			debugTele++;
@@ -275,6 +285,7 @@ class GameView {
 	/** solo para pruebas automaticas: mantiene pulsado el boton de excavar/colocar */
 	public var debugAction = false;
 	public var debugTele = 0;
+	public var debugDoorFrames = Sys.args().indexOf("--door") >= 0 || Sys.args().indexOf("--computer") >= 0 ? 1 : 0;
 	/** solo para pruebas: finge que el bloque no se puede romper (para ver el efecto) */
 	public var debugDeny = false;
 
@@ -533,8 +544,14 @@ class GameView {
 			case BShipComputer: onComputer();
 			default:
 			}
-		} else if( b.toggle != null )
-			world.setBlock(x, y, z, b.toggle);
+		} else if( b.toggle != null ) {
+			// Process.toggle: se cambia toda la columna del mismo bloque (una puerta mide varios bloques de alto)
+			while( world.block(x, y, z - 1) == b ) z--;
+			while( world.block(x, y, z) == b ) {
+				world.setBlock(x, y, z, b.toggle);
+				z++;
+			}
+		}
 	}
 
 	// ---------------------------------------------------------------- excavar y colocar
@@ -597,6 +614,8 @@ class GameView {
 			for( i in 0...10 )
 				if( K.isPressed(K.NUMBER_0 + ((i + 1) % 10)) && inv.inv.t.length >= i ) inv.select(i);
 			if( K.isPressed(K.TAB) ) inv.select(0);
+			// Mayus + K: volver a la nave (Game.checkKeys)
+			if( K.isDown(K.SHIFT) && K.isPressed(K.K) ) gotoShip(true);
 			if( (K.isPressed(K.R) || K.isPressed(K.DELETE)) && inv.getCurrentBlock() != null ) dropCurrent();
 		}
 		if( debugAction ) {
