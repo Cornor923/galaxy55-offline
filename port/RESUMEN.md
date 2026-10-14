@@ -24,6 +24,8 @@ Trabajo en la rama `port-hashlink` (commits locales, nada subido). `main` conser
   pantalla completa, invertir eje vertical, A/D girar (original) o desplazar.
 - Jugador: caminar, X despacio, saltar, jetpack con combustible, colisiones, casco (H), barra de combustible. Sin correr ni vuelo.
 - Biomas jugables: Otoño, Luna, Marte, Cumbres nevadas (con nieve, añadido nuestro), Bosque ácido.
+- Mundo: da la vuelta como el original (toroide, copias vecinas hasta 180 bloques); luz como `Builder.relight` (sol por bioma, cuevas, `BFLight`, suavizado por vértice); modelos de bloque (`Models.hx`, copia de `initModels`), bloques parciales y extendidos; hielo/cristal con alfa.
+- Falta del original (inventario de bloques: 213; ~85 eran modelos, ya dibujados): puertas de nave (`door.md` binario), vida/daño/curación/oxígeno/lava, bloques activables y contenedores, líquidos que fluyen, romper/colocar, y los modos nave, hangar y mapa de exploración (`fla/explore`).
 - No probado en ventana real por mí: ratón/teclado/mando en vivo, ni el movimiento de la nieve (solo capturas y números).
 
 ## Qué falló y cómo se resolvió

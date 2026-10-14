@@ -44,6 +44,14 @@ class World {
 	var wrapY = -1e9;
 	var genStarted : Float;
 
+	// luz (Builder.relight del original): 0..15 por celda; LBASE = 10 equivale a luz plena
+	public static inline var LBASE = 10;
+	static inline var NOLIGHT = 8; // enumIndex(BTReduced): a partir de aqui el bloque no deja pasar la luz
+	var light : haxe.io.Bytes;
+	var idTag : Array<Int>;
+	var sunP : Float;
+	var sunF : Float;
+
 	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false ) {
 		this.seed = seed;
 		this.biomeName = biomeName;
@@ -53,6 +61,8 @@ class World {
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
 		sky = new Sky(root, biome, menuFog);		gen = new gen.DetailsGenerator(size, seed);
 		var bd = Data.getBiome(biome);
+		sunP = bd.sunPower;
+		sunF = bd.sunFalloff == null ? 1 : bd.sunFalloff;
 		gen.alloc(bd.water);
 		gen.alloc(BMinIron);
 		gen.alloc(BMinAluminium);
@@ -72,6 +82,7 @@ class World {
 		if( phase == 0 ) {
 			if( !gen.process(Std.int(budgetMs)) ) {
 				bytes = gen.getBytes().b;
+				computeLight();
 				phase = 1;
 			}
 			return progress = (phase == 0 ? gen.progress * 0.75 : 0.75);
@@ -203,9 +214,191 @@ class World {
 		return { x : x + 0.5, y : y + 0.5, z : z + 1.01 };
 	}
 
+	// ---------------------------------------------------------------- luz
+
+	/** luz de una celda (el mundo da la vuelta; por encima del techo es luz de sol plena) */
+	public function lightAt( x : Int, y : Int, z : Int ) : Int {
+		if( z < 0 ) return 0;
+		if( z >= HEIGHT ) return Std.int(sunP);
+		if( x < 0 ) x += size else if( x >= size ) x -= size;
+		if( y < 0 ) y += size else if( y >= size ) y -= size;
+		return light.get(((x + y * size) << ZBITS) | z);
+	}
+
+	/**
+	 * Copia de Builder.relight/processLight para todo el planeta: la luz de sol llena el aire hasta el primer bloque,
+	 * se cuela de lado bajo los voladizos y se propaga por las cuevas con la caida de cada bioma;
+	 * despues cada bloque luminoso (BFLight) ilumina su entorno.
+	 */
+	function computeLight() {
+		var n = size * size * HEIGHT;
+		light = haxe.io.Bytes.alloc(n);
+		idTag = [for( b in gen.blocks ) b == null ? 0 : Type.enumIndex(b.type)];
+		var lmax = Std.int(sunP);
+		var lsun = Std.int(sunP - sunF);
+		if( lsun < 0 ) lsun = 0;
+		var seeds = new Array<Int>();
+		var top = HEIGHT - 1;
+		for( y in 0...size )
+			for( x in 0...size ) {
+				var col = x + y * size;
+				var base = col << ZBITS;
+				var cxm = x == 0 ? col + size - 1 : col - 1;
+				var cym = y == 0 ? col + size * (size - 1) : col - size;
+				var z = top;
+				while( z >= 0 ) {
+					var p = base | z;
+					var t = idTag[bytes.get(p)];
+					if( t != 0 ) {
+						if( t < NOLIGHT ) {
+							light.set(p, lsun);
+							seeds.push(p);
+						}
+						break;
+					}
+					light.set(p, lmax);
+					// la luz se cuela hacia los vecinos -x e -y que aun no la tienen
+					var q = (cxm << ZBITS) | z;
+					if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+						light.set(q, lsun);
+						seeds.push(q);
+					}
+					q = (cym << ZBITS) | z;
+					if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+						light.set(q, lsun);
+						seeds.push(q);
+					}
+					z--;
+				}
+				// bajo el primer bloque: aire/bloques con luz directa a su lado
+				while( z > 0 ) {
+					var p = base | z;
+					if( idTag[bytes.get(p)] < NOLIGHT && (isSunAir((cxm << ZBITS) | z, lmax) || isSunAir((cym << ZBITS) | z, lmax)) ) {
+						light.set(p, lsun);
+						seeds.push(p);
+					}
+					z--;
+				}
+			}
+		flood(seeds, sunP - sunF * 2, sunF);
+
+		// bloques luminosos
+		var infos = new Array<{ p : Int, f : Float }>();
+		var lightIdx = [for( b in gen.blocks ) -1];
+		for( i in 0...gen.blocks.length ) {
+			var b = gen.blocks[i];
+			if( b == null || b.special == null ) continue;
+			switch( b.special ) {
+			case BFLight(p, f):
+				var ip = Std.int(p);
+				if( ip > 15 ) ip = 15;
+				lightIdx[i] = infos.length;
+				infos.push({ p : ip, f : f == null ? 1.0 : f });
+			default:
+			}
+		}
+		if( infos.length > 0 ) {
+			var powers = [for( b in gen.blocks ) 0.];
+			for( i in 0...gen.blocks.length ) {
+				var b = gen.blocks[i];
+				if( b == null || b.special == null ) continue;
+				switch( b.special ) {
+				case BFLight(p, _): powers[i] = p;
+				default:
+				}
+			}
+			for( p in 0...n ) {
+				var id = bytes.get(p);
+				var li = lightIdx[id];
+				if( li < 0 ) continue;
+				var info = infos[li];
+				if( light.get(p) >= info.p ) continue;
+				light.set(p, info.p);
+				flood([p], powers[id] - info.f, info.f);
+			}
+		}
+	}
+
+	inline function isSunAir( p : Int, lmax : Int ) : Bool {
+		return light.get(p) == lmax && idTag[bytes.get(p)] == 0;
+	}
+
+	/** onda expansiva: cada anillo baja la luz en delta (Builder.processLight) */
+	function flood( seeds : Array<Int>, lvalue : Float, delta : Float ) {
+		var cur = seeds;
+		var sz = size;
+		while( true ) {
+			var l = Std.int(lvalue);
+			if( l > 15 ) l = 15;
+			if( l <= 0 || cur.length == 0 ) break;
+			var next = new Array<Int>();
+			for( p in cur ) {
+				var z = p & (HEIGHT - 1);
+				var col = p >> ZBITS;
+				var x = col % sz;
+				var y = Std.int(col / sz);
+				var c = x == 0 ? col + sz - 1 : col - 1;
+				spread((c << ZBITS) | z, l, next);
+				c = x == sz - 1 ? col - (sz - 1) : col + 1;
+				spread((c << ZBITS) | z, l, next);
+				c = y == 0 ? col + sz * (sz - 1) : col - sz;
+				spread((c << ZBITS) | z, l, next);
+				c = y == sz - 1 ? col - sz * (sz - 1) : col + sz;
+				spread((c << ZBITS) | z, l, next);
+				if( z > 0 ) spread(p - 1, l, next);
+				if( z < HEIGHT - 1 ) spread(p + 1, l, next);
+			}
+			cur = next;
+			lvalue -= delta;
+		}
+	}
+
+	inline function spread( q : Int, l : Int, next : Array<Int> ) {
+		if( light.get(q) < l && idTag[bytes.get(q)] < NOLIGHT ) {
+			light.set(q, l);
+			next.push(q);
+		}
+	}
+
 	// ---------------------------------------------------------------- mallado
 
+	var shv = [0., 0., 0., 0.];
+
 	function addQuad( m : MeshBuf, p : Array<Float>, tile : Int, shade : Float ) {
+		shv[0] = shv[1] = shv[2] = shv[3] = shade;
+		addQuad4(m, p, tile);
+	}
+
+	/**
+	 * Cara con la luz del original (Builder.addQuad): cada vertice promedia la luz de las 4 celdas que lo rodean
+	 * en el plano exterior de la cara, multiplicada por la sombra de la cara. Con BFNoShade (neg) no depende de la luz.
+	 * (cx,cy,cz) es la celda del bloque y (ox,oy,oz) la normal de la cara; uniform usa solo la celda exterior.
+	 */
+	function addQuadL( m : MeshBuf, p : Array<Float>, tile : Int, shade : Float, neg : Bool, ox : Int, oy : Int, oz : Int, cx : Int, cy : Int, cz : Int, uniform = false ) {
+		if( tile < 0 || tile >= 0xFFF ) return;
+		if( neg ) {
+			shv[0] = shv[1] = shv[2] = shv[3] = shade;
+		} else if( uniform ) {
+			var l = lightAt(cx + ox, cy + oy, cz + oz) * shade / LBASE;
+			shv[0] = shv[1] = shv[2] = shv[3] = l;
+		} else {
+			var nx = cx + ox, ny = cy + oy, nz = cz + oz;
+			for( k in 0...4 ) {
+				var vx = Std.int(p[k * 3]), vy = Std.int(p[k * 3 + 1]), vz = Std.int(p[k * 3 + 2]);
+				var s = 0;
+				for( a in 0...2 )
+					for( b in 0...2 ) {
+						if( ox != 0 ) s += lightAt(nx, vy - a, vz - b);
+						else if( oy != 0 ) s += lightAt(vx - a, ny, vz - b);
+						else s += lightAt(vx - a, vy - b, nz);
+					}
+				shv[k] = s * shade * (0.25 / LBASE);
+			}
+		}
+		addQuad4(m, p, tile);
+	}
+
+	function addQuad4( m : MeshBuf, p : Array<Float>, tile : Int ) {
 		if( tile < 0 || tile >= 0xFFF ) return;
 		var tx = tile & 63, ty = tile >> 6;
 		var u0 = tx / 64 + (1 - TE) / 128, v0 = ty / 64 + (1 - TE) / 128;
@@ -219,9 +412,15 @@ class World {
 		m.uvs.push(new h3d.prim.UV(u1, v1));
 		m.uvs.push(new h3d.prim.UV(u1, v0));
 		m.uvs.push(new h3d.prim.UV(u0, v0));
-		for( i in 0...4 ) m.cols.push(new h3d.col.Point(shade, shade, shade));
-		m.idx.push(b); m.idx.push(b + 1); m.idx.push(b + 2);
-		m.idx.push(b); m.idx.push(b + 2); m.idx.push(b + 3);
+		for( i in 0...4 ) m.cols.push(new h3d.col.Point(shv[i], shv[i], shv[i]));
+		// la diagonal se elige segun la luz para evitar costuras raras
+		if( shv[0] + shv[2] >= shv[1] + shv[3] ) {
+			m.idx.push(b); m.idx.push(b + 1); m.idx.push(b + 2);
+			m.idx.push(b); m.idx.push(b + 2); m.idx.push(b + 3);
+		} else {
+			m.idx.push(b + 1); m.idx.push(b + 2); m.idx.push(b + 3);
+			m.idx.push(b + 1); m.idx.push(b + 3); m.idx.push(b);
+		}
 		faces++;
 	}
 
@@ -231,6 +430,8 @@ class World {
 		var md = Models.get(mk);
 		var v = md.v;
 		var n = Std.int(v.length / 24);
+		// los modelos usan la luz de su propia celda (Builder: getLight(p) / LBASE)
+		var lt = lightAt(x, y, z) / LBASE;
 		for( q in 0...n ) {
 			var sel = Std.int(v[q * 24 + 3]);
 			var tile = !md.multi || sel == 0 ? b.tlr : (sel == 1 ? b.tu : b.td);
@@ -240,7 +441,7 @@ class World {
 			for( k in 0...4 ) {
 				var o = q * 24 + k * 6;
 				var u = v[o + 3];
-				var s = v[o + 5];
+				var s = v[o + 5] * lt;
 				m.pts.push(new h3d.col.Point(x + v[o], y + v[o + 1], z + v[o + 2]));
 				m.uvs.push(new h3d.prim.UV(tx / 64 + (1 - TE) / 128 + (u - Std.int(u)), ty / 64 + (1 - TE) / 128 + v[o + 4]));
 				m.cols.push(new h3d.col.Point(s, s, s));
@@ -338,41 +539,43 @@ class World {
 					var su = Math.sqrt(b.shadeUp), sd = Math.sqrt(b.shadeDown);
 					var sx = Math.sqrt(b.shadeX), sy = Math.sqrt(b.shadeY);
 					var fx = x, fy = y, fz = z;
+					var neg = b.hasFlag(BFNoShade);
 					switch( b.type ) {
 					case BTWater:
 						// solo la superficie
 						if( voxel(x, y, z + 1) == 0 )
-							addQuad(waterBuf, [fx, fy, fz + 0.9, fx + 1, fy, fz + 0.9, fx + 1, fy + 1, fz + 0.9, fx, fy + 1, fz + 0.9], b.tu, su);
+							addQuadL(waterBuf, [fx, fy, fz + 0.9, fx + 1, fy, fz + 0.9, fx + 1, fy + 1, fz + 0.9, fx, fy + 1, fz + 0.9], b.tu, su, neg, 0, 0, 1, x, y, z);
 					case BTFull, BTAlpha, BTTransp:
 						var m = b.type == BTFull ? solidBuf : alphaBuf;
 						var al = b.type == BTAlpha;
-						if( al ? openAlpha(x, y, z + 1) : open(x, y, z + 1) ) addQuad(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su);
-						if( al ? openAlpha(x, y, z - 1) : open(x, y, z - 1) ) addQuad(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd);
-						if( al ? openAlpha(x - 1, y, z) : open(x - 1, y, z) ) addQuad(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr, sx);
-						if( al ? openAlpha(x + 1, y, z) : open(x + 1, y, z) ) addQuad(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx);
-						if( al ? openAlpha(x, y - 1, z) : open(x, y - 1, z) ) addQuad(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy);
-						if( al ? openAlpha(x, y + 1, z) : open(x, y + 1, z) ) addQuad(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy);
+						if( al ? openAlpha(x, y, z + 1) : open(x, y, z + 1) ) addQuadL(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su, neg, 0, 0, 1, x, y, z);
+						if( al ? openAlpha(x, y, z - 1) : open(x, y, z - 1) ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
+						if( al ? openAlpha(x - 1, y, z) : open(x - 1, y, z) ) addQuadL(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr, sx, neg, -1, 0, 0, x, y, z);
+						if( al ? openAlpha(x + 1, y, z) : open(x + 1, y, z) ) addQuadL(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx, neg, 1, 0, 0, x, y, z);
+						if( al ? openAlpha(x, y - 1, z) : open(x, y - 1, z) ) addQuadL(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy, neg, 0, -1, 0, x, y, z);
+						if( al ? openAlpha(x, y + 1, z) : open(x, y + 1, z) ) addQuadL(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy, neg, 0, 1, 0, x, y, z);
 					case BTModel, BTModel2Side, BTSprite:
 						addModel(alphaBuf, b, fx, fy, fz);
 					case BTReduced:
 						if( b.size != null ) {
+							// igual que el original: las caras de un bloque parcial se ven si no tapan todo el lado o si el vecino es transparente
 							var s = b.size;
 							var x1 = fx + s.x1, y1 = fy + s.y1, z1 = fz + s.z1, x2 = fx + s.x2, y2 = fy + s.y2, z2 = fz + s.z2;
-							addQuad(solidBuf, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su);
-							addQuad(solidBuf, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd);
-							addQuad(solidBuf, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx);
-							addQuad(solidBuf, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx);
-							addQuad(solidBuf, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy);
-							addQuad(solidBuf, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy);
+							if( s.z2 < 1 || open(x, y, z + 1) ) addQuadL(solidBuf, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su, neg, 0, 0, 1, x, y, z, true);
+							if( s.z1 > 0 || open(x, y, z - 1) ) addQuadL(solidBuf, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd, neg, 0, 0, -1, x, y, z, true);
+							if( s.x1 > 0 || open(x - 1, y, z) ) addQuadL(solidBuf, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx, neg, -1, 0, 0, x, y, z, true);
+							if( s.x2 < 1 || open(x + 1, y, z) ) addQuadL(solidBuf, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx, neg, 1, 0, 0, x, y, z, true);
+							if( s.y1 > 0 || open(x, y - 1, z) ) addQuadL(solidBuf, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy, neg, 0, -1, 0, x, y, z, true);
+							if( s.y2 < 1 || open(x, y + 1, z) ) addQuadL(solidBuf, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy, neg, 0, 1, 0, x, y, z, true);
 						}
 					case BTExtended:
 						// caras con texturas distintas empaquetadas de a 12 bits (BFTextures)
-						addQuad(solidBuf, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu & 0xFFF, su);
-						addQuad(solidBuf, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td & 0xFFF, sd);
-						addQuad(solidBuf, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr & 0xFFF, sx);
-						addQuad(solidBuf, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr >> 12, sx);
-						addQuad(solidBuf, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tu >> 12, sy);
-						addQuad(solidBuf, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.td >> 12, sy);
+						if( open(x, y, z + 1) ) addQuadL(solidBuf, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu & 0xFFF, su, neg, 0, 0, 1, x, y, z);
+						if( open(x, y, z - 1) ) addQuadL(solidBuf, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td & 0xFFF, sd, neg, 0, 0, -1, x, y, z);
+						if( open(x - 1, y, z) ) addQuadL(solidBuf, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr & 0xFFF, sx, neg, -1, 0, 0, x, y, z);
+						if( open(x + 1, y, z) ) addQuadL(solidBuf, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr >> 12, sx, neg, 1, 0, 0, x, y, z);
+						if( open(x, y - 1, z) ) addQuadL(solidBuf, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tu >> 12, sy, neg, 0, -1, 0, x, y, z);
+						if( open(x, y + 1, z) ) addQuadL(solidBuf, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.td >> 12, sy, neg, 0, 1, 0, x, y, z);
 					default:
 					}
 				}
