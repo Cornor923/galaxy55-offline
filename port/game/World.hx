@@ -164,7 +164,8 @@ class World {
 	/** tipo de bloque a efectos de mallado (las hojas sin BFNoOptimize cuentan como bloque lleno, igual que el original) */
 	function tagOf( id : Int ) : BlockType {
 		var b = gen.blocks[id];
-		if( b.type == BTTransp && !b.hasFlag(BFNoOptimize) ) return BTFull;
+		// con tarjeta grafica el original NO trata las hojas como bloques llenos (solo el modo por software lo hacia):
+		// asi las caras que hay detras de una hoja se dibujan y se ven a traves de sus huecos transparentes
 		return b.type;
 	}
 
