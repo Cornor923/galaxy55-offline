@@ -3,8 +3,8 @@
 ## Versión 0.2 — 14 de octubre de 2026
 
 Primera versión con el código **completo y compilable** en el repositorio (antes solo había parches), y
-con mucho trabajo de jugabilidad. Los tres `.swf` (es / en / fr) se generan con `build.bat` y salen
-idénticos a los de `release/`.
+con mucho trabajo de jugabilidad. Los tres `.swf` (es / en / fr) se generan con `build.bat` y son
+equivalentes a los de `release/` (misma fuente; el archivo compilado puede diferir en algunos bytes de recursos incrustados).
 
 ### Cambios que ves al jugar
 
