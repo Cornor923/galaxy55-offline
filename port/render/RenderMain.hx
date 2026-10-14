@@ -76,7 +76,7 @@ class RenderMain extends hxd.App {
 			var id = world.get(i);
 			if( id == 0 ) continue;
 			var b = gen.blocks[id];
-			var k = b == null ? "null" : Std.string(b.type) + " (" + Type.enumConstructor(b.k) + ")";
+			var k = b == null ? "null" : Std.string(b.type) + " (" + Type.enumConstructor(b.k) + (b.collide ? ",choca" : ",NO choca") + ")";
 			counts.set(k, (counts.exists(k) ? counts.get(k) : 0) + 1);
 		}
 		var ks = [for( k in counts.keys() ) k];
@@ -140,7 +140,16 @@ class RenderMain extends hxd.App {
 		return id == 0 || gen.btrans[id];
 	}
 
+	/** bloque con el que se choca: usa el atributo collide del original (hojas si, agua y detalles no) */
 	inline function solid( x : Int, y : Int, z : Int ) : Bool {
+		var id = voxel(x, y, z);
+		if( id == 0 ) return false;
+		var b = gen.blocks[id];
+		return b != null && b.collide;
+	}
+
+	/** suelo opaco (para elegir el punto de aparicion) */
+	inline function opaque( x : Int, y : Int, z : Int ) : Bool {
 		var id = voxel(x, y, z);
 		return id != 0 && !gen.btrans[id];
 	}
@@ -232,7 +241,7 @@ class RenderMain extends hxd.App {
 	function spawn() {
 		var x = size >> 1, y = size >> 1;
 		var z = HEIGHT - 1;
-		while( z > 1 && !solid(x, y, z) ) z--;
+		while( z > 1 && !opaque(x, y, z) ) z--;
 		px = x + 0.5;
 		py = y + 0.5;
 		pz = z + 1.01;
