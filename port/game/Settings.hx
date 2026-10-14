@@ -7,6 +7,8 @@ class Settings {
 	public static var volume = 80;
 	public static var fullscreen = false;
 	public static var invertY = false;
+	/** true: A/D y flechas izquierda/derecha giran al personaje (como el original); false: se desplaza de lado */
+	public static var turnKeys = false;
 
 	public static function dir() : String {
 		var base = Sys.getEnv("GALAXY55_DATA");
@@ -29,12 +31,13 @@ class Settings {
 			if( o.volume != null ) volume = o.volume;
 			if( o.fullscreen != null ) fullscreen = o.fullscreen;
 			if( o.invertY != null ) invertY = o.invertY;
+			if( o.turnKeys != null ) turnKeys = o.turnKeys;
 		} catch( e : Dynamic ) {}
 		Lang.setCode(lang);
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }

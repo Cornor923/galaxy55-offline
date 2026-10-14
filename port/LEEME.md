@@ -9,7 +9,7 @@ Doble clic en `jugar.bat`. Abre el menú de inicio: Continuar, Nueva partida, Ca
 Las partidas y los ajustes se guardan en `%APPDATA%\Galaxy55\` (se puede cambiar con la variable `GALAXY55_DATA`).
 
 Controles (los del juego original; el movimiento y la fisica son una copia de ent/Hero.hx y Game.moveHero):
-W/Z/flecha arriba avanzar, S/flecha abajo retroceder, A/D y flechas desplazarse de lado, ratón mirar,
+W/Z/flecha arriba avanzar, S/flecha abajo retroceder, A/D y flechas izquierda/derecha desplazarse de lado (en Opciones se puede elegir que giren, como en el original), ratón mirar,
 Espacio o Ctrl saltar y, en el aire, jetpack (gasta combustible y se recarga en el suelo), X caminar despacio,
 H quitar o poner el casco, Esc pausa, F5 guardado rápido. No hay botón de correr, como en el original.
 Mando: palanca izquierda mueve, derecha mira, A salta y jetpack, B camina despacio, Back casco, Start pausa.
@@ -35,5 +35,5 @@ documentación de la sesión). Desde la raíz del repo:
 ## Diferencias con el original
 
 - El cielo, el degradado y la niebla usan los colores originales de cada bioma. Las estrellas son de este port.
-- La nieve del bioma de invierno es un añadido de este port: el original no la tiene.
+- La nieve del bioma de invierno es un añadido de este port: el original no la tiene. Los copos están fijos en el mundo y se ocultan detrás del terreno.
 - Todavía faltan: modelos (plantas, cristales), romper y colocar bloques, sonido, tienda y nave.

@@ -1,48 +1,53 @@
 import h2d.SpriteBatch;
 
 /**
-	Nieve en pantalla (anadido de este port: el juego original no la tiene).
+	Nieve que cae en el mundo (anadido de este port: el juego original no la tiene).
 
-	Son copos 2D que caen por la pantalla en varias capas de profundidad. Cuando la camara gira, los
-	copos se desplazan como si estuvieran fijos en el mundo (compensan el giro de yaw y pitch), asi no
-	"corren" al mover el raton. Se dibuja debajo de los menus y del HUD.
+	Cada copo tiene una posicion fija en el mundo: cae despacio y se mece, pero no se mueve cuando
+	el jugador camina, vuela o gira. El campo de copos es una red periodica alrededor de la camara
+	(un copo que sale por un lado reaparece por el otro lado, lejos y atenuado), asi hay siempre nieve
+	sin un numero enorme de particulas. Cada copo se proyecta con la camara 3D y se dibuja como un
+	cuadrado 2D; se oculta si hay terreno entre la camara y el copo.
 **/
 class Snow {
 
-	static inline var N = 320;
+	static inline var N = 1100;
+	/** tamano de la red de copos alrededor de la camara */
+	static inline var LX = 44.;
+	static inline var LZ = 26.;
+	/** distancia de atenuacion en el borde de la red */
+	static inline var FADE = 6.;
 
 	var batch : SpriteBatch;
 	var els = new Array<BatchElement>();
-	var depth = new Array<Float>();
-	var phase = new Array<Float>();
-	var freq = new Array<Float>();
-	var w : Float;
-	var h : Float;
-	var prevYaw = 0.;
-	var prevPitch = 0.;
-	var started = false;
+	var bx = new Array<Float>();
+	var by = new Array<Float>();
+	var bz = new Array<Float>();
+	var vs = new Array<Float>();
+	var sp = new Array<Float>();
+	var sf = new Array<Float>();
+	var sz = new Array<Float>();
+	var t = 0.;
+	var pt = new h3d.Vector();
 
 	public var visible(get, set) : Bool;
 
-	public function new( parent : h2d.Object, w : Int, h : Int ) {
-		this.w = w;
-		this.h = h;
+	public function new( parent : h2d.Object ) {
 		batch = new SpriteBatch(h2d.Tile.fromColor(0xFFFFFF, 1, 1), parent);
 		batch.hasRotationScale = true;
 		batch.visible = false;
 		for( i in 0...N ) {
+			bx.push(Math.random() * LX);
+			by.push(Math.random() * LX);
+			bz.push(Math.random() * LZ);
+			// caida de 1.6 a 3.4 bloques por segundo; copos mas grandes caen un poco mas rapido
+			var s = 0.05 + Math.random() * Math.random() * 0.12;
+			sz.push(s);
+			vs.push(1.6 + (s - 0.05) / 0.12 * 1.0 + Math.random() * 0.8);
+			sp.push(Math.random() * 6.28);
+			sf.push(0.5 + Math.random() * 0.9);
 			var e = new BatchElement(batch.tile);
-			// capas: abundantes y pequenas al fondo, pocas y grandes delante
-			var d = Math.pow(Math.random(), 1.6);
-			depth.push(d);
-			phase.push(Math.random() * 6.28);
-			freq.push(0.5 + Math.random() * 1.0);
-			e.x = Math.random() * w;
-			e.y = Math.random() * h;
-			var s = 2 + 6 * d;
-			e.scaleX = s;
-			e.scaleY = s;
-			e.alpha = 0.5 + 0.5 * d;
+			e.visible = false;
 			batch.add(e);
 			els.push(e);
 		}
@@ -51,44 +56,82 @@ class Snow {
 	function get_visible() return batch.visible;
 
 	function set_visible( v : Bool ) {
-		if( v && !batch.visible ) started = false;
 		return batch.visible = v;
 	}
 
-	/** yaw/pitch en radianes (de la camara), fovY en grados. */
-	public function update( dt : Float, yaw : Float, pitch : Float, fovY : Float ) {
-		if( !batch.visible ) return;
-		var dyaw = 0., dpitch = 0.;
-		if( started ) {
-			dyaw = yaw - prevYaw;
-			while( dyaw > Math.PI ) dyaw -= Math.PI * 2;
-			while( dyaw < -Math.PI ) dyaw += Math.PI * 2;
-			dpitch = pitch - prevPitch;
-		}
-		started = true;
-		prevYaw = yaw;
-		prevPitch = pitch;
+	/** posicion periodica: el valor mas cercano a c que es congruente con u modulo l */
+	static inline function wrap( u : Float, c : Float, l : Float ) : Float {
+		var d = (u - c) % l;
+		if( d < -l * 0.5 ) d += l;
+		else if( d > l * 0.5 ) d -= l;
+		return c + d;
+	}
 
-		// pixeles por radian en el centro de la pantalla
-		var f = (h * 0.5) / Math.tan(fovY * Math.PI / 360);
-		var sx = -dyaw * f;
-		var sy = dpitch * f;
+	/**
+		cam: camara 3D ya colocada; world: para ocultar copos tapados por el terreno.
+		offX/offY/visW/visH: rectangulo de la ventana en coordenadas de la escena 2D.
+	**/
+	public function update( dt : Float, cam : h3d.Camera, world : World, offX : Float, offY : Float, visW : Float, visH : Float ) {
+		if( !batch.visible ) return;
+		t += dt;
+		cam.update();
+		var cx = cam.pos.x, cy = cam.pos.y, cz = cam.pos.z;
+		var fx = cam.target.x - cx, fy = cam.target.y - cy, fz = cam.target.z - cz;
+		var fl = Math.sqrt(fx * fx + fy * fy + fz * fz);
+		if( fl < 1e-6 ) return;
+		fx /= fl;
+		fy /= fl;
+		fz /= fl;
+		var focal = (visH * 0.5) / Math.tan(cam.fovY * Math.PI / 360);
+
 		for( i in 0...N ) {
 			var e = els[i];
-			var d = depth[i];
-			phase[i] += dt * freq[i];
-			e.x += sx + Math.sin(phase[i]) * (10 + 22 * d) * dt;
-			e.y += sy + (45 + 150 * d) * dt;
-			// al salir por un borde reaparece por el opuesto
-			if( e.y > h + 8 ) {
-				e.y -= h + 16;
-				e.x = Math.random() * w;
-			} else if( e.y < -8 ) {
-				e.y += h + 16;
-				e.x = Math.random() * w;
+			// posicion sin envolver (caida y balanceo) y despues envuelta alrededor de la camara
+			var ux = bx[i] + Math.sin(t * sf[i] + sp[i]) * 0.4;
+			var uy = by[i] + Math.cos(t * sf[i] * 0.8 + sp[i]) * 0.4;
+			var uz = bz[i] - t * vs[i];
+			var wx = wrap(ux, cx, LX), wy = wrap(uy, cy, LX), wz = wrap(uz, cz, LZ);
+
+			var dx = wx - cx, dy = wy - cy, dz = wz - cz;
+			var depth = dx * fx + dy * fy + dz * fz;
+			if( depth < 0.4 ) {
+				e.visible = false;
+				continue;
 			}
-			if( e.x > w + 8 ) e.x -= w + 16;
-			else if( e.x < -8 ) e.x += w + 16;
+			// atenuar cerca del borde de la red
+			var fade = Math.min(1, Math.min((LX * 0.5 - Math.abs(dx)) / FADE, Math.min((LX * 0.5 - Math.abs(dy)) / FADE, (LZ * 0.5 - Math.abs(dz)) / FADE)));
+			if( fade <= 0 ) {
+				e.visible = false;
+				continue;
+			}
+			cam.project(wx, wy, wz, visW, visH, false, pt);
+			if( pt.x < -10 || pt.x > visW + 10 || pt.y < -10 || pt.y > visH + 10 ) {
+				e.visible = false;
+				continue;
+			}
+			// oculto si hay terreno entre la camara y el copo
+			var hidden = world.collidePoint(wx, wy, wz);
+			if( !hidden ) {
+				var k = 0.12;
+				while( k < 1 ) {
+					if( world.collidePoint(cx + dx * k, cy + dy * k, cz + dz * k) ) {
+						hidden = true;
+						break;
+					}
+					k += 0.14;
+				}
+			}
+			if( hidden ) {
+				e.visible = false;
+				continue;
+			}
+			var px = Math.max(1.6, Math.min(10, sz[i] * 2 * focal / depth));
+			e.visible = true;
+			e.scaleX = px;
+			e.scaleY = px;
+			e.x = offX + pt.x - px * 0.5;
+			e.y = offY + pt.y - px * 0.5;
+			e.alpha = 0.92 * fade;
 		}
 	}
 

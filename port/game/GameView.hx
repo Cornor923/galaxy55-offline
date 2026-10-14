@@ -130,18 +130,20 @@ class GameView {
 		walkingSlow = false;
 		walking = false;
 		if( controls ) {
-			// A/D y cursores: con el raton mirando se desplaza de lado; si no, giran con aceleracion
+			// A/D y flechas izquierda/derecha: en el original giran al personaje, con aceleracion
+			// (Settings.turnKeys); por defecto se desplazan de lado
 			var move = false;
+			var turnMode = Settings.turnKeys;
 			if( K.isDown(K.RIGHT) || K.isDown(K.D) || K.isDown(K.NUMPAD_6) ) {
 				if( turnSpeed < 0 ) turnSpeed = 0;
-				if( mouseLook ) strafe += 0.15;
-				else turnSpeed += 0.008 * tmod;
+				if( turnMode ) turnSpeed += 0.008 * tmod;
+				else strafe += 0.15;
 				move = true;
 			}
 			if( K.isDown(K.LEFT) || K.isDown(K.A) || K.isDown(K.Q) || K.isDown(K.NUMPAD_4) ) {
 				if( turnSpeed > 0 ) turnSpeed = 0;
-				if( mouseLook ) strafe -= 0.15;
-				else turnSpeed -= 0.008 * tmod;
+				if( turnMode ) turnSpeed -= 0.008 * tmod;
+				else strafe -= 0.15;
 				move = true;
 			}
 			if( !move ) turnSpeed *= Math.pow(0.6, tmod);

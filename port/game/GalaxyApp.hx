@@ -88,7 +88,6 @@ class GalaxyApp extends hxd.App {
 	var bgCy = 64.;
 	var bgR = 38.;
 	var snow : Snow;
-	var snowPrevOk = false;
 	var loadWorld : World;
 	var loadInfo : SaveInfo;
 	var game : GameView;
@@ -168,7 +167,7 @@ class GalaxyApp extends hxd.App {
 		atlas.mipMap = None;
 
 		dim = new h2d.Bitmap(h2d.Tile.fromColor(0x000000, W, H, 0.0), s2d);
-		snow = new Snow(s2d, W, H);
+		snow = new Snow(s2d);
 		ui = new h2d.Object(s2d);
 		// brillo del jetpack (hud_jetpack.png del original) y barra de combustible
 		var ht = hxd.res.Any.fromBytes("hud.png", sys.io.File.getBytes("src/G55/fla/client/gfx/hud.png")).toTile();
@@ -417,9 +416,9 @@ class GalaxyApp extends hxd.App {
 	var modal : Screen;
 
 	function buildOptions() : Screen {
-		var s = panelFor(860, 560, Lang.t("options.title"));
+		var s = panelFor(860, 620, Lang.t("options.title"));
 		var x = (W - 660) * 0.5;
-		var y = 175.;
+		var y = 140.;
 		var lang = new Selector(s, Lang.t("language"), Lang.LABELS, 660);
 		lang.index = Lang.cur;
 		var sens = new Slider(s, Lang.t("sens"), 0.2, 3.0, 0.1, 660);sens.decimals = 1;
@@ -432,6 +431,8 @@ class GalaxyApp extends hxd.App {
 		full.index = Settings.fullscreen ? 1 : 0;
 		var inv = new Selector(s, Lang.t("invert"), [Lang.t("off"), Lang.t("on")], 660);
 		inv.index = Settings.invertY ? 1 : 0;
+		var tk = new Selector(s, Lang.t("turnkeys"), [Lang.t("turnkeys.strafe"), Lang.t("turnkeys.turn")], 660);
+		tk.index = Settings.turnKeys ? 1 : 0;
 		var back = new Button(s, Lang.t("back"), 660);
 		s.add(lang, x, y);
 		s.add(sens, x, y + 60);
@@ -439,7 +440,8 @@ class GalaxyApp extends hxd.App {
 		s.add(vol, x, y + 180);
 		s.add(full, x, y + 240);
 		s.add(inv, x, y + 300);
-		s.add(back, x, y + 380);
+		s.add(tk, x, y + 360);
+		s.add(back, x, y + 440);
 		var origin = state == Paused ? "pause" : "main";
 		lang.onChange = function(i) {
 			Settings.lang = Lang.CODES[i];
@@ -455,6 +457,7 @@ class GalaxyApp extends hxd.App {
 			hxd.Window.getInstance().displayMode = Settings.fullscreen ? Borderless : Windowed;
 		};
 		inv.onChange = function(i) Settings.invertY = i == 1;
+		tk.onChange = function(i) Settings.turnKeys = i == 1;
 		var leave = function() {
 			Settings.save();
 			show(state == Paused ? "pause" : "main");
@@ -805,18 +808,18 @@ class GalaxyApp extends hxd.App {
 			if( toastTime <= 0 ) toast.visible = false;
 		}
 
-		// nieve (solo bioma de invierno): sigue el giro de la camara
-		var winter = false;
+		// nieve (solo bioma de invierno): copos fijos en el mundo
+		var snowWorld : World = null;
 		if( (state == Playing || state == Paused) && game != null )
-			winter = game.world.biomeName == "BIWinterPeaks";
+			snowWorld = game.world;
 		else if( (state == Menu || state == Loading) && bgIndex < bgWorlds.length )
-			winter = bgWorlds[bgIndex].biomeName == "BIWinterPeaks";
-		snow.visible = winter && dim.alpha < 0.5;
+			snowWorld = bgWorlds[bgIndex];
+		snow.visible = snowWorld != null && snowWorld.biomeName == "BIWinterPeaks" && dim.alpha < 0.5;
 		if( snow.visible ) {
-			var c = s3d.camera;
-			var vx = c.target.x - c.pos.x, vy = c.target.y - c.pos.y, vz = c.target.z - c.pos.z;
-			var len = Math.sqrt(vx * vx + vy * vy + vz * vz);
-			if( len > 1e-6 ) snow.update(dt, Math.atan2(vy, vx), Math.asin(vz / len), c.fovY);
+			var ww = engine.width, wh = engine.height;
+			var scale = Math.min(ww / W, wh / H);
+			var visW = ww / scale, visH = wh / scale;
+			snow.update(dt, s3d.camera, snowWorld, (W - visW) * 0.5, (H - visH) * 0.5, visW, visH);
 		}
 
 		testShot();
