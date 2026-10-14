@@ -12,6 +12,8 @@ Este proyecto recompila el cliente 3D a partir del código fuente que Motion Twi
 > **No hay** cuentas, licencias ni multijugador (dependían del servidor de Motion Twin).
 > Cada función dice abajo si es del original, deducida de una fuente, o **añadido nuestro**.
 
+**Novedades de esta versión:** [CHANGELOG.md](CHANGELOG.md) · **Qué falta arreglar y añadir:** [PENDIENTES.md](PENDIENTES.md)
+
 ## Jugar
 
 1. Descarga `release/Galaxy55_offline.swf` (español), `Galaxy55_offline_en.swf` (inglés) o
