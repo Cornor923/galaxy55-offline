@@ -1,0 +1,83 @@
+GALAXY 55 - version hors ligne recompilée
+=========================================
+
+Qu'est-ce que c'est ?
+---------------------
+Galaxy 55 était un jeu d'exploration spatiale en Flash de Motion Twin (alpha, 2012) : tu voles en vaisseau,
+tu atterris sur des planètes générées au hasard, tu creuses des kubes et tu construis avec un système
+d'assemblage en 3D. Ces fichiers sont le client 3D recompilé à partir du code source publié par Motion Twin sur
+github.com/motion-twin/WebGamesArchives, adapté pour fonctionner sans serveur (mode local).
+
+  Galaxy55_offline_fr.swf   français      Galaxy55_offline.swf   espagnol      Galaxy55_offline_en.swf   anglais
+
+Comment l'ouvrir
+----------------
+1. Utilise Adobe Flash Player standalone (le "projector"), pas Ruffle : le jeu utilise Stage3D.
+2. Fichier > Ouvrir, et choisis le .swf (ou glisse-le dans la fenêtre du lecteur).
+3. Il faut une carte graphique avec accélération 3D. La planète est générée à l'atterrissage (quelques secondes).
+
+Comment jouer
+-------------
+Au lancement tu arrives sur la carte stellaire : choisis un système, puis une planète, et clique sur "Scanner
+cette planète" (la première fois) puis "Atterrir". Les chiffres orange sont les planètes pas encore explorées de
+chaque système. Tu apparais dans ton vaisseau ; sors par la colonne de lumière. Le secteur est généré au hasard
+à chaque lancement.
+
+Ordinateur de bord (dans le vaisseau, E / Maj sur l'ordinateur)
+---------------------------------------------------------------
+  1 (A)  Décoller : retour à la carte stellaire, à côté de ta planète.
+  2 (X)  Modifier le vaisseau : hangar de 17x17x14 kubes. Le jeu vérifie les règles (coque étanche, téléporteur
+         avec 2 kubes libres au-dessus, ordinateur, dalle d'assemblage, synthétiseur, au moins 2 moteurs, le tout
+         relié) et signale la première non respectée. Sors par les téléporteurs : si le vaisseau est valide, il
+         est sauvegardé (en mémoire : perdu à la fermeture du jeu).
+  4 (Y)  Commerce (ESCorp) : vends ce que tu portes (50 % du prix de base) et achète des pièces de vaisseau.
+  3 (B) / Échap   Arrêter.
+
+Boutique (ajout de notre part) : haut/bas pour choisir, gauche/droite pour passer de VENDRE à ACHETER,
+Entrée = 1 unité, Maj+Entrée = 10, Échap pour sortir. Tu commences avec 500 crédits (non sauvegardés).
+Le hangar te donne 64 exemplaires de chaque pièce gratuitement (ajout de notre part aussi).
+
+Clavier et souris
+-----------------
+  Flèches / ZQSD                              se déplacer
+  Espace ou Ctrl                              jetpack
+  E, Maj ou clic gauche                       action (miner / utiliser / poser)
+  Molette, 0-9                                choisir l'emplacement de l'inventaire
+  Tab                                         foreuse
+  H                                           mettre / enlever le casque
+  R ou Suppr                                  lâcher le kube choisi
+  M / N (ou PgUp / PgDn, pavé num. + / -)     champ de vision plus large / plus étroit
+  F                                           panneau FPS et données (et manette)
+  F2                                          capture d'écran
+  F11 ou Entrée                               plein écran avec souris verrouillée (Échap pour sortir)
+  * du pavé numérique                         basculer commandes classiques / souris
+  T                                           chat ; commandes de débogage : /despegar  /hangar
+  F9 décolle sans passer par l'ordinateur ; F8 ouvre la boutique.
+
+Manette (Xbox 360 / compatibles) - ajout de notre part
+------------------------------------------------------
+  Joystick gauche    se déplacer        Joystick droit    regarder
+  A                  jetpack            B                 marcher lentement
+  RT (ou X)          casser / utiliser  LT                poser le kube choisi
+  LB / RB (ou ←/→)   changer de kube    Y                 lâcher le kube
+  L3 / R3            champ de vision + / -
+  Select             casque             Start             plein écran
+  Sur la carte stellaire les joysticks déplacent un curseur ; A = clic.
+  Dans les menus : A / X / Y / B choisissent les options affichées.
+  Les boutons sont calibrés avec une manette précise ; si la tienne donne d'autres codes, appuie sur F.
+
+Avertissements
+--------------
+* C'est une alpha annulée : il manque des choses et le jeu a ses propres bugs.
+* Il reste environ 27 Mo non libérés par voyage entre planètes ; après de très nombreux voyages, redémarre.
+* Les fonctions non testées sont listées dans le README du dépôt (la boutique et les menus en français
+  démarrent, mais je n'ai pas tout parcouru).
+* Les noms des kubes sont les noms officiels de Motion Twin (extraits des clients d'origine).
+* Les parties qui parlaient au serveur, à l'anti-triche et au navigateur ont été remplacées par des versions vides.
+
+Licence
+-------
+Le code d'origine est de Motion Twin, publié sous licence Creative Commons Attribution - Pas d'Utilisation
+Commerciale - Partage dans les Mêmes Conditions 4.0 (CC BY-NC-SA 4.0). Cette version modifiée est partagée aux
+mêmes conditions : pas d'usage commercial, et en citant Motion Twin.
+https://creativecommons.org/licenses/by-nc-sa/4.0/

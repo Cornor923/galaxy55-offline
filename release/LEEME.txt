@@ -1,74 +1,84 @@
-GALAXY 55 - versión offline recompilada (NO PROBADA)
-=====================================================
+GALAXY 55 - versión offline recompilada
+========================================
 
 Qué es
 ------
-Galaxy 55 fue un juego de exploración espacial en Flash de Motion Twin (alpha, 2012):
-vuelas en una nave, aterrizas en planetas generados al azar, minas bloques y
-construyes con un sistema de crafteo en 3D.
+Galaxy 55 fue un juego de exploración espacial en Flash de Motion Twin (alpha, 2012): vuelas en una
+nave, aterrizas en planetas generados al azar, minas bloques y construyes con un sistema de crafteo en 3D.
+Estos archivos son el cliente 3D recompilado a partir del código fuente que Motion Twin publicó en
+github.com/motion-twin/WebGamesArchives, adaptado para funcionar sin servidor (modo local).
 
-Este archivo (Galaxy55_offline.swf) es el cliente 3D recompilado a partir del código
-fuente que Motion Twin publicó en github.com/motion-twin/WebGamesArchives, con ajustes
-para que arranque sin servidor (modo local, planeta generado en tu propio equipo).
+  Galaxy55_offline.swf      español
+  Galaxy55_offline_en.swf   inglés
+  Galaxy55_offline_fr.swf   francés
 
 Cómo abrirlo
 ------------
-1. Usa Adobe Flash Player standalone (el "projector"), no Ruffle: el juego usa Stage3D,
-   que Ruffle no soporta.
-2. Abre el programa, menú  Archivo > Abrir  y elige Galaxy55_offline.swf.
-   (También puedes arrastrar el archivo a la ventana del reproductor.)
-3. Necesitas una tarjeta gráfica con aceleración 3D. La primera carga genera el planeta
-   y puede tardar un rato.
+1. Usa Adobe Flash Player standalone (el "projector"), no Ruffle: el juego usa Stage3D.
+2. Archivo > Abrir y elige el .swf (o arrástralo a la ventana del reproductor).
+3. Necesitas una tarjeta gráfica con aceleración 3D. Al aterrizar se genera el planeta; tarda unos segundos.
 
-Mapa estelar
-------------
-Al abrir el juego aparece primero el mapa del sector (la parte "explorador" del original).
-Vuela con la nave hasta un sistema, luego a un planeta y pulsa "Aterrizar". El sector y los
-planetas se generan al azar en cada arranque. Para volver al mapa y viajar a otro planeta,
-cierra y reabre el juego (el ordenador de la nave te lo recuerda).
+Cómo se juega
+-------------
+Al abrir aparece el mapa estelar: elige un sistema, luego un planeta, y pulsa ESCANEAR (la primera vez)
+y luego ATERRIZAR. Los números naranjas del mapa son los planetas aún sin explorar de cada sistema.
+Apareces dentro de tu nave; sal por la columna de luz. El sector se genera al azar cada vez que abres el juego.
 
-Controles (leídos del código, no comprobados en pantalla)
----------------------------------------------------------
+Ordenador de a bordo (dentro de la nave, E / Shift sobre el ordenador)
+----------------------------------------------------------------------
+  1 (A)  Despegar: vuelves al mapa estelar junto a tu planeta.
+  2 (X)  Modificar la nave: hangar de 17x17x14 bloques. El juego comprueba las reglas (casco estanco,
+         teletransportador con 2 bloques libres encima, ordenador, losa de ensamblaje, sintetizador, al menos
+         2 motores, todo unido) y avisa de la primera que falla. Sal por los teletransportadores: si la nave
+         es válida se guarda (en memoria: se pierde al cerrar el juego).
+  4 (Y)  Comerciar (ESCorp): vende lo que llevas (50 % del precio base) y compra piezas de nave.
+  3 (B) / Esc   Detener.
+
+Tienda (añadido nuestro): arriba/abajo elige, izquierda/derecha cambia entre VENDER y COMPRAR, Intro = 1 unidad,
+Mayús+Intro = 10, Esc sale. Empiezas con 500 créditos (no se guardan al cerrar).
+El hangar te da 64 unidades de cada pieza gratis (también añadido nuestro).
+
+Teclado y ratón
+---------------
   Flechas / WASD (ZQSD en teclado francés)   moverse
   Espacio o Ctrl                             jetpack
-  E, Shift o clic izquierdo*                 acción (minar / usar)
-  0-9                                        elegir ranura del inventario
-  Tab, H, T, F                               interfaz y ayudas
-  M / RePág / NumPad +                       campo de visión más ancho (4° por pulsación)
-  N / AvPág / NumPad -                       campo de visión más cerrado
+  E, Shift o clic izquierdo                  acción (minar / usar / colocar)
+  Rueda del ratón, 0-9                       elegir ranura del inventario
+  Tab                                        taladro
+  H                                          poner / quitar el casco
   R o Supr                                   soltar el bloque elegido
-  F11 o Enter                                pantalla completa + cámara con el ratón
-                                             (ratón bloqueado: se mira moviéndolo, sin hacer clic)
-  Esc                                        salir de pantalla completa
-  Clic en la ventana                         entra a pantalla completa con el RATON BLOQUEADO
-                                             (como Minecraft): la camara sigue al raton sin limites.
-  Esc                                        sale de pantalla completa y libera el raton
-  Clic izquierdo (raton bloqueado)           accion: minar / colocar el bloque elegido
-  Rueda del raton                            cambiar de ranura del inventario
-  F11 / Enter                                alternar pantalla completa bloqueada
+  M / N (o RePág / AvPág, NumPad + / -)      campo de visión más ancho / más cerrado
+  F                                          panel de FPS y datos (y del mando)
+  F2                                         captura de pantalla
+  F11 o Enter                                pantalla completa con el ratón bloqueado (Esc sale)
+  * del teclado numérico                     cambiar entre controles clásicos y de ratón
+  T                                          chat; comandos de depuración: /despegar  /hangar
+  F9 despega sin ir al ordenador; F8 abre la tienda.
 
-  * Si el bloqueo no esta disponible, se usa un modo de respaldo en ventana (el cursor en
-    el borde sigue girando la camara).
+Mando (Xbox 360 / compatibles) - añadido nuestro
+------------------------------------------------
+  Palanca izquierda   moverse           Palanca derecha   mirar
+  A                   jetpack           B                 caminar despacio
+  RT (o X)            romper / usar     LT                colocar el bloque elegido
+  LB / RB (o ←/→)     cambiar de bloque Y                 soltar el bloque
+  L3 / R3             campo de visión + / -
+  Select              casco             Start             pantalla completa
+  En el mapa estelar las palancas mueven un cursor; A hace clic.
+  En los menús: A / X / Y / B eligen las opciones que se muestran en pantalla.
+  Los botones están calibrados con un mando concreto; si el tuyo da otros códigos, pulsa F y mira el panel.
 
-Avisos importantes
-------------------
-* El bloqueo de ratón (F11/Enter) lo añadí yo y tampoco está probado. Si no funciona, el
-  modo original de arrastrar con clic sigue disponible.
-* Compila sin errores, pero no pude ejecutarlo: no hay Flash Player en el entorno donde
-  lo preparé. Puede fallar al arrancar, verse mal o ir lento. Si lo abres y pasa algo,
-  cuéntalo (pantalla negra, mensaje de error, etc.) y se puede seguir corrigiendo.
+Avisos
+------
 * Es un alpha cancelado: faltan cosas y hay errores del propio juego.
-* Idioma: Galaxy55_offline.swf está en español y Galaxy55_offline_en.swf en inglés. Los nombres
-  de bloques son los oficiales de Motion Twin, sacados de client_es.swf / client_en.swf. Los
-  datos de bloques y biomas se regeneraron a partir de la hoja data.ods original, porque la
-  herramienta original de Motion Twin no se publicó. En la versión inglesa original algunos
-  bloques (bioma ácido, hielo...) ya salían en francés.
-* Se sustituyeron por versiones vacías las partes que hablaban con el servidor, el sistema
-  antitrampas y las llamadas a JavaScript del navegador.
+* Aún quedan unos 27 MB sin liberar por viaje entre planetas; tras muchísimos viajes seguidos conviene reiniciar.
+* Las funciones sin probar están listadas en el README del repositorio.
+* Sonido: los efectos del código original (pasos, láser, jetpack...). No hay música en el código.
+* Los nombres de bloques son los oficiales de Motion Twin (sacados de los clientes originales). En la versión
+  inglesa original algunos bloques ya salían en francés.
+* Se sustituyeron por versiones vacías las partes que hablaban con el servidor, el antitrampas y el navegador.
 
 Licencia
 --------
-El código original es de Motion Twin y se publicó con licencia Creative Commons
-Atribución-NoComercial-CompartirIgual 4.0 (CC BY-NC-SA 4.0). Esta versión modificada se
-comparte bajo los mismos términos: sin uso comercial y citando a Motion Twin.
-https://creativecommons.org/licenses/by-nc-sa/4.0/
+El código original es de Motion Twin y se publicó con licencia Creative Commons Atribución-NoComercial-
+CompartirIgual 4.0 (CC BY-NC-SA 4.0). Esta versión modificada se comparte con los mismos términos: sin uso
+comercial y citando a Motion Twin. https://creativecommons.org/licenses/by-nc-sa/4.0/

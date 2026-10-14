@@ -1,0 +1,22 @@
+LIBRERÍAS INCLUIDAS EN libs/
+============================
+
+  libs-haxe2/, libs-haxe3/   librerías de Motion Twin (CC BY-NC-SA 4.0), con nuestros cambios menores.
+  heaps/                     Heaps (motor 3D de Haxe) en el estado de 2012-11-30 (commit 787f6e88). Licencia MIT.
+  format_old/                librería "format" de Haxe en el estado de 2012-11-14 (commit b505801). Licencia BSD-2.
+
+Cada una conserva su propia licencia (archivo LICENSE dentro de la carpeta). El proyecto no usa las
+versiones actuales de Heaps ni de format: la API cambió mucho desde 2012, hay que usar estas.
+
+Ediciones hechas a heaps/ y format_old/ respecto a esos commits (según las notas de preparación):
+
+  1. format_old/format/png/Reader.hx : checkCRC = false
+  2. heaps/h3d/impl/Macros.hx        : manejadores de error envueltos con Context.error
+
+AVISO: no pude comparar estas copias con los commits originales (no había git cuando se preparó), así
+que no puedo asegurar que sean las únicas diferencias. Los commits de 2012 no traían archivo LICENSE;
+el texto incluido es el de la licencia actual de cada proyecto.
+
+Cambios de esta última ronda en las librerías de Motion Twin:
+  libs-haxe2/mt/flash/Key.hx         isToggled() casi nunca se cumplía (F, F9, H, T, TAB, R, 1-9...)
+  libs-haxe2/mt/deepnight/Buffer.hx  llamada a drawWithQuality con la firma de Flash 11.8
