@@ -19,6 +19,8 @@ typedef SaveInfo = {
 	@:optional var inv : Protocol.InventoryInfos;
 	/** cambios del terreno: pares [celda, bloque global] */
 	@:optional var edits : Array<Int>;
+	/** modo creativo: bloques sin limite, rotura instantanea y jetpack infinito (no existe en el original) */
+	@:optional var creative : Bool;
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
@@ -42,7 +44,7 @@ class SaveData {
 		var now = Date.now().getTime();
 		return {
 			version : VERSION, id : newId(), name : name, seed : seed, biome : biome, sizeChunks : sizeChunks,
-			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : Inv.defaults(), edits : [],
+			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : Inv.defaults(), edits : [], creative : false,
 		};
 	}
 
@@ -87,7 +89,7 @@ class SaveData {
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true,
-					inv : readInv(o.inv), edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
+					creative : o.creative == true, inv : readInv(o.inv), edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 			};
 		} catch( e : Dynamic ) {
 			return null;

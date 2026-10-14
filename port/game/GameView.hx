@@ -48,6 +48,8 @@ class GameView {
 	public var canBreak = true;
 	public var laserCharge : Null<ChargeKind>;
 	public var miningPower = 1.0;
+	/** modo creativo (anadido nuestro): bloques sin limite, rotura instantanea y jetpack infinito */
+	public var creative(default, null) = false;
 	var actionPause = 0.;
 	var actionWait = false;
 	var armed = false;
@@ -87,6 +89,7 @@ class GameView {
 		this.world = world;
 		this.info = info;
 		playSeconds = info.playSeconds;
+		creative = info.creative == true || Sys.args().indexOf("--creative") >= 0;
 		inv = new Inv(info.inv != null ? Inv.copy(info.inv) : Inv.defaults());
 		// solo pruebas: --inv=BIron,BGlass,... llena el inventario con esos bloques
 		for( a in Sys.args() )
@@ -270,6 +273,7 @@ class GameView {
 		var dt = tmod / k;
 		thrusting = false;
 		for( i in 0...k ) doMove(dt, speed, strafe, useJetpack);
+		if( creative ) jetpack = 1;
 	}
 
 	/** Game.updateInterface: el original lo ejecuta una vez por fotograma (60 por segundo). */
@@ -577,6 +581,7 @@ class GameView {
 		var matter = b.matter;
 		var req = b.requiredPower != null ? b.requiredPower : matter.requiredPower;
 		if( req == null ) req = 1;
+		var instant = creative && req > 0;
 		var power = 1.0;
 		laserCharge = null;
 		if( matter.quickBreaks != null )
@@ -586,13 +591,14 @@ class GameView {
 					laserCharge = c.c;
 					break;
 				}
-		if( req > 0 && (!matter.hasProp(PRequireCharge) || laserCharge != null) ) {
+		if( creative ) laserCharge = null;
+		if( req > 0 && (!matter.hasProp(PRequireCharge) || laserCharge != null || creative) ) {
 			canBreak = true;
 			if( actionPause > 0 ) {
 				if( s.power == 0 ) s.power = 1e-8;
 				return;
 			}
-			s.power += miningPower * power / (req * 40);
+			s.power += instant ? 1 : miningPower * power / (req * 40);
 		} else
 			canBreak = false;
 		if( debugDeny ) canBreak = false;
@@ -600,6 +606,7 @@ class GameView {
 		if( s.power < 1 || debugDeny ) return;
 		if( laserCharge != null ) inv.useCharge(laserCharge);
 		breakBlock(s.x, s.y, s.z, b);
+		if( creative ) actionPause = 8;
 		select = null;
 	}
 
@@ -619,8 +626,8 @@ class GameView {
 			else if( (tmp = world.block(x, y + 1, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
 		}
 		if( !ok || actionPause > 0 ) return;
-		actionPause = 15;
-		if( !inv.useCurrentBlock() ) return;
+		actionPause = creative ? 6 : 15;
+		if( !creative && !inv.useCurrentBlock() ) return;
 		// si era el ultimo bloque, hay que soltar el boton antes de seguir (evita excavar sin querer)
 		if( inv.getCurrentBlock() == null ) actionWait = true;
 		world.setBlock(x, y, z, put);
@@ -630,7 +637,7 @@ class GameView {
 	/** Game.blockBreak: suelta lo que corresponda (con su probabilidad) y quita el bloque. */
 	public function breakBlock( x : Int, y : Int, z : Int, b : Block ) {
 		var get = b.getDrop();
-		if( get != null ) {
+		if( get != null && !creative ) {
 			var chance = b.getMain().getDropChance();
 			for( i in 0...get.count ) {
 				if( Std.random(100) >= chance ) continue;
@@ -644,12 +651,28 @@ class GameView {
 	function dropCurrent() {
 		var index = inv.blockIndex - 1;
 		var s = inv.drop(index);
-		if( s == null ) return;
+		if( s == null || creative ) return; // en creativo tirar solo vacia la casilla
 		var d = drops.add(px + Math.cos(yaw), py + Math.sin(yaw), pz + 1.2, Block.all[s.k]);
 		d.n = s.n;
 		d.vx = Math.cos(yaw) * 0.3;
 		d.vy = Math.sin(yaw) * 0.3;
 		d.active = false;
+	}
+
+	/** Paleta creativa: pone el bloque en la casilla elegida (o en la primera libre si esta el excavador). */
+	public function setSlot( b : Block ) {
+		var idx = inv.blockIndex - 1;
+		if( idx < 0 ) {
+			idx = 0;
+			for( i in 0...inv.inv.t.length )
+				if( inv.inv.t[i] == null ) {
+					idx = i;
+					break;
+				}
+			inv.blockIndex = idx + 1;
+		}
+		inv.inv.t[idx] = { k : b.index, n : inv.maxBlock(b) };
+		inv.display();
 	}
 
 	/** rueda del raton */

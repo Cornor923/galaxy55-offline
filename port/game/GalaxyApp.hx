@@ -35,7 +35,7 @@ class SaveRow extends Widget {
 		Theme.text(this, info.name, 2.4, Theme.TEXT, 190, 10);
 		var biome = Lang.t("biome." + info.biome);
 		var size = 128 * info.sizeChunks;
-		Theme.text(this, biome + "  ·  " + size + "x" + size + "  ·  " + Lang.t("seed") + " " + info.seed, 1.7, Theme.CYAN, 190, 48);
+		Theme.text(this, biome + "  ·  " + size + "x" + size + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t("mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
 		Theme.text(this, Lang.t("played") + " " + Lang.duration(info.playSeconds) + "   " + Lang.t("saved") + " " + Lang.date(info.saved), 1.5, Theme.DIM, 190, 74);
 	}
 }
@@ -139,6 +139,9 @@ class GalaxyApp extends hxd.App {
 	var nSeed : TextField;
 	var nBiome : Selector;
 	var nSize : Selector;
+	var nMode : Selector;
+	var palette : Palette;
+	var paletteOpen = false;
 
 	override function init() {
 		for( a in Sys.args() ) {
@@ -329,7 +332,7 @@ class GalaxyApp extends hxd.App {
 	function randomSeed() : Int return 1 + Std.random(999999);
 
 	function buildNew() : Screen {
-		var s = panelFor(760, 560, Lang.t("newgame.title"));
+		var s = panelFor(760, 640, Lang.t("newgame.title"));
 		var x = (W - 560) * 0.5;
 		nName = new TextField(s, Lang.t("name"), "Planeta " + (1 + SaveData.list().length));
 		nSeed = new TextField(s, Lang.t("seed"), "" + randomSeed());
@@ -340,6 +343,7 @@ class GalaxyApp extends hxd.App {
 		nBiome = new Selector(s, Lang.t("biome"), names);
 		nSize = new Selector(s, Lang.t("size"), [Lang.t("size.small"), Lang.t("size.normal"), Lang.t("size.large")]);
 		nSize.index = 0;
+		nMode = new Selector(s, Lang.t("mode"), [Lang.t("mode.adventure"), Lang.t("mode.creative")]);
 		var create = new Button(s, Lang.t("create"), 560);
 		var back = new Button(s, Lang.t("back"), 560);
 		var y = 190.;
@@ -347,19 +351,22 @@ class GalaxyApp extends hxd.App {
 		s.add(nSeed, x, y + 66);
 		s.add(nBiome, x, y + 132);
 		s.add(nSize, x, y + 198);
-		s.add(create, x, y + 280);
-		s.add(back, x, y + 346);
+		s.add(nMode, x, y + 264);
+		s.add(create, x, y + 346);
+		s.add(back, x, y + 412);
 		create.onActivate = function() {
 			var seed = Std.parseInt(nSeed.text);
 			if( seed == null || seed <= 0 ) seed = randomSeed();
 			var biome = nBiome.index == 0 ? BIOMES[seed % BIOMES.length] : BIOMES[nBiome.index - 1];
 			var name = StringTools.trim(nName.text);
 			if( name == "" ) name = "Planeta";
-			startGame(SaveData.create(name, seed, biome, nSize.index + 1));
+			var info = SaveData.create(name, seed, biome, nSize.index + 1);
+			info.creative = nMode.index == 1;
+			startGame(info);
 		};
 		back.onActivate = function() show("main");
 		s.onBack = function() show("main");
-		hint(s, (W - 600) * 0.5 + 50, 640);
+		hint(s, (W - 600) * 0.5 + 50, 692);
 		return s;
 	}
 
@@ -592,6 +599,7 @@ class GalaxyApp extends hxd.App {
 
 	function toMainMenu() {
 		saveGame(false);
+		closePalette();
 		game.dispose();
 		if( invBar != null ) {
 			invBar.remove();
@@ -617,10 +625,31 @@ class GalaxyApp extends hxd.App {
 		hxd.Window.getInstance().mouseMode = on ? Relative(onMouse, true) : Absolute;
 	}
 
-	/** rueda del raton: cambia de casilla (en el original, bajar la rueda pasa a la siguiente) */
+	/** rueda del raton: cambia de casilla (en el original, bajar la rueda pasa a la siguiente); con la paleta abierta, de pagina */
 	function onWindowEvent( e : hxd.Event ) {
-		if( e.kind == EWheel && game != null && state == Playing )
-			game.scrollInventory(e.wheelDelta > 0 ? -1 : 1);
+		if( e.kind != EWheel || game == null || state != Playing ) return;
+		if( paletteOpen && palette != null ) palette.scroll(e.wheelDelta);
+		else game.scrollInventory(e.wheelDelta > 0 ? -1 : 1);
+	}
+
+	function openPalette() {
+		if( paletteOpen || game == null || !game.creative ) return;
+		palette = new Palette(s2d, atlas);
+		palette.onPick = function(b) game.setSlot(b);
+		paletteOpen = true;
+		captureMouse(false);
+	}
+
+	function closePalette() {
+		if( palette != null ) {
+			palette.remove();
+			palette = null;
+		}
+		paletteOpen = false;
+		if( game != null && state == Playing ) {
+			captureMouse(true);
+			game.releaseAction();
+		}
 	}
 
 	function onMouse( e : hxd.Event ) {
@@ -813,7 +842,12 @@ class GalaxyApp extends hxd.App {
 
 		if( state == Playing && game != null ) {
 			var K = hxd.Key;
-			if( K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start)) ) { pause(); pausedThisFrame = true; }
+			if( paletteOpen ) {
+				if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
+				game.updateCamera();
+			} else if( game.creative && K.isPressed(K.I) ) {
+				openPalette();
+			} else if( K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start)) ) { pause(); pausedThisFrame = true; }
 			else {
 				game.update(dt, true, pad);
 				game.updateCamera();
@@ -824,7 +858,7 @@ class GalaxyApp extends hxd.App {
 					saveGame(true);
 				}
 				var p = game;
-				hud.text = Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps\n" + Lang.t("hud.help");
+				hud.text = Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps\n" + Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : "");
 				if( K.isPressed(K.H) || (pad != null && pad.isPressed(pad.config.back)) ) toggleHelmet();
 				if( !helmet.visible && helmetOn ) helmet.visible = true;
 				updateHelmet(dt, p);
@@ -1142,7 +1176,7 @@ class GalaxyApp extends hxd.App {
 		if( shotPath == null ) return;
 		// menus: esperar a que el planeta de fondo este listo y sacar la captura
 		if( state == Menu && shotStage == 0 && frames > shotFrames ) {
-			if( shotScreen == "game" || shotScreen == "pause" || shotScreen == "phys" || shotScreen == "jet" || shotScreen == "mine" || shotScreen == "place" || shotScreen == "cont" ) {
+			if( shotScreen == "game" || shotScreen == "pause" || shotScreen == "phys" || shotScreen == "jet" || shotScreen == "mine" || shotScreen == "place" || shotScreen == "cont" || shotScreen == "palette" ) {
 				shotStage = 1;
 				if( shotScreen == "cont" ) {
 					// carga la partida mas reciente (prueba de guardado)
@@ -1178,6 +1212,11 @@ class GalaxyApp extends hxd.App {
 				game.debugAction = !shotCont;
 				game.debugDeny = Sys.args().indexOf("--deny") >= 0;
 				shotFrames = frames + shotN;
+				return;
+			}
+			if( shotScreen == "palette" ) {
+				openPalette();
+				shotFrames = frames + 8;
 				return;
 			}
 			if( shotScreen == "pause" ) {
