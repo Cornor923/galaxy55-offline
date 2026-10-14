@@ -88,6 +88,14 @@ class GameView {
 		this.info = info;
 		playSeconds = info.playSeconds;
 		inv = new Inv(info.inv != null ? Inv.copy(info.inv) : Inv.defaults());
+		// solo pruebas: --inv=BIron,BGlass,... llena el inventario con esos bloques
+		for( a in Sys.args() )
+			if( StringTools.startsWith(a, "--inv=") ) {
+				inv.inv.t = [];
+				for( nm in a.substr(6).split(",") )
+					inv.inv.t.push({ k : Type.enumIndex(Type.createEnum(BlockKind, nm)), n : 5 });
+				while( inv.inv.t.length < 10 ) inv.inv.t.push(null);
+			}
 		drops = new Drops(world, atlas);
 		fx = new Fx(world, atlas);
 		if( info.px < 0 ) {

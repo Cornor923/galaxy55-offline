@@ -48,7 +48,8 @@ class Atlas {
 
 	/** Si ya se asignaron las casillas de color (segunda vez), solo se repinta el atlas nuevo con las mismas casillas. */
 	static function patch( pix : hxd.Pixels, again = false ) {
-		var lastTex = 4095;
+		// el original empieza en 4095, que coincide con el valor "sin textura" (0xFFF) del mallador y dejaba invisible el primer bloque
+		var lastTex = 4094;
 		for( b in Block.all )
 			for( f in b.flags )
 				switch( f ) {

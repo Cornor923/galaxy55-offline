@@ -100,7 +100,7 @@ class IconMesh {
 		case BTReduced:
 			var s = b.size;
 			if( s == null ) box(m, b, 0, 0, 0, 1, 1, 1, all) else box(m, b, s.x1, s.y1, s.z1, s.x2, s.y2, s.z2, all);
-		case BTInvisible, BTWater:
+		case BTInvisible:
 			return null;
 		default:
 			box(m, b, 0, 0, 0, 1, 1, 1, all);
@@ -144,14 +144,21 @@ class Icons {
 			mat.textureShader.killAlphaThreshold = 0.5;
 			var mesh = new h3d.scene.Mesh(poly, mat, scene);
 			var cam = scene.camera;
-			cam.orthoBounds = h3d.col.Bounds.fromValues(-0.95, -0.95, 0.1, 0.95, 0.95, 20);
+			// vista isometrica aproximada: perspectiva con angulo muy estrecho, desde +x, -y y arriba
+			cam.orthoBounds = null;
+			cam.fovY = 18;
+			cam.screenRatio = 1;
+			cam.zNear = 0.5;
+			cam.zFar = 30;
 			cam.target.set(0.5, 0.5, 0.5);
-			cam.pos.set(0.5 + 5, 0.5 - 5, 0.5 + 4.1);
+			cam.pos.set(0.5 + 4.1, 0.5 - 4.1, 0.5 + 3.4);
 			cam.up.set(0, 0, 1);
 			engine.pushTarget(tex);
 			engine.clear(0x00000000, 1, 0);
 			scene.render(engine);
 			engine.popTarget();
+			if( Sys.args().indexOf("--dumpicons") >= 0 )
+				sys.io.File.saveBytes("port/out/icon_" + b.k + ".png", tex.capturePixels().toPNG());
 			mesh.remove();
 			poly.dispose();
 		}
