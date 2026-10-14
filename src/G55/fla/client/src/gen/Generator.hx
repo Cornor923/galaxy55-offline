@@ -353,6 +353,9 @@ class Generator {
 			var t = flash.Lib.getTimer();
 			var cur = steps[curPosition];
 			curPosition++;
+			#if genDebug
+			var dbgT0 = haxe.Timer.stamp();
+			#end
 			cur.f();
 			#if genDebug
 			{
@@ -374,7 +377,7 @@ class Generator {
 					db = (db + da) % 65521;
 					j += 3;
 				}
-				var msg = "STEP " + (curPosition - 1) + " " + cur.p.fileName + ":" + cur.p.lineNumber + " heights=" + StringTools.hex(ha, 4) + StringTools.hex(hb, 4) + " doubles=" + StringTools.hex(da, 4) + StringTools.hex(db, 4) + " world=" + StringTools.hex(a, 4) + StringTools.hex(b, 4);
+				var msg = "STEP " + (curPosition - 1) + " " + cur.p.fileName + ":" + cur.p.lineNumber + " heights=" + StringTools.hex(ha, 4) + StringTools.hex(hb, 4) + " doubles=" + StringTools.hex(da, 4) + StringTools.hex(db, 4) + " world=" + StringTools.hex(a, 4) + StringTools.hex(b, 4) + " ms=" + Std.int((haxe.Timer.stamp() - dbgT0) * 1000);
 				#if flash
 				flash.Lib.trace(msg);
 				#else

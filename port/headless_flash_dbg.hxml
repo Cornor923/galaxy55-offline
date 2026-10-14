@@ -11,4 +11,4 @@
 -D genDebug
 -D genOnly
 -debug
--D genCase=0
+-D genCase=4
