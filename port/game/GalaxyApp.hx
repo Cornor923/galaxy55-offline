@@ -1046,7 +1046,7 @@ class GalaxyApp extends hxd.App {
 		var t = fi - Std.int(fi);
 		bgCamZ = bgAlt[i0] * (1 - t) + bgAlt[i1] * t;
 		var yaw = bgPhase + Math.PI * 0.5 + 0.5;
-		var pitch = -0.5; // el planeta es redondo: hay que mirar mas abajo para ver el terreno
+		var pitch = -0.65; // el planeta es redondo: hay que mirar mas abajo para ver el terreno
 		var c = s3d.camera;
 		c.fovY = 65;
 		c.zNear = 0.2;
