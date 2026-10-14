@@ -22,7 +22,7 @@ class DetailsGenerator extends BiomeGenerator {
 			{ f : hdetNoise, p : 7 },
 			{ f : hdetPilarField, p : 10 },
 		];
-		det.sort(function(d1, d2) return Reflect.compare(d2.p, d1.p));
+		FlashSort.sort(det, function(d1, d2) return Reflect.compare(d2.p, d1.p));
 		var surf = size / 128;
 		for( i in 0...Math.ceil(surf*surf) ) {
 			var found = null;
@@ -63,7 +63,7 @@ class DetailsGenerator extends BiomeGenerator {
 			{ f : detCaveHeal, p : 5 },
 		];
 		
-		det.sort(function(d1, d2) return Reflect.compare(d2.p, d1.p));
+		FlashSort.sort(det, function(d1, d2) return Reflect.compare(d2.p, d1.p));
 		var surf = size / 128;
 		for( i in 0...Math.ceil(surf*surf) ) {
 			var found = null;
@@ -165,7 +165,7 @@ class DetailsGenerator extends BiomeGenerator {
 			{ f : detHeal, p : 5 },
 		];
 		
-		det.sort(function(d1, d2) return Reflect.compare(d2.p, d1.p));
+		FlashSort.sort(det, function(d1, d2) return Reflect.compare(d2.p, d1.p));
 		var surf = size / 128;
 		for( i in 0...Math.ceil(surf*surf) ) {
 			var found = null;

@@ -333,6 +333,16 @@ class Generator {
 			}
 	}
 	
+	#if genDebug
+	public static function dbg( s : String ) {
+		#if flash
+		flash.Lib.trace(s);
+		#else
+		Sys.println(s);
+		#end
+	}
+	#end
+
 	public function process( maxTimeSlice = 100 ) {
 		var t0 = flash.Lib.getTimer();
 		perlin.select();
@@ -344,6 +354,34 @@ class Generator {
 			var cur = steps[curPosition];
 			curPosition++;
 			cur.f();
+			#if genDebug
+			{
+				var a = 1, b = 0, i = outPos, end = outPos + (size * size << HBITS);
+				while( i < end ) {
+					a = (a + flash.Memory.getByte(i)) % 65521;
+					b = (b + a) % 65521;
+					i += 7;
+				}
+				var ha = 1, hb = 0;
+				for( j in 0...size * size ) {
+					ha = (ha + flash.Memory.getByte(outHeight + j)) % 65521;
+					hb = (hb + ha) % 65521;
+				}
+				var da = 1, db = 0, j = perlin.outOffset;
+				var dend = perlin.outOffset + size * size * 8;
+				while( j < dend ) {
+					da = (da + flash.Memory.getByte(j)) % 65521;
+					db = (db + da) % 65521;
+					j += 3;
+				}
+				var msg = "STEP " + (curPosition - 1) + " " + cur.p.fileName + ":" + cur.p.lineNumber + " heights=" + StringTools.hex(ha, 4) + StringTools.hex(hb, 4) + " doubles=" + StringTools.hex(da, 4) + StringTools.hex(db, 4) + " world=" + StringTools.hex(a, 4) + StringTools.hex(b, 4);
+				#if flash
+				flash.Lib.trace(msg);
+				#else
+				Sys.println(msg);
+				#end
+			}
+			#end
 			var t2 = flash.Lib.getTimer();
 			spentTime += t2 - t;
 			var dt = t2 - t0;
@@ -898,7 +936,7 @@ class Generator {
 				if( p2.dist < 50*50 )
 					p.next.push(p2);
 			}
-			p.next.sort(sortCaves);
+			FlashSort.sort(p.next, sortCaves);
 			var next = 0;
 			for( i in 0...min(p.next.length, 2 + (rnd.random(3) == 0 ? 1 : 0)) - p.links ) {
 				var p2 = p.next[i];
@@ -1054,9 +1092,13 @@ class Generator {
 		if( m != null )
 			return m;
 		var bytes : haxe.io.Bytes = haxe.Unserializer.run(mdata);
+		#if flash
 		var data = bytes.getData();
 		data.uncompress();
 		bytes = haxe.io.Bytes.ofData(data);
+		#else
+		bytes = haxe.zip.Uncompress.run(bytes);
+		#end
 		var sx = bytes.get(0), sy = bytes.get(1), sz = bytes.get(2);
 		// calculate size
 		var xmin = sx - 1, ymin = sy - 1, xmax = 0, ymax = 0, zmax = 0;

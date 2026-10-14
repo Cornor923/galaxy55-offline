@@ -1,0 +1,14 @@
+-cp port/headless
+-cp libs/libs-haxe3
+-cp libs/libs-haxe2
+-cp src/G55/com
+-cp src/G55/fla/client/src
+-cp stubs
+-D haxe3
+-main GenMain
+-swf port/out/gen_dbg.swf
+-swf-version 11.8
+-D genDebug
+-D genOnly
+-debug
+-D genCase=0

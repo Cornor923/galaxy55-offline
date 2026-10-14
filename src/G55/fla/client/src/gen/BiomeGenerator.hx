@@ -736,13 +736,24 @@ class BiomeGenerator extends Generator {
 	function lowerChunks(zmin:Int, zloss:Int, ?ratio=1.0) {
 		var count = ratio * size * size / 300;
 		var delta = 10;
+		#if genDebug
+		{
+			var r = rnd.clone();
+			var rs = [for( k in 0...6 ) r.random(1000)];
+			var hs = [for( k in 0...8 ) height(k * 31, k * 17)];
+			Generator.dbg("LC count=" + count + " ceil=" + Math.ceil(count) + " seed=" + rnd.getSeed() + " rnd=" + rs.join(",") + " h=" + hs.join(",") + " zmin=" + zmin + " zloss=" + zloss + " size=" + size);
+		}
+		var dbgChanged = 0, dbgTry = 0, dbgPass = 0;
+		#end
 		for( i in 0...Math.ceil(count) ) {
 			var ntry = 100;
 			while( ntry-->0 ) {
 				var x = rnd.random(size);
 				var y = rnd.random(size);
 				var h = height(x, y);
+				#if genDebug dbgTry++; #end
 				if( h < zmin ) continue;
+				#if genDebug dbgPass++; #end
 				if( h >= zmin && ( h - height(x - 1, y) >= delta || h - height(x + 1, y) >= delta || h - height(x, y - 1) >= delta || h - height(x, y + 1) >= delta ) ) {
 					var z0 = h - max(rnd.random(zloss), rnd.random(zloss));
 					var width = 3 + rnd.random(4);
@@ -756,12 +767,16 @@ class BiomeGenerator extends Generator {
 							if( this.height(real(x + dx), real(y + dy)) < z0 && (dx/width) * (dx/width) + (dy/height)*(dy/height) < ray ) {
 								count++;
 								setHeight(x + dx, y + dy, z0);
+								#if genDebug dbgChanged++; #end
 							}
 					if( count > 10 )
 						break;
 				}
 			}
 		}
+		#if genDebug
+		Generator.dbg("LC end tries=" + dbgTry + " passMin=" + dbgPass + " changed=" + dbgChanged + " seed=" + rnd.getSeed());
+		#end
 	}
 	
 	function addMoonTrees() {

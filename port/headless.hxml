@@ -1,0 +1,11 @@
+--macro allowPackage('flash')
+-cp port/headless
+-cp libs/libs-haxe3
+-cp libs/libs-haxe2
+-cp src/G55/com
+-cp src/G55/fla/client/src
+-cp stubs
+-cp port/shim
+-D haxe3
+-main GenMain
+-hl port/out/gen.hl

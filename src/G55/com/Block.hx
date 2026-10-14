@@ -197,7 +197,7 @@ class Block {
 	static function initBlocks() {
 		var blocks = new Table();
 		for( c in Type.getEnumConstructs(BlockKind) ) {
-			var k = Reflect.field(BlockKind,c);
+			var k = #if flash Reflect.field(BlockKind,c) #else Type.createEnum(BlockKind,c) #end;
 			var b = new Block(k);
 			b.index = Type.enumIndex(k);
 			blocks.push(b);
