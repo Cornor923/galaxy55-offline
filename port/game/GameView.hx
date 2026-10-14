@@ -1,24 +1,57 @@
+import Common;
 import SaveData.SaveInfo;
 
-/** Una partida en curso: jugador en primera persona sobre un World. */
+/**
+	Una partida en curso: el jugador en primera persona sobre un World.
+
+	La fisica es una copia fiel de ent/Hero.hx y Game.moveHero del juego original: misma gravedad,
+	salto, jetpack, sondas de colision de pies, cabeza y paredes, velocidades y unidad de tiempo
+	(tmod: 1 unidad = 1/32 s). No hay boton de correr: en el original solo existe caminar despacio (X).
+**/
 class GameView {
 
-	static inline var EYE = 1.62;
-	static inline var RADIUS = 0.3;
-	static inline var BODY = 1.8;
+	/** unidades de tiempo del juego (mt.Timer.wantedFPS) */
+	static inline var FPS = 32.;
+	/** altura de los ojos (Hero.viewZ) */
+	public static inline var VIEW_Z = 1.5;
 
 	public var world(default, null) : World;
 	public var info(default, null) : SaveInfo;
+
+	// posicion y vista (Hero.x/y/z, angle, angleZ)
 	public var px = 0.;
 	public var py = 0.;
 	public var pz = 0.;
 	public var yaw = 0.;
 	public var pitch = 0.;
-	public var fly = false;
 	public var playSeconds = 0.;
 
-	var vz = 0.;
-	var onGround = false;
+	// estado fisico (Hero)
+	public var gravity = 0.;
+	public var maxGravity = 0.9;
+	/** combustible del jetpack, de 0 a 1 (Hero.jetpack) */
+	public var jetpack = 0.;
+	public var swimming = false;
+	public var standingBlock : Block;
+	/** true mientras el jetpack empuja (para el brillo del casco) */
+	public var thrusting(default, null) = false;
+	/** true si el raton gobierna la vista; si no, los cursores giran (Game.drag.active) */
+	public var mouseLook = true;
+
+	// vaiven del casco y de la camara (Game.walkBobbing, bobbingX, bobbingY)
+	public var walking = false;
+	public var walkBobbing = 0.;
+	public var bobX = 0.;
+	public var bobY = 0.;
+	public var turnSpeed = 0.;
+
+	var pushPower = 0.;
+	var walkingSlow = false;
+	var oldSpeedX = 0.;
+	var oldSpeedY = 0.;
+	var stun = 0.;
+
+	public inline function onGround() return standingBlock != null;
 	var s3d : h3d.scene.Scene;
 
 	public function new( s3d : h3d.scene.Scene, world : World, info : SaveInfo ) {
@@ -26,7 +59,6 @@ class GameView {
 		this.world = world;
 		this.info = info;
 		playSeconds = info.playSeconds;
-		fly = info.fly;
 		if( info.px < 0 ) {
 			var s = world.spawnPoint();
 			px = s.x;
@@ -50,120 +82,341 @@ class GameView {
 		info.pz = pz;
 		info.yaw = yaw;
 		info.pitch = pitch;
-		info.fly = fly;
+		info.fly = false;
 		info.playSeconds = playSeconds;
 		return info;
 	}
 
+	/** Mirar con el raton: mismos divisores que Game (lookLock: 260 en horizontal, 360 en vertical). */
 	public function look( dx : Float, dy : Float ) {
-		var k = 0.0025 * Settings.mouseSens;
-		yaw += dx * k;
-		pitch -= dy * k * (Settings.invertY ? -1 : 1);
+		yaw += dx * Settings.mouseSens / 260.0;
+		pitch -= dy * Settings.mouseSens / 360.0 * (Settings.invertY ? -1 : 1);
 		clampPitch();
 	}
 
 	inline function clampPitch() {
-		if( pitch > 1.5 ) pitch = 1.5;
-		if( pitch < -1.5 ) pitch = -1.5;
+		var amax = Math.PI / 2.01;
+		if( pitch < -amax ) pitch = -amax;
+		else if( pitch > amax ) pitch = amax;
 	}
 
-	function collides( x : Float, y : Float, z : Float ) : Bool {
-		var x0 = Math.floor(x - RADIUS), x1 = Math.floor(x + RADIUS);
-		var y0 = Math.floor(y - RADIUS), y1 = Math.floor(y + RADIUS);
-		var z0 = Math.floor(z), z1 = Math.floor(z + BODY);
-		for( ix in x0...x1 + 1 )
-			for( iy in y0...y1 + 1 )
-				for( iz in z0...z1 + 1 )
-					if( world.solid(ix, iy, iz) ) return true;
-		return false;
-	}
-
-	/** mueve en un eje con colision; devuelve true si choco */
-	function moveAxis( dx : Float, dy : Float, dz : Float ) : Bool {
-		if( dx == 0 && dy == 0 && dz == 0 ) return false;
-		var steps = Std.int(Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.max(Math.abs(dy), Math.abs(dz))) / 0.25)));
-		var sx = dx / steps, sy = dy / steps, sz = dz / steps;
-		for( i in 0...steps ) {
-			var nx = px + sx, ny = py + sy, nz = pz + sz;
-			if( collides(nx, ny, nz) ) return true;
-			px = nx;
-			py = ny;
-			pz = nz;
-		}
-		return false;
+	inline function collide( x : Float, y : Float, z : Float ) : Bool {
+		return world.collidePoint(x, y, z);
 	}
 
 	inline function clampPos( v : Float ) : Float {
 		var s = world.size;
-		return v < RADIUS ? RADIUS : (v > s - RADIUS ? s - RADIUS : v);
+		return v < 0.5 ? 0.5 : (v > s - 0.5 ? s - 0.5 : v);
 	}
 
-	public function update( dt : Float, controls : Bool, pad : hxd.Pad ) {
-		if( dt > 0.05 ) dt = 0.05;
-		playSeconds += dt;
+	inline function onWater() return inWater(0.01);
+
+	function inWater( ?dz : Float ) : Bool {
+		if( dz == null ) dz = VIEW_Z;
+		var b = world.block(Math.floor(px), Math.floor(py), Std.int(pz + dz));
+		return b != null && b.hasFlag(BFLiquid);
+	}
+
+	// ---------------------------------------------------------------- bucle de entrada (Game.moveHero)
+
+	public function update( realDt : Float, controls : Bool, pad : hxd.Pad ) {
+		if( realDt > 0.1 ) realDt = 0.1;
+		playSeconds += realDt;
+		var tmod = realDt * FPS;
 		var K = hxd.Key;
-		var fwd = 0., side = 0.;
-		var run = false, jump = false, down = false;
+
+		var speed = 0., strafe = 0.;
+		var useJetpack = false;
+		walkingSlow = false;
+		walking = false;
 		if( controls ) {
-			if( K.isPressed(K.F) || (pad != null && pad.isPressed(pad.config.Y)) ) {
-				fly = !fly;
-				vz = 0;
+			// A/D y cursores: con el raton mirando se desplaza de lado; si no, giran con aceleracion
+			var move = false;
+			if( K.isDown(K.RIGHT) || K.isDown(K.D) || K.isDown(K.NUMPAD_6) ) {
+				if( turnSpeed < 0 ) turnSpeed = 0;
+				if( mouseLook ) strafe += 0.15;
+				else turnSpeed += 0.008 * tmod;
+				move = true;
 			}
-			if( K.isDown(K.W) || K.isDown(K.UP) ) fwd += 1;
-			if( K.isDown(K.S) || K.isDown(K.DOWN) ) fwd -= 1;
-			if( K.isDown(K.D) ) side += 1;
-			if( K.isDown(K.A) ) side -= 1;
-			run = K.isDown(K.SHIFT) || K.isDown(K.CTRL);
-			jump = K.isDown(K.SPACE);
-			down = K.isDown(K.SHIFT);
+			if( K.isDown(K.LEFT) || K.isDown(K.A) || K.isDown(K.Q) || K.isDown(K.NUMPAD_4) ) {
+				if( turnSpeed > 0 ) turnSpeed = 0;
+				if( mouseLook ) strafe -= 0.15;
+				else turnSpeed -= 0.008 * tmod;
+				move = true;
+			}
+			if( !move ) turnSpeed *= Math.pow(0.6, tmod);
+			var tmax = 0.06;
+			if( turnSpeed < -tmax ) turnSpeed = -tmax;
+			if( turnSpeed > tmax ) turnSpeed = tmax;
+			var turn = turnSpeed;
+
+			walkingSlow = K.isDown(K.X);
+			if( K.isDown(K.UP) || K.isDown(K.W) || K.isDown(K.Z) || K.isDown(K.X) || K.isDown(K.NUMPAD_8) ) {
+				speed += 0.15;
+				walking = true;
+			} else pushPower = 0.0;
+			if( K.isDown(K.DOWN) || K.isDown(K.S) || K.isDown(K.NUMPAD_2) ) {
+				speed -= 0.15;
+				walking = true;
+			}
+
+			// mando: palanca izquierda mueve, derecha mira, A salta/jetpack, B camina despacio
 			if( pad != null ) {
 				var dead = 0.2;
-				if( Math.abs(pad.xAxis) > dead ) side += pad.xAxis;
-				if( Math.abs(pad.yAxis) > dead ) fwd -= pad.yAxis;
-				if( Math.abs(pad.rxAxis) > dead ) yaw += pad.rxAxis * 2.5 * Settings.mouseSens * dt;
-				if( Math.abs(pad.ryAxis) > dead ) pitch -= pad.ryAxis * 2.0 * Settings.mouseSens * dt * (Settings.invertY ? -1 : 1);
-				if( pad.isDown(pad.config.A) ) jump = true;
-				if( pad.isDown(pad.config.LB) ) down = true;
-				if( pad.isDown(pad.config.RB) ) jump = true;
-				if( pad.isDown(pad.config.analogClick) ) run = true;
+				var lx = pad.xAxis, ly = pad.yAxis;
+				if( Math.abs(lx) > dead ) { strafe += 0.15 * lx; walking = true; }
+				if( Math.abs(ly) > dead ) { speed += -0.15 * ly; walking = true; }
+				walkingSlow = walkingSlow || pad.isDown(pad.config.B);
+				if( pad.isDown(pad.config.A) ) useJetpack = true;
+				var rx = pad.rxAxis, ry = pad.ryAxis;
+				if( Math.abs(rx) > dead ) yaw += rx * 0.054 * Settings.mouseSens * tmod;
+				if( Math.abs(ry) > dead ) pitch -= ry * 0.036 * Settings.mouseSens * tmod * (Settings.invertY ? -1 : 1);
 			}
+
+			if( speed != 0 && strafe != 0 ) {
+				var diag = 1 / Math.sqrt(2);
+				speed *= diag;
+				strafe *= diag;
+			}
+			if( swimming || onWater() ) {
+				speed *= 0.6;
+				strafe *= 0.6;
+				turn *= 0.6;
+			} else if( walkingSlow ) {
+				speed *= 0.4;
+				strafe *= 0.4;
+				turn *= 0.4;
+			}
+			if( K.isDown(K.SPACE) || K.isDown(K.CTRL) ) useJetpack = true;
+			yaw += turn;
 			clampPitch();
+		} else
+			turnSpeed = 0;
+
+		if( debugJet ) useJetpack = true;
+		stepPhysics(tmod, speed, strafe, useJetpack);
+		updateBobbing(realDt * 60);
+	}
+
+	/** solo para pruebas automaticas: mantiene el jetpack pulsado */
+	public var debugJet = false;
+
+	/** Un fotograma de fisica con varios pasos pequenos, como el original (tmod: 1 = 1/32 s). */
+	public function stepPhysics( tmod : Float, speed : Float, strafe : Float, useJetpack : Bool ) {
+		var k = Math.ceil(tmod * 10);
+		var dt = tmod / k;
+		thrusting = false;
+		for( i in 0...k ) doMove(dt, speed, strafe, useJetpack);
+	}
+
+	/** Game.updateInterface: el original lo ejecuta una vez por fotograma (60 por segundo). */
+	function updateBobbing( frames : Float ) {
+		if( walking && onGround() && !stunnedLock() )
+			walkBobbing += (inWater() ? 0.05 : 0.2) * frames;
+		else
+			walkBobbing = 0;
+		if( !onGround() ) bobY = -gravity * 30;
+		bobX += -turnSpeed * 300 * frames;
+		if( bobX < -20 ) bobX = -20;
+		if( bobX > 20 ) bobX = 20;
+		if( bobY < -15 ) bobY = -15;
+		if( bobY > 15 ) bobY = 15;
+		var decay = Math.pow(0.92, frames);
+		bobX *= decay;
+		bobY *= decay;
+	}
+
+	inline function stunnedLock() return false;
+
+	// ---------------------------------------------------------------- fisica (Hero.doMove)
+
+	function doMove( dt : Float, speed : Float, strafe : Float, useJetpack : Bool ) {
+		if( stun > 0 ) stun -= dt;
+
+		var waterBlock = world.block(Math.floor(px), Math.floor(py), Std.int(pz + 0.1));
+		if( waterBlock != null && !waterBlock.hasFlag(BFLiquid) ) waterBlock = null;
+		if( waterBlock != null && waterBlock.k == BMarsQuickSand ) {
+			dt *= 0.3;
+			speed *= 0.6;
+			strafe *= 0.6;
 		}
 
-		var cy = Math.cos(yaw), sy = Math.sin(yaw);
-		if( fly ) {
-			var speed = run ? 36 : 14;
-			var cp = Math.cos(pitch), sp = Math.sin(pitch);
-			moveAxis((cy * cp * fwd - sy * side) * speed * dt, 0, 0);
-			moveAxis(0, (sy * cp * fwd + cy * side) * speed * dt, 0);
-			moveAxis(0, 0, (sp * fwd + (jump ? 1 : 0) - (down ? 1 : 0)) * speed * dt);
-		} else {
-			var speed = run ? 9 : 5.5;
-			var len = Math.sqrt(fwd * fwd + side * side);
-			if( len > 1 ) {
-				fwd /= len;
-				side /= len;
-			}
-			if( jump && onGround ) {
-				vz = 8.5;
-				onGround = false;
-			}
-			vz -= 28 * dt;
-			if( vz < -60 ) vz = -60;
-			moveAxis((cy * fwd - sy * side) * speed * dt, 0, 0);
-			moveAxis(0, (sy * fwd + cy * side) * speed * dt, 0);
-			var hitZ = moveAxis(0, 0, vz * dt);
-			onGround = hitZ && vz < 0;
-			if( hitZ ) vz = 0;
+		swimming = inWater();
+
+		pz -= gravity * dt;
+
+		// angulo con el desplazamiento lateral
+		var a = yaw;
+		if( speed != 0 || strafe != 0 ) {
+			var s = Math.sqrt(speed * speed + strafe * strafe);
+			a += Math.atan2(strafe / s, speed / s);
+			speed = s;
 		}
+
+		// puntos de los pies
+		var fx = new Array<Float>(), fy = new Array<Float>();
+		for( da in [0., Math.PI * 2 / 3, -Math.PI * 2 / 3] ) {
+			fx.push(px + Math.cos(a + da) * 0.1);
+			fy.push(py + Math.sin(a + da) * 0.1);
+		}
+
+		// colision de pies
+		var col = false;
+		for( i in 0...3 )
+			if( collide(fx[i], fy[i], pz - 0.01) ) {
+				col = true;
+				break;
+			}
+
+		// colision de cabeza
+		if( gravity < 0 && !col ) {
+			var d = VIEW_Z + 0.13;
+			var recal = 0.;
+			for( i in 0...3 )
+				while( recal < 0.5 && collide(fx[i], fy[i], pz + d) ) {
+					pz -= 0.01;
+					recal += 0.01;
+				}
+			if( recal > 0 && recal < 0.5 ) gravity = 0;
+		}
+
+		if( useJetpack && swimming ) {
+			if( gravity > -0.1 ) gravity -= 0.03 * dt;
+			useJetpack = false;
+		}
+
+		var jconsume = 0.02;
+		if( !col ) {
+			standingBlock = null;
+			if( useJetpack ) {
+				if( jetpack > 0 ) {
+					thrusting = true;
+					jetpack -= jconsume * dt;
+					if( gravity > -0.05 )
+						gravity += -(0.025 / Math.pow(1 + Math.abs(gravity), 2)) * dt; // cayendo
+					else
+						gravity += -0.005 * dt; // subiendo
+				}
+			} else {
+				if( swimming ) jetpack += jconsume * 0.7 * dt;
+				else jetpack += jconsume * 0.2 * dt;
+			}
+			if( swimming ) {
+				gravity += 0.005 * dt;
+				if( gravity > 0.07 ) gravity *= Math.pow(0.95, dt);
+			} else {
+				gravity += 0.014 * dt;
+				if( gravity > maxGravity ) gravity = maxGravity;
+			}
+		} else {
+			// recolocar los pies sobre el suelo (resolucion de 1/32)
+			if( gravity >= 0 ) {
+				var h = Std.int(pz * 32) / 32;
+				while( true ) {
+					var found = false;
+					for( i in 0...3 )
+						if( collide(fx[i], fy[i], h) ) {
+							found = true;
+							break;
+						}
+					if( !found ) break;
+					h += 1 / 32;
+				}
+				pz = h;
+			}
+			if( jetpack < 1 ) jetpack += jconsume * 7 * dt;
+			var feet : Block;
+			if( collide(px, py, pz - 0.02) )
+				feet = world.block(Math.floor(px), Math.floor(py), Std.int(pz - 0.02));
+			else
+				feet = null;
+			if( feet == null )
+				for( i in 0...3 )
+					if( collide(fx[i], fy[i], pz - 0.02) ) {
+						feet = world.block(Math.floor(fx[i]), Math.floor(fy[i]), Std.int(pz - 0.02));
+						break;
+					}
+			if( feet != standingBlock ) standingBlock = feet;
+			if( gravity > 0 ) {
+				pushPower = 0;
+				if( jetpack < 1 ) jetpack += 0.3;
+				else if( gravity >= 0.25 ) bobY = 15; // aterrizaje fuerte
+				else bobY = 5;
+				gravity = 0;
+			}
+			if( useJetpack && stun <= 0 ) gravity = -0.23; // salto
+		}
+
+		if( jetpack > 1 ) jetpack = 1;
+
+		// movimiento
+		var dist = speed * dt;
+		var ox = px, oy = py;
+
+		if( standingBlock != null )
+			for( f in standingBlock.flags )
+				switch( f ) {
+				case BFJump(p):
+					if( gravity >= 0 ) gravity = -p;
+				default:
+				}
+
+		if( standingBlock != null && standingBlock.hasFlag(BFSlippy) ) {
+			var p = Math.pow(0.96, dt);
+			dist *= 0.005;
+			oldSpeedX *= p;
+			oldSpeedY *= p;
+			oldSpeedX += dist * Math.cos(a);
+			oldSpeedY += dist * Math.sin(a);
+			dist = Math.sqrt(oldSpeedX * oldSpeedX + oldSpeedY * oldSpeedY);
+			a = Math.atan2(oldSpeedY, oldSpeedX);
+		} else {
+			oldSpeedX = dist * Math.cos(a);
+			oldSpeedY = dist * Math.sin(a);
+		}
+		px += oldSpeedX;
+		py += oldSpeedY;
+
+		// permitir pequenas correcciones
+		if( dist == 0 ) dist = 0.01;
+
+		// recolocar contra las paredes
+		var old = pushPower;
+		var dzs = swimming ? [0., 0.5, 0.9] : (walkingSlow ? [-0.2, 0., 0.5, 1., 1.3] : [0., 0.5, 1., 1.3]);
+		for( dz in dzs ) {
+			var qz = pz + dz;
+			var recal = 20;
+			while( --recal > 0 ) {
+				var r = false;
+				for( k in 0...16 ) {
+					var a2 = a + ((k & 1) * 2 - 0.99) * (k >> 1) * Math.PI / 8;
+					var px2 = px + Math.cos(a2) * 0.45, py2 = py + Math.sin(a2) * 0.45;
+					if( collide(px2, py2, qz) == (dz < 0) ) continue;
+					px -= Math.cos(a2) * dist / 20;
+					py -= Math.sin(a2) * dist / 20;
+					pushPower += dist / 20;
+					r = true;
+				}
+				if( !r ) break;
+			}
+		}
+
+		ox -= px;
+		oy -= py;
+		dist = Math.sqrt(ox * ox + oy * oy);
+
 		px = clampPos(px);
 		py = clampPos(py);
+
+		if( walkingSlow || pushPower == old || dist > speed * dt * 0.5 ) pushPower = 0;
 	}
+
+	// ---------------------------------------------------------------- camara
 
 	public function updateCamera() {
 		var cp = Math.cos(pitch);
 		var c = s3d.camera;
-		var ez = pz + EYE;
+		var ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
 		c.fovY = Settings.fov;
 		c.zNear = 0.1;
 		c.zFar = 1500;

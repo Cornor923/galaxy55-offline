@@ -8,8 +8,12 @@ en la rama `port-hashlink`; el juego original en Flash sigue intacto en `src/`, 
 Doble clic en `jugar.bat`. Abre el menú de inicio: Continuar, Nueva partida, Cargar partida, Opciones y Salir.
 Las partidas y los ajustes se guardan en `%APPDATA%\Galaxy55\` (se puede cambiar con la variable `GALAXY55_DATA`).
 
-Controles: WASD mover, ratón mirar, Espacio saltar, Shift correr, F alternar vuelo, Esc pausa, F5 guardado rápido.
-Mando: sticks para moverte y mirar, A salta, Y vuelo, Start pausa. Menús: flechas/Intro/Esc, ratón o mando.
+Controles (los del juego original; el movimiento y la fisica son una copia de ent/Hero.hx y Game.moveHero):
+W/Z/flecha arriba avanzar, S/flecha abajo retroceder, A/D y flechas desplazarse de lado, ratón mirar,
+Espacio o Ctrl saltar y, en el aire, jetpack (gasta combustible y se recarga en el suelo), X caminar despacio,
+H quitar o poner el casco, Esc pausa, F5 guardado rápido. No hay botón de correr, como en el original.
+Mando: palanca izquierda mueve, derecha mira, A salta y jetpack, B camina despacio, Back casco, Start pausa.
+Menús: flechas/Intro/Esc, ratón o mando.
 
 ## Compilar
 

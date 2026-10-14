@@ -103,6 +103,18 @@ class GalaxyApp extends hxd.App {
 	var bar : h2d.Graphics;
 	var barText : h2d.Text;
 	var hud : h2d.Text;
+	var jetGlow : h2d.Bitmap;
+	var jetBar : h2d.Graphics;
+
+	// casco (Game.hudOn, render.hud[H_HELMET]): posicion en pixeles de la imagen de 1024x1024
+	var helmet : h2d.Bitmap;
+	var helmetOn = true;
+	var helmetX = -20.;
+	var helmetY = -190.;
+	var helmetSeq = new Array<{ wait : Bool, to : Float, dur : Float, easeIn : Bool }>();
+	var helmetT = 0.;
+	var helmetFrom = 0.;
+	var helmetOnDone : Void -> Void;
 	var toast : h2d.Text;
 	var toastTime = 0.;
 	var orbit = 0.;
@@ -158,6 +170,18 @@ class GalaxyApp extends hxd.App {
 		dim = new h2d.Bitmap(h2d.Tile.fromColor(0x000000, W, H, 0.0), s2d);
 		snow = new Snow(s2d, W, H);
 		ui = new h2d.Object(s2d);
+		// brillo del jetpack (hud_jetpack.png del original) y barra de combustible
+		var ht = hxd.res.Any.fromBytes("hud.png", sys.io.File.getBytes("src/G55/fla/client/gfx/hud.png")).toTile();
+		helmet = new h2d.Bitmap(ht, s2d);
+		helmet.visible = false;
+		var jt = hxd.res.Any.fromBytes("hud_jetpack.png", sys.io.File.getBytes("src/G55/fla/client/gfx/hud_jetpack.png")).toTile();
+		jetGlow = new h2d.Bitmap(jt, s2d);
+		jetGlow.visible = false;
+		jetBar = new h2d.Graphics(s2d);
+		jetBar.x = Std.int(W * 0.5 - 175);
+		jetBar.y = H - 25;
+		jetBar.alpha = 0.9;
+		jetBar.visible = false;
 		hud = Theme.text(s2d, "", 1.8, 0xFFFFFF, 14, 10);
 		hud.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
 		hud.visible = false;
@@ -553,6 +577,7 @@ class GalaxyApp extends hxd.App {
 
 	function captureMouse( on : Bool ) {
 		captured = on;
+		if( game != null ) game.mouseLook = on;
 		hxd.Window.getInstance().mouseMode = on ? Relative(onMouse, true) : Absolute;
 	}
 
@@ -593,6 +618,94 @@ class GalaxyApp extends hxd.App {
 		if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
 	}
 
+	/** Quitar o poner el casco (tecla H), con las mismas animaciones que Game.update del original. */
+	function toggleHelmet() {
+		if( helmetSeq.length > 0 ) return;
+		if( helmetOn ) {
+			helmetOn = false;
+			helmetSeq = [{ wait : false, to : -210, dur : 0.1, easeIn : false }, { wait : true, to : 0, dur : 0.3, easeIn : false }, { wait : false, to : -1024, dur : 0.7, easeIn : true }];
+			helmetOnDone = function() helmet.visible = false;
+		} else {
+			helmet.visible = true;
+			helmetSeq = [{ wait : false, to : -250, dur : 0.5, easeIn : true }, { wait : true, to : 0, dur : 0.1, easeIn : false }, { wait : false, to : -190, dur : 0.8, easeIn : true }];
+			helmetOnDone = function() helmetOn = true;
+		}
+		helmetT = 0;
+		helmetFrom = helmetY;
+	}
+
+	function updateHelmet( dt : Float, p : GameView ) {
+		if( helmetSeq.length > 0 ) {
+			var s = helmetSeq[0];
+			helmetT += dt;
+			if( s.wait ) {
+				if( helmetT >= s.dur ) {
+					helmetSeq.shift();
+					helmetT = 0;
+					helmetFrom = helmetY;
+				}
+			} else {
+				var f = Math.min(1, helmetT / s.dur);
+				var e = s.easeIn ? f * f : 1 - (1 - f) * (1 - f);
+				helmetY = helmetFrom + (s.to - helmetFrom) * e;
+				if( f >= 1 ) {
+					helmetSeq.shift();
+					helmetT = 0;
+					helmetFrom = helmetY;
+				}
+			}
+			if( helmetSeq.length == 0 && helmetOnDone != null ) {
+				var f = helmetOnDone;
+				helmetOnDone = null;
+				f();
+			}
+		}
+		// casco puesto: sigue el vaiven de la camara
+		if( helmetOn && helmetSeq.length == 0 ) {
+			helmetX = -20 + p.bobX;
+			helmetY = -190 + Math.cos(p.walkBobbing) * 2 + p.bobY;
+		}
+	}
+
+	/** Coloca el casco y el brillo del jetpack cubriendo toda la ventana (escala del original: ancho/974, alto/624). */
+	function layoutHelmet() {
+		var ww = engine.width, wh = engine.height;
+		var scale = Math.min(ww / W, wh / H);
+		var visW = ww / scale, visH = wh / scale;
+		var offX = (W - visW) * 0.5, offY = (H - visH) * 0.5;
+		var sx = visW / 974, sy = visH / 624;
+		for( b in [helmet, jetGlow] ) {
+			b.scaleX = sx;
+			b.scaleY = sy;
+			b.x = offX + helmetX * sx;
+			b.y = offY + helmetY * sy;
+		}
+		jetBar.setScale(1 / scale);
+		jetBar.x = offX + (visW - 350 / scale) * 0.5;
+		jetBar.y = offY + visH - 25 / scale;
+	}
+
+	/** Barra de combustible y brillo del jetpack, como Interface.updateJetpack y el HUD del original. */
+	function updateJetHud( p : GameView ) {
+		var ratio = 1 - p.jetpack;
+		if( ratio <= 0 ) {
+			jetBar.visible = false;
+		} else {
+			if( ratio > 1 ) ratio = 1;
+			jetBar.visible = true;
+			jetBar.clear();
+			jetBar.beginFill(0x000000, 0.3);
+			jetBar.drawRect(0, 0, 350, 4);
+			var col = ratio >= 0.8 ? 0xFD5C17 : (ratio >= 0.6 ? 0xFFA428 : 0xFFD900);
+			jetBar.beginFill(col, 1);
+			jetBar.drawRect(0, 0, ratio * 350, 4);
+			jetBar.endFill();
+		}
+		// el brillo solo se ve con el casco puesto (Hero.hx: if game.hudOn)
+		jetGlow.visible = p.thrusting && helmetOn;
+		if( jetGlow.visible ) jetGlow.alpha = 0.3 + Math.random() * 0.7;
+	}
+
 	function showToast( msg : String ) {
 		toast.text = msg;
 		toast.x = (W - toast.textWidth * toast.scaleX) * 0.5;
@@ -619,6 +732,18 @@ class GalaxyApp extends hxd.App {
 	override function update( dt : Float ) {
 		frames++;
 		if( dt > 0.1 ) dt = 0.1;
+		if( state != Playing ) {
+			jetBar.visible = false;
+			jetGlow.visible = false;
+		}
+		// el casco se ve jugando y en pausa; en los menus no
+		if( game == null || (state != Playing && state != Paused) ) {
+			helmet.visible = false;
+			helmetOn = true;
+			helmetSeq = [];
+			helmetX = -20;
+			helmetY = -190;
+		}
 
 		// planeta de fondo del menu
 		if( state == Boot ) {
@@ -657,7 +782,12 @@ class GalaxyApp extends hxd.App {
 					saveGame(true);
 				}
 				var p = game;
-				hud.text = Lang.t(p.fly ? "mode.fly" : "mode.walk") + "   " + Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps\n" + Lang.t("hud.help");
+				hud.text = Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps\n" + Lang.t("hud.help");
+				if( K.isPressed(K.H) || (pad != null && pad.isPressed(pad.config.back)) ) toggleHelmet();
+				if( !helmet.visible && helmetOn ) helmet.visible = true;
+				updateHelmet(dt, p);
+				layoutHelmet();
+				updateJetHud(p);
 			}
 		} else if( state == Paused && game != null ) {
 			game.updateCamera();
@@ -884,11 +1014,87 @@ class GalaxyApp extends hxd.App {
 
 	var shotStage = 0;
 
+	/** Prueba numerica de la fisica: reposo, salto, jetpack, caida libre y caminata (1 fotograma = tmod 1). */
+	function physTest() {
+		var g = game;
+		function run( n : Int, speed : Float, strafe : Float, jet : Bool ) {
+			for( i in 0...n ) g.stepPhysics(1.0, speed, strafe, jet);
+		}
+		function f( v : Float ) return "" + Math.round(v * 1000) / 1000;
+		run(80, 0, 0, false);
+		var z0 = g.pz;
+		Sys.println("reposo: z=" + f(z0) + " gravedad=" + f(g.gravity) + " combustible=" + f(g.jetpack) + " enSuelo=" + g.onGround());
+
+		// salto: una pulsacion de un fotograma
+		g.stepPhysics(1.0, 0, 0, true);
+		var zmax = g.pz, frames = 1;
+		for( i in 0...120 ) {
+			g.stepPhysics(1.0, 0, 0, false);
+			if( g.pz > zmax ) zmax = g.pz;
+			frames++;
+			if( g.onGround() ) break;
+		}
+		Sys.println("salto simple: altura maxima=" + f(zmax - z0) + " bloques, duracion=" + frames + " fotogramas (" + f(frames / 32) + " s). Formula 0.23^2/(2*0.014)=" + f(0.23 * 0.23 / (2 * 0.014)));
+
+		// jetpack: espacio mantenido 90 fotogramas
+		run(40, 0, 0, false);
+		z0 = g.pz;
+		var fuel0 = g.jetpack;
+		zmax = z0;
+		var fuelEnd = 0., tEmpty = -1;
+		for( i in 0...90 ) {
+			g.stepPhysics(1.0, 0, 0, true);
+			if( g.pz > zmax ) zmax = g.pz;
+			if( tEmpty < 0 && g.jetpack <= 0 ) tEmpty = i;
+		}
+		fuelEnd = g.jetpack;
+		Sys.println("jetpack mantenido 90 fotogramas: altura maxima=" + f(zmax - z0) + " combustible " + f(fuel0) + " -> " + f(fuelEnd) + (tEmpty >= 0 ? ", se agota en el fotograma " + tEmpty : ""));
+		// caer
+		var maxG = 0., n = 0;
+		while( !g.onGround() && n < 600 ) {
+			g.stepPhysics(1.0, 0, 0, false);
+			if( g.gravity > maxG ) maxG = g.gravity;
+			n++;
+		}
+		Sys.println("aterriza tras " + n + " fotogramas, gravedad maxima alcanzada=" + f(maxG));
+
+		// caida libre desde 25 bloques
+		run(40, 0, 0, false);
+		var zs = g.pz;
+		g.pz += 25;
+		g.gravity = 0;
+		g.standingBlock = null;
+		maxG = 0;
+		n = 0;
+		while( !g.onGround() && n < 600 ) {
+			g.stepPhysics(1.0, 0, 0, false);
+			if( g.gravity > maxG ) maxG = g.gravity;
+			n++;
+		}
+		Sys.println("caida de 25 bloques: " + n + " fotogramas (" + f(n / 32) + " s), gravedad maxima=" + f(maxG) + " (tope 0.9), aterriza en z=" + f(g.pz) + " (suelo " + f(zs) + ")");
+
+		// caminar: 32 fotogramas = 1 segundo, hacia una direccion libre
+		var bestDist = -1., bestMode = "";
+		for( mode in ["normal", "despacio"] ) {
+			run(30, 0, 0, false);
+			var x0 = g.px, y0 = g.py;
+			var sp = mode == "normal" ? 0.15 : 0.15 * 0.4;
+			run(32, sp, 0, false);
+			var d = Math.sqrt((g.px - x0) * (g.px - x0) + (g.py - y0) * (g.py - y0));
+			Sys.println("caminar " + mode + " 1 s: recorre " + f(d) + " bloques (esperado " + f(sp * 32) + " si no hay obstaculos)");
+		}
+		// no atraviesa paredes: empuja 200 fotogramas contra lo que haya delante
+		var x1 = g.px, y1 = g.py;
+		run(200, 0.15, 0, false);
+		var tot = Math.sqrt((g.px - x1) * (g.px - x1) + (g.py - y1) * (g.py - y1));
+		Sys.println("200 fotogramas hacia delante: recorre " + f(tot) + " bloques (sin atravesar el terreno: z=" + f(g.pz) + ")");
+	}
+
 	function testShot() {
 		if( shotPath == null ) return;
 		// menus: esperar a que el planeta de fondo este listo y sacar la captura
 		if( state == Menu && shotStage == 0 && frames > shotFrames ) {
-			if( shotScreen == "game" || shotScreen == "pause" ) {
+			if( shotScreen == "game" || shotScreen == "pause" || shotScreen == "phys" || shotScreen == "jet" ) {
 				shotStage = 1;
 				var info = SaveData.create("Prueba", 1234, shotBiome != null ? shotBiome : "BIAutumn", 1);
 				startGame(info);
@@ -898,6 +1104,15 @@ class GalaxyApp extends hxd.App {
 		}
 		if( state == Playing && shotStage == 1 ) {
 			shotStage = 2;
+			if( shotScreen == "phys" ) {
+				physTest();
+				Sys.exit(0);
+			}
+			if( shotScreen == "jet" ) {
+				game.debugJet = true;
+				shotFrames = frames + 45;
+				return;
+			}
 			if( shotScreen == "pause" ) {
 				pause();
 				shotFrames = frames + 6;

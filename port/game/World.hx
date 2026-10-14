@@ -117,6 +117,25 @@ class World {
 		return id != 0 && !gen.btrans[id];
 	}
 
+	/** bloque en una celda (null si es aire) */
+	public function block( x : Int, y : Int, z : Int ) : Block {
+		var id = voxel(x, y, z);
+		return id <= 0 ? null : gen.blocks[id];
+	}
+
+	/** Igual que Level.collide del original: consulta de un punto, con la caja de los bloques parciales. */
+	public function collidePoint( x : Float, y : Float, z : Float ) : Bool {
+		var ix = Math.floor(x), iy = Math.floor(y), iz = Std.int(z);
+		if( z < 0 || iz >= HEIGHT ) return false;
+		var id = voxel(ix, iy, iz);
+		if( id == 0 ) return false;
+		var b = gen.blocks[id];
+		if( b == null || !b.collide ) return false;
+		if( b.size == null ) return true;
+		var fz = z - iz;
+		return fz >= b.size.z1 && fz < b.size.z2;
+	}
+
 	/** altura de la superficie mas alta con colision (incluye copas de arboles) */
 	public function topCollide( x : Int, y : Int ) : Int {
 		var z = HEIGHT - 1;
