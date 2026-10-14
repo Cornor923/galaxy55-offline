@@ -115,6 +115,7 @@ class World {
 	public function step( budgetMs : Float ) : Float {
 		var t0 = haxe.Timer.stamp();
 		if( phase == 0 && isShip ) {
+			applySaved();
 			computeLight();
 			phase = 1;
 			return progress = 0.75;

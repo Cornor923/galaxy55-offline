@@ -1282,6 +1282,8 @@ class GalaxyApp extends hxd.App {
 								out.push(b.k + "/" + b.type + "@" + dx + "," + dy + "," + dz);
 						}
 				Sys.println("cerca: " + out.join("  "));
+				var zs = [for( c in game.ship.crafts ) "x=" + (c.x + w.shipDX) + ".." + (c.x + c.w - 1 + w.shipDX) + " y=" + (c.y + w.shipDY) + ".." + (c.y + c.h - 1 + w.shipDY) + " z=" + (c.z + World.SHIP_Z) + " alto=" + c.zSize];
+				Sys.println("zonas de sintetizador: " + zs.join("  |  "));
 			}
 			if( shotScreen == "mine" || shotScreen == "place" ) {
 				if( Sys.args().indexOf("--save") >= 0 ) saveGame(false);

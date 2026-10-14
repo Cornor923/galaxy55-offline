@@ -106,7 +106,7 @@ class GameView {
 			}
 		drops = new Drops(world, atlas);
 		fx = new Fx(world, atlas);
-		ship = new Ship(world, atlas, s3d);
+		ship = new Ship(world, atlas, s3d, info.shipEdits);
 		if( info.px < 0 ) {
 			// partida nueva: se empieza dentro de la nave, encima del teletransportador
 			gotoShip(true);
@@ -131,6 +131,7 @@ class GameView {
 		info.playSeconds = playSeconds;
 		info.inv = Inv.copy(inv.inv);
 		info.edits = world.editsFlat();
+		info.shipEdits = ship.world.editsFlat();
 		return info;
 	}
 
@@ -594,7 +595,7 @@ class GameView {
 	 * Primer bloque que toca el rayo del centro de la pantalla (alcance 7). Igual que Render.pick del original, la altura
 	 * se corrige con la curvatura del planeta (z + r2 * curve), porque lo que se ve esta curvado.
 	 */
-	function pick() : Select {
+	function pick( hand : Block ) : Select {
 		var cp = Math.cos(pitch);
 		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
 		var ex = px, ey = py, ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
@@ -612,7 +613,11 @@ class GameView {
 				if( !have || iz < 1 ) return null;
 				if( iz >= World.SHIP_Z ) {
 					// en la nave solo se puede apuntar a lo que se activa (puertas, ordenador); el casco no se toca (ShipLogic.checkSelect)
-					if( b.activable == null && b.toggle == null ) return null;
+					if( hand == null ) {
+						// mano vacia: se apunta a lo que se activa o a lo que se puso en una zona de sintetizador
+						if( b.activable == null && b.toggle == null && !ship.inCraft(ix, iy, iz) ) return null;
+					} else if( !ship.inCraft(lx, ly, lz) )
+						return null; // con un bloque en la mano solo se puede poner dentro de esas zonas
 				} else if( iz >= World.HEIGHT - 1 )
 					return null;
 				return { x : wrapI(ix), y : wrapI(iy), z : iz, b : b, tx : wrapI(lx), ty : wrapI(ly), tz : lz, hx : x, hy : y, hz : z, power : 0. };
@@ -662,7 +667,7 @@ class GameView {
 
 		// seleccion (Game.update: no se puede apuntar a la propia celda ni a la de encima)
 		var prev = select;
-		var s = controls || select != null || debugAction ? pick() : null;
+		var s = controls || select != null || debugAction ? pick(hand) : null;
 		if( s != null ) {
 			var cx = hand == null ? s.x : s.tx, cy = hand == null ? s.y : s.ty, cz = hand == null ? s.z : s.tz;
 			if( cx == Std.int(px) && cy == Std.int(py) && (cz == Std.int(pz) || cz == Std.int(pz) + 1) ) s = null;
@@ -702,13 +707,15 @@ class GameView {
 			activatePending = s;
 			return;
 		}
+		// en una zona de sintetizador se excava x4 y sin necesitar cargas (ShipLogic.checkSelect)
+		var inCraft = s.z >= World.SHIP_Z && ship.inCraft(s.x, s.y, s.z);
 		var matter = b.matter;
 		var req = b.requiredPower != null ? b.requiredPower : matter.requiredPower;
 		if( req == null ) req = 1;
 		var instant = creative && req > 0;
-		var power = 1.0;
+		var power = inCraft ? 4.0 : 1.0;
 		laserCharge = null;
-		if( matter.quickBreaks != null )
+		if( !inCraft && matter.quickBreaks != null )
 			for( c in matter.quickBreaks )
 				if( inv.hasCharge(c.c) ) {
 					power *= c.v;
@@ -716,7 +723,7 @@ class GameView {
 					break;
 				}
 		if( creative ) laserCharge = null;
-		if( req > 0 && (!matter.hasProp(PRequireCharge) || laserCharge != null || creative) ) {
+		if( req > 0 && (!matter.hasProp(PRequireCharge) || laserCharge != null || creative || inCraft) ) {
 			canBreak = true;
 			if( actionPause > 0 ) {
 				if( s.power == 0 ) s.power = 1e-8;
@@ -738,7 +745,9 @@ class GameView {
 	function place( hand : Block ) {
 		var s = select;
 		var put = hand.getFlip(yaw);
-		if( s.tz >= World.SHIP_Z ) return; // el casco de la nave no se edita aqui (eso es el hangar)
+		// en la nave solo se coloca dentro de las zonas de sintetizador (el casco se edita en el hangar) y alli no hace falta apoyo
+		var inShip = s.tz >= World.SHIP_Z;
+		if( inShip && !ship.inCraft(s.tx, s.ty, s.tz) ) return;
 		var x = s.tx, y = s.ty, z = s.tz;
 		var ok = false;
 		var tmp : Block;
@@ -750,6 +759,7 @@ class GameView {
 			else if( (tmp = world.block(x, y - 1, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
 			else if( (tmp = world.block(x, y + 1, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
 		}
+		if( inShip ) ok = true; // select.ignoreMagnets del original
 		if( !ok || actionPause > 0 ) return;
 		actionPause = creative ? 6 : 15;
 		if( !creative && !inv.useCurrentBlock() ) return;

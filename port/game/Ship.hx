@@ -15,6 +15,21 @@ class Ship {
 	/** posicion del jugador al aparecer en la nave (encima del teletransportador), en coordenadas del planeta */
 	public var start(default, null) : { x : Int, y : Int, z : Int };
 	public var world(default, null) : World;
+	/** zonas de los sintetizadores: lo unico de la nave donde se pueden poner y quitar bloques */
+	public var crafts(default, null) : Array<ShipData.CraftArea>;
+
+	/** true si la posicion (en coordenadas del planeta) esta en la zona libre sobre una losa de ensamblaje (CraftPoint.inside) */
+	public function inCraft( wx : Int, wy : Int, wz : Int ) : Bool {
+		if( wz < World.SHIP_Z ) return false;
+		var s = planet.size;
+		var lx = (wx - planet.shipDX) % s, ly = (wy - planet.shipDY) % s;
+		if( lx < 0 ) lx += s;
+		if( ly < 0 ) ly += s;
+		var lz = wz - World.SHIP_Z;
+		for( c in crafts )
+			if( c.inside(lx, ly, lz) ) return true;
+		return false;
+	}
 
 	var planet : World;
 	var beam : h3d.scene.Mesh;
@@ -22,16 +37,17 @@ class Ship {
 	var time = 0.;
 	var needRecal = true;
 
-	public function new( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object ) {
+	public function new( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, ?edits : Array<Int> ) {
 		this.planet = planet;
 		var data = ShipData.load(Const.DEFAULT_SHIP);
+		crafts = data.crafts;
 		// el sitio de aterrizaje es fijo para cada planeta (misma semilla = mismo sitio), como en Game.placeShip
 		var p = planet.startPlace(new mt.Rand(planet.seed ^ 0x5A17));
 		x = p != null ? p.x : 14;
 		y = p != null ? p.y : 12;
 		start = { x : data.entry.x, y : data.entry.y, z : data.entry.z + 1 + World.SHIP_Z };
 		var dx = x - start.x, dy = y - start.y;
-		world = new World(planet.seed, planet.biomeName, 1, parent, atlas, false, null, data, planet.sky);
+		world = new World(planet.seed, planet.biomeName, 1, parent, atlas, false, edits, data, planet.sky);
 		var guard = 0;
 		while( !world.isReady() && guard++ < 1000 ) world.step(1000);
 		planet.ship = world;
