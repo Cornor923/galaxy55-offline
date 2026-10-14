@@ -1229,7 +1229,13 @@ class GalaxyApp extends hxd.App {
 			if( shotScreen == "mine" || shotScreen == "place" ) {
 				if( Sys.args().indexOf("--save") >= 0 ) saveGame(false);
 				var n = 0;
-				for( k in game.world.editMap.keys() ) n++;
+				var cells = [];
+				for( k in game.world.editMap.keys() ) {
+					n++;
+					var col = k >> 7;
+					cells.push((col % game.world.size) + "," + Std.int(col / game.world.size) + "," + (k & 127));
+				}
+				if( cells.length > 0 ) Sys.println("celdas: " + cells.join("  "));
 				var items = [for( s in game.inv.inv.t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n];
 				Sys.println("ediciones: " + n + "  inventario: " + items.join(" ") + "  select: " + (game.select == null ? "ninguno" : game.select.b.k + " poder=" + game.select.power));
 			}

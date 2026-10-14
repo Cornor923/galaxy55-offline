@@ -129,7 +129,8 @@ class Icons {
 	public static function get( b : Block, atlas : h3d.mat.Texture ) : h2d.Tile {
 		var t = cache.get(b.index);
 		if( t != null ) return t;
-		var poly = IconMesh.polygon(b, false);
+		// los bloques translucidos dibujan sus 6 caras: se ve a traves el cubo entero
+		var poly = IconMesh.polygon(b, b.type == BTAlpha);
 		var tex = new h3d.mat.Texture(SIZE, SIZE, [Target]);
 		tex.filter = Linear;
 		if( poly != null ) {
@@ -140,8 +141,13 @@ class Icons {
 			mat.mainPass.enableLights = false;
 			mat.mainPass.culling = None;
 			mat.mainPass.addShader(new h3d.shader.VertexColor());
-			mat.textureShader.killAlpha = true;
-			mat.textureShader.killAlphaThreshold = 0.5;
+			if( b.type == BTAlpha || b.type == BTWater ) {
+				// cristal, hielo, agua: se ven translucidos, no solo sus marcos (el original los dibuja con alfa)
+				mat.blendMode = Alpha;
+			} else {
+				mat.textureShader.killAlpha = true;
+				mat.textureShader.killAlphaThreshold = 0.5;
+			}
 			var mesh = new h3d.scene.Mesh(poly, mat, scene);
 			var cam = scene.camera;
 			// vista isometrica aproximada: perspectiva con angulo muy estrecho, desde +x, -y y arriba

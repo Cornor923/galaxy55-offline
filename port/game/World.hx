@@ -726,6 +726,22 @@ class World {
 			mat.mainPass.depthWrite = false;
 			mat.mainPass.setPassName("alpha");
 		}
+		if( kind == 3 ) {
+			// pasada opaca de los pixeles solidos (marcos del cristal, bordes del hielo): escribe profundidad, asi las caras lejanas
+			// no se pintan encima de las cercanas (la pasada translucida no puede ordenar triangulos)
+			var cut = h3d.mat.Material.create(atlas);
+			cut.shadows = false;
+			cut.mainPass.enableLights = false;
+			cut.mainPass.culling = None;
+			cut.mainPass.addShader(new h3d.shader.VertexColor());
+			cut.mainPass.addShader(sky.fog);
+			cut.textureShader.killAlpha = true;
+			cut.textureShader.killAlphaThreshold = 0.9;
+			meshes.push(new h3d.scene.Mesh(poly, cut, root));
+			if( curList != null ) curList.push(meshes.length - 1);
+			meshCx.push(curCx);
+			meshCy.push(curCy);
+		}
 		meshes.push(new h3d.scene.Mesh(poly, mat, root));
 		if( curList != null ) curList.push(meshes.length - 1);
 		meshCx.push(curCx);
