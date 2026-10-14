@@ -247,7 +247,7 @@ class RenderMain extends hxd.App {
 	}
 
 	function onMouse( e : hxd.Event ) {
-		yaw -= e.relX * 0.0025;
+		yaw += e.relX * 0.0025;
 		pitch -= e.relY * 0.0025;
 		if( pitch > 1.5 ) pitch = 1.5;
 		if( pitch < -1.5 ) pitch = -1.5;
@@ -290,7 +290,7 @@ class RenderMain extends hxd.App {
 			var lx = pad.xAxis, ly = pad.yAxis, rx = pad.rxAxis, ry = pad.ryAxis;
 			if( Math.abs(lx) > dead ) side += lx;
 			if( Math.abs(ly) > dead ) fwd -= ly;
-			if( Math.abs(rx) > dead ) yaw -= rx * 2.5 * dt;
+			if( Math.abs(rx) > dead ) yaw += rx * 2.5 * dt;
 			if( Math.abs(ry) > dead ) pitch -= ry * 2.0 * dt;
 			if( pad.isDown(pad.config.A) ) jump = true;
 			if( pad.isDown(pad.config.LB) ) down = true;
@@ -306,8 +306,8 @@ class RenderMain extends hxd.App {
 		if( fly ) {
 			speed = run ? 36 : 14;
 			var cp = Math.cos(pitch), sp = Math.sin(pitch);
-			dx = (cy * cp * fwd + sy * side) * speed * dt;
-			dy = (sy * cp * fwd - cy * side) * speed * dt;
+			dx = (cy * cp * fwd - sy * side) * speed * dt;
+			dy = (sy * cp * fwd + cy * side) * speed * dt;
 			var dz = (sp * fwd + (jump ? 1 : 0) - (down ? 1 : 0)) * speed * dt;
 			moveAxis(dx, 0, 0);
 			moveAxis(0, dy, 0);
@@ -316,8 +316,8 @@ class RenderMain extends hxd.App {
 			speed = run ? 9 : 5.5;
 			var len = Math.sqrt(fwd * fwd + side * side);
 			if( len > 1 ) { fwd /= len; side /= len; }
-			dx = (cy * fwd + sy * side) * speed * dt;
-			dy = (sy * fwd - cy * side) * speed * dt;
+			dx = (cy * fwd - sy * side) * speed * dt;
+			dy = (sy * fwd + cy * side) * speed * dt;
 			if( jump && onGround ) {
 				vz = 8.5;
 				onGround = false;
