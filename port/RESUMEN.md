@@ -51,14 +51,21 @@ Trabajo en la rama `port-hashlink` (commits locales, nada subido). `main` conser
 | Movimiento inventado (Shift, vuelo) | no existía en el original | copia fiel de `Hero.doMove`/`moveHero`; correr y vuelo eliminados |
 | Filtro de seguridad bloquea comandos | falso positivo de "Remove-Item" | usar las herramientas Edit/Write y evitar `//` en comandos PowerShell |
 
-## Pendiente (por orden sugerido)
-1. Romper y colocar bloques (el guardado aún no tiene terreno modificado que guardar).
-2. Modelos: plantas, enredaderas, cristales, lámparas (hoy se omiten; los `.bae` están sin leer).
-3. Sonido, daño por caída, vida y oxígeno, bordes del planeta que dan la vuelta.
-4. Inventario, tienda, nave, ordenador de a bordo.
-5. Biomas Shed y Ciudad Muerta (Shed se cuelga con algunas semillas también en el original).
-6. Decidir SDL (actual) o DirectX; empaquetar como instalable; multijugador y Steam.
-7. Cuando el usuario lo apruebe: fusionar `port-hashlink` en `main` ("hacerlo oficial").
+## Pendiente (por orden)
+1. **Nave** (lo que toca ahora): aparecer en ella, caminar por dentro, salir al planeta por el teletransportador, ordenador de a bordo
+   (menú: despegar / modificar la nave / comerciar). Código original: `ShipLogic.hx`, `Game.hx` (ship, openComputerMenu, shop), `Mode.hx`. Puertas: `door.md` (binario).
+2. **Hangar** (`EditShip.hx`, `net/EditShip.hx`): editar los bloques de la nave y validarla (hermética, motores, ordenador, teletransportador...).
+3. **Explorador / mapa de estrellas** (`fla/explore`, `Manager.hx` + `Room.hx`): sectores, sistemas solares y planetas.
+4. Después, ideas guardadas por el usuario (no empezar antes de 1-3):
+   - **Agua que se mueve**: primero el flujo del original (`Process.hx`: inundación del mar con `updateFlood`, líquidos con `BFPropagate`
+     como cascada y lava, cubrir/descubrir hierba, plantas que se rompen al quitar el suelo; hay que portar `Process.onSet` entero),
+     luego niveles de altura al estilo Minecraft (cada paso lateral baja la altura de la superficie; la columna que cae va llena)
+     y una textura de agua animada.
+   - **Opción de calidad** (distancia de dibujado, caras de las hojas) para PC lentas; el valor por defecto sigue siendo la mejor calidad.
+   - Vida, daño, curación, oxígeno y lava; bloques activables, cofres, `BFTransform`; sonido; partículas al romper; planeta Shed y Ciudad muerta completos.
+5. Decidir SDL (actual) o DirectX; empaquetar como instalable; multijugador y Steam.
+6. Cuando el usuario lo apruebe: fusionar `port-hashlink` en `main` ("hacerlo oficial").
+
 
 ## Cómo retomar
     . C:\Users\Usuario\Desktop\Claude\tools-portable\env.ps1     (Haxe 4.3.7, HashLink 1.16, Neko)
