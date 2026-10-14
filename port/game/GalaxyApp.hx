@@ -1226,6 +1226,19 @@ class GalaxyApp extends hxd.App {
 				shotFrames = frames + 6;
 		}
 		if( shotStage == 2 && frames > shotFrames && (state == Playing || state == Paused) ) {
+			if( Sys.args().indexOf("--listnear") >= 0 ) {
+				// solo pruebas: bloques no cubicos a menos de 10 bloques del jugador
+				var w = game.world;
+				var out = [];
+				for( dz in -6...7 )
+					for( dy in -10...11 )
+						for( dx in -10...11 ) {
+							var b = w.block(Std.int(game.px) + dx, Std.int(game.py) + dy, Std.int(game.pz) + dz);
+							if( b != null && b.type != BTFull && b.type != BTTransp && b.type != BTWater && b.type != BTModel2Side )
+								out.push(b.k + "/" + b.type + "@" + dx + "," + dy + "," + dz);
+						}
+				Sys.println("cerca: " + out.join("  "));
+			}
 			if( shotScreen == "mine" || shotScreen == "place" ) {
 				if( Sys.args().indexOf("--save") >= 0 ) saveGame(false);
 				var n = 0;

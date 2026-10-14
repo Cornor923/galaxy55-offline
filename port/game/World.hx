@@ -610,6 +610,8 @@ class World {
 	// ---------------------------------------------------------------- mallado
 
 	var shv = [0., 0., 0., 0.];
+	var redFace = -1;
+	var redB : Array<Float>;
 
 	function addQuad( m : MeshBuf, p : Array<Float>, tile : Int, shade : Float ) {
 		shv[0] = shv[1] = shv[2] = shv[3] = shade;
@@ -655,10 +657,28 @@ class World {
 		m.pts.push(new h3d.col.Point(p[3], p[4], p[5]));
 		m.pts.push(new h3d.col.Point(p[6], p[7], p[8]));
 		m.pts.push(new h3d.col.Point(p[9], p[10], p[11]));
+		if( redFace >= 0 ) {
+			// bloque parcial (BTReduced): como Builder.addCustomQuad, la cara muestra un RECORTE de la casilla del tamano de la cara
+			// (en bloques), desde su esquina superior izquierda, en vez de la casilla entera estirada
+			for( k in 0...4 ) {
+				var px = p[k * 3], py = p[k * 3 + 1], pz = p[k * 3 + 2];
+				var u : Float, v : Float;
+				switch( redFace ) {
+				case 0, 1: u = py - redB[1]; v = redB[2] - px;
+				case 2: u = py - redB[1]; v = redB[4] - pz;
+				case 3: u = redB[3] - py; v = redB[4] - pz;
+				case 4: u = redB[2] - px; v = redB[4] - pz;
+				default: u = px - redB[0]; v = redB[4] - pz;
+				}
+				m.uvs.push(new h3d.prim.UV((tx + u * TE) / 64, (ty + v * TE) / 64));
+			}
+			redFace = -1;
+		} else {
 		m.uvs.push(new h3d.prim.UV(u0, v1));
 		m.uvs.push(new h3d.prim.UV(u1, v1));
 		m.uvs.push(new h3d.prim.UV(u1, v0));
 		m.uvs.push(new h3d.prim.UV(u0, v0));
+		}
 		for( i in 0...4 ) m.cols.push(new h3d.col.Point(shv[i], shv[i], shv[i]));
 		// la diagonal se elige segun la luz para evitar costuras raras
 		if( shv[0] + shv[2] >= shv[1] + shv[3] ) {
@@ -851,12 +871,13 @@ class World {
 							// igual que el original: las caras de un bloque parcial se ven si no tapan todo el lado o si el vecino es transparente
 							var s = b.size;
 							var x1 = fx + s.x1, y1 = fy + s.y1, z1 = fz + s.z1, x2 = fx + s.x2, y2 = fy + s.y2, z2 = fz + s.z2;
-							if( s.z2 < 1 || open(x, y, z + 1) ) addQuadL(alphaBuf, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su, neg, 0, 0, 1, x, y, z, true);
-							if( s.z1 > 0 || open(x, y, z - 1) ) addQuadL(alphaBuf, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd, neg, 0, 0, -1, x, y, z, true);
-							if( s.x1 > 0 || open(x - 1, y, z) ) addQuadL(alphaBuf, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx, neg, -1, 0, 0, x, y, z, true);
-							if( s.x2 < 1 || open(x + 1, y, z) ) addQuadL(alphaBuf, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx, neg, 1, 0, 0, x, y, z, true);
-							if( s.y1 > 0 || open(x, y - 1, z) ) addQuadL(alphaBuf, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy, neg, 0, -1, 0, x, y, z, true);
-							if( s.y2 < 1 || open(x, y + 1, z) ) addQuadL(alphaBuf, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy, neg, 0, 1, 0, x, y, z, true);
+							redB = [x1, y1, x2, y2, z2];
+							if( s.z2 < 1 || open(x, y, z + 1) ) { redFace = 0; addQuadL(alphaBuf, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su, neg, 0, 0, 1, x, y, z, true); }
+							if( s.z1 > 0 || open(x, y, z - 1) ) { redFace = 1; addQuadL(alphaBuf, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd, neg, 0, 0, -1, x, y, z, true); }
+							if( s.x1 > 0 || open(x - 1, y, z) ) { redFace = 2; addQuadL(alphaBuf, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx, neg, -1, 0, 0, x, y, z, true); }
+							if( s.x2 < 1 || open(x + 1, y, z) ) { redFace = 3; addQuadL(alphaBuf, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx, neg, 1, 0, 0, x, y, z, true); }
+							if( s.y1 > 0 || open(x, y - 1, z) ) { redFace = 4; addQuadL(alphaBuf, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy, neg, 0, -1, 0, x, y, z, true); }
+							if( s.y2 < 1 || open(x, y + 1, z) ) { redFace = 5; addQuadL(alphaBuf, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy, neg, 0, 1, 0, x, y, z, true); }
 						}
 					case BTExtended:
 						// caras con texturas distintas empaquetadas de a 12 bits (BFTextures)

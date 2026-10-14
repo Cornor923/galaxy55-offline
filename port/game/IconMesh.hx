@@ -9,24 +9,42 @@ class IconMesh {
 
 	static inline var TE = 0.999;
 
-	static function quad( m : MeshBuf, p : Array<Float>, tile : Int, shade : Float ) {
+	/** caja parcial en curso (x1, y1, x2, y2, z2): sus caras muestran un recorte de la casilla, como en el mundo */
+	static var rb : Array<Float> = null;
+
+	static function quad( m : MeshBuf, p : Array<Float>, tile : Int, shade : Float, face = -1 ) {
 		if( tile < 0 || tile >= 0xFFF ) return;
 		var tx = tile & 63, ty = tile >> 6;
 		var u0 = tx / 64 + (1 - TE) / 128, v0 = ty / 64 + (1 - TE) / 128;
 		var u1 = u0 + TE / 64, v1 = v0 + TE / 64;
 		var b = m.pts.length;
 		for( k in 0...4 ) m.pts.push(new h3d.col.Point(p[k * 3], p[k * 3 + 1], p[k * 3 + 2]));
-		m.uvs.push(new h3d.prim.UV(u0, v1));
-		m.uvs.push(new h3d.prim.UV(u1, v1));
-		m.uvs.push(new h3d.prim.UV(u1, v0));
-		m.uvs.push(new h3d.prim.UV(u0, v0));
+		if( face >= 0 && rb != null ) {
+			for( k in 0...4 ) {
+				var px = p[k * 3], py = p[k * 3 + 1], pz = p[k * 3 + 2];
+				var u : Float, v : Float;
+				switch( face ) {
+				case 0, 1: u = py - rb[1]; v = rb[2] - px;
+				case 2: u = py - rb[1]; v = rb[4] - pz;
+				case 3: u = rb[3] - py; v = rb[4] - pz;
+				case 4: u = rb[2] - px; v = rb[4] - pz;
+				default: u = px - rb[0]; v = rb[4] - pz;
+				}
+				m.uvs.push(new h3d.prim.UV((tx + u * TE) / 64, (ty + v * TE) / 64));
+			}
+		} else {
+			m.uvs.push(new h3d.prim.UV(u0, v1));
+			m.uvs.push(new h3d.prim.UV(u1, v1));
+			m.uvs.push(new h3d.prim.UV(u1, v0));
+			m.uvs.push(new h3d.prim.UV(u0, v0));
+		}
 		for( i in 0...4 ) m.cols.push(new h3d.col.Point(shade, shade, shade));
 		m.idx.push(b); m.idx.push(b + 1); m.idx.push(b + 2);
 		m.idx.push(b); m.idx.push(b + 2); m.idx.push(b + 3);
 	}
 
 	/** caja con una textura por cara; all=false solo dibuja las 3 caras que ve la camara isometrica (+x, -y, +z) */
-	static function box( m : MeshBuf, b : Block, x1 : Float, y1 : Float, z1 : Float, x2 : Float, y2 : Float, z2 : Float, all : Bool ) {
+	static function box( m : MeshBuf, b : Block, x1 : Float, y1 : Float, z1 : Float, x2 : Float, y2 : Float, z2 : Float, all : Bool, red = false ) {
 		var su = Math.sqrt(b.shadeUp), sd = Math.sqrt(b.shadeDown), sx = Math.sqrt(b.shadeX), sy = Math.sqrt(b.shadeY);
 		var tu = b.tu, td = b.td, tlr = b.tlr;
 		if( b.type == BTExtended ) {
@@ -40,14 +58,16 @@ class IconMesh {
 			}
 			return;
 		}
-		quad(m, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], tu, su);
-		quad(m, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], tlr, sx);
-		quad(m, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], tlr, sy);
+		rb = red ? [x1, y1, x2, y2, z2] : null;
+		quad(m, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], tu, su, 0);
+		quad(m, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], tlr, sx, 3);
+		quad(m, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], tlr, sy, 4);
 		if( all ) {
-			quad(m, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], td, sd);
-			quad(m, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], tlr, sx);
-			quad(m, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], tlr, sy);
+			quad(m, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], td, sd, 1);
+			quad(m, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], tlr, sx, 2);
+			quad(m, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], tlr, sy, 5);
 		}
+		rb = null;
 	}
 
 	static function model( m : MeshBuf, b : Block ) {
@@ -99,7 +119,7 @@ class IconMesh {
 			model(m, b);
 		case BTReduced:
 			var s = b.size;
-			if( s == null ) box(m, b, 0, 0, 0, 1, 1, 1, all) else box(m, b, s.x1, s.y1, s.z1, s.x2, s.y2, s.z2, all);
+			if( s == null ) box(m, b, 0, 0, 0, 1, 1, 1, all) else box(m, b, s.x1, s.y1, s.z1, s.x2, s.y2, s.z2, all, true);
 		case BTInvisible:
 			return null;
 		default:
