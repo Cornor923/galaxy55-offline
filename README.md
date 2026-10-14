@@ -122,3 +122,15 @@ standalone** (Ruffle doesn't support Stage3D). Build with Haxe 3.4.7 + Python 3;
 format (BSD-2) libraries are included under `libs/` with their licenses. Features are labelled in the Spanish text above as original,
 source-derived, or **our own additions**; the "not tested" list is honest. CC BY-NC-SA 4.0, non-commercial,
 credit to Motion Twin.
+
+## Résumé en français
+
+Version hors ligne de l'alpha Flash annulée de Motion Twin, *Galaxy 55* (2012), recompilée à partir de leur archive
+de code source publique, avec un remplaçant local pour le serveur disparu. Elle ajoute la manette, le son, une boutique
+locale ESCorp, un menu de l'ordinateur de bord (décoller, modifier le vaisseau, commercer, arrêter), la sauvegarde du
+terrain par planète pendant la session, et de nombreuses corrections pour voyager entre planètes. Langues : espagnol,
+anglais, français (`release/`, voir `release/LISEZMOI.txt`). Ouvre le SWF avec **Adobe Flash Player standalone**
+(Ruffle ne gère pas Stage3D). Compilation : Haxe 3.4.7 + Python 3 ; les bibliothèques Heaps et format de 2012 sont
+dans `libs/` avec leurs licences. Chaque fonction est étiquetée (original, déduit de sources, ou **ajout de notre part**),
+et la liste « non testé » est honnête. Pas de multijoueur, de licences ni de sauvegarde sur disque pour le moment.
+Licence CC BY-NC-SA 4.0 : usage non commercial, attribution à Motion Twin.
