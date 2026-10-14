@@ -268,6 +268,30 @@ class GameView {
 		fx.update(this, realDt, tmod);
 	}
 
+	/** solo pruebas: recorre el rayo de la mira y cuenta la primera celda ocupada y por que se descarta */
+	public function debugPick() : String {
+		var cp = Math.cos(pitch);
+		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
+		var ex = px, ey = py, ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
+		var curve = 2.0 / world.size;
+		var out = [];
+		var t = 0.;
+		var last = "";
+		while( t < 7.0 ) {
+			t += 0.02;
+			var hx = dx * t, hy = dy * t;
+			var x = ex + hx, y = ey + hy, z = ez + dz * t + (hx * hx + hy * hy) * curve;
+			var ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+			var b = world.block(ix, iy, iz);
+			var s = b == null ? "" : "" + b.k;
+			if( s != last && s != "" ) {
+				out.push(s + "@" + ix + "," + iy + "," + iz + " t=" + Std.int(t * 100) / 100 + (blocking(b) ? "" : "(no bloquea)"));
+			}
+			last = s;
+		}
+		return "ojos=" + Std.int(ex * 100) / 100 + "," + Std.int(ey * 100) / 100 + "," + Std.int(ez * 100) / 100 + " yaw=" + yaw + " pitch=" + pitch + "  rayo: " + out.join("  ");
+	}
+
 	/** vuelve a exigir soltar el boton antes de actuar (al volver de un menu) */
 	public function releaseAction() {
 		armed = false;
@@ -285,6 +309,7 @@ class GameView {
 	/** solo para pruebas automaticas: mantiene pulsado el boton de excavar/colocar */
 	public var debugAction = false;
 	public var debugTele = 0;
+	public var debugClick = Sys.args().indexOf("--click") >= 0 ? 1 : 0;
 	public var debugDoorFrames = Sys.args().indexOf("--door") >= 0 || Sys.args().indexOf("--computer") >= 0 ? 1 : 0;
 	/** solo para pruebas: finge que el bloque no se puede romper (para ver el efecto) */
 	public var debugDeny = false;
@@ -581,9 +606,9 @@ class GameView {
 			var hx = dx * t, hy = dy * t;
 			var x = ex + hx, y = ey + hy, z = ez + dz * t + (hx * hx + hy * hy) * curve;
 			var ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
-			if( have && ix == lx && iy == ly && iz == lz ) continue;
+			// (no se salta la misma celda: los bloques parciales solo cuentan si el rayo pasa por su caja)
 			var b = world.block(ix, iy, iz);
-			if( b != null && blocking(b) ) {
+			if( b != null && blocking(b) && (b.size == null || (x - ix >= b.size.x1 && x - ix <= b.size.x2 && y - iy >= b.size.y1 && y - iy <= b.size.y2 && z - iz >= b.size.z1 && z - iz <= b.size.z2)) ) {
 				if( !have || iz < 1 ) return null;
 				if( iz >= World.SHIP_Z ) {
 					// en la nave solo se puede apuntar a lo que se activa (puertas, ordenador); el casco no se toca (ShipLogic.checkSelect)
@@ -621,6 +646,11 @@ class GameView {
 		if( debugAction ) {
 			held = true;
 			armed = true;
+		}
+		if( debugClick > 0 ) {
+			// solo pruebas: un clic completo (se pulsa 10 fotogramas y se suelta)
+			debugClick++;
+			held = debugClick > 8 && debugClick < 20;
 		}
 		var hand = forceEmpty ? null : inv.getCurrentBlock();
 		if( !held ) {

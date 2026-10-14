@@ -1285,6 +1285,7 @@ class GalaxyApp extends hxd.App {
 			}
 			if( shotScreen == "mine" || shotScreen == "place" ) {
 				if( Sys.args().indexOf("--save") >= 0 ) saveGame(false);
+				if( Sys.args().indexOf("--click") >= 0 ) Sys.println(game.debugPick());
 				var n = 0;
 				var cells = [];
 				for( k in game.world.editMap.keys() ) {
