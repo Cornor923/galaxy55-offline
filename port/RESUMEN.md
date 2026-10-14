@@ -5,7 +5,8 @@ Galaxy 55 (Motion Twin, 2012) era un juego de bloques en Flash. Este repo lo hac
 Flash está muerto, así que estamos **portándolo a una aplicación nativa de escritorio**: Haxe 4 + Heaps moderno + HashLink
 (el mismo motor y lenguaje con el que se hizo el original, y con el que Motion Twin hizo Dead Cells).
 Metas: menú de inicio con guardado y carga, fidelidad al original, y a futuro Steam y multijugador.
-Trabajo en la rama `port-hashlink` (commits locales, nada subido). `main` conserva la versión Flash intacta.
+Desde el 2026-10-14 la versión nativa es la oficial: está en `main` y en `port-hashlink` (iguales). La versión Flash sigue intacta en la
+etiqueta `flash-version` y la rama `flash` (más los SWF de `release/`). El README avisa de las dos versiones y de los errores conocidos.
 
 ## Cómo lo hacemos
 - **Reutilizar, no reescribir:** los generadores de planetas originales (`src/G55/fla/client/src/gen`) se compilan tal cual.
@@ -51,6 +52,15 @@ Trabajo en la rama `port-hashlink` (commits locales, nada subido). `main` conser
 | Nieve corría al girar, luego pegada al jugador | el modo de partículas GPU rota un offset grande; la versión 2D no reaccionaba al movimiento | copos con posición fija en el mundo, proyectados con la cámara y ocultos tras el terreno |
 | Movimiento inventado (Shift, vuelo) | no existía en el original | copia fiel de `Hero.doMove`/`moveHero`; correr y vuelo eliminados |
 | Filtro de seguridad bloquea comandos | falso positivo de "Remove-Item" | usar las herramientas Edit/Write y evitar `//` en comandos PowerShell |
+
+## Siguiente paso acordado (mañana): paquete de prueba
+Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-release «alfa»** en GitHub Releases (no dentro de `main`):
+- Contenido: `hl.exe` y DLL de HashLink, `galaxy55.hl`, los gráficos del original que lee el juego (`texture.png`, `hud.png`, `hud_jetpack.png`, `digger.png`,
+  `icons.png`, `lazer*.png`, `ship_halo.png`, `door.md`) en una carpeta `res/`, un `jugar.bat`, `LEEME`, `NOTICE` y licencia.
+- El juego lee hoy esas imágenes con rutas relativas `src/G55/fla/client/gfx/...`: hay que moverlas a una ruta configurable o relativa al ejecutable y
+  **probarlo en una carpeta vacía** (sin el repositorio) antes de publicar.
+- En la descripción: lista de errores conocidos, aviso de que el formato de las partidas puede cambiar entre versiones, y que la versión Flash es hoy la más completa.
+- Un instalador `.exe` vendrá después, cuando haya menos errores. No empezar sin que el usuario pruebe el zip.
 
 ## Pendiente (por orden)
 1. **Nave** (parte 1 hecha: aparecer, teletransporte, ordenador, puertas). Falta: **sintetizador** (`BCrafter` + `BCrafterComputer`, `CraftEngine`, recetas

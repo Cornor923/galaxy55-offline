@@ -1,7 +1,6 @@
 # Port nativo (Haxe 4 + Heaps + HashLink)
 
-Esta carpeta contiene el port del juego a una aplicación de escritorio nativa, sin Flash. Es trabajo en curso
-en la rama `port-hashlink`; el juego original en Flash sigue intacto en `src/`, `libs/` y `release/`.
+Esta carpeta contiene el port del juego a una aplicación de escritorio nativa, sin Flash. Es trabajo en curso (version alfa, con errores conocidos); el juego original en Flash sigue intacto en `src/`, `libs/` y `release/`.
 
 ## Jugar
 
