@@ -1014,6 +1014,7 @@ class GalaxyApp extends hxd.App {
 		c.target.set(x + Math.cos(yaw) * Math.cos(pitch), y + Math.sin(yaw) * Math.cos(pitch), bgCamZ + Math.sin(pitch));
 		c.up.set(0, 0, 1);
 		w.sky.follow(x, y, bgCamZ);
+		w.updateWrap(x, y);
 	}
 
 	// ---------------------------------------------------------------- pruebas automaticas

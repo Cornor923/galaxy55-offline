@@ -34,6 +34,12 @@ class World {
 	var phase = 0;
 	var chunk = 0;
 	var meshes = new Array<h3d.scene.Mesh>();
+	var meshCx = new Array<Float>();
+	var meshCy = new Array<Float>();
+	var curCx = 0.;
+	var curCy = 0.;
+	var wrapX = -1e9;
+	var wrapY = -1e9;
 	var genStarted : Float;
 
 	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false ) {
@@ -84,6 +90,8 @@ class World {
 			m.primitive.dispose();
 		}
 		meshes = [];
+		meshCx = [];
+		meshCy = [];
 		root.remove();
 	}
 
@@ -210,12 +218,32 @@ class World {
 			mat.mainPass.setPassName("alpha");
 		}
 		meshes.push(new h3d.scene.Mesh(poly, mat, root));
+		meshCx.push(curCx);
+		meshCy.push(curCy);
+	}
+
+	/**
+	 * El planeta da la vuelta como en el original (AbstractGame.real/realDist): cada chunk se dibuja en la copia
+	 * mas cercana a la camara, asi no hay borde del mundo y el horizonte sigue siendo terreno.
+	 */
+	public function updateWrap( x : Float, y : Float ) {
+		if( x == wrapX && y == wrapY ) return;
+		wrapX = x;
+		wrapY = y;
+		var s = size;
+		for( i in 0...meshes.length ) {
+			var m = meshes[i];
+			m.x = s * Math.round((x - meshCx[i]) / s);
+			m.y = s * Math.round((y - meshCy[i]) / s);
+		}
 	}
 
 	function buildChunk( cx : Int, cy : Int ) {
 		var solidBuf = new MeshBuf();
 		var alphaBuf = new MeshBuf();
 		var waterBuf = new MeshBuf();
+		curCx = cx * CSIZE + CSIZE * 0.5;
+		curCy = cy * CSIZE + CSIZE * 0.5;
 
 		for( y in cy * CSIZE...(cy + 1) * CSIZE )
 			for( x in cx * CSIZE...(cx + 1) * CSIZE )

@@ -106,7 +106,8 @@ class GameView {
 
 	inline function clampPos( v : Float ) : Float {
 		var s = world.size;
-		return v < 0.5 ? 0.5 : (v > s - 0.5 ? s - 0.5 : v);
+		// el planeta da la vuelta (AbstractGame.real del original)
+		return v < 0 ? v + s : (v >= s ? v - s : v);
 	}
 
 	inline function onWater() return inWater(0.01);
@@ -426,5 +427,6 @@ class GameView {
 		c.target.set(px + Math.cos(yaw) * cp, py + Math.sin(yaw) * cp, ez + Math.sin(pitch));
 		c.up.set(0, 0, 1);
 		world.sky.follow(px, py, ez);
+		world.updateWrap(px, py);
 	}
 }
