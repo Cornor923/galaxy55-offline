@@ -9,6 +9,7 @@ class FogShader extends hxsl.Shader {
 	static var SRC = {
 		@global var camera : {
 			var position : Vec3;
+				var viewProj : Mat4;
 		};
 		var transformedPosition : Vec3;
 		var projectedPosition : Vec4;
@@ -17,6 +18,14 @@ class FogShader extends hxsl.Shader {
 		@param var c1 : Vec3;
 		@param var c2 : Vec3;
 		@param var fogK : Float;
+			@param var curve : Float;
+
+			// el planeta es redondo: como en el original (Shaders.hx: fpos.z -= (dx*dx + dy*dy) * cam.w) cada vertice baja
+			// con el cuadrado de su distancia horizontal a la camara; curve = 2 / tamano del planeta
+			function vertex() {
+				var d = transformedPosition.xy - camera.position.xy;
+				projectedPosition = vec4(transformedPosition.x, transformedPosition.y, transformedPosition.z - dot(d, d) * curve, 1.0) * camera.viewProj;
+			}
 
 		function skyAt( e : Float ) : Vec3 {
 			var h = clamp(0.65 - 0.5 * e, 0.0, 1.0);

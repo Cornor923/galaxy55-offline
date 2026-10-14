@@ -59,7 +59,9 @@ class World {
 		size = sizeChunks << Const.BITS;
 		root = new h3d.scene.Object(parent);
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
-		sky = new Sky(root, biome, menuFog);		gen = new gen.DetailsGenerator(size, seed);
+		sky = new Sky(root, biome, menuFog);
+		sky.fog.curve = 2.0 / size; // curvatura del planeta, igual que AbstractGame: curve = 2 / totalSize
+		gen = new gen.DetailsGenerator(size, seed);
 		var bd = Data.getBiome(biome);
 		sunP = bd.sunPower;
 		sunF = bd.sunFalloff == null ? 1 : bd.sunFalloff;

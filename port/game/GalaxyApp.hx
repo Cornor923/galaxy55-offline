@@ -952,7 +952,7 @@ class GalaxyApp extends hxd.App {
 		// construir el siguiente planeta de fondo (hasta 3 listos a la vez)
 		if( bgBuilding == null && bgWorlds.length < 3 && bgQueue.length > 0 ) {
 			var b = bgQueue.shift();
-			bgBuilding = new World(Std.random(100000), b, 1, s3d, atlas, true);
+			bgBuilding = new World(Std.random(100000), b, 2, s3d, atlas, true);
 			bgBuilding.root.visible = false;
 		}
 		if( bgBuilding != null ) {
@@ -1010,7 +1010,7 @@ class GalaxyApp extends hxd.App {
 		var t = fi - Std.int(fi);
 		bgCamZ = bgAlt[i0] * (1 - t) + bgAlt[i1] * t;
 		var yaw = bgPhase + Math.PI * 0.5 + 0.5;
-		var pitch = -0.17;
+		var pitch = -0.5; // el planeta es redondo: hay que mirar mas abajo para ver el terreno
 		var c = s3d.camera;
 		c.fovY = 65;
 		c.zNear = 0.2;
