@@ -1,0 +1,13 @@
+--macro allowPackage('flash')
+-cp port/render
+-cp libs/libs-haxe3
+-cp libs/libs-haxe2
+-cp src/G55/com
+-cp src/G55/fla/client/src
+-cp stubs
+-cp port/shim
+-lib heaps
+-lib hlsdl
+-D haxe3
+-main RenderMain
+-hl port/out/render.hl
