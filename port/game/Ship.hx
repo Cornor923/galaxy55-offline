@@ -177,8 +177,8 @@ class Ship {
 	public function craft( wx : Int, wy : Int, wz : Int, b : Block, g : GameView ) {
 		var a = areaAt(wx, wy, wz);
 		if( a == null ) return;
-		if( b == null ) a.c.engine.remove(a.x - a.c.x, a.y - a.c.y, a.z - a.c.z)
-		else a.c.engine.add(b, a.x - a.c.x, a.y - a.c.y, a.z - a.c.z);
+		a.c.engine.remove(a.x - a.c.x, a.y - a.c.y, a.z - a.c.z);
+		if( b != null ) a.c.engine.add(b, a.x - a.c.x, a.y - a.c.y, a.z - a.c.z);
 		checkCraft(a.c, g);
 	}
 

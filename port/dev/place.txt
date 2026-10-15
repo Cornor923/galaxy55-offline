@@ -1,0 +1,15 @@
+# colocar hierro con la accion real (no con set) en la zona del sintetizador y comprobar que el texto coincide con lo que hay
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.2
+wait 5
+slot 5
+lookl 59.5 62.5 2.5
+key place
+wait 120
+unkey
+print inv
+print msg
+print cells
+quit

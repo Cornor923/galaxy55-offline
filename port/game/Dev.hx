@@ -22,6 +22,8 @@ import Common;
  */
 class Dev {
 
+	/** mensajes de seguimiento del juego (orden `trace`) */
+	public static var trace = false;
 	var lines : Array<String>;
 	var pc = 0;
 	var waiting = 0;
@@ -91,6 +93,7 @@ class Dev {
 				case "synth":
 					var c = g.ship.crafts[Std.parseInt(a[1])];
 					g.ship.activateCraft(c.out.x + sdx, c.out.y + sdy, c.out.z + sz, g);
+				case "trace": trace = true;
 				case "key": g.debugKey = a[1];
 				case "unkey": g.debugKey = null;
 				case "print": print(a, g);
@@ -137,6 +140,16 @@ class Dev {
 				}
 				Sys.println(row);
 			}
+		case "cells":
+			// bloques de la zona 0 del sintetizador (locales de la nave)
+			var c = g.ship.crafts[0];
+			var out = [];
+			for( dx in 0...c.w ) for( dy in 0...c.h ) for( dz in 0...c.heights[dx][dy] ) {
+				var b = w.block(c.x + dx + w.shipDX, c.y + dy + w.shipDY, c.z + dz + World.SHIP_Z);
+				if( b != null ) out.push(b.k + "@" + (c.x + dx) + "," + (c.y + dy) + "," + (c.z + dz));
+			}
+			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
+		case "hit": Sys.println(g.debugPick());
 		case "drops": Sys.println("sueltos: " + g.drops.count());
 		case "msg": Sys.println("mensaje: " + g.message);
 		case "block":

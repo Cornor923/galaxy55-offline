@@ -636,6 +636,7 @@ class GameView {
 			// (no se salta la misma celda: los bloques parciales solo cuentan si el rayo pasa por su caja)
 			var b = world.block(ix, iy, iz);
 			if( b != null && blocking(b) && (b.size == null || (x - ix >= b.size.x1 && x - ix <= b.size.x2 && y - iy >= b.size.y1 && y - iy <= b.size.y2 && z - iz >= b.size.z1 && z - iz <= b.size.z2)) ) {
+				if( Dev.trace && iz >= World.SHIP_Z ) Sys.println("pick: toca " + b.k + "@" + ix + "," + iy + "," + iz + " antes=" + lx + "," + ly + "," + lz + " mano=" + (hand != null) + " enZona=" + ship.inCraft(lx, ly, lz));
 				if( !have || iz < 1 ) return null;
 				if( iz >= World.SHIP_Z ) {
 					// en la nave solo se puede apuntar a lo que se activa (puertas, ordenador); el casco no se toca (ShipLogic.checkSelect)
@@ -786,11 +787,13 @@ class GameView {
 			else if( (tmp = world.block(x, y + 1, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
 		}
 		if( inShip ) ok = true; // select.ignoreMagnets del original
+		if( world.block(x, y, z) != null ) return; // la celda ya esta ocupada (p. ej. por lo que se acaba de poner): no se gasta nada
 		if( !ok || actionPause > 0 ) return;
 		actionPause = creative ? 6 : 15;
 		if( !creative && !inv.useCurrentBlock() ) return;
 		// si era el ultimo bloque, hay que soltar el boton antes de seguir (evita excavar sin querer)
 		if( inv.getCurrentBlock() == null ) actionWait = true;
+		if( Dev.trace ) Sys.println("place en " + x + "," + y + "," + z + " sobre " + s.b.k + "@" + s.x + "," + s.y + "," + s.z + " antes=" + world.block(x, y, z));
 		world.setBlock(x, y, z, put);
 		if( inShip ) ship.craft(x, y, z, put, this);
 		select = null;
