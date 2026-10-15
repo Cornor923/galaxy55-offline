@@ -87,7 +87,20 @@ Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-rele
    resultado, texto de la receta en pantalla y fabricar con el ordenador del sintetizador; probado por hook `--craft`/`--craftgo`, falta probarlo con ratón y
    teclado reales). Falta: **tienda ESCorp** (`Game.openShop`, créditos) — idea del usuario (a hacer DESPUÉS del explorador): naves de comerciantes (robot) que dan vueltas por las galaxias del mapa, entrando y saliendo de planetas; al pulsar una, nuestra nave la sigue; al llegar a su lado aparecemos en el espacio dentro de nuestra nave y la puerta se conecta a la nave del robot, donde está la tienda. A decidir luego: una nave fija o varias con vendedores distintos, y si el vendedor se va o espera mientras lo seguimos. Orden nuevo: explorador → nave del robot/tienda → hangar, y el menú "despegar" que llevará al explorador.
 2. **Hangar** (`EditShip.hx`, `net/EditShip.hx`): editar los bloques de la nave y validarla (hermética, motores, ordenador, teletransportador...).
-3. **Explorador / mapa de estrellas** (`fla/explore`, `Manager.hx` + `Room.hx`): sectores, sistemas solares y planetas.
+3. **Explorador / mapa de estrellas** (`fla/explore`, `Manager.hx` + `Room.hx`) — EN CURSO (ver la sección "Explorador" más arriba). Hecho: sector, sistema solar, planetas con ventana, nave 3D,
+   universo guardado (`SaveInfo.uni`), aterrizar y volver junto al planeta. **Falta, por orden (lo pidió el usuario: "tiene que ser igual al original"):**
+   a. **Entrar al sistema solar** (`Manager.gotoSolar` + `hyperjumpFx3D` + `zoomAnim`, 1300 ms): partículas de líneas que convergen en la nave y `novaFx`; el sector hace zoom
+      (capas `zoom` 0→60 con alfa 1→0, entidades zoom 0→12) mientras `makeHyperspacePart` lanza líneas desde el centro entre t=0.10 y 0.60; el sistema crece desde un punto (`zoomCache` = `solar.snapshot()`,
+      escala 0.01→1, TEase, empieza a los 10 %), las estrellas del sistema hacen zoom 0→10 con alfa 0→1, fondo `setBg` con fundido, `overdriveBurn` (destello de color, alfa 0→0.7→0) y al final
+      `popString(nombre)`, `hyperjumpArrivalFx(10)` (líneas rectas + nova) y `centerView`.
+   b. **Salir del sistema** (`gotoSector` + `hyperjumpFxHorizontal` + `zoomAnim`, 800 ms): hoy es demasiado rápido. En el original el borde del sistema NO te saca al instante: dejas pasar la
+      última órbita y, pasado un rato, te saca (revisar `Manager.main`: `d>=exitDist-30 && td>=exitDist` con `exitDist = órbita más lejana + 100`; probablemente la nave tiene que frenar/seguir hacia el
+      anillo de salida durante un tiempo; comprobar con el original en marcha, ver "Ver el juego original"). Luego el sistema se encoge a un punto (zoomCache 1→0.01, TBurnIn), el sector hace zoom 60→0.
+   c. **Aterrizar** (`Manager.sendAction(ALandPlanet)` y el flujo de "Escanear"): fundido a negro, `popString(nombre)` grande sin desvanecerse, barra de carga fina (`showBar`), icono de carga que gira
+      (`loading`), y al terminar entrar al planeta. Hoy solo hay una barra provisional.
+   d. Utilidades que hacen falta para a, b y c: un `Tweenie` (curvas Bézier: TEase 0,0,1,1; TEaseIn 0,0,.5,1; TEaseOut 0,.5,1,1; TBurnIn 0,1,1,1), un `Particle` (dx, dy, fricción, vida, `onUpdate`),
+      `novaFx` (círculo blanco con brillo interior y desenfoque) y la "common room" (`generateCommon`, remolino `makeMaelstrom`), más GPS a planetas activos y reactores de la nave.
+   e. Opcional más adelante: sonidos, "energía" de la nave.
 4. Después, ideas guardadas por el usuario (no empezar antes de 1-3):
    - **Agua que se mueve**: primero el flujo del original (`Process.hx`: inundación del mar con `updateFlood`, líquidos con `BFPropagate`
      como cascada y lava, cubrir/descubrir hierba, plantas que se rompen al quitar el suelo; hay que portar `Process.onSet` entero),

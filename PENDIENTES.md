@@ -1,5 +1,7 @@
 # Pendientes
 
+> Esta lista es de la versión Flash. El estado y la lista de tareas de la versión nativa (la oficial) están en [`port/RESUMEN.md`](port/RESUMEN.md).
+
 Lo que **falta arreglar**, lo que **falta comprobar** y lo que **se podría añadir**. Si algo de aquí te interesa
 o tienes información, abre un *issue*.
 
