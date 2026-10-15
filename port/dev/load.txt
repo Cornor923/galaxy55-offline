@@ -1,0 +1,14 @@
+# cargar una partida guardada (--load=ID) y andar por la nave
+wait 5
+print pos
+print zones
+ship
+wait 10
+print pos
+print cells
+print msg
+walk 1
+wait 30
+print pos
+print msg
+quit

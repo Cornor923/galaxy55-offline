@@ -246,6 +246,11 @@ class GameView {
 			turnSpeed = 0;
 
 		if( debugJet ) useJetpack = true;
+		if( debugSpeed != 0 || debugStrafe != 0 ) {
+			speed = debugSpeed;
+			strafe = debugStrafe;
+			walking = true;
+		}
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateBobbing(realDt * 60);
 		ship.update(this, tmod);
@@ -329,6 +334,8 @@ class GameView {
 	public var debugAction = false;
 	/** banco de pruebas (Dev): mantiene pulsado excavar/colocar */
 	public var debugKey : String;
+	public var debugSpeed = 0.;
+	public var debugStrafe = 0.;
 	public var debugTele = 0;
 	public var debugCraft = Sys.args().indexOf("--craft") >= 0 ? 1 : 0;
 	public var debugClick = Sys.args().indexOf("--click") >= 0 ? 1 : 0;

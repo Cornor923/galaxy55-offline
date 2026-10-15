@@ -1,0 +1,18 @@
+# saltar y usar el jetpack dentro de la zona del sintetizador: no se debe salir de la nave
+wait 3
+ship
+wait 10
+tpl 60.5 63.5 3.0 3.14 0
+wait 10
+print pos
+jet 1
+wait 10
+print pos
+wait 20
+print pos
+wait 30
+print pos
+jet 0
+wait 40
+print pos
+quit

@@ -1,0 +1,18 @@
+# planeta de la partida que dio problemas (la nave cruza el borde del mundo): andar hacia el sintetizador
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 0
+walk 1
+print pos
+wait 15
+print pos
+wait 15
+print pos
+wait 15
+print pos
+wait 15
+print pos
+wait 15
+print pos
+quit

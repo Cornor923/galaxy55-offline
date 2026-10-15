@@ -1,0 +1,18 @@
+# andar contra bloques puestos en la zona (no debe salir despedido hacia arriba)
+wait 3
+ship
+wait 10
+setl 59 62 3 BIron
+setl 60 62 3 BIron
+setl 59 63 3 BIron
+tpl 62.5 62.5 3.0 3.14 0
+wait 10
+walk 1
+wait 40
+print pos
+walk 0 0
+tpl 60.5 63.5 3.0 3.14 0
+wait 20
+print pos
+print msg
+quit

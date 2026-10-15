@@ -1,0 +1,18 @@
+# andar desde el teletransportador hasta la zona del sintetizador y comprobar que no se sale de la nave
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 0
+wait 10
+walk 1
+print pos
+wait 15
+print pos
+wait 15
+print pos
+wait 15
+print pos
+wait 15
+print pos
+walk 0 0
+quit

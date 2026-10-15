@@ -15,6 +15,8 @@ import Common;
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local
  *   synth N                 usar el ordenador del sintetizador N
+ *   jet 1|0                 mantener Espacio (salto y jetpack)
+ *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]
  *   shot nombre             captura en port/out/nombre.png
@@ -93,6 +95,10 @@ class Dev {
 				case "synth":
 					var c = g.ship.crafts[Std.parseInt(a[1])];
 					g.ship.activateCraft(c.out.x + sdx, c.out.y + sdy, c.out.z + sz, g);
+				case "walk":
+					g.debugSpeed = f(a[1]) * 0.15;
+					g.debugStrafe = a.length > 2 ? f(a[2]) * 0.15 : 0;
+				case "jet": g.debugJet = a[1] == "1";
 				case "trace": trace = true;
 				case "key": g.debugKey = a[1];
 				case "unkey": g.debugKey = null;

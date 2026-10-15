@@ -1,0 +1,10 @@
+# bajar al planeta desde la nave y comprobar donde se aparece
+wait 3
+ship
+wait 10
+planet
+wait 30
+print pos
+print ship
+shot down
+quit

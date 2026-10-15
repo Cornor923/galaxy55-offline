@@ -128,6 +128,8 @@ class GalaxyApp extends hxd.App {
 	// pruebas automaticas (captura de pantalla)
 	var shotPath : String = null;
 	var dev : Dev;
+	var shotSeed = 1234;
+	var shotLoad : String;
 	var shotScreen = "main";
 	var shotFrames = 30;
 	var demoSaves = false;
@@ -156,6 +158,8 @@ class GalaxyApp extends hxd.App {
 				shotPath = "port/out/dev.png";
 				shotScreen = "game";
 			}
+			else if( StringTools.startsWith(a, "--load=") ) shotLoad = a.substr(7);
+			else if( StringTools.startsWith(a, "--seed=") ) shotSeed = Std.parseInt(a.substr(7));
 			else if( a == "--demo-saves" ) demoSaves = true;
 			else if( StringTools.startsWith(a, "--n=") ) shotN = Std.parseInt(a.substr(4));
 			else if( StringTools.startsWith(a, "--slot=") ) shotSlot = Std.parseInt(a.substr(7));
@@ -1244,7 +1248,11 @@ class GalaxyApp extends hxd.App {
 					shotCont = true;
 					shotScreen = "mine";
 				}
-				var info = shotCont ? SaveData.list()[0] : SaveData.create("Prueba", 1234, shotBiome != null ? shotBiome : "BIAutumn", 1);
+				var info = shotLoad != null ? SaveData.list().filter(function(i) return i.id == shotLoad)[0] : shotCont ? SaveData.list()[0] : SaveData.create("Prueba", shotSeed, shotBiome != null ? shotBiome : "BIAutumn", 1);
+				if( info == null ) {
+					Sys.println("no se encontro la partida; hay: " + [for( i in SaveData.list() ) i.id].join(", ") + "  carpeta=" + SaveData.dir());
+					Sys.exit(1);
+				}
 				startGame(info);
 				return;
 			}
