@@ -91,7 +91,7 @@ class Ship {
 		}
 		var poly = new h3d.prim.Polygon(pts, idx);
 		poly.uvs = uvs;
-		var tex = hxd.res.Any.fromBytes("ship_halo.png", sys.io.File.getBytes("src/G55/fla/client/gfx/ship_halo.png")).toTexture();
+		var tex = hxd.res.Any.fromBytes("ship_halo.png", Res.bytes("ship_halo.png")).toTexture();
 		tex.wrap = Repeat;
 		tex.filter = Linear;
 		var mat = h3d.mat.Material.create(tex);

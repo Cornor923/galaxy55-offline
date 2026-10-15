@@ -29,9 +29,8 @@ class InvBar extends h2d.Object {
 		this.inv = inv;
 		this.atlas = atlas;
 		this.width = width;
-		var gfx = "src/G55/fla/client/gfx/";
-		digger = hxd.res.Any.fromBytes("digger.png", sys.io.File.getBytes(gfx + "digger.png")).toTile();
-		chargeIcons = hxd.res.Any.fromBytes("icons.png", sys.io.File.getBytes(gfx + "icons.png")).toTile();
+		digger = hxd.res.Any.fromBytes("digger.png", Res.bytes("digger.png")).toTile();
+		chargeIcons = hxd.res.Any.fromBytes("icons.png", Res.bytes("icons.png")).toTile();
 		inv.onChange = refresh;
 		refresh();
 	}

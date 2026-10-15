@@ -70,9 +70,8 @@ class Fx {
 		var poly = new h3d.prim.Polygon(pts, idx);
 		poly.uvs = uvs;
 		beamTex = [];
-		var gfx = "src/G55/fla/client/gfx/";
 		for( n in ["lazer.png", "lazer2.png", "lazer3.png", "lazer4.png"] ) {
-			var t = hxd.res.Any.fromBytes(n, sys.io.File.getBytes(gfx + n)).toTexture();
+			var t = hxd.res.Any.fromBytes(n, Res.bytes(n)).toTexture();
 			t.wrap = Repeat;
 			t.filter = Linear;
 			beamTex.push(t);

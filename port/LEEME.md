@@ -55,7 +55,7 @@ Hace falta (Windows):
        haxe port\headless_flash.hxml  el mismo programa para Flash (referencia)
 
 `jugar.bat` busca `hl` en el `PATH`; si lo tienes en otra carpeta, define la variable `HL` con su ruta antes de ejecutarlo.
-El juego lee los gráficos del original de `src\G55\fla\client\gfx\`, por eso hay que ejecutarlo desde el repositorio.
+El juego busca los gráficos del original en `res\` (paquete portátil) o, si no existe, en `src\G55\fla\client\gfx\`; la variable `GALAXY55_RES` fuerza otra carpeta.
 
 ## Qué hay
 

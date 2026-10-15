@@ -174,7 +174,7 @@ class GalaxyApp extends hxd.App {
 		s2d.scaleMode = LetterBox(W, H);
 		engine.backgroundColor = 0xFF05070D;
 
-		var png = sys.io.File.getBytes("src/G55/fla/client/gfx/texture.png");
+		var png = Res.bytes("texture.png");
 		// atlas con los parches del original (colores planos BFColor, opacidades BFAlpha)
 		atlas = Atlas.build(png);
 
@@ -182,10 +182,10 @@ class GalaxyApp extends hxd.App {
 		snow = new Snow(s2d);
 		ui = new h2d.Object(s2d);
 		// brillo del jetpack (hud_jetpack.png del original) y barra de combustible
-		var ht = hxd.res.Any.fromBytes("hud.png", sys.io.File.getBytes("src/G55/fla/client/gfx/hud.png")).toTile();
+		var ht = hxd.res.Any.fromBytes("hud.png", Res.bytes("hud.png")).toTile();
 		helmet = new h2d.Bitmap(ht, s2d);
 		helmet.visible = false;
-		var jt = hxd.res.Any.fromBytes("hud_jetpack.png", sys.io.File.getBytes("src/G55/fla/client/gfx/hud_jetpack.png")).toTile();
+		var jt = hxd.res.Any.fromBytes("hud_jetpack.png", Res.bytes("hud_jetpack.png")).toTile();
 		jetGlow = new h2d.Bitmap(jt, s2d);
 		jetGlow.visible = false;
 		jetBar = new h2d.Graphics(s2d);

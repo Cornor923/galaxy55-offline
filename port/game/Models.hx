@@ -32,7 +32,7 @@ class Models {
 	 * vertice (x, y, z, u, v, sombra). La variante Y es la X con los ejes cambiados y el orden de cada cara corregido.
 	 */
 	static function loadDoor( flip : Bool ) : { v : Array<Float>, box : { x1 : Float, y1 : Float, z1 : Float, x2 : Float, y2 : Float, z2 : Float } } {
-		var i = new haxe.io.BytesInput(sys.io.File.getBytes("src/G55/fla/client/gfx/door.md"));
+		var i = new haxe.io.BytesInput(Res.bytes("door.md"));
 		i.readByte();
 		var count = i.readInt32();
 		var raw = [for( _ in 0...count * 6 ) i.readFloat()];
