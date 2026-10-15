@@ -4,7 +4,8 @@
 >
 > **Esta es la versión nativa (por defecto):** una aplicación de escritorio para Windows, sin Flash, hecha con
 > Haxe 4 + Heaps + HashLink. Para jugar, mira [`port/LEEME.md`](port/LEEME.md) (doble clic en `port/jugar.bat`
-> tras compilarla, o sigue las instrucciones de ese archivo).
+> tras compilarla, o sigue las instrucciones de ese archivo). **Sin compilar:** descarga el zip de la
+> [pre-release v0.1](../../releases/tag/v0.1), descomprímelo y haz doble clic en `jugar.bat`.
 >
 > **La versión Flash sigue aquí, intacta.** No se ha borrado nada: el código (`src/`, `libs/`), los SWF
 > (`release/`) y todo lo descrito más abajo en este README siguen funcionando igual.
@@ -19,8 +20,9 @@
 > - hay bloques blancos lisos en el bioma de invierno y la capa 0 se ve rara desde abajo;
 > - la curvatura del planeta se nota más de la cuenta y los cristales sueltos se ven demasiado anchos;
 > - las hojas del abeto sueltan material y puede que no deban, y el agua no se mueve ni fluye;
-> - de la nave solo funcionan el teletransportador, el ordenador (sin despegar ni tienda), las puertas y
->   poner bloques sobre el sintetizador; faltan las recetas, el hangar y el mapa de exploración;
+> - de la nave funcionan el teletransportador, las puertas, el sintetizador con las recetas del original y el
+>   ordenador, que abre el mapa de estrellas («Despegar»); faltan la tienda, el hangar y las animaciones
+>   de viaje del mapa (la entrada y la salida de los sistemas solares son aún un simple fundido);
 > - el bloque elegido no se ve en la mano, y no hay sonido.
 >
 > La lista completa y al día está en [`port/RESUMEN.md`](port/RESUMEN.md) (sección «Pendiente»).
