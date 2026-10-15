@@ -1,0 +1,22 @@
+# empezar junto al planeta inicial, aterrizar en otro planeta y volver al mapa: debe aparecer junto a ese planeta
+wait 3
+ship
+wait 10
+explore
+wait 12
+wait 200
+expinfo
+shot start
+expplanet 1
+wait 400
+expbutton
+wait 600
+print pos
+ship
+wait 20
+explore
+wait 12
+wait 300
+expinfo
+shot back
+quit

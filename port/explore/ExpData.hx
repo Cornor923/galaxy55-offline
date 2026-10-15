@@ -103,7 +103,11 @@ class ExpOffline {
 		return s;
 	}
 
-	public static function make( seed : Int ) : ExpInfos {
+	/**
+	 * `start` sustituye al planeta 0 del sistema 0 (con el que empieza la partida), `visited` son los planetas ya pisados (activos)
+	 * y `pos` donde esta la nave en el mapa.
+	 */
+	public static function make( seed : Int, ?start : { seed : Int, biome : String, size : Int }, ?visited : Array<Int>, ?pos : Array<Int> ) : ExpInfos {
 		seed = 1 + Std.int(Math.abs(seed)) % 999998;
 		var d : ExpInfos = {
 			sector : { id : 0, seed : seed, width : 50, height : 50, name : SEC + " " + seed },
@@ -119,6 +123,22 @@ class ExpOffline {
 			s.x += rseed.random(2);
 			s.y += rseed.random(20);
 		}
+		if( start != null ) {
+			var p = d.systems[0].planets[0];
+			p.seed = start.seed;
+			p.biome = start.biome;
+			p.size = start.size;
+		}
+		if( visited != null )
+			for( s in d.systems )
+				for( p in s.planets )
+					if( visited.indexOf(p.id) >= 0 ) p.status = PActive;
+		if( pos != null && pos.length > 0 )
+			d.shipPos = switch( pos[0] ) {
+				case 1: PInSystem(pos[1]);
+				case 2: PPlanet(pos[1]);
+				default: PInSector(pos[1], pos[2]);
+			};
 		return d;
 	}
 }

@@ -94,6 +94,8 @@ class Explorer extends h2d.Object {
 	public dynamic function onExit() {}
 	/** el jugador quiere aterrizar en un planeta */
 	public dynamic function onLand( p : ExpPlanet, s : ExpSystem ) {}
+	/** la nave ha cambiado de sitio en el mapa: [0, x, y] sector, [1, sistema], [2, planeta] (para guardarlo) */
+	public dynamic function onPos( pos : Array<Int> ) {}
 
 	var content : h2d.Object;
 	var bgBmp : h2d.Bitmap;
@@ -235,6 +237,23 @@ class Explorer extends h2d.Object {
 		sector.viewX = ship.x;
 		sector.viewY = ship.y;
 		ship.speed = shipSpeed();
+		// la nave estaba en un sistema o junto a un planeta (Manager.start)
+		switch( infos.shipPos ) {
+		case PPlanet(id):
+			for( si in infos.systems )
+				for( p in si.planets )
+					if( p.id == id ) {
+						buildSolar(si, 0, id);
+						popString(si.name);
+					}
+		case PInSystem(id):
+			for( si in infos.systems )
+				if( si.id == id ) {
+					buildSolar(si, 0, -1);
+					popString(si.name);
+				}
+		default:
+		}
 		layout();
 		update(0);
 		fadeIn(); // entrada suave desde negro (initMask)
@@ -357,49 +376,62 @@ class Explorer extends h2d.Object {
 		closeWindow();
 		var arrival = (180 + ship.rotation) * Math.PI / 180;
 		fadeOut(function() {
-			curSystem = si;
-			sector.root.visible = false;
-			worldSector.visible = false;
-			disposeView(solar);
-			disposeView(solarStars);
-			for( s in solarSpots ) s.obj.remove();
-			solarSpots = [];
-			if( worldSolar != null ) worldSolar.remove();
-
-			var room = new ExpRoom(si.seed, VW, VH);
-			room.generateSolarSystem(si);
-			solar = makeView(room);
-			var stars = new ExpRoom(si.seed, VW, VH);
-			stars.bgColor = room.bgColor;
-			stars.generateSolarStars();
-			solarStars = makeView(stars);
-			buildLayers(solarStars);
-			buildLayers(solar);
-			content.addChildAt(solarStars.root, content.getChildIndex(sector.root) + 1);
-			content.addChildAt(solar.root, content.getChildIndex(solarStars.root) + 1);
-			worldSolar = new h2d.Object(content);
-			content.addChildAt(worldSolar, content.getChildIndex(shipWorld));
-			for( pv in room.planetViews ) addPlanet(pv);
-			setBg(room.bgColor);
-
-			room.entrance.x = room.center.x + Math.cos(arrival) * Math.min(250, room.exitDist - 10);
-			room.entrance.y = room.center.y + Math.sin(arrival) * Math.min(250, room.exitDist - 10);
-			solar.viewX = room.entrance.x;
-			solar.viewY = room.entrance.y;
-			solarStars.viewX = solar.viewX;
-			solarStars.viewY = solar.viewY;
-			for( o in solarStars.layers ) o.l.zoom = 10; // ANIM_SOLARSTAR_ZOOM
-			current = solar;
-			inSolar = true;
-			ship.x = room.entrance.x;
-			ship.y = room.entrance.y;
-			ship.rotation = 180 + arrival * 180 / Math.PI;
-			ship.dx = ship.dy = 0;
-			cursorAlpha = 0;
+			buildSolar(si, arrival, -1);
+			onPos([1, si.id]);
 			popString(si.name);
 			locked = false;
 			fadeIn();
 		});
+	}
+
+	/** crea la vista del sistema; con planetId la nave aparece junto a ese planeta (al volver de aterrizar) */
+	function buildSolar( si : ExpSystem, arrival : Float, planetId : Int ) {
+		curSystem = si;
+		sector.root.visible = false;
+		worldSector.visible = false;
+		disposeView(solar);
+		disposeView(solarStars);
+		for( s in solarSpots ) s.obj.remove();
+		solarSpots = [];
+		if( worldSolar != null ) worldSolar.remove();
+
+		var room = new ExpRoom(si.seed, VW, VH);
+		room.generateSolarSystem(si);
+		solar = makeView(room);
+		var stars = new ExpRoom(si.seed, VW, VH);
+		stars.bgColor = room.bgColor;
+		stars.generateSolarStars();
+		solarStars = makeView(stars);
+		buildLayers(solarStars);
+		buildLayers(solar);
+		content.addChildAt(solarStars.root, content.getChildIndex(sector.root) + 1);
+		content.addChildAt(solar.root, content.getChildIndex(solarStars.root) + 1);
+		worldSolar = new h2d.Object(content);
+		content.addChildAt(worldSolar, content.getChildIndex(shipWorld));
+		for( pv in room.planetViews ) addPlanet(pv);
+		setBg(room.bgColor);
+
+		room.entrance.x = room.center.x + Math.cos(arrival) * Math.min(250, room.exitDist - 10);
+		room.entrance.y = room.center.y + Math.sin(arrival) * Math.min(250, room.exitDist - 10);
+		var ex = room.entrance.x, ey = room.entrance.y;
+		if( planetId >= 0 )
+			for( pv in room.planetViews )
+				if( pv.infos.id == planetId ) {
+					ex = pv.x + 32;
+					ey = pv.y;
+				}
+		solar.viewX = ex;
+		solar.viewY = ey;
+		solarStars.viewX = ex;
+		solarStars.viewY = ey;
+		for( o in solarStars.layers ) o.l.zoom = 10; // ANIM_SOLARSTAR_ZOOM
+		current = solar;
+		inSolar = true;
+		ship.x = ex;
+		ship.y = ey;
+		ship.rotation = planetId >= 0 ? 180 : 180 + arrival * 180 / Math.PI;
+		ship.dx = ship.dy = 0;
+		cursorAlpha = 0;
 	}
 
 	function addPlanet( pv : ExpPlanetView ) {
@@ -455,6 +487,7 @@ class Explorer extends h2d.Object {
 			sector.viewY = ship.y;
 			curSystem = null;
 			burn.visible = false;
+			onPos([0, from.x, from.y]);
 			locked = false;
 			fadeIn();
 		});
@@ -837,10 +870,12 @@ class Explorer extends h2d.Object {
 	// ---------------------------------------------------------------- pruebas (banco de pruebas Dev)
 
 	public function devClickSystem( id : Int ) {
+		if( inSolar ) return;
 		for( sp in sectorSpots ) if( sp.system.id == id ) moveShip(sp);
 	}
 
 	public function devClickPlanet( id : Int ) {
+		if( !inSolar ) return;
 		for( sp in solarSpots ) if( sp.planet.id == id ) moveShip(sp);
 	}
 

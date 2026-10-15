@@ -556,25 +556,47 @@ class GalaxyApp extends hxd.App {
 		pendingExplorer = 2; // se deja pintar la pantalla de carga antes de generar el mapa
 	}
 
+	/** el universo de la partida (se crea con la primera apertura del mapa si la partida es antigua) */
+	function universe() : SaveData.UniInfo {
+		var info = game.info;
+		if( info.uni == null )
+			info.uni = { seed : info.seed, planetId : 0, pos : [2, 0], start : { seed : info.seed, biome : info.biome, size : info.sizeChunks }, planets : [] };
+		return info.uni;
+	}
+
 	function buildExplorer() {
 		ui.removeChildren();
 		bar = null;
-		explorer = new Explorer(s2d, ExpData.ExpOffline.make(game.info.seed), game.ship.captureFrames(engine, s3d));
+		var uni = universe();
+		var visited = [uni.planetId];
+		for( p in uni.planets ) visited.push(p.id);
+		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, visited, uni.pos);
+		explorer = new Explorer(s2d, infos, game.ship.captureFrames(engine, s3d));
 		s2d.under(explorer);
 		explorer.onExit = closeExplorer;
 		explorer.onLand = landOnPlanet;
+		explorer.onPos = function( pos ) universe().pos = pos;
 		state = Exploring;
 		dim.visible = false;
 		captureMouse(false);
 	}
 
-	/** aterrizar en un planeta del mapa: de momento cada planeta es una partida nueva (despues sera un universo) */
+	/** aterrizar en un planeta del mapa: se guardan los cambios del planeta actual y se carga el elegido (o se crea si es nuevo) */
 	function landOnPlanet( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
-		var creative = game.info.creative;
+		var old = game.info;
+		var uni = universe();
+		uni.pos = [2, p.id];
+		// los cambios del planeta actual se guardan con su id
+		var cur = game.toInfo();
+		uni.planets = uni.planets.filter(function(q) return q.id != uni.planetId);
+		uni.planets.push({ id : uni.planetId, edits : cur.edits });
+		var target : SaveData.UniPlanet = null;
+		for( q in uni.planets ) if( q.id == p.id ) target = q;
+		uni.planets = uni.planets.filter(function(q) return q.id != p.id);
+		uni.planetId = p.id;
 		explorer.dispose();
 		explorer = null;
 		dim.visible = true;
-		saveGame(false);
 		closePalette();
 		game.dispose();
 		if( invBar != null ) {
@@ -585,9 +607,14 @@ class GalaxyApp extends hxd.App {
 		game = null;
 		ui.removeChildren();
 		screens = new Map();
-		var info = SaveData.create(p.name, p.seed, p.biome, p.size);
-		info.creative = creative;
-		startGame(info);
+		// misma partida: el inventario, la nave y el universo son de toda la partida; el terreno es el del planeta elegido
+		old.seed = p.seed;
+		old.biome = p.biome;
+		old.sizeChunks = p.size;
+		old.edits = target != null ? target.edits : [];
+		old.px = old.py = old.pz = -1;
+		old.yaw = old.pitch = 0;
+		startGame(old);
 	}
 
 	function closeExplorer() {

@@ -1,3 +1,25 @@
+/** Un planeta ya visitado del universo: sus cambios de terreno (los de la nave y el inventario son de toda la partida). */
+typedef UniPlanet = {
+	var id : Int;
+	var edits : Array<Int>;
+}
+
+/**
+ * Universo de la partida: el sector del mapa de estrellas, el planeta en el que estas y donde esta la nave en el mapa.
+ * `start` es el planeta con el que empezo la partida (sistema 0, planeta 0 del mapa).
+ */
+typedef UniInfo = {
+	/** semilla del sector */
+	var seed : Int;
+	/** id del planeta actual (0 = el inicial) */
+	var planetId : Int;
+	/** posicion de la nave en el mapa: [0, x, y] en el sector, [1, sistema] en un sistema, [2, planeta] junto a un planeta */
+	var pos : Array<Int>;
+	var start : { seed : Int, biome : String, size : Int };
+	/** planetas visitados distintos del actual, con sus cambios */
+	var planets : Array<UniPlanet>;
+}
+
 /** Datos de una partida guardada. Los cambios de terreno, inventario y creditos se anadiran aqui. */
 typedef SaveInfo = {
 	var version : Int;
@@ -23,6 +45,8 @@ typedef SaveInfo = {
 	@:optional var shipEdits : Array<Int>;
 	/** modo creativo: bloques sin limite, rotura instantanea y jetpack infinito (no existe en el original) */
 	@:optional var creative : Bool;
+	/** universo (mapa de estrellas); las partidas antiguas no lo tienen y se crea al abrir el mapa */
+	@:optional var uni : UniInfo;
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
@@ -48,6 +72,19 @@ class SaveData {
 			version : VERSION, id : newId(), name : name, seed : seed, biome : biome, sizeChunks : sizeChunks,
 			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : Inv.defaults(), edits : [], shipEdits : [], creative : false,
 		};
+	}
+
+	static function readUni( o : Dynamic ) : UniInfo {
+		try {
+			if( o == null || o.seed == null ) return null;
+			return {
+				seed : Std.int(o.seed), planetId : Std.int(o.planetId), pos : [for( v in (o.pos : Array<Dynamic>) ) Std.int(v)],
+				start : { seed : Std.int(o.start.seed), biome : o.start.biome, size : Std.int(o.start.size) },
+				planets : [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : [for( v in (p.edits : Array<Dynamic>) ) Std.int(v)] }],
+			};
+		} catch( e : Dynamic ) {
+			return null;
+		}
 	}
 
 	/** inventario guardado; si falta o esta mal formado se usa el inicial */
@@ -91,7 +128,7 @@ class SaveData {
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true,
-					creative : o.creative == true, inv : readInv(o.inv),
+					creative : o.creative == true, inv : readInv(o.inv), uni : readUni(o.uni),
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 			};
 		} catch( e : Dynamic ) {
