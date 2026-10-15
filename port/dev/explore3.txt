@@ -1,0 +1,17 @@
+# sector -> sistema -> escanear un planeta -> aterrizar en una partida nueva
+wait 3
+ship
+wait 10
+explore
+wait 12
+wait 300
+expsys 3
+wait 400
+expplanet 31
+wait 500
+expbutton
+wait 200
+wait 400
+print pos
+shot land
+quit

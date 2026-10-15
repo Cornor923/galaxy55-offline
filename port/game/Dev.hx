@@ -98,6 +98,8 @@ class Dev {
 					g.ship.activateCraft(c.out.x + sdx, c.out.y + sdy, c.out.z + sz, g);
 				case "explore": app.startExplorer();
 				case "expsys": app.explorer.devClickSystem(Std.parseInt(a[1]));
+				case "expplanet": app.explorer.devClickPlanet(Std.parseInt(a[1]));
+				case "expbutton": app.explorer.devPressButton();
 				case "expgo": app.explorer.devClickPoint(f(a[1]), f(a[2]));
 				case "expship": app.explorer.devDumpShip("port/out/" + a[1] + ".png");
 				case "expinfo": Sys.println(app.explorer.devInfo());

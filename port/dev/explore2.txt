@@ -1,0 +1,18 @@
+# sector -> sistema solar -> planeta (ventana) -> volver al sector por el borde
+wait 3
+ship
+wait 10
+explore
+wait 12
+wait 300
+expsys 3
+wait 400
+expinfo
+wait 60
+shot sol1
+expplanet 30
+wait 500
+expinfo
+wait 60
+shot sol2
+quit

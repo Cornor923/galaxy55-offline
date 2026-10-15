@@ -55,54 +55,65 @@ typedef ExpInfos = {
 	var freeLicense : Bool;
 }
 
+/** Datos de sector y sistemas generados en local (exp.OfflineData del original sin servidor): todos los sistemas abiertos y planetas sin explorar. */
 class ExpOffline {
-	static var BIOMES = ["BIAutumn", "BIMars", "BIMoon", "BIWinterPeaks"];
+	static var SYS = "Sistema";
+	static var SEC = "Sector";
+	static var NAMES = ["Aldebar", "Brume", "Cyrene", "Dorian", "Eskel", "Fenris", "Galata", "Hespera", "Ikaros", "Jovan", "Kestrel", "Lumen"];
+	static var BIOMES = ["BIAutumn", "BIWinterPeaks", "BIMars", "BIMoon", "BIAcidForest"];
+	static var BWEIGHTS = [100, 100, 80, 80, 50];
+	public static var BNAMES = ["Otono", "Picos nevados", "Marte", "Luna", "Bosque acido"];
 
-	static function generateSystem( id : Int, seed : Int, status : ExpSystemStatus ) : ExpSystem {
+	public static function biomeIndex( biome : String ) : Int {
+		var i = BIOMES.indexOf(biome);
+		return i < 0 ? 0 : i;
+	}
+
+	static function generateSystem( id : Int, seed : Int ) : ExpSystem {
 		var rseed = new mt.Rand(seed);
 		var s : ExpSystem = {
 			id : id,
 			seed : seed,
-			name : "System " + id,
+			name : SYS + " " + NAMES[id % NAMES.length],
 			planets : [],
 			x : 20 + id * 3,
 			y : 25,
-			status : status,
+			status : SOpen,
 		};
-		switch( status ) {
-		case SOpen:
-			for( i in 0...rseed.random(3) + 2 ) {
-				var biome = BIOMES[rseed.random(BIOMES.length)];
-				s.planets.push({
-					id : i,
-					seed : seed + i,
-					size : rseed.random(4) + 1,
-					distance : i,
-					name : "Planet " + i,
-					status : PUnexplored,
-					gas : false,
-					biome : biome,
-				});
+		var total = 0;
+		for( w in BWEIGHTS ) total += w;
+		for( i in 0...rseed.random(3) + 2 ) {
+			var roll = rseed.random(total);
+			var bi = 0;
+			while( roll >= BWEIGHTS[bi] ) {
+				roll -= BWEIGHTS[bi];
+				bi++;
 			}
-		case SLocked(_):
+			s.planets.push({
+				id : id * 10 + i,
+				seed : seed + i,
+				size : [1, 2, 2, 3][rseed.random(4)], // pequena 128, normal 256, grande 384
+				distance : i,
+				name : s.name + " " + (i + 1),
+				status : PUnexplored,
+				gas : false,
+				biome : BIOMES[bi],
+			});
 		}
 		return s;
 	}
 
-	/** Main.getInfos del original: un sector de 50x50 con 10 sistemas, un tercio bloqueados (1500) */
 	public static function make( seed : Int ) : ExpInfos {
+		seed = 1 + Std.int(Math.abs(seed)) % 999998;
 		var d : ExpInfos = {
-			sector : { id : 0, seed : seed, width : 50, height : 50, name : "Sector 0" },
+			sector : { id : 0, seed : seed, width : 50, height : 50, name : SEC + " " + seed },
 			systems : [],
 			shipPos : PInSector(30, 30),
 			energy : 100,
 			freeLicense : true,
 		};
+		for( i in 0...10 ) d.systems.push(generateSystem(i, seed + i));
 		var rseed = new mt.Rand(seed);
-		for( i in 0...10 ) {
-			var status = rseed.random(100) < 33 ? SLocked(1500) : SOpen;
-			d.systems.push(generateSystem(i, seed + i, status));
-		}
 		rseed.initSeed(seed);
 		for( s in d.systems ) {
 			s.x += rseed.random(2);

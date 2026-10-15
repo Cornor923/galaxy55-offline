@@ -562,9 +562,32 @@ class GalaxyApp extends hxd.App {
 		explorer = new Explorer(s2d, ExpData.ExpOffline.make(game.info.seed), game.ship.captureFrames(engine, s3d));
 		s2d.under(explorer);
 		explorer.onExit = closeExplorer;
+		explorer.onLand = landOnPlanet;
 		state = Exploring;
 		dim.visible = false;
 		captureMouse(false);
+	}
+
+	/** aterrizar en un planeta del mapa: de momento cada planeta es una partida nueva (despues sera un universo) */
+	function landOnPlanet( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
+		var creative = game.info.creative;
+		explorer.dispose();
+		explorer = null;
+		dim.visible = true;
+		saveGame(false);
+		closePalette();
+		game.dispose();
+		if( invBar != null ) {
+			invBar.remove();
+			invBar = null;
+		}
+		game.world.dispose();
+		game = null;
+		ui.removeChildren();
+		screens = new Map();
+		var info = SaveData.create(p.name, p.seed, p.biome, p.size);
+		info.creative = creative;
+		startGame(info);
 	}
 
 	function closeExplorer() {
@@ -1331,7 +1354,7 @@ class GalaxyApp extends hxd.App {
 			} else
 				shotFrames = frames + 6;
 		}
-		if( dev != null && shotStage == 2 && (state == Playing || state == Exploring || state == Loading) ) {
+		if( dev != null && shotStage == 2 && game != null && (state == Playing || state == Exploring || state == Loading) ) {
 			if( dev.tick(this, game) ) Sys.exit(0);
 			return;
 		}

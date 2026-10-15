@@ -61,8 +61,12 @@ El explorador original arranca en modo depuracion dentro de un sistema solar (`P
 ## Explorador (portado desde `fla/explore`)
 - `port/shim/flash/*`: `BitmapData` por software (ruido, Perlin, filtros, mezcla), `geom`, `filters`, `Sprite/Graphics` minimos. OJO: `getPixel32` devuelve `UInt`; restar con UInt da valores enormes: convertir a `Int`.
 - `port/explore/`: `ExpRoom` (generacion de fondos: copia de `Room.hx`), `ExpData` (datos offline), `Explorer` (vista del sector con paralaje, sistemas, nave, viaje con clic).
-- Hecho: vista del sector (fondo, sistemas, nave provisional, cursor, viaje). Falta: vista del sistema solar (sol, orbitas, planetas, ventana de planeta, aterrizar), nave 3D en 2D (32 fotogramas),
-  reactores, efectos de salto, universo guardado en la partida, naves de comerciantes.
+- Hecho: vista del sector (fondo, sistemas, cursor, viaje), tu nave renderizada desde arriba en 32 fotogramas (`Ship.captureFrames`), vista del sistema solar (sol, orbitas, planetas con
+  ventana, rocas, anillo de salida, calor del sol), transiciones con fundido a negro y aterrizaje (de momento cada planeta crea una partida nueva).
+- Datos: `ExpData.ExpOffline` copia `exp.OfflineData` del original sin servidor: TODOS los sistemas abiertos (los candados de `Main.hx` eran solo datos de prueba) y planetas sin explorar ("Escanear" y luego aterrizar).
+- Falta: universo guardado en la partida (posicion de la nave, planetas visitados con sus cambios), animaciones de zoom/hipersalto del original, reactores y particulas, GPS a planetas activos, la "common room" (remolino),
+  naves de comerciantes y volver del planeta al mapa.
+- El paquete portatil necesita ademas `res/explore_tiles.png` (de `src/G55/fla/explore/gfx/tiles.png`).
 
 ## Banco de pruebas (`port/game/Dev.hx`, guiones en `port/dev/`)
 Solo para desarrollo: `hl galaxy55.hl --script=guion.txt` arranca una partida nueva y ejecuta ordenes (tp, tpl, lookat, set, activate, synth, give, print, map, shot...;

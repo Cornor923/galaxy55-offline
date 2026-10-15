@@ -3,10 +3,56 @@ import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.geom.ColorTransform;
 import mt.deepnight.Color;
+import ExpData;
 
 /** Funciones de Color.hx de deepnight que solo existen con flash9 (copiadas tal cual). */
 class ExpColor {
 	public static inline function addAlphaChannel( rgb : Int, a : Int ) : Int return (a << 24) | (rgb & 0xFFFFFF);
+
+	public static function getContrastFilter( ratio : Float ) {
+		var m = 1 + ratio * 1.5;
+		var o = -64 * ratio;
+		return new flash.filters.ColorMatrixFilter([m, 0, 0, 0, o, 0, m, 0, 0, o, 0, 0, m, 0, o, 0, 0, 0, 1, 0]);
+	}
+
+	/** -1 (desaturar) .. 1 (saturar) */
+	public static function getSaturationFilter( ratio : Float ) {
+		if( ratio > 0 )
+			return new flash.filters.ColorMatrixFilter([1 + ratio, -ratio, 0, 0, 0, -ratio, 1 + ratio, 0, 0, 0, 0, -ratio, 1 + ratio, 0, 0, 0, 0, 0, 1, 0]);
+		var t = -ratio;
+		var l = function( a : Float, b : Float ) return a + (b - a) * t;
+		return new flash.filters.ColorMatrixFilter([
+			l(1, .3), l(0, .59), l(0, .11), 0, 0,
+			l(0, .3), l(1, .59), l(0, .11), 0, 0,
+			l(0, .3), l(0, .59), l(1, .11), 0, 0,
+			0, 0, 0, 1, 0]);
+	}
+
+	public static function makeNicePalette( col : Int, dark = 0x0, ?light : Int ) : Array<Int> {
+		var c = Color.intToRgb(col);
+		if( light == null ) light = Color.rgbToInt(Color.offsetColor(c, 100));
+		var d = Color.intToRgb(dark);
+		var l = Color.intToRgb(light);
+		var pal = [];
+		var lightLimit = 200;
+		var lightRange = 256 - lightLimit;
+		for( i in 0...256 )
+			pal[i] = i < lightLimit ? Color.rgbToInt(Color.interpolate(d, c, i / lightLimit)) : Color.rgbToInt(Color.interpolate(c, l, (i - lightLimit) / lightRange));
+		return pal;
+	}
+
+	/** Color.paintBitmap: los pixeles rojos, verdes o azules puros se repintan con la paleta de su canal */
+	public static function paintBitmap( bd : flash.display.BitmapData, red : Array<Int>, green : Array<Int>, blue : Array<Int> ) {
+		for( i in 0...bd.width * bd.height ) {
+			var c = bd.px[i];
+			var a = (c >>> 24) & 0xFF;
+			if( a == 0 ) continue;
+			var r = (c >> 16) & 0xFF, g = (c >> 8) & 0xFF, b = c & 0xFF;
+			if( r == g && g == b ) continue;
+			var res = if( g == 0 && b == 0 ) red[r] else if( r == 0 && b == 0 ) green[g] else if( r == 0 && g == 0 ) blue[b] else 0xff00ff;
+			bd.px[i] = (a << 24) | (res & 0xFFFFFF);
+		}
+	}
 
 	public static inline function getColorizeMatrixFilter( col : Int, ?ratioNewColor = 1.0, ?ratioOldColor = 1.0 ) {
 		var rgb = Color.intToRgb(col);
@@ -23,6 +69,19 @@ class ExpColor {
 	}
 }
 
+/** Un planeta del sistema solar ya dibujado: imagen, posicion y estado (Room.addPlanet) */
+typedef ExpPlanetView = {
+	var infos : ExpData.ExpPlanet;
+	var x : Float;
+	var y : Float;
+	var bd : BitmapData;
+	var scale : Float;
+	var icon : Int;
+	var iconX : Float;
+	var iconY : Float;
+	var showName : Bool;
+}
+
 /** Una capa con paralaje (ZLayer del original, sin la lista de visualizacion de Flash). */
 class ExpLayer {
 	public var bd : BitmapData;
@@ -34,6 +93,12 @@ class ExpLayer {
 	public var yOffset = 0.;
 	/** se mezcla en aditivo (por defecto) o normal (las estrellas) */
 	public var additive = true;
+	/** mezcla SCREEN (los soles) */
+	public var screen = false;
+	/** zoom del paralaje (ZLayer.zoom): se amplia mas cuanto mas cerca esta la capa */
+	public var zoom = 0.;
+	/** la capa se mueve con la camara pero no se redondea a pixeles (rocas) */
+	public var snap = true;
 	public var alpha = 1.;
 	public var hideZoom = false;
 	public var texWid : Int;
@@ -84,6 +149,16 @@ class ExpRoom {
 	public var galaxyColors : Array<Int>;
 	public var layers : Array<ExpLayer> = [];
 	public var randValues : Array<Float>;
+	/** hoja de graficos del explorador (tiles.png) */
+	public static var tiles : BitmapData;
+	public var sunColor = 0xFF7900;
+	public var entrance : Point;
+	public var exitDist = -1;
+	public var orbitalObjects : Array<Bool> = [];
+	public var planetViews : Array<ExpPlanetView> = [];
+	public var sunLayer : ExpLayer;
+	public static var SUN_COLORS = [0xFF7900, 0xD6A229, 0xFF0000, 0x00A6FF, 0xE38FEF, 0x99D807];
+	public static var REACTOR_COLOR = 0xA482FF;
 
 	public function new( s : Int, viewW = 900, viewH = 450 ) {
 		seed = s;
@@ -247,6 +322,281 @@ class ExpRoom {
 			var g = makeGalaxyCloud(size + rseed.rand() * 0.3);
 			g.colorTransform(g.rect, new ColorTransform(1, 1, 1, 0.6 + (1 - quality) * 0.3));
 			var l = new ExpLayer(this, g, z, false, scale);
+			l.xOffset = center.x;
+			l.yOffset = center.y;
+		}
+	}
+
+	// ---------------------------------------------------------------- sistema solar (Room.generateSolarSystem y compania)
+
+	inline function getOrbitDist( orbitId : Int ) return Std.int(160 + orbitId * 80 + randValues[orbitId] * 20);
+
+	inline function getOrbitAng( orbitId : Int ) return randValues[0] * Math.PI * 2 + orbitId * Math.PI * 0.8 + randValues[orbitId] * Math.PI * 0.4;
+
+	public function getOrbitCoord( orbitId : Int ) {
+		var a = getOrbitAng(orbitId), d = getOrbitDist(orbitId);
+		return { x : center.x + Math.cos(a) * d, y : center.y + Math.sin(a) * d };
+	}
+
+	/** estrellas y nubes del fondo del sistema solar (Room.generateSolarStars) */
+	public function generateSolarStars() {
+		exitDist = -1;
+		initRandom();
+		initStars(0.4);
+		initClouds(bgColor, [0.7, 0.3]);
+	}
+
+	function frameBmp( x : Int, y : Int, w : Int, h : Int, padding = 0 ) : BitmapData {
+		var bd = new BitmapData(w + padding * 2, h + padding * 2, true, 0);
+		bd.copyPixels(tiles, new Rectangle(x, y, w, h), new Point(padding, padding), null, null, true);
+		return bd;
+	}
+
+	function makeSunBitmap( col : Int, size : Float ) {
+		var wid = Math.ceil(size * 80);
+		var filterRadius = Math.ceil(size * 96);
+		var totalWid = wid + filterRadius * 2;
+		var core = new flash.display.Sprite();
+		core.graphics.beginFill(0x0, 1);
+		core.graphics.drawCircle(filterRadius + wid * 0.5, filterRadius + wid * 0.5, wid * 0.5);
+
+		var sun = new BitmapData(totalWid, totalWid, true, 0x0);
+		sun.draw(core);
+
+		var disp = new BitmapData(totalWid, totalWid, true, 0x0);
+		disp.perlinNoise(6, 6, 2, safePerlinSeed(rseed), false, true, 7, true);
+
+		var mask = new BitmapData(totalWid, totalWid, true, 0x0);
+		mask.draw(core);
+		mask.applyFilter(mask, mask.rect, pt0, new flash.filters.BlurFilter(8, 8, 2));
+		mask.applyFilter(mask, mask.rect, pt0, new flash.filters.DisplacementMapFilter(disp, pt0, 1, 0, size * 10, size * 10));
+
+		var tex = new BitmapData(totalWid, totalWid, true, 0x0);
+		tex.perlinNoise(size * 8, size * 8, 1, safePerlinSeed(rseed), false, false, 7, true);
+		tex.copyChannel(mask, mask.rect, pt0, flash.display.BitmapDataChannel.ALPHA, flash.display.BitmapDataChannel.ALPHA);
+
+		sun.fillRect(sun.rect, 0xffffffff);
+		sun.copyChannel(mask, mask.rect, pt0, 8, 8);
+		sun.applyFilter(sun, sun.rect, pt0, new flash.filters.GlowFilter(Color.lighten(col, 0.4), 1, size * 32, size * 32, 1, 1, true));
+		sun.draw(tex, null, new ColorTransform(1, 1, 1, 0.05 + rseed.rand() * 0.15), flash.display.BlendMode.NORMAL);
+		sun.applyFilter(sun, sun.rect, pt0, new flash.filters.GlowFilter(Color.lighten(col, 0.4), 0.7, size * 16, size * 16, 1, 2));
+		sun.applyFilter(sun, sun.rect, pt0, new flash.filters.GlowFilter(Color.lighten(col, 0.4), 1, size * 96, size * 96, 2, 2));
+		sun.applyFilter(sun, sun.rect, pt0, ExpColor.getContrastFilter(0.2));
+		disp.dispose();
+		mask.dispose();
+		tex.dispose();
+		return sun;
+	}
+
+	function makeSun( col : Int, size : Float, z : Float ) {
+		initRandom(col + size);
+		var bd = makeSunBitmap(col, size);
+		var l = new ExpLayer(this, bd, z, false);
+		l.xOffset = center.x;
+		l.yOffset = center.y;
+		l.additive = false;
+		l.screen = true;
+		return l;
+	}
+
+	function addRocks( n : Int, size : Float, ?color : Int, posFunc : Void -> { x : Float, y : Float, z : Float } ) {
+		if( color == null ) color = Color.desaturateInt(Color.getRainbowColor(Math.random()), 0.7);
+		for( i in 0...Std.int(n * quality) ) {
+			var pos = posFunc();
+			rseed.random(1); // getRandomFrame("asteroid"): una sola imagen
+			var rot = rseed.random(360);
+			// la roca es la imagen "asteroid" (tiles.png, 32x32) girada y coloreada
+			var src = frameBmp(0, 64, 32, 32, 8);
+			var rb = new BitmapData(src.width, src.height, true, 0);
+			var m = new flash.geom.Matrix();
+			m.translate(-src.width * 0.5, -src.height * 0.5);
+			m.rotate(rot * Math.PI / 180);
+			m.translate(src.width * 0.5, src.height * 0.5);
+			rb.draw(src, m);
+			rb.applyFilter(rb, rb.rect, pt0, ExpColor.getColorizeMatrixFilter(color, 0.5, 0.8));
+			rb.applyFilter(rb, rb.rect, pt0, ExpColor.getColorizeMatrixFilter(bgColor, 1 - pos.z, pos.z));
+			var l = new ExpLayer(this, rb, pos.z, false, 0.05 * size + pos.z * size * 0.95);
+			l.xOffset = pos.x;
+			l.yOffset = pos.y;
+			l.snap = false;
+			l.additive = false;
+		}
+	}
+
+	function addRocksAround( color : Int, x : Float, y : Float, minDist : Int, maxDist : Int ) {
+		addRocks(2 + rseed.random(20), 0.20, Color.desaturateInt(color, 0.7), function() {
+			var a = rseed.rand() * Math.PI * 2;
+			var d = minDist + rseed.random(maxDist - minDist);
+			return { x : x + Math.cos(a) * d, y : y + Math.sin(a) * d, z : rseed.rand() * 0.1 + 0.9 };
+		});
+	}
+
+	function makeRockCloud( n : Int ) {
+		// el original elige el patron 3 (nube excentrada); los demas estan desactivados
+		// randomPoint(100): dos tiradas distintas para x e y, como en el original
+		var a0 = rseed.rand() * Math.PI * 2;
+		var pt = { x : center.x + Math.cos(a0) * (100 + rseed.rand() * (exitDist - 100)), y : center.y + Math.sin(a0) * (100 + rseed.rand() * (exitDist - 100)) };
+		var z = rseed.rand() * 0.6 + 0.4;
+		addRocks(n, rseed.rand() * 0.20 + 0.30, function() {
+			var a = rseed.rand() * Math.PI * 2;
+			var d = 50 + rseed.random(150);
+			return { x : pt.x + Math.cos(a) * d, y : pt.y + Math.sin(a) * d, z : z - rseed.rand() * 0.29 };
+		});
+	}
+
+	function addPlanet( infos : ExpPlanet ) {
+		var size = switch( infos.size ) {
+			case 1: 0.07;
+			case 2: 0.25;
+			case 3: 0.50;
+			case 4: 1.00;
+			default: 0.5;
+		}
+		var orbitId = infos.distance;
+		initRandom(orbitId);
+		var ang = getOrbitAng(orbitId), d = getOrbitDist(orbitId);
+		var c0r = Color.getRainbowColor(rseed.rand());
+		var frame = rseed.random(3);
+		var bd = frameBmp(frame * 64, 5 * 32, 64, 64, 16);
+		var scale = size + 0.5;
+		var biome = Common.Data.getBiome(Type.createEnum(Common.BiomeKind, infos.biome));
+		var c0 = biome.exploreColors.length >= 1 ? biome.exploreColors[0] : 0x0;
+		var c1 = biome.exploreColors.length >= 2 ? biome.exploreColors[1] : c0;
+		var c2 = biome.exploreColors.length >= 3 ? biome.exploreColors[2] : c1;
+		ExpColor.paintBitmap(bd, ExpColor.makeNicePalette(c0), ExpColor.makeNicePalette(c1), ExpColor.makeNicePalette(c2));
+		bd.applyFilter(bd, bd.rect, pt0, new flash.filters.DropShadowFilter(5, -45, 0x0, 0.4, 4, 4, 1, 1, true));
+		var pv : ExpPlanetView = {
+			infos : infos,
+			x : center.x + Math.cos(ang) * d,
+			y : center.y + Math.sin(ang) * d,
+			bd : bd,
+			scale : scale,
+			icon : 2,
+			iconX : Std.int(bd.width * scale * 0.2),
+			iconY : Std.int(-bd.height * scale * 0.2),
+			showName : false,
+		};
+		var halo = Color.brightnessInt(bgColor, 0.5);
+		switch( infos.status ) {
+		case PAbandonned, PForbidden:
+			pv.icon = 1;
+			pv.iconX = pv.iconY = 0;
+			bd.applyFilter(bd, bd.rect, pt0, ExpColor.getSaturationFilter(-0.9));
+			bd.applyFilter(bd, bd.rect, pt0, ExpColor.getColorizeMatrixFilter(0x0, 0.5, 0.5));
+			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(Color.brightnessInt(bgColor, -0.7), 0.7, 16, 16, 1, 2));
+		case PActive, PInvited:
+			pv.icon = 3;
+			pv.showName = true;
+			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.9, 8, 8, 1));
+			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.7, 32, 32, 1));
+		case PUnexplored:
+			pv.icon = 2;
+			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.9, 8, 8, 1));
+			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.7, 32, 32, 1));
+		}
+		if( rseed.random(100) < 15 ) addRocksAround(c0r, pv.x, pv.y, 20, 60);
+		orbitalObjects[orbitId] = true;
+		planetViews.push(pv);
+	}
+
+	public function generateSolarSystem( infos : ExpSystem ) {
+		exitDist = 500;
+		var a = rseed.rand() * Math.PI * 2;
+		entrance = new Point(center.x + 200 * Math.cos(a), center.y + 200 * Math.sin(a));
+		bgColor = Color.getRainbowColor(rseed.rand(), 0.25 + rseed.rand() * 0.35, 0.15 + rseed.rand() * 0.4);
+
+		// gran sol
+		sunColor = SUN_COLORS[rseed.random(SUN_COLORS.length)];
+		sunLayer = makeSun(sunColor, 0.6 + rseed.rand() * 0.9, 0.85);
+
+		// soles secundarios
+		var extraSuns = new mt.deepnight.RandList<Int>();
+		extraSuns.add(0, 150);
+		extraSuns.add(1, 45);
+		extraSuns.add(2, 10);
+		extraSuns.add(3, 1);
+		extraSuns.add(4, 1);
+		var nsuns = extraSuns.draw(rseed.random);
+		for( i in 0...nsuns ) {
+			var z = rseed.rand() * 0.4 + 0.4;
+			var s = makeSun(SUN_COLORS[rseed.random(SUN_COLORS.length)], z * (rseed.rand() * 0.2 + 0.4), z);
+			var a = rseed.rand() * Math.PI * 2;
+			var d = rseed.rand() * 350 + 100;
+			s.xOffset = center.x + Math.cos(a) * d;
+			s.yOffset = center.y + Math.sin(a) * d;
+		}
+
+		for( p in infos.planets ) addPlanet(p);
+
+		// escombros espaciales
+		initRandom();
+		if( rseed.random(100) < 50 ) makeRockCloud(rseed.random(60) + 20);
+
+		// galaxia
+		initRandom();
+		if( rseed.random(100) < 70 ) {
+			var size = quality * 0.8 + 0.2;
+			var scale = rseed.rand() * 1 + 0.50;
+			scale += 1 / size - 1;
+			var bz = rseed.rand() * 0.4 + 0.2;
+			var pt = { x : center.x + rseed.rand() * 100 * (rseed.random(2) * 2 - 1), y : center.y + rseed.rand() * 100 * (rseed.random(2) * 2 - 1) };
+			var zeds = nsuns < 2 ? [bz + 0.15, bz] : [bz];
+			galaxyColors = [];
+			var base = Color.saturationInt(bgColor, 0.3);
+			for( i in 0...zeds.length ) galaxyColors.push(Color.hueInt(base, rseed.rand() * 0.3 * (rseed.random(2) * 2 - 1)));
+			for( z in zeds ) {
+				var g = makeGalaxyCloud(size);
+				g.colorTransform(g.rect, new ColorTransform(1, 1, 1, 0.5));
+				var l = new ExpLayer(this, g, z, false, scale);
+				l.xOffset = pt.x;
+				l.yOffset = pt.y;
+			}
+		}
+		finalizeSolar();
+	}
+
+	/** circulos de orbita y anillo de salida (Room.finalize) */
+	function finalizeSolar() {
+		var last = -1;
+		for( i in 0...orbitalObjects.length ) if( orbitalObjects[i] ) last = i;
+		if( last >= 0 ) exitDist = getOrbitDist(last) + 100;
+		if( exitDist > 0 ) {
+			var wid = 600;
+			var fullWid = wid + 32 * 2;
+			var disc = new flash.display.Sprite();
+			disc.graphics.lineStyle(1, REACTOR_COLOR, 0.5);
+			disc.graphics.drawCircle(0, 0, wid * 0.5);
+			var bd = new BitmapData(fullWid, fullWid, true, 0x0);
+			var m = new flash.geom.Matrix();
+			m.translate(bd.width * 0.5, bd.height * 0.5);
+			bd.draw(disc, m);
+			var stripes = new flash.display.Sprite();
+			var g = stripes.graphics;
+			g.lineStyle(10, 0xffffff, 1);
+			for( i in 0...100 ) {
+				var a = Math.PI * 2 * (i / 100);
+				g.moveTo(fullWid * 0.5, fullWid * 0.5);
+				g.lineTo(fullWid * 0.5 + Math.cos(a) * fullWid * 0.5, fullWid * 0.5 + Math.sin(a) * fullWid * 0.5);
+			}
+			bd.draw(stripes, null, null, flash.display.BlendMode.ERASE);
+			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(REACTOR_COLOR, 1, 8, 8, 3, 2));
+			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.BlurFilter(2, 2, 2));
+			var l = new ExpLayer(this, bd, 1, false, (exitDist * 2) / wid);
+			l.xOffset = center.x;
+			l.yOffset = center.y;
+		}
+		if( last >= 0 ) {
+			var maxR = getOrbitDist(last);
+			var w = (maxR + 4) * 2;
+			var oc = new flash.display.Sprite();
+			oc.graphics.lineStyle(1, bgColor, 1);
+			for( i in 0...orbitalObjects.length )
+				if( orbitalObjects[i] ) oc.graphics.drawCircle(0, 0, getOrbitDist(i));
+			var bd = new BitmapData(w, w, true, 0x0);
+			var m = new flash.geom.Matrix();
+			m.translate(w * 0.5, w * 0.5);
+			bd.draw(oc, m);
+			var l = new ExpLayer(this, bd, 1, false);
 			l.xOffset = center.x;
 			l.yOffset = center.y;
 		}
