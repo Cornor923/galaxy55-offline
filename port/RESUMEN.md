@@ -64,9 +64,21 @@ El explorador original arranca en modo depuracion dentro de un sistema solar (`P
 - Hecho: vista del sector (fondo, sistemas, cursor, viaje), tu nave renderizada desde arriba en 32 fotogramas (`Ship.captureFrames`), vista del sistema solar (sol, orbitas, planetas con
   ventana, rocas, anillo de salida, calor del sol), transiciones con fundido a negro y aterrizaje (de momento cada planeta crea una partida nueva).
 - Datos: `ExpData.ExpOffline` copia `exp.OfflineData` del original sin servidor: TODOS los sistemas abiertos (los candados de `Main.hx` eran solo datos de prueba) y planetas sin explorar ("Escanear" y luego aterrizar).
-- Falta: universo guardado en la partida (posicion de la nave, planetas visitados con sus cambios), animaciones de zoom/hipersalto del original, reactores y particulas, GPS a planetas activos, la "common room" (remolino),
-  naves de comerciantes y volver del planeta al mapa.
-- El paquete portatil necesita ademas `res/explore_tiles.png` (de `src/G55/fla/explore/gfx/tiles.png`).
+- Universo guardado: HECHO (`SaveInfo.uni`: semilla del sector, planeta actual, posicion de la nave en el mapa, planetas visitados con sus cambios). El mapa empieza junto al planeta inicial y,
+  al volver de un planeta, la nave aparece junto a ese planeta en su sistema.
+- **PENDIENTE (lo siguiente, pedido por el usuario, el 15/10/2026): hacer las transiciones IGUALES al original.** Hoy solo hay un fundido a negro. Leer y portar de `Manager.hx`:
+  1. **Entrar al sistema solar** (`gotoSolar` con `anim`, lineas ~1412-1595): `hyperjumpFx3D` (10 lineas de particulas que convergen en la nave + `novaFx` que se absorbe) y luego `zoomAnim` de 1300 ms:
+     lineas de hiperespacio (`makeHyperspacePart`) entre el 10 % y el 60 %, destello de calor (`burn`/`overdriveBurn`), el sistema crece desde un punto (`zoomCache` = `solar.snapshot()`, escala 0.01 -> 1 con `TEase`),
+     el sector se aleja (zoom 60 de las capas, alpha 1-t; las entidades zoom 12), las estrellas del sistema (`solarStars`, zoom 0 -> 10) y el fondo cambia de color; al acabar `popString(nombre)` y `hyperjumpArrivalFx(10)`.
+  2. **Salir del sistema solar** (`gotoSector` con `anim`, ~1596-1715): `hyperjumpFxHorizontal` + `zoomAnim` de 800 ms (el sistema se encoge a un punto, el sector vuelve con zoom 60 -> 0) + `hyperjumpArrivalFx(6)`.
+     **Ademas hoy la salida ocurre demasiado rapido**: el original deja pasar la ULTIMA linea de orbita y un rato despues te saca (la salida se dispara con `d >= exitDist - 30` y destino `td >= exitDist`;
+     `exitDist = getOrbitDist(ultimo) + 100`). Mirar esa parte del original en marcha con `port/dev/orig_flash_shot.ps1` (salir por el borde con clics) y copiar el comportamiento y el momento exacto.
+  3. **Entrar a un planeta** (`Escanear`/`Aterrizar`): el original oscurece la pantalla (`initMask`, 350 ms), muestra el nombre grande (`popString(p.name, false)`), la barra fina de carga (`showBar`) y el icono giratorio
+     (`loading`), y al aterrizar un planeta activo bloquea los controles y llama a `onLand` a los 100 ms.
+  Para portarlo hace falta: un gestor de animaciones como `Tweenie` (curvas Bezier: TEase 0,0,1,1; TEaseIn 0,0,.5,1; TEaseOut 0,.5,1,1; TBurnIn 0,1,1,1), un sistema de particulas como `Particle` (dx/dy, friccion, vida, alpha),
+  el zoom de las capas (`ExpLayer.zoom` ya existe) y de las entidades, y `snapshot()` del sistema (render de las capas con una vista virtual de 2200x2200 a una textura).
+- Falta ademas: reactores y particulas de la nave, GPS (flechas) a planetas activos, la "common room" (remolino), naves de comerciantes (tienda), el hangar y que la nave del mapa sea la editada.
+- El paquete portatil necesita ademas `res/explore_tiles.png` (de `src/G55/fla/explore/gfx/tiles.png`) y volver a generarse con el sintetizador y el explorador.
 
 ## Banco de pruebas (`port/game/Dev.hx`, guiones en `port/dev/`)
 Solo para desarrollo: `hl galaxy55.hl --script=guion.txt` arranca una partida nueva y ejecuta ordenes (tp, tpl, lookat, set, activate, synth, give, print, map, shot...;
