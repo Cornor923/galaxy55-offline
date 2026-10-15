@@ -237,6 +237,7 @@ class Explorer extends h2d.Object {
 		ship.speed = shipSpeed();
 		layout();
 		update(0);
+		fadeIn(); // entrada suave desde negro (initMask)
 	}
 
 	/** Const.shipSpeed(motores, peso): motores y bloques de la nave por defecto */

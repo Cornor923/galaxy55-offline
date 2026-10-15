@@ -1,12 +1,11 @@
-# abrir el explorador, ver el sector, viajar a un sistema y a un punto libre
+# abrir el explorador, ver el sector, viajar a un punto libre
 wait 3
 ship
 wait 10
 explore
 wait 12
-wait 400
+wait 200
 expinfo
-expship ship_frames
 shot exp1
 expgo 900 700
 wait 90
