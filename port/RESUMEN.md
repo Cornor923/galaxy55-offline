@@ -63,8 +63,9 @@ Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-rele
 - Un instalador `.exe` vendrá después, cuando haya menos errores. No empezar sin que el usuario pruebe el zip.
 
 ## Pendiente (por orden)
-1. **Nave** (parte 1 hecha: aparecer, teletransporte, ordenador, puertas). Falta: **sintetizador** (`BCrafter` + `BCrafterComputer`, `CraftEngine`, recetas
-   `Data.CRAFTS`), **tienda ESCorp** (`Game.openShop`, créditos), y el menú "despegar" que llevará al explorador.
+1. **Nave** (parte 1 hecha: aparecer, teletransporte, ordenador, puertas; parte 2a hecha: **sintetizador** con `CraftEngine` del original, vista previa del
+   resultado, texto de la receta en pantalla y fabricar con el ordenador del sintetizador; probado por hook `--craft`/`--craftgo`, falta probarlo con ratón y
+   teclado reales). Falta: **tienda ESCorp** (`Game.openShop`, créditos), y el menú "despegar" que llevará al explorador.
 2. **Hangar** (`EditShip.hx`, `net/EditShip.hx`): editar los bloques de la nave y validarla (hermética, motores, ordenador, teletransportador...).
 3. **Explorador / mapa de estrellas** (`fla/explore`, `Manager.hx` + `Room.hx`): sectores, sistemas solares y planetas.
 4. Después, ideas guardadas por el usuario (no empezar antes de 1-3):

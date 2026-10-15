@@ -102,6 +102,7 @@ class GalaxyApp extends hxd.App {
 	var bar : h2d.Graphics;
 	var barText : h2d.Text;
 	var hud : h2d.Text;
+	var msgText : h2d.Text;
 	var jetGlow : h2d.Bitmap;
 	var jetBar : h2d.Graphics;
 	var invBar : InvBar;
@@ -212,6 +213,10 @@ class GalaxyApp extends hxd.App {
 		hud = Theme.text(s2d, "", 1.8, 0xFFFFFF, 14, 74);
 		hud.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
 		hud.visible = false;
+		msgText = Theme.text(s2d, "", 2.2, 0xFFFFFF, 0, 0);
+		msgText.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
+		msgText.textAlign = Center;
+		msgText.visible = false;
 		toast = Theme.text(s2d, "", 2.4, Theme.ACCENT, 0, 640);
 		toast.dropShadow = { dx : 2, dy : 2, color : 0, alpha : 0.9 };
 		toast.visible = false;
@@ -529,7 +534,7 @@ class GalaxyApp extends hxd.App {
 		if( state != Playing ) return;
 		state = Paused;
 		captureMouse(false);
-		hud.visible = false;
+		hud.visible = false; msgText.visible = false;
 		show("computer");
 	}
 
@@ -587,7 +592,7 @@ class GalaxyApp extends hxd.App {
 	function startGame( info : SaveInfo ) {
 		state = Loading;
 		clearUi();
-		hud.visible = false;
+		hud.visible = false; msgText.visible = false;
 		loadInfo = info;
 		loadWorld = new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits);
 		loadWorld.root.visible = false;
@@ -633,7 +638,7 @@ class GalaxyApp extends hxd.App {
 	function pause() {
 		state = Paused;
 		captureMouse(false);
-		hud.visible = false;
+		hud.visible = false; msgText.visible = false;
 		show("pause");
 	}
 
@@ -650,7 +655,7 @@ class GalaxyApp extends hxd.App {
 		ui.removeChildren();
 		screens = new Map();
 		bgStart();
-		hud.visible = false;
+		hud.visible = false; msgText.visible = false;
 		state = Menu;
 		show("main");
 	}
@@ -899,6 +904,13 @@ class GalaxyApp extends hxd.App {
 				}
 				var p = game;
 				hud.text = Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps\n" + Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : "");
+				msgText.visible = game.message != null;
+				if( game.message != null ) {
+					msgText.text = game.message;
+					msgText.textColor = game.messageRed ? 0xFF1C1C : 0xFFFFFF;
+					msgText.maxWidth = 600 / msgText.scaleX;
+					msgText.setPosition(s2d.width * 0.5 - 300, s2d.height * 0.72);
+				}
 				if( K.isPressed(K.H) || (pad != null && pad.isPressed(pad.config.back)) ) toggleHelmet();
 				if( !helmet.visible && helmetOn ) helmet.visible = true;
 				updateHelmet(dt, p);

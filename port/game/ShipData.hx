@@ -17,6 +17,11 @@ class CraftArea {
 	public var heights : Array<Array<Int>>;
 	/** celda del ordenador del sintetizador (BCrafterComputer) que le toca */
 	public var out : { x : Int, y : Int, z : Int };
+	/** estado del sintetizador (CraftPoint): receta reconocida, texto de la lista y bloque de vista previa */
+	public var engine = new CraftEngine();
+	public var curCraft : CraftRule;
+	public var curText : String;
+	public var preview : Drops.Drop;
 
 	public function new( x : Int, y : Int, z : Int ) {
 		this.x = x;

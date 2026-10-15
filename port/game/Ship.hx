@@ -144,4 +144,130 @@ class Ship {
 			if( g.enteringShip < 0 ) g.enteringShip = 0;
 		}
 	}
+
+	// ---------------------------------------------------------------- sintetizador (ShipLogic.craft / activateBlock)
+
+	/** zona de sintetizador que contiene esa posicion del planeta, con la posicion relativa a la zona */
+	function areaAt( wx : Int, wy : Int, wz : Int ) : { c : ShipData.CraftArea, x : Int, y : Int, z : Int } {
+		if( wz < World.SHIP_Z ) return null;
+		var s = planet.size;
+		var lx = (wx - planet.shipDX) % s, ly = (wy - planet.shipDY) % s;
+		if( lx < 0 ) lx += s;
+		if( ly < 0 ) ly += s;
+		var lz = wz - World.SHIP_Z;
+		for( c in crafts )
+			if( c.inside(lx, ly, lz) ) return { c : c, x : lx, y : ly, z : lz };
+		return null;
+	}
+
+	/** al cargar una partida: los bloques que ya hay en las zonas vuelven a contar para el sintetizador */
+	public function initCrafts( g : GameView ) {
+		for( c in crafts ) {
+			for( dx in 0...c.w )
+				for( dy in 0...c.h )
+					for( dz in 0...c.heights[dx][dy] ) {
+						var b = world.block(c.x + dx, c.y + dy, c.z + dz);
+						if( b != null ) c.engine.add(b, dx, dy, dz);
+					}
+			checkCraft(c, g);
+		}
+	}
+
+	/** se ha puesto (b) o quitado (null) un bloque en el planeta: si cae en una zona, el sintetizador lo recuerda */
+	public function craft( wx : Int, wy : Int, wz : Int, b : Block, g : GameView ) {
+		var a = areaAt(wx, wy, wz);
+		if( a == null ) return;
+		if( b == null ) a.c.engine.remove(a.x - a.c.x, a.y - a.c.y, a.z - a.c.z)
+		else a.c.engine.add(b, a.x - a.c.x, a.y - a.c.y, a.z - a.c.z);
+		checkCraft(a.c, g);
+	}
+
+	function outPos( c : ShipData.CraftArea ) {
+		return { x : c.out.x + planet.shipDX + 0.5, y : c.out.y + planet.shipDY + 0.5, z : c.out.z + World.SHIP_Z + 0.25 };
+	}
+
+	function checkCraft( c : ShipData.CraftArea, g : GameView ) {
+		var r = c.engine.checkAll();
+		c.curCraft = r;
+		if( c.preview != null ) {
+			g.drops.remove(c.preview);
+			c.preview = null;
+		}
+		if( r != null && c.out != null ) {
+			var p = outPos(c);
+			var d = g.drops.add(p.x, p.y, p.z, Block.get(r.out));
+			d.fixed = true;
+			d.active = false;
+			c.preview = d;
+		}
+		var text = [];
+		var bl = c.engine.getBlocks(false);
+		for( b in bl ) text.push(b.n + "x " + b.b.getName());
+		if( bl.length > 0 )
+			text.push(" = " + (r != null ? (r.count != null && r.count > 1 ? r.count + " x " : "") + Block.get(r.out).getName() : Lang.t("craft.norecipe")));
+		c.curText = text.length == 0 ? null : text.join("
+");
+	}
+
+	/** texto de las recetas cercanas (ShipLogic.checkHero); null si no hay ninguna cerca */
+	public function message( g : GameView ) : String {
+		if( g.pz < World.SHIP_Z ) return null;
+		for( c in crafts ) {
+			if( c.curText == null ) continue;
+			var dx = g.wrapDist(c.x + planet.shipDX + c.w * 0.5 - g.px);
+			var dy = g.wrapDist(c.y + planet.shipDY + c.h * 0.5 - g.py);
+			var dz = c.z + World.SHIP_Z - g.pz;
+			if( Math.sqrt(dx * dx + dy * dy + dz * dz) < Math.max(c.w, c.h) * 0.5 + 3 ) {
+				g.messageRed = c.curCraft == null;
+				return c.curText;
+			}
+		}
+		return null;
+	}
+
+	/** ordenador del sintetizador: fabrica la receta con los bloques del inventario o, si faltan, con los puestos en la zona */
+	public function activateCraft( wx : Int, wy : Int, wz : Int, g : GameView ) {
+		var s = planet.size;
+		var lx = (wx - planet.shipDX) % s, ly = (wy - planet.shipDY) % s;
+		if( lx < 0 ) lx += s;
+		if( ly < 0 ) ly += s;
+		var lz = wz - World.SHIP_Z;
+		var c : ShipData.CraftArea = null;
+		for( cc in crafts )
+			if( cc.out != null && cc.out.x == lx && cc.out.y == ly && cc.out.z == lz ) {
+				c = cc;
+				break;
+			}
+		if( c == null || c.curCraft == null ) return;
+		var cur = c.curCraft;
+		var blocks = c.engine.getBlocks(true);
+		var hasInv = true;
+		for( b in blocks )
+			if( !g.inv.hasBlocks(b.b, b.n) ) {
+				hasInv = false;
+				break;
+			}
+		var out = Block.get(cur.out);
+		var n = cur.count != null ? cur.count : 1;
+		var p = outPos(c);
+		for( i in 0...n ) {
+			var d = g.drops.add(p.x, p.y, p.z, out);
+			d.delay = 30;
+		}
+		if( hasInv ) {
+			if( !g.creative )
+				for( b in blocks ) g.inv.useBlocks(b.b, b.n);
+		} else {
+			c.engine.clear();
+			g.drops.remove(c.preview);
+			c.preview = null;
+			c.curCraft = null;
+			c.curText = null;
+			for( b in blocks )
+				for( q in b.pos ) {
+					var x = c.x + q.x + planet.shipDX, y = c.y + q.y + planet.shipDY, z = c.z + q.z + World.SHIP_Z;
+					g.removeShipBlock(x, y, z, b.b);
+				}
+		}
+	}
 }

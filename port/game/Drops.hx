@@ -13,6 +13,9 @@ class Drop {
 	/** vida restante en unidades de 30 tmod (Dummy.time: 180 al soltarlo) */
 	public var time = 180.;
 	public var active = true;
+	/** vista previa del sintetizador: quieto, no se recoge */
+	public var fixed = false;
+	public var delay = 0.;
 	public var light = 0.;
 	public var obj : h3d.scene.Object;
 	public var mat : h3d.mat.Material;
@@ -66,6 +69,14 @@ class Drops {
 
 	public function count() return list.length;
 
+	public function remove( d : Drop ) {
+		if( d.obj != null ) {
+			for( c in d.obj.getMeshes() ) c.primitive.dispose();
+			d.obj.remove();
+		}
+		list.remove(d);
+	}
+
 	inline function collide( x : Float, y : Float, z : Float ) return world.collidePoint(x, y, z);
 
 	inline function dist( a : Float, ref : Float ) : Float {
@@ -82,6 +93,21 @@ class Drops {
 		while( i < list.length ) {
 			var d = list[i];
 			d.time -= dt / 30;
+			if( d.fixed ) {
+				if( d.obj != null ) {
+					d.obj.setPosition(d.x, d.y, d.z + Math.sin(d.time * 7) * 0.04);
+					d.obj.setRotation(0, 0, d.time * 6);
+				}
+				i++;
+				continue;
+			}
+			if( d.delay > 0 ) {
+				d.delay -= dt;
+				if( d.obj != null ) d.obj.visible = false;
+				i++;
+				continue;
+			}
+			if( d.obj != null ) d.obj.visible = true;
 			// fisica (Dummy.updatePos)
 			if( !collide(d.x, d.y, d.z - 0.01) )
 				d.vz -= 0.01 * dt;

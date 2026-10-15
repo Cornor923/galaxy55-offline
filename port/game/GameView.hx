@@ -54,7 +54,7 @@ class GameView {
 	var activatePending : Select;
 	var actionWait = false;
 	var armed = false;
-	var drops : Drops;
+	public var drops : Drops;
 	var fx : Fx;
 	/** la nave: el jugador empieza dentro y baja al planeta por el teletransportador (Game.placeShip) */
 	public var ship(default, null) : Ship;
@@ -107,6 +107,7 @@ class GameView {
 		drops = new Drops(world, atlas);
 		fx = new Fx(world, atlas);
 		ship = new Ship(world, atlas, s3d, info.shipEdits);
+		ship.initCrafts(this);
 		if( info.px < 0 ) {
 			// partida nueva: se empieza dentro de la nave, encima del teletransportador
 			gotoShip(true);
@@ -248,6 +249,7 @@ class GameView {
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateBobbing(realDt * 60);
 		ship.update(this, tmod);
+		message = ship.message(this);
 		if( debugDoorFrames > 0 && ++debugDoorFrames == 12 ) {
 			// solo pruebas: abre la puerta de la nave que hay cerca del teletransportador
 			if( Sys.args().indexOf("--computer") >= 0 ) onComputer();
@@ -257,6 +259,22 @@ class GameView {
 			activateBlock(ship.x - 3, ship.y + 3, dz, db);
 			var da = world.block(ship.x - 3, ship.y + 3, dz);
 			Sys.println("despues: " + (da == null ? "ninguna" : "" + da.k));
+		}
+		if( debugCraft > 0 ) {
+			// solo pruebas: pone bloques de madera en la primera zona de sintetizador y, con --craftgo, usa el ordenador
+			debugCraft++;
+			var c = ship.crafts[0];
+			var bx = c.x + world.shipDX, by = c.y + world.shipDY, bz = c.z + World.SHIP_Z;
+			if( debugCraft == 5 ) {
+				world.setBlock(bx, by, bz, Block.get(BWood));
+				ship.craft(bx, by, bz, Block.get(BWood), this);
+				Sys.println("zona: " + c.curText + " receta=" + (c.curCraft != null));
+			}
+			if( debugCraft == 12 && Sys.args().indexOf("--craftgo") >= 0 ) {
+				ship.activateCraft(c.out.x + world.shipDX, c.out.y + world.shipDY, c.out.z + World.SHIP_Z, this);
+				Sys.println("fabricado; sueltos=" + drops.count() + " madera en inv=" + inv.hasBlocks(Block.get(BWood), 1));
+			}
+			if( debugCraft == 30 ) Sys.println("tras 60 frames: sueltos=" + drops.count() + " tablas en inv=" + inv.hasBlocks(Block.get(BWoodPlank), 1) + " zona=" + c.curText);
 		}
 		if( debugTele > 0 ) {
 			// solo pruebas: se aparta del teletransportador y vuelve a el para probar el teletransporte
@@ -310,6 +328,7 @@ class GameView {
 	/** solo para pruebas automaticas: mantiene pulsado el boton de excavar/colocar */
 	public var debugAction = false;
 	public var debugTele = 0;
+	public var debugCraft = Sys.args().indexOf("--craft") >= 0 ? 1 : 0;
 	public var debugClick = Sys.args().indexOf("--click") >= 0 ? 1 : 0;
 	public var debugDoorFrames = Sys.args().indexOf("--door") >= 0 || Sys.args().indexOf("--computer") >= 0 ? 1 : 0;
 	/** solo para pruebas: finge que el bloque no se puede romper (para ver el efecto) */
@@ -557,6 +576,10 @@ class GameView {
 	/** se llama al activar el ordenador de a bordo */
 	public dynamic function onComputer() {}
 
+	/** texto de recetas del sintetizador cercano (se muestra en pantalla) */
+	public var message : String;
+	public var messageRed = false;
+
 	/** ShipLogic.activateBlock y Process.toggle: ordenador de a bordo y bloques que se abren o cierran (puertas) */
 	function activateBlock( x : Int, y : Int, z : Int, b : Block ) {
 		if( b.activable != null ) {
@@ -568,6 +591,7 @@ class GameView {
 			if( !ok ) return;
 			switch( b.k ) {
 			case BShipComputer: onComputer();
+			case BCrafterComputer: ship.activateCraft(x, y, z, this);
 			default:
 			}
 		} else if( b.toggle != null ) {
@@ -766,6 +790,7 @@ class GameView {
 		// si era el ultimo bloque, hay que soltar el boton antes de seguir (evita excavar sin querer)
 		if( inv.getCurrentBlock() == null ) actionWait = true;
 		world.setBlock(x, y, z, put);
+		if( inShip ) ship.craft(x, y, z, put, this);
 		select = null;
 	}
 
@@ -779,6 +804,12 @@ class GameView {
 				drops.add(x + 0.5, y + 0.5, z + 0.5, get.b);
 			}
 		}
+		world.setBlock(x, y, z, null);
+		if( z >= World.SHIP_Z ) ship.craft(x, y, z, null, this);
+	}
+
+	/** bloque de una zona de sintetizador gastado en una receta: desaparece con su efecto de rotura */
+	public function removeShipBlock( x : Int, y : Int, z : Int, b : Block ) {
 		world.setBlock(x, y, z, null);
 	}
 
