@@ -1,0 +1,12 @@
+--macro allowPackage('flash')
+-cp port/explore
+-cp port/game
+-cp libs/libs-haxe3
+-cp libs/libs-haxe2
+-cp stubs
+-cp port/shim
+-lib format
+-D haxe3
+-D flash9
+-main ExpTest
+-hl port/out/exptest.hl

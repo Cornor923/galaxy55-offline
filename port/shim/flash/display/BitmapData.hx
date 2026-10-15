@@ -273,7 +273,7 @@ class BitmapData {
 		var n01 = g(ix, iy + 1, fx, fy - 1), n11 = g(ix + 1, iy + 1, fx - 1, fy - 1);
 		var u = fade(fx), v = fade(fy);
 		var a = n00 + (n10 - n00) * u, b = n01 + (n11 - n01) * u;
-		return (a + (b - a) * v) * 1.4142;
+		return a + (b - a) * v;
 	}
 
 	public function perlinNoise( baseX : Float, baseY : Float, numOctaves : Int, randomSeed : Int, stitch : Bool, fractalNoise : Bool, channelOptions = 7, grayScale = false, ?offsets : Array<Point> ) {
@@ -584,4 +584,25 @@ class BitmapData {
 				}
 		}
 	}
+
+	/** no se usa: solo para que compile Color.hx de deepnight */
+	public function compare( o : BitmapData ) : Dynamic return 0;
+
+	/** bytes ARGB de un rectangulo (uno por posicion) */
+	public function getPixels( r : Rectangle ) : Vector<Int> {
+		var w = Std.int(r.width), h = Std.int(r.height);
+		var v = new Vector<Int>(w * h * 4);
+		var i = 0;
+		for( y in 0...h )
+			for( x in 0...w ) {
+				var c = getPixel32(Std.int(r.x) + x, Std.int(r.y) + y);
+				v[i++] = (c >>> 24) & 0xFF;
+				v[i++] = (c >> 16) & 0xFF;
+				v[i++] = (c >> 8) & 0xFF;
+				v[i++] = c & 0xFF;
+			}
+		return v;
+	}
+
+	public function setPixels( r : Rectangle, v : Dynamic ) {}
 }
