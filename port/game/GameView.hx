@@ -327,6 +327,8 @@ class GameView {
 	public var debugJet = false;
 	/** solo para pruebas automaticas: mantiene pulsado el boton de excavar/colocar */
 	public var debugAction = false;
+	/** banco de pruebas (Dev): mantiene pulsado excavar/colocar */
+	public var debugKey : String;
 	public var debugTele = 0;
 	public var debugCraft = Sys.args().indexOf("--craft") >= 0 ? 1 : 0;
 	public var debugClick = Sys.args().indexOf("--click") >= 0 ? 1 : 0;
@@ -581,7 +583,7 @@ class GameView {
 	public var messageRed = false;
 
 	/** ShipLogic.activateBlock y Process.toggle: ordenador de a bordo y bloques que se abren o cierran (puertas) */
-	function activateBlock( x : Int, y : Int, z : Int, b : Block ) {
+	public function activateBlock( x : Int, y : Int, z : Int, b : Block ) {
 		if( b.activable != null ) {
 			var ok = switch( b.activable ) {
 				case WEverywhere: true;
@@ -672,7 +674,7 @@ class GameView {
 			if( K.isDown(K.SHIFT) && K.isPressed(K.K) ) gotoShip(true);
 			if( (K.isPressed(K.R) || K.isPressed(K.DELETE)) && inv.getCurrentBlock() != null ) dropCurrent();
 		}
-		if( debugAction ) {
+		if( debugAction || debugKey != null ) {
 			held = true;
 			armed = true;
 		}

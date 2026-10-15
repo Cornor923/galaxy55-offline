@@ -1,0 +1,6 @@
+wait 3
+ship
+wait 5
+print map 3
+print map 4
+quit

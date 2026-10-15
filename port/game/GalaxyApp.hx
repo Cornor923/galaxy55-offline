@@ -127,6 +127,7 @@ class GalaxyApp extends hxd.App {
 
 	// pruebas automaticas (captura de pantalla)
 	var shotPath : String = null;
+	var dev : Dev;
 	var shotScreen = "main";
 	var shotFrames = 30;
 	var demoSaves = false;
@@ -150,6 +151,11 @@ class GalaxyApp extends hxd.App {
 			if( StringTools.startsWith(a, "--shot=") ) shotPath = a.substr(7);
 			else if( StringTools.startsWith(a, "--screen=") ) shotScreen = a.substr(9);
 			else if( StringTools.startsWith(a, "--frames=") ) shotFrames = Std.parseInt(a.substr(9));
+			else if( StringTools.startsWith(a, "--script=") ) {
+				dev = new Dev(a.substr(9));
+				shotPath = "port/out/dev.png";
+				shotScreen = "game";
+			}
 			else if( a == "--demo-saves" ) demoSaves = true;
 			else if( StringTools.startsWith(a, "--n=") ) shotN = Std.parseInt(a.substr(4));
 			else if( StringTools.startsWith(a, "--slot=") ) shotSlot = Std.parseInt(a.substr(7));
@@ -1281,6 +1287,10 @@ class GalaxyApp extends hxd.App {
 			} else
 				shotFrames = frames + 6;
 		}
+		if( dev != null && shotStage == 2 && state == Playing ) {
+			if( dev.tick(this, game) ) Sys.exit(0);
+			return;
+		}
 		if( shotStage == 2 && frames > shotFrames && (state == Playing || state == Paused) ) {
 			if( Sys.args().indexOf("--listnear") >= 0 ) {
 				// solo pruebas: bloques no cubicos a menos de 10 bloques del jugador
@@ -1315,7 +1325,7 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
-	function capture( path : String ) {
+	public function capture( path : String, exit = true ) {
 		var w = engine.width, h = engine.height;
 		var tex = new h3d.mat.Texture(w, h, [Target]);
 		tex.depthBuffer = new h3d.mat.Texture(w, h, [Target], Depth24Stencil8);
@@ -1326,7 +1336,9 @@ class GalaxyApp extends hxd.App {
 		engine.popTarget();
 		sys.io.File.saveBytes(path, tex.capturePixels().toPNG());
 		Sys.println("captura guardada: " + path);
-		Sys.exit(0);
+		tex.depthBuffer.dispose();
+		tex.dispose();
+		if( exit ) Sys.exit(0);
 	}
 
 	static function main() {

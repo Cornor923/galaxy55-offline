@@ -53,6 +53,11 @@ etiqueta `flash-version` y la rama `flash` (más los SWF de `release/`). El READ
 | Movimiento inventado (Shift, vuelo) | no existía en el original | copia fiel de `Hero.doMove`/`moveHero`; correr y vuelo eliminados |
 | Filtro de seguridad bloquea comandos | falso positivo de "Remove-Item" | usar las herramientas Edit/Write y evitar `//` en comandos PowerShell |
 
+## Banco de pruebas (`port/game/Dev.hx`, guiones en `port/dev/`)
+Solo para desarrollo: `hl galaxy55.hl --script=guion.txt` arranca una partida nueva y ejecuta ordenes (tp, tpl, lookat, set, activate, synth, give, print, map, shot...;
+la lista esta en la cabecera de `Dev.hx`). `port/dev/devrun.ps1 -Script port/dev/synth.txt` lo lanza y muestra la salida. Ejemplos: `zones.txt`, `map.txt`, `synth.txt`.
+Los ganchos antiguos `--screen=... --craft --at=...` siguen funcionando, pero para pruebas nuevas se usa Dev.
+
 ## Siguiente paso acordado (mañana): paquete de prueba
 Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-release «alfa»** en GitHub Releases (no dentro de `main`):
 - Contenido: `hl.exe` y DLL de HashLink, `galaxy55.hl`, los gráficos del original que lee el juego (`texture.png`, `hud.png`, `hud_jetpack.png`, `digger.png`,
