@@ -86,7 +86,7 @@ la lista esta en la cabecera de `Dev.hx`). `port/dev/devrun.ps1 -Script port/dev
 Los ganchos antiguos `--screen=... --craft --at=...` siguen funcionando, pero para pruebas nuevas se usa Dev.
 
 ## Siguiente paso acordado (mañana): paquete de prueba
-Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-release «alfa»** en GitHub Releases (no dentro de `main`):
+Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-release** en GitHub Releases (no dentro de `main`):
 - Contenido: `hl.exe` y DLL de HashLink, `galaxy55.hl`, los gráficos del original que lee el juego (`texture.png`, `hud.png`, `hud_jetpack.png`, `digger.png`,
   `icons.png`, `lazer*.png`, `ship_halo.png`, `door.md`) en una carpeta `res/`, un `jugar.bat`, `LEEME`, `NOTICE` y licencia.
 - El juego lee hoy esas imágenes con rutas relativas `src/G55/fla/client/gfx/...`: hay que moverlas a una ruta configurable o relativa al ejecutable y

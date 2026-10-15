@@ -1,4 +1,4 @@
-## Galaxy 55 (offline) — alfa nativa para Windows
+## Galaxy 55 (offline) — port nativo para Windows
 
 Port **no oficial** de Galaxy 55 (Motion Twin, 2012) a una aplicación nativa para Windows (Haxe + Heaps + HashLink). Sin Flash, sin navegador y sin servidor.
 
@@ -10,7 +10,7 @@ Port **no oficial** de Galaxy 55 (Motion Twin, 2012) a una aplicación nativa pa
 - La nave: teletransporte, puertas, ordenador, sintetizador con las recetas del original.
 - Mapa de estrellas («Despegar» en el ordenador de la nave): sector, sistemas solares, planetas, tu nave y aterrizaje. El universo se guarda en la partida.
 
-### Qué falta o falla (es una alfa)
+### Qué falta o falla (versión en desarrollo)
 - Animaciones de viaje del mapa (entrada y salida de sistemas, entrada a planetas) todavía simplificadas.
 - Tienda, hangar, agua que fluye, sonido, vida/oxígeno/lava, ver el bloque en la mano.
 - Errores conocidos: ver `port/RESUMEN.md` (borrar partida desde el menú, luz en bloques no cuadrados, partículas al romper, entre otros).

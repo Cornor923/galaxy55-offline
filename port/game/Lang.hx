@@ -7,7 +7,7 @@ class Lang {
 
 	// clave => [es, en, fr]
 	static var T : Map<String, Array<String>> = [
-		"subtitle" => ["VERSIÓN OFFLINE · ALFA", "OFFLINE VERSION · ALPHA", "VERSION HORS LIGNE · ALPHA"],
+		"subtitle" => ["VERSIÓN OFFLINE", "OFFLINE VERSION", "VERSION HORS LIGNE"],
 		"continue" => ["Continuar", "Continue", "Continuer"],
 		"new" => ["Nueva partida", "New game", "Nouvelle partie"],
 		"load" => ["Cargar partida", "Load game", "Charger une partie"],
