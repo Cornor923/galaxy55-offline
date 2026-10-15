@@ -85,6 +85,9 @@ class Explorer extends h2d.Object {
 	var tiles : h2d.Tile;
 	var ship = new ExpEntity();
 	var shipObj : h2d.Graphics;
+	var shipBmp : h2d.Bitmap;
+	var shipTiles : Array<h2d.Tile>;
+	var shipFrames : Array<flash.display.BitmapData>;
 	var cursor : h2d.Graphics;
 	var cursorE = new ExpEntity();
 	var cursorAlpha = 1.;
@@ -99,7 +102,7 @@ class Explorer extends h2d.Object {
 	var fadeAlpha = 1.;
 	var locked = false;
 
-	public function new( parent : h2d.Object, infos : ExpInfos ) {
+	public function new( parent : h2d.Object, infos : ExpInfos, ?frames : Array<flash.display.BitmapData> ) {
 		super(parent);
 		this.infos = infos;
 		content = new h2d.Object(this);
@@ -139,6 +142,22 @@ class Explorer extends h2d.Object {
 		shipObj.lineTo(8, 0);
 		shipObj.lineTo(-8, 5);
 		shipObj.endFill();
+		if( frames != null && frames.length > 0 ) {
+			// la nave del jugador: fotogramas renderizados desde arriba (SHIP_FRAMES = 32; se muestran a 128 px como en el original)
+			shipTiles = [];
+			shipFrames = frames;
+			for( bd in frames ) {
+				var px = hxd.Pixels.alloc(bd.width, bd.height, BGRA);
+				for( i in 0...bd.width * bd.height ) px.bytes.setInt32(i * 4, bd.px[i]);
+				var tex = new h3d.mat.Texture(bd.width, bd.height);
+				tex.uploadPixels(px);
+				tex.filter = Linear;
+				shipTiles.push(h2d.Tile.fromTexture(tex).center());
+			}
+			shipBmp = new h2d.Bitmap(shipTiles[0], world);
+			shipBmp.setScale(128 / frames[0].width);
+			shipObj.visible = false;
+		}
 		cursor = new h2d.Graphics(world);
 		cursor.lineStyle(3, 0xC8D9F2, 1);
 		var w = 8.;
@@ -320,6 +339,14 @@ class Explorer extends h2d.Object {
 	public function devClickSystem( id : Int ) {
 		for( sv in systems ) if( sv.info.id == id ) moveShip(sv);
 	}
+	/** solo pruebas: hoja con los primeros fotogramas de la nave */
+	public function devDumpShip( path : String ) {
+		if( shipFrames == null ) return;
+		var n = 8, w = shipFrames[0].width;
+		var sheet = new flash.display.BitmapData(w * n, w, true, 0xFF404060);
+		for( i in 0...n ) sheet.copyPixels(shipFrames[i * 4], shipFrames[i * 4].rect, new flash.geom.Point(i * w, 0), null, null, true);
+		sys.io.File.saveBytes(path, BmpPng.encode(sheet));
+	}
 	public function devClickPoint( x : Float, y : Float ) moveShip(null, { x : x, y : y });
 	public function devInfo() : String {
 		var s = "nave=" + Std.int(ship.x) + "," + Std.int(ship.y) + " vel=" + Std.int(ship.getScreenSpeed() * 100) / 100 + " camara=" + Std.int(viewX) + "," + Std.int(viewY) + " velocidadNave=" + ship.speed;
@@ -403,6 +430,18 @@ class Explorer extends h2d.Object {
 		for( sv in systems ) sv.obj.setPosition(Std.int(sv.e.x), Std.int(sv.e.y));
 		shipObj.setPosition(Std.int(ship.x), Std.int(ship.y));
 		shipObj.rotation = ship.rotation * Math.PI / 180;
+		if( shipBmp != null ) {
+			// Manager.main: fotograma segun el rumbo y el resto como giro suave
+			var n = shipTiles.length;
+			var r = 1 - ((360 + 90 + ship.rotation) % 360) / 360;
+			var f = Math.floor((n - 1) * r);
+			if( f < 0 ) f = 0;
+			if( f > n - 1 ) f = n - 1;
+			var delta = n * r - f;
+			shipBmp.tile = shipTiles[f];
+			shipBmp.rotation = -delta * (360 / n) * Math.PI / 180;
+			shipBmp.setPosition(Std.int(ship.x), Std.int(ship.y));
+		}
 		cursor.setPosition(Std.int(cursorE.x), Std.int(cursorE.y));
 		cursor.rotation = cursorRot * Math.PI / 180;
 		cursor.setScale(Math.max(1, cursorE.scale));

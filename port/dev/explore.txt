@@ -6,9 +6,11 @@ explore
 wait 12
 wait 400
 expinfo
+expship ship_frames
 shot exp1
 expgo 900 700
 wait 90
 shot exp2
 expinfo
+expship ship_frames
 quit

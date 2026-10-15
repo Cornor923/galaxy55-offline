@@ -270,4 +270,86 @@ class Ship {
 				}
 		}
 	}
+
+	// ---------------------------------------------------------------- imagenes de la nave para el mapa (r3d.Capture)
+
+	/**
+	 * Renderiza la nave desde arriba (camara a 35 de altura, inclinacion 0.5) en `angles` direcciones y devuelve un BitmapData por
+	 * fotograma, con el contraste y el contorno negro del original. Solo se ve la nave: el resto de la escena se oculta un momento.
+	 */
+	public function captureFrames( engine : h3d.Engine, s3d : h3d.scene.Scene, size = 192, angles = 32 ) : Array<flash.display.BitmapData> {
+		var data = ShipData.load(Const.DEFAULT_SHIP);
+		var gx = 0., gy = 0.;
+		for( c in data.cells ) {
+			gx += c.x;
+			gy += c.y;
+		}
+		var cx = 0.5 + gx / data.cells.length + planet.shipDX, cy = 0.5 + gy / data.cells.length + planet.shipDY;
+		var baseZ = World.SHIP_Z + 1;
+		var height = 35.;
+		var incli = 0.5;
+		var delta = Math.sin(incli) * height;
+
+		// ocultar todo menos la nave; sin niebla ni curvatura
+		var hidden = [];
+		for( i in 0...s3d.numChildren ) {
+			var o = s3d.getChildAt(i);
+			if( o != world.root && o.visible ) {
+				hidden.push(o);
+				o.visible = false;
+			}
+		}
+		var fog = planet.sky.fog;
+		var oldFog = fog.fogK, oldCurve = fog.curve, oldWorldFogK = world.sky.fog.fogK;
+		fog.fogK = 0;
+		fog.curve = 0;
+		world.sky.fog.fogK = 0;
+		var cam = s3d.camera;
+		var old = { pos : cam.pos.clone(), target : cam.target.clone(), up : cam.up.clone(), fov : cam.fovY, zn : cam.zNear, zf : cam.zFar, ratio : cam.screenRatio };
+		cam.fovY = 52;
+		cam.zNear = 0.1;
+		cam.zFar = 256;
+		cam.screenRatio = 1;
+		cam.up.set(0, 0, 1);
+
+		var tex = new h3d.mat.Texture(size, size, [Target]);
+		tex.depthBuffer = new h3d.mat.Texture(size, size, [Target], Depth24Stencil8);
+		var frames = [];
+		for( i in 0...angles ) {
+			var a = Math.PI * 2 * i / angles;
+			var p = -(Math.PI / 2 - incli);
+			cam.pos.set(cx - Math.cos(a) * delta, cy - Math.sin(a) * delta, baseZ + height);
+			cam.target.set(cam.pos.x + Math.cos(a) * Math.cos(p), cam.pos.y + Math.sin(a) * Math.cos(p), cam.pos.z + Math.sin(p));
+			engine.pushTarget(tex);
+			engine.clear(0x00000000, 1, 0);
+			s3d.render(engine);
+			engine.popTarget();
+			var px = tex.capturePixels();
+			px.convert(BGRA);
+			var bd = new flash.display.BitmapData(size, size, true, 0);
+			for( k in 0...size * size ) bd.px[k] = px.bytes.getInt32(k * 4);
+			px.dispose();
+			// la luz de la nave es mas fuerte que la del original: se oscurece antes del contraste y el contorno negro (Manager.initShip)
+			bd.colorTransform(bd.rect, new flash.geom.ColorTransform(0.58, 0.58, 0.6, 1));
+			bd.applyFilter(bd, bd.rect, new flash.geom.Point(0, 0), new flash.filters.ColorMatrixFilter([1 + 0.7 * 1.5, 0, 0, 0, -64 * 0.7, 0, 1 + 0.7 * 1.5, 0, 0, -64 * 0.7, 0, 0, 1 + 0.7 * 1.5, 0, -64 * 0.7, 0, 0, 0, 1, 0]));
+			bd.applyFilter(bd, bd.rect, new flash.geom.Point(0, 0), new flash.filters.GlowFilter(0x0, 1, 3, 3, 3));
+			frames.push(bd);
+		}
+		tex.depthBuffer.dispose();
+		tex.dispose();
+
+		// restaurar
+		cam.pos.load(old.pos);
+		cam.target.load(old.target);
+		cam.up.load(old.up);
+		cam.fovY = old.fov;
+		cam.zNear = old.zn;
+		cam.zFar = old.zf;
+		cam.screenRatio = old.ratio;
+		fog.fogK = oldFog;
+		fog.curve = oldCurve;
+		world.sky.fog.fogK = oldWorldFogK;
+		for( o in hidden ) o.visible = true;
+		return frames;
+	}
 }

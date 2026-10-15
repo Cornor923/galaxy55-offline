@@ -559,7 +559,7 @@ class GalaxyApp extends hxd.App {
 	function buildExplorer() {
 		ui.removeChildren();
 		bar = null;
-		explorer = new Explorer(s2d, ExpData.ExpOffline.make(game.info.seed));
+		explorer = new Explorer(s2d, ExpData.ExpOffline.make(game.info.seed), game.ship.captureFrames(engine, s3d));
 		s2d.under(explorer);
 		explorer.onExit = closeExplorer;
 		state = Exploring;

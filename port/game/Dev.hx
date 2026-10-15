@@ -99,6 +99,7 @@ class Dev {
 				case "explore": app.startExplorer();
 				case "expsys": app.explorer.devClickSystem(Std.parseInt(a[1]));
 				case "expgo": app.explorer.devClickPoint(f(a[1]), f(a[2]));
+				case "expship": app.explorer.devDumpShip("port/out/" + a[1] + ".png");
 				case "expinfo": Sys.println(app.explorer.devInfo());
 				case "walk":
 					g.debugSpeed = f(a[1]) * 0.15;
