@@ -19,4 +19,11 @@ class Res {
 	public static function bytes(name:String):haxe.io.Bytes {
 		return sys.io.File.getBytes(path(name));
 	}
+
+	/** gráficos del explorador: res/explore_<nombre> o src/G55/fla/explore/gfx/<nombre> */
+	public static function exploreBytes( name : String ) : haxe.io.Bytes {
+		var p = "res/explore_" + name;
+		if( !sys.FileSystem.exists(p) ) p = "src/G55/fla/explore/gfx/" + name;
+		return sys.io.File.getBytes(p);
+	}
 }

@@ -53,6 +53,17 @@ etiqueta `flash-version` y la rama `flash` (más los SWF de `release/`). El READ
 | Movimiento inventado (Shift, vuelo) | no existía en el original | copia fiel de `Hero.doMove`/`moveHero`; correr y vuelo eliminados |
 | Filtro de seguridad bloquea comandos | falso positivo de "Remove-Item" | usar las herramientas Edit/Write y evitar `//` en comandos PowerShell |
 
+## Ver el juego original en marcha (referencia visual)
+`port/dev/orig_flash_shot.ps1` abre un SWF original (por defecto el explorador `fla/explore/swf/explore.swf`) con `flashplayer_32_sa_debug.exe`, pulsa "Continuar" en los
+avisos de error del reproductor y guarda capturas SOLO de la ventana del reproductor (PrintWindow); admite clics (`-Clicks "880,225;..."`). Nunca capturar la pantalla completa.
+El explorador original arranca en modo depuracion dentro de un sistema solar (`PInSystem(5)`); saliendo por el borde con clics se llega a la vista del sector.
+
+## Explorador (portado desde `fla/explore`)
+- `port/shim/flash/*`: `BitmapData` por software (ruido, Perlin, filtros, mezcla), `geom`, `filters`, `Sprite/Graphics` minimos. OJO: `getPixel32` devuelve `UInt`; restar con UInt da valores enormes: convertir a `Int`.
+- `port/explore/`: `ExpRoom` (generacion de fondos: copia de `Room.hx`), `ExpData` (datos offline), `Explorer` (vista del sector con paralaje, sistemas, nave, viaje con clic).
+- Hecho: vista del sector (fondo, sistemas, nave provisional, cursor, viaje). Falta: vista del sistema solar (sol, orbitas, planetas, ventana de planeta, aterrizar), nave 3D en 2D (32 fotogramas),
+  reactores, efectos de salto, universo guardado en la partida, naves de comerciantes.
+
 ## Banco de pruebas (`port/game/Dev.hx`, guiones en `port/dev/`)
 Solo para desarrollo: `hl galaxy55.hl --script=guion.txt` arranca una partida nueva y ejecuta ordenes (tp, tpl, lookat, set, activate, synth, give, print, map, shot...;
 la lista esta en la cabecera de `Dev.hx`). `port/dev/devrun.ps1 -Script port/dev/synth.txt` lo lanza y muestra la salida. Ejemplos: `zones.txt`, `map.txt`, `synth.txt`.

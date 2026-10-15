@@ -27,6 +27,7 @@ class Lang {
 		"computer.edit" => ["Modificar la nave (hangar)", "Modify the ship (hangar)", "Modifier le vaisseau (hangar)"],
 		"computer.trade" => ["Comerciar (ESCorp)", "Trade (ESCorp)", "Commercer (ESCorp)"],
 		"computer.close" => ["Cerrar", "Close", "Fermer"],
+		"explore.loading" => ["Generando el mapa de estrellas...", "Generating the star map...", "Génération de la carte stellaire..."],
 		"computer.soon" => ["Todavia no esta disponible en esta version", "Not available in this version yet", "Pas encore disponible dans cette version"],
 		"mode" => ["Modo", "Mode", "Mode"],
 		"mode.adventure" => ["Aventura (original)", "Adventure (original)", "Aventure (original)"],

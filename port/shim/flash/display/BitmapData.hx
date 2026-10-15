@@ -168,9 +168,10 @@ class BitmapData {
 			for( x in 0...sw ) {
 				var dx = dx0 + x;
 				if( dx < 0 || dx >= width ) continue;
-				var s = src.getPixel32(sx0 + x, sy0 + y);
+				var s : Int = src.getPixel32(sx0 + x, sy0 + y);
 				if( alphaBitmap != null ) {
-					var aa = (alphaBitmap.getPixel32(ax + x, ay + y) >>> 24) & 0xFF;
+					var ap : Int = alphaBitmap.getPixel32(ax + x, ay + y);
+					var aa = (ap >>> 24) & 0xFF;
 					var sa = (s >>> 24) & 0xFF;
 					s = (Std.int(sa * aa / 255) << 24) | (s & 0xFFFFFF);
 				}
@@ -192,7 +193,8 @@ class BitmapData {
 			for( x in 0...sw ) {
 				var dx = dx0 + x;
 				if( dx < 0 || dx >= width ) continue;
-				var v = (src.getPixel32(sx0 + x, sy0 + y) >> ss) & 0xFF;
+				var sp : Int = src.getPixel32(sx0 + x, sy0 + y);
+				var v = (sp >> ss) & 0xFF;
 				var i = dx + dy * width;
 				px[i] = (px[i] & ~(0xFF << ds)) | (v << ds);
 			}
@@ -210,7 +212,7 @@ class BitmapData {
 			for( x in 0...sw ) {
 				var dx = dx0 + x, dy = dy0 + y;
 				if( dx < 0 || dy < 0 || dx >= width || dy >= height ) continue;
-				var s = src.getPixel32(sx0 + x, sy0 + y);
+				var s : Int = src.getPixel32(sx0 + x, sy0 + y);
 				var v : UInt = s & mask;
 				var ok = switch( operation ) {
 					case "<": v < t;
@@ -276,6 +278,9 @@ class BitmapData {
 		return a + (b - a) * v;
 	}
 
+	/** contraste del ruido Perlin (ajustado a ojo para parecerse al de Flash) */
+	public static var perlinGain = 1.0;
+
 	public function perlinNoise( baseX : Float, baseY : Float, numOctaves : Int, randomSeed : Int, stitch : Bool, fractalNoise : Bool, channelOptions = 7, grayScale = false, ?offsets : Array<Point> ) {
 		var chans = [for( c in 0...4 ) (channelOptions & (1 << c)) != 0];
 		var vals = [for( c in 0...4 ) new Vector<Float>(width * height)];
@@ -293,7 +298,7 @@ class BitmapData {
 				for( y in 0...height )
 					for( x in 0...width ) {
 						var n = gradNoise(x * fx, y * fy, perX, perY, seed);
-						out[x + y * width] += (fractalNoise ? n : Math.abs(n) * 2 - 0.5) * amp;
+						out[x + y * width] += (fractalNoise ? n : Math.abs(n) * 2 - 0.5) * amp * perlinGain;
 					}
 			}
 		}
@@ -466,7 +471,7 @@ class BitmapData {
 		var wrap = f.mode == "wrap";
 		for( y in 0...h )
 			for( x in 0...w ) {
-				var mc = m.getPixel32(x - mx, y - my);
+				var mc : Int = m.getPixel32(x - mx, y - my);
 				var vx = (mc >> sx) & 0xFF, vy = (mc >> sy) & 0xFF;
 				var ox = Math.floor(x + (vx - 128) * f.scaleX / 256), oy = Math.floor(y + (vy - 128) * f.scaleY / 256);
 				if( wrap ) {
@@ -595,7 +600,7 @@ class BitmapData {
 		var i = 0;
 		for( y in 0...h )
 			for( x in 0...w ) {
-				var c = getPixel32(Std.int(r.x) + x, Std.int(r.y) + y);
+				var c : Int = getPixel32(Std.int(r.x) + x, Std.int(r.y) + y);
 				v[i++] = (c >>> 24) & 0xFF;
 				v[i++] = (c >> 16) & 0xFF;
 				v[i++] = (c >> 8) & 0xFF;

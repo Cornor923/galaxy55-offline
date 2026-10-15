@@ -4,6 +4,25 @@ import flash.geom.Rectangle;
 import flash.geom.ColorTransform;
 import mt.deepnight.Color;
 
+/** Funciones de Color.hx de deepnight que solo existen con flash9 (copiadas tal cual). */
+class ExpColor {
+	public static inline function addAlphaChannel( rgb : Int, a : Int ) : Int return (a << 24) | (rgb & 0xFFFFFF);
+
+	public static inline function getColorizeMatrixFilter( col : Int, ?ratioNewColor = 1.0, ?ratioOldColor = 1.0 ) {
+		var rgb = Color.intToRgb(col);
+		var r = ratioNewColor * rgb.r / 255;
+		var g = ratioNewColor * rgb.g / 255;
+		var b = ratioNewColor * rgb.b / 255;
+		var matrix = [
+			ratioOldColor + r, r, r, 0, 0,
+			g, ratioOldColor + g, g, 0, 0,
+			b, b, ratioOldColor + b, 0, 0,
+			0, 0, 0, 1.0, 0,
+		];
+		return new flash.filters.ColorMatrixFilter(matrix);
+	}
+}
+
 /** Una capa con paralaje (ZLayer del original, sin la lista de visualizacion de Flash). */
 class ExpLayer {
 	public var bd : BitmapData;
@@ -64,6 +83,7 @@ class ExpRoom {
 	public var bgColor : Int;
 	public var galaxyColors : Array<Int>;
 	public var layers : Array<ExpLayer> = [];
+	public var randValues : Array<Float>;
 
 	public function new( s : Int, viewW = 900, viewH = 450 ) {
 		seed = s;
@@ -76,11 +96,21 @@ class ExpRoom {
 		starColor = STAR_COLORS[rseed.random(STAR_COLORS.length)];
 		bgColor = BG_COLORS[rseed.random(BG_COLORS.length)];
 		initRandom();
+		randValues = [];
+		for( i in 0...150 ) randValues[i] = rseed.rand();
 	}
 
 	function setSize( w : Int, h : Int ) {
 		width = height = w;
 		center = new Point(width * 0.5, height * 0.5);
+	}
+
+	/** posicion en el mapa de una casilla de la rejilla (Room.gridToMap) */
+	public function gridToMap( gx : Int, gy : Int ) {
+		return {
+			x : Std.int(gx * GRID_WID + GRID_WID * 0.5 + randValues[(gx * 2 + gy) % randValues.length] * GRID_WID * 0.40),
+			y : Std.int(gy * GRID_WID + GRID_WID * 0.5 + randValues[(gx + gy * 2) % randValues.length] * GRID_WID * 0.40),
+		};
 	}
 
 	function initRandom( ?seed2 = 0.0 ) {
@@ -92,7 +122,7 @@ class ExpRoom {
 	function makeStarfield( bd : BitmapData, density : Float, wid : Int, margin : Int ) {
 		var n = Std.int(density * 0.0015 * bd.width * bd.height * 1 / quality);
 		for( i in 0...n )
-			bd.fillRect(new Rectangle(margin + rseed.random(bd.width - margin * 2), margin + rseed.random(bd.height - margin * 2), wid, wid), Color.addAlphaChannel(0x808080, rseed.random(64) + 192));
+			bd.fillRect(new Rectangle(margin + rseed.random(bd.width - margin * 2), margin + rseed.random(bd.height - margin * 2), wid, wid), ExpColor.addAlphaChannel(0x808080, rseed.random(64) + 192));
 	}
 
 	public function initStars( density : Float ) {
@@ -112,7 +142,7 @@ class ExpRoom {
 			var bd = l.bd;
 			bd.colorTransform(bd.rect, new ColorTransform(1, 1, 1, z / (zmax * 1.3)));
 			var c = Color.interpolateInt(bgColor, starColor, z / zmax);
-			bd.applyFilter(bd, bd.rect, pt0, Color.getColorizeMatrixFilter(c, 1, 0));
+			bd.applyFilter(bd, bd.rect, pt0, ExpColor.getColorizeMatrixFilter(c, 1, 0));
 			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(c, 1, 2, 2, 2, 2));
 			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(c, z / zmax, 8, 8, 2, 2));
 		}
@@ -133,7 +163,7 @@ class ExpRoom {
 			var thr = Color.rgbaToInt({ r : Std.int(255 * cut), g : 0, b : 0, a : 255 });
 			perlin.threshold(perlin, perlin.rect, pt0, "<=", thr, 0x0, 0xffff0000, true);
 			perlin.colorTransform(perlin.rect, new ColorTransform(1, 1, 1, 1, -255 * cut, -255 * cut, -255 * cut));
-			var f = Color.getColorizeMatrixFilter(col, 0.5, 0);
+			var f = ExpColor.getColorizeMatrixFilter(col, 0.5, 0);
 			perlin.applyFilter(perlin, perlin.rect, new Point(0, 0), f);
 			new ExpLayer(this, perlin, z, true);
 		}
@@ -199,7 +229,7 @@ class ExpRoom {
 		noise.dispose();
 
 		var gcol = galaxyColors.splice(rseed.random(galaxyColors.length), 1)[0];
-		galaxy.applyFilter(galaxy, galaxy.rect, pt0, Color.getColorizeMatrixFilter(gcol, 0.6, 0.4));
+		galaxy.applyFilter(galaxy, galaxy.rect, pt0, ExpColor.getColorizeMatrixFilter(gcol, 0.6, 0.4));
 		return galaxy;
 	}
 

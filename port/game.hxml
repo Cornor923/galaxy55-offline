@@ -1,5 +1,6 @@
 --macro allowPackage('flash')
 -cp port/game
+-cp port/explore
 -cp libs/libs-haxe3
 -cp libs/libs-haxe2
 -cp src/G55/com

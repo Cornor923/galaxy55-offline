@@ -6,6 +6,8 @@ class ExpTest {
 		var args = Sys.args();
 		var seed = args.length > 0 ? Std.parseInt(args[0]) : 253725;
 		var path = args.length > 1 ? args[1] : "port/out/exp_sector.png";
+		var gain = Sys.getEnv("PGAIN");
+		if( gain != null ) BitmapData.perlinGain = Std.parseFloat(gain);
 		var t0 = haxe.Timer.stamp();
 		var room = new ExpRoom(seed);
 		room.generateSectorBackground();

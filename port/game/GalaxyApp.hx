@@ -7,6 +7,7 @@ enum State {
 	Loading;
 	Playing;
 	Paused;
+	Exploring;
 }
 
 /** Fila de la lista de partidas guardadas: miniatura, nombre y datos. */
@@ -532,12 +533,45 @@ class GalaxyApp extends hxd.App {
 			resume();
 			showToast(Lang.t("computer.soon"));
 		};
-		takeoff.onActivate = soon;
+		takeoff.onActivate = startExplorer;
 		edit.onActivate = soon;
 		trade.onActivate = soon;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
 		return s;
+	}
+
+	// ---------------------------------------------------------------- explorador (mapa de estrellas)
+
+	public var explorer : Explorer;
+	var pendingExplorer = 0;
+
+	public function startExplorer() {
+		current = null;
+		ui.removeChildren();
+		screens = new Map();
+		state = Loading;
+		hud.visible = false; msgText.visible = false;
+		showLoading(Lang.t("explore.loading"));
+		pendingExplorer = 2; // se deja pintar la pantalla de carga antes de generar el mapa
+	}
+
+	function buildExplorer() {
+		ui.removeChildren();
+		bar = null;
+		explorer = new Explorer(s2d, ExpData.ExpOffline.make(game.info.seed));
+		s2d.under(explorer);
+		explorer.onExit = closeExplorer;
+		state = Exploring;
+		dim.visible = false;
+		captureMouse(false);
+	}
+
+	function closeExplorer() {
+		explorer.dispose();
+		explorer = null;
+		dim.visible = true;
+		resume();
 	}
 
 	function openComputer() {
@@ -932,6 +966,8 @@ class GalaxyApp extends hxd.App {
 			game.updateCamera();
 		}
 
+		if( pendingExplorer > 0 && --pendingExplorer == 0 ) buildExplorer();
+		if( state == Exploring && explorer != null ) explorer.update(dt);
 		if( invBar != null ) invBar.visible = state == Playing || state == Paused;
 		cross.visible = state == Playing && game != null && game.laserActive;
 		var fade = (state == Playing || state == Paused) && game != null ? Math.min(0.999, game.enteringShip) : 0.;
@@ -1295,7 +1331,7 @@ class GalaxyApp extends hxd.App {
 			} else
 				shotFrames = frames + 6;
 		}
-		if( dev != null && shotStage == 2 && state == Playing ) {
+		if( dev != null && shotStage == 2 && (state == Playing || state == Exploring || state == Loading) ) {
 			if( dev.tick(this, game) ) Sys.exit(0);
 			return;
 		}
