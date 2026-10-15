@@ -1,0 +1,18 @@
+package flash.display;
+
+enum BlendMode {
+	NORMAL;
+	ADD;
+	ERASE;
+	MULTIPLY;
+	SCREEN;
+	OVERLAY;
+	LAYER;
+	ALPHA;
+	DARKEN;
+	LIGHTEN;
+	SUBTRACT;
+	DIFFERENCE;
+	INVERT;
+	HARDLIGHT;
+}
