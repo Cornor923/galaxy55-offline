@@ -407,25 +407,39 @@ class GalaxyApp extends hxd.App {
 		var t = Theme.text(s, Lang.t("load.title"), 3.2, Theme.TEXT, 0, 82);
 		t.x = (W - t.textWidth * t.scaleX) * 0.5;
 		var saves = SaveData.list();
-		var confirmBox : Screen = null;
+		// "Borrar" activa un modo en el que la siguiente partida que se elige es la que se borra
+		var deleting = false;
+		var hint = Theme.text(s, Lang.t("delete.pick"), 1.8, Theme.DANGER, 0, 130);
+		hint.x = (W - hint.textWidth * hint.scaleX) * 0.5;
+		hint.visible = false;
+		var del : Button = null;
+		var setDeleting = function( b : Bool ) {
+			deleting = b;
+			hint.visible = b;
+			del.setLabel(Lang.t(b ? "delete.cancel" : "delete"));
+			if( b && s.rows.length > 0 ) s.setFocus(0);
+		};
 		for( info in saves ) {
 			var row = new SaveRow(s, info);
 			s.rows.push(row);
 			s.add(row, 160, 150);
 			var inf = info;
-			row.onActivate = function() startGame(inf);
+			row.onActivate = function() {
+				if( deleting ) {
+					setDeleting(false);
+					askDelete(s, inf);
+				} else
+					startGame(inf);
+			};
 		}
 		s.layout();
-		var del = new Button(s, Lang.t("delete"), 300, 48);
+		del = new Button(s, Lang.t("delete"), 300, 48);
 		var back = new Button(s, Lang.t("back"), 300, 48);
 		s.add(del, 640 - 310, 598);
 		s.add(back, 640 + 10, 598);
-		var doDelete = function() {
-			if( s.selected < s.rows.length ) askDelete(s, s.rows[s.selected].info);
-		};
-		del.onActivate = doDelete;
+		del.onActivate = function() setDeleting(!deleting);
 		back.onActivate = function() { show("main"); }
-		s.onBack = function() show("main");
+		s.onBack = function() if( deleting ) setDeleting(false) else show("main");
 		if( saves.length == 0 ) {
 			var n = Theme.text(s, Lang.t("nosaves"), 2.2, Theme.DIM, 0, 320);
 			n.x = (W - n.textWidth * n.scaleX) * 0.5;
@@ -436,6 +450,7 @@ class GalaxyApp extends hxd.App {
 
 	/** ventana de confirmacion para borrar una partida */
 	function askDelete( parent : LoadScreen, info : SaveInfo ) {
+		if( modal != null && modal.parent != null ) return; // ya hay una ventana de confirmacion abierta
 		parent.active = false;
 		var m = new Screen(ui);
 		var bg = new h2d.Graphics(m);
@@ -1050,6 +1065,8 @@ class GalaxyApp extends hxd.App {
 		else if( (state == Menu || state == Loading) && bgIndex < bgWorlds.length )
 			snowWorld = bgWorlds[bgIndex];
 		snow.visible = snowWorld != null && snowWorld.biomeName == "BIWinterPeaks" && dim.alpha < 0.5;
+		// dentro de la nave no nieva (la nave flota sobre el planeta)
+		if( snow.visible && (state == Playing || state == Paused) && game != null && game.pz >= World.SHIP_Z - 1 ) snow.visible = false;
 		if( snow.visible ) {
 			var ww = engine.width, wh = engine.height;
 			var scale = Math.min(ww / W, wh / H);

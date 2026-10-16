@@ -43,6 +43,8 @@ class Lang {
 		"nosaves" => ["No hay partidas guardadas", "No saved games", "Aucune partie sauvegardée"],
 		"delete" => ["Borrar", "Delete", "Supprimer"],
 		"delete.ask" => ["¿Borrar esta partida?", "Delete this save?", "Supprimer cette partie ?"],
+		"delete.pick" => ["Elige la partida que quieres borrar", "Choose the save to delete", "Choisis la partie à supprimer"],
+		"delete.cancel" => ["Cancelar", "Cancel", "Annuler"],
 		"yes" => ["Sí", "Yes", "Oui"],
 		"no" => ["No", "No", "Non"],
 		"played" => ["Jugado", "Played", "Temps de jeu"],

@@ -137,8 +137,6 @@ class Explorer extends h2d.Object {
 	var winButtons : Array<{ o : h2d.Interactive, g : h2d.Graphics, cb : Void -> Void }> = [];
 	var zoomT = 0.;
 	var zoomGoal = 0.;
-	var scanProgress = -1.;
-	var scanPlanet : ExpPlanet;
 	// transiciones del original (Manager.gotoSolar, gotoSector, hyperjump*)
 	var tw = new ExpTweens();
 	var common : View;
@@ -1177,32 +1175,34 @@ class Explorer extends h2d.Object {
 		}
 	}
 
-	/** Manager.sendAction(ALandPlanet) del modo local: icono de carga y a los 100 ms se entra en el planeta */
+	/**
+	 * Entrar en un planeta (botones Escanear y Aterrizar). Cambio del port: el original fundia a negro y mostraba una barra
+	 * mientras su servidor generaba el planeta. Aqui se cierra la ventana, la camara se acerca al planeta mientras la pantalla
+	 * se oscurece un poco, sale el nombre una vez y se pasa a la pantalla de carga del juego (que tiene la barra de verdad).
+	 */
 	function landPlanet( p : ExpPlanet ) {
+		if( locked ) return;
+		var sp = winSpot;
+		closeWindow();
 		locked = true;
 		serverLock = true;
+		stopShip();
 		loading(true);
-		tw.delay(100, function() onLand(p, curSystem));
+		if( sp != null ) {
+			lockCamera = true;
+			tw.create(current, "viewX", sp.e.x, TEase, 700);
+			tw.create(current, "viewY", sp.e.y, TEase, 700);
+		}
+		zoomGoal = 0;
+		var z = { v : zoomT };
+		tw.create(z, "v", 2.5, TEaseIn, 900).onUpdateT = function(_) zoomT = z.v;
+		fade.visible = true;
+		tw.create(this, "fadeAlpha", 0.55, TEaseIn, 900);
+		popString(p.name);
+		tw.delay(1000, function() onLand(p, curSystem));
 	}
 
-	/**
-	 * Boton "Escanear" (Manager.moveShip): la pantalla se funde a negro (350 ms), aparece el nombre del planeta y la barra
-	 * de progreso; el planeta se genera (aqui la barra avanza y la generacion de verdad la hace el juego al entrar) y se aterriza.
-	 */
-	function startScan( p : ExpPlanet ) {
-		loading(true);
-		serverLock = true;
-		locked = true;
-		fade.visible = true;
-		tw.create(this, "fadeAlpha", 1, TEaseIn, 350).onEnd = function() {
-			showBar(0);
-			popString(p.name);
-			tw.delay(150, function() {
-				scanPlanet = p;
-				scanProgress = 0;
-			});
-		};
-	}
+	function startScan( p : ExpPlanet ) landPlanet(p);
 
 	// ---------------------------------------------------------------- bucle
 
@@ -1299,17 +1299,6 @@ class Explorer extends h2d.Object {
 			}
 		}
 
-		// barra de escaneo del planeta (onProgress de startGeneratePlanet)
-		if( scanProgress >= 0 ) {
-			scanProgress += dt / 0.8;
-			if( scanProgress >= 1 ) {
-				scanProgress = -1;
-				showBar(1);
-				landPlanet(scanPlanet);
-			} else
-				showBar(scanProgress);
-		}
-
 		ship.update(tmod);
 		if( ship.getScreenSpeed() > 0.3 ) ship.rotation = ship.getAngleRad() * 180 / Math.PI;
 
@@ -1342,7 +1331,7 @@ class Explorer extends h2d.Object {
 		if( cursorRot >= 360 ) cursorRot -= 360;
 
 		// zoom de la ventana (setZoom: 0.6 con la ventana abierta)
-		zoomT += (zoomGoal - zoomT) * Math.min(1, 0.12 * tmod);
+		if( !serverLock ) zoomT += (zoomGoal - zoomT) * Math.min(1, 0.12 * tmod);
 
 		// camara (Manager.main: scrolling)
 		var spd = 1 - Math.pow(0.9, tmod);
