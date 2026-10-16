@@ -20,6 +20,7 @@ import Common;
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]
+ *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png
  *   quit
  */
@@ -108,6 +109,14 @@ class Dev {
 					g.debugStrafe = a.length > 2 ? f(a[2]) * 0.15 : 0;
 				case "jet": g.debugJet = a[1] == "1";
 				case "trace": trace = true;
+				case "shop": app.openShop();
+				case "shopclose": if( app.shop != null ) @:privateAccess app.closeShop();
+				case "buy", "sell":
+					// buy CLAVE n / sell CLAVE n (clave de Market: b<bloque> o c<carga>; o el nombre del bloque, p.ej. BWood)
+					var w = Market.ware(a[1]);
+					if( w == null ) w = Market.wareOfBlock(bk(a[1]));
+					if( app.shop != null ) { if( a[0] == "buy" ) app.shop.doBuy(w, Std.parseInt(a[2])) else app.shop.doSell(w, Std.parseInt(a[2])); }
+					Sys.println(a[0] + " " + w.block.k + " x" + a[2] + " -> creditos=" + g.info.credits + " compra=" + g.market.buyPrice(w) + " venta=" + g.market.sellPrice(w) + " quedan=" + g.market.item(w).stock);
 				case "key": g.debugKey = a[1];
 				case "unkey": g.debugKey = null;
 				case "print": print(a, g);
@@ -130,6 +139,8 @@ class Dev {
 	function print( a : Array<String>, g : GameView ) {
 		var w = g.world;
 		switch( a[1] ) {
+		case "credits":
+			Sys.println("creditos: " + g.info.credits);
 		case "inv":
 			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
 		case "pos":

@@ -125,6 +125,18 @@ class GameView {
 		}
 	}
 
+	/** mercado del robot comerciante (se crea al abrir la tienda por primera vez) */
+	public var market(get, null) : Market;
+	function get_market() {
+		if( market == null ) {
+			if( info.credits == null ) info.credits = Market.START_CREDITS;
+			market = new Market(info.market, info.uni != null ? info.uni.seed : info.seed);
+			info.market = market.info;
+		}
+		market.advance(playSeconds);
+		return market;
+	}
+
 	/** Estado actual para guardar. */
 	public function toInfo() : SaveInfo {
 		info.px = px;

@@ -47,6 +47,10 @@ typedef SaveInfo = {
 	@:optional var creative : Bool;
 	/** universo (mapa de estrellas); las partidas antiguas no lo tienen y se crea al abrir el mapa */
 	@:optional var uni : UniInfo;
+	/** creditos (tienda del robot comerciante) */
+	@:optional var credits : Int;
+	/** precios y existencias del robot comerciante (Market) */
+	@:optional var market : Market.MarketInfo;
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
@@ -70,7 +74,7 @@ class SaveData {
 		var now = Date.now().getTime();
 		return {
 			version : VERSION, id : newId(), name : name, seed : seed, biome : biome, sizeChunks : sizeChunks,
-			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : Inv.defaults(), edits : [], shipEdits : [], creative : false,
+			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : Inv.defaults(), edits : [], shipEdits : [], creative : false, credits : Market.START_CREDITS,
 		};
 	}
 
@@ -82,6 +86,15 @@ class SaveData {
 				start : { seed : Std.int(o.start.seed), biome : o.start.biome, size : Std.int(o.start.size) },
 				planets : [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : [for( v in (p.edits : Array<Dynamic>) ) Std.int(v)] }],
 			};
+		} catch( e : Dynamic ) {
+			return null;
+		}
+	}
+
+	static function readMarket( o : Dynamic ) : Market.MarketInfo {
+		try {
+			if( o == null || o.items == null ) return null;
+			return { time : o.time != null ? o.time : 0, items : [for( i in (o.items : Array<Dynamic>) ) { key : Std.string(i.key), stock : Std.int(i.stock), pressure : (i.pressure : Float) }] };
 		} catch( e : Dynamic ) {
 			return null;
 		}
@@ -128,7 +141,7 @@ class SaveData {
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true,
-					creative : o.creative == true, inv : readInv(o.inv), uni : readUni(o.uni),
+					creative : o.creative == true, inv : readInv(o.inv), uni : readUni(o.uni), credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market),
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 			};
 		} catch( e : Dynamic ) {

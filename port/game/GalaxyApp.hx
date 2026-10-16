@@ -556,7 +556,7 @@ class GalaxyApp extends hxd.App {
 		};
 		takeoff.onActivate = startExplorer;
 		edit.onActivate = soon;
-		trade.onActivate = soon;
+		trade.onActivate = openShop;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
 		return s;
@@ -788,7 +788,8 @@ class GalaxyApp extends hxd.App {
 	/** rueda del raton: cambia de casilla (en el original, bajar la rueda pasa a la siguiente); con la paleta abierta, de pagina */
 	function onWindowEvent( e : hxd.Event ) {
 		if( e.kind != EWheel || game == null || state != Playing ) return;
-		if( paletteOpen && palette != null ) palette.scroll(e.wheelDelta);
+		if( shop != null ) shop.scroll(e.wheelDelta);
+		else if( paletteOpen && palette != null ) palette.scroll(e.wheelDelta);
 		else game.scrollInventory(e.wheelDelta > 0 ? -1 : 1);
 	}
 
@@ -798,6 +799,31 @@ class GalaxyApp extends hxd.App {
 		palette.onPick = function(b) game.setSlot(b);
 		paletteOpen = true;
 		captureMouse(false);
+	}
+
+	public var shop : Shop;
+
+	/** tienda del robot comerciante (por ahora desde el ordenador de a bordo; luego estara en la nave nodriza) */
+	public function openShop() {
+		if( game == null || shop != null ) return;
+		if( current != null ) resume();
+		var m = game.market;
+		shop = new Shop(s2d, atlas, m, game.inv, game.info.credits);
+		shop.onCredits = function(c) game.info.credits = c;
+		shop.onClose = closeShop;
+		paletteOpen = true;
+		captureMouse(false);
+	}
+
+	function closeShop() {
+		if( shop == null ) return;
+		shop.remove();
+		shop = null;
+		paletteOpen = false;
+		if( game != null && state == Playing ) {
+			captureMouse(true);
+			game.releaseAction();
+		}
 	}
 
 	function closePalette() {
@@ -1003,7 +1029,9 @@ class GalaxyApp extends hxd.App {
 		if( state == Playing && game != null ) {
 			var K = hxd.Key;
 			if( paletteOpen ) {
-				if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
+				if( shop != null ) {
+					if( K.isPressed(K.ESCAPE) ) closeShop();
+				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
 				game.updateCamera();
 			} else if( game.creative && K.isPressed(K.I) ) {
 				openPalette();
