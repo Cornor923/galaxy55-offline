@@ -1,66 +1,102 @@
 import Common;
 
 /**
- * Nave nodriza del robot comerciante (anadido del port). Una nave enorme hecha con bloques de nave, con un gran hangar
- * abierto en un costado (como el de la Estrella de la Muerte) y bahias de aparcamiento dentro: en una esta tu nave y las
- * demas quedan para el multijugador. Al fondo del hangar esta el mostrador del robot.
+ * Nave nodriza del robot comerciante (anadido del port). Casco principal facetado de dos cubiertas, con franjas de ventanas
+ * y el morro biselado; detras, cinco capsulas de motor unidas al casco por brazos de celosia. Dentro, un gran hangar abierto
+ * por un costado con bahias de aparcamiento (en una esta tu nave; las demas, para el multijugador) y al fondo la zona de
+ * comercio (el mostrador del robot y puestos para tiendas de jugadores).
  * El mismo modelo se usa en el mapa (fotogramas como los de tu nave) y como mundo para entrar.
  */
 class Mothership {
 
-	/** medidas (bloques) y posicion en el volumen de 128 */
-	public static inline var LX = 120;
-	public static inline var LY = 64;
-	public static inline var LZ = 40;
-	public static inline var X0 = 4;
-	public static inline var Y0 = 32;
-	public static inline var Z0 = 20;
-	/** cubierta principal: de z 0 a DECK; la proa (+x) en punta */
-	static inline var DECK = 22;
-	static inline var HULL0 = 12;
-	/** hangar: hueco interior abierto por el costado -y */
-	public static inline var HX0 = 14;
-	public static inline var HX1 = 79;
-	public static inline var HY1 = 40;
-	public static inline var HZ0 = 2;
-	public static inline var HZ1 = 20;
+	/** volumen local y su posicion en el mundo de 128 */
+	public static inline var LX = 124;
+	public static inline var LY = 124;
+	public static inline var LZ = 68;
+	public static inline var X0 = 2;
+	public static inline var Y0 = 2;
+	public static inline var Z0 = 16;
+	/** casco principal: de MX0 a MX1 en x (morro hacia +x), centrado en (CY, CZ), media anchura W y media altura H */
+	static inline var MX0 = 44;
+	static inline var MX1 = 122;
+	static inline var CY = 62;
+	static inline var CZ = 34;
+	static inline var W = 24;
+	static inline var H = 13;
+	/** hangar: hueco abierto por el costado -y, de HX0 a HX1, de la pared exterior hasta HY1 y de HZ0 a HZ1 */
+	public static inline var HX0 = 48;
+	public static inline var HX1 = 111;
+	public static inline var HY1 = CY + 14;
+	public static inline var HZ0 = CZ - 10;
+	public static inline var HZ1 = CZ + 9;
 	/** bahias: 3 a lo largo del hangar, de 19x19 (cabe la nave mas grande del hangar, 17x17x14) */
 	public static inline var BAYS = 3;
 	public static inline var BAY = 19;
 
-	/** centro de la bahia i (coordenadas del volumen); z = encima del suelo */
+	/** centro de la bahia i (coordenadas del mundo); z = encima del suelo */
 	public static function bay( i : Int ) {
 		var span = (HX1 - HX0) / BAYS;
-		return { x : X0 + Std.int(HX0 + span * (i + 0.5)), y : Y0 + 2 + (BAY >> 1), z : Z0 + HZ0 };
+		return { x : X0 + Std.int(HX0 + span * (i + 0.5)), y : Y0 + CY - W + 3 + (BAY >> 1), z : Z0 + HZ0 };
 	}
 
-	/** media anchura de la cubierta en x (proa en punta) */
+	/** media anchura del casco principal en x: el morro se estrecha redondeado */
 	static function halfWidth( x : Int ) : Float {
-		if( x < HULL0 ) return 0;
-		var f = (x - HULL0) / (LX - HULL0);
-		return f < 0.55 ? LY * 0.5 : LY * 0.5 * (1 - (f - 0.55) / 0.45 * 0.92);
+		if( x < MX0 || x > MX1 ) return -1;
+		var f = (x - MX0) / (MX1 - MX0);
+		if( f < 0.72 ) return W;
+		var t = (f - 0.72) / 0.28;
+		return W * (0.45 + 0.55 * Math.sqrt(1 - t * t));
 	}
 
-	/** forma de la nave */
-	static function shape( x : Int, y : Int, z : Int ) : Bool {
-		var cy = LY * 0.5, dy = Math.abs(y + 0.5 - cy);
-		// cubierta principal, con los bordes biselados abajo y arriba
+	/** casco principal: seccion octogonal (esquinas biseladas) y una ranura entre las dos cubiertas */
+	static function mainHull( x : Int, y : Int, z : Int ) : Bool {
 		var hw = halfWidth(x);
-		if( hw > 0 ) {
-			var bevel = Math.min(z, DECK - 1 - z);
-			if( z < DECK && dy <= hw - Math.max(0, 3 - bevel) ) return true;
+		if( hw < 0 ) return false;
+		var dy = Math.abs(y + 0.5 - CY), dz = z + 0.5 - CZ;
+		var hh = x > MX1 - 8 ? H - (x - (MX1 - 8)) * 0.6 : H;
+		if( dy > hw || Math.abs(dz) > hh ) return false;
+		// biselado de las aristas largas (arriba un poco piramidal)
+		if( dy + Math.abs(dz) * 1.1 > hw + hh * 0.45 ) return false;
+		if( dz > 0 && dy > hw * 0.45 && dz > hh - (dy - hw * 0.45) * 0.35 ) return false;
+		// ranura entre cubiertas en los costados
+		if( Math.abs(dz) < 1 && dy > hw - 2 ) return false;
+		return true;
+	}
+
+	/** capsulas de motor: centro, longitud y radio; con una antena en la punta */
+	static var PODS = [
+		{ y : CY - 50, z : CZ + 20, x : 10, len : 40, r : 7. },
+		{ y : CY + 32, z : CZ + 26, x : 14, len : 36, r : 7. },
+		{ y : CY + 54, z : CZ - 2, x : 8, len : 34, r : 6.5 },
+		{ y : CY - 40, z : CZ - 22, x : 12, len : 38, r : 7. },
+		{ y : CY + 26, z : CZ - 24, x : 6, len : 40, r : 7.5 },
+	];
+
+	static function pod( x : Int, y : Int, z : Int ) : Int {
+		for( p in PODS ) {
+			var fx = (x + 0.5 - p.x) / p.len;
+			if( fx < 0 || fx > 1 ) continue;
+			// cuerpo: grueso en el centro, punta afilada delante y culata recortada detras
+			var prof = fx < 0.15 ? 0.75 + fx / 0.15 * 0.25 : (fx > 0.7 ? 1 - (fx - 0.7) / 0.3 * 0.8 : 1);
+			var r = p.r * prof;
+			var dy = Math.abs(y + 0.5 - p.y), dz = Math.abs(z + 0.5 - p.z);
+			// seccion octogonal
+			if( dy <= r && dz <= r && dy + dz <= r * 1.45 ) return 1;
 		}
-		// lomo central y torre de mando atras
-		if( x >= HULL0 + 4 && x < LX - 22 && dy <= 8 - (z - DECK) && z >= DECK && z < DECK + 5 ) return true;
-		if( x >= HULL0 + 4 && x < HULL0 + 18 && dy <= 6 && z >= DECK && z < DECK + 13 ) {
-			if( z >= DECK + 10 ) return dy <= 9 && x >= HULL0 + 6 && x < HULL0 + 16; // puente, mas ancho
-			return true;
-		}
-		// tres motores (cilindros) que salen por detras
-		for( ey in [cy - 20, cy, cy + 20] ) {
-			var ez = 11.5;
-			var ddy = y + 0.5 - ey, ddz = z + 0.5 - ez;
-			if( x < HULL0 + 10 && ddy * ddy + ddz * ddz <= (ey == cy ? 80 : 56) ) return true;
+		return 0;
+	}
+
+	/** brazos de celosia de la culata del casco a cada capsula */
+	static function strut( x : Int, y : Int, z : Int ) : Bool {
+		for( p in PODS ) {
+			var ax = MX0 + 2., ay = CY + (p.y - CY) * 0.25, az = CZ + (p.z - CZ) * 0.3;
+			var bx = p.x + p.len * 0.5, by = p.y, bz = p.z;
+			var vx = bx - ax, vy = by - ay, vz = bz - az;
+			var l2 = vx * vx + vy * vy + vz * vz;
+			var t = ((x + 0.5 - ax) * vx + (y + 0.5 - ay) * vy + (z + 0.5 - az) * vz) / l2;
+			if( t < 0 || t > 1 ) continue;
+			var qx = ax + vx * t - x - 0.5, qy = ay + vy * t - y - 0.5, qz = az + vz * t - z - 0.5;
+			if( qx * qx + qy * qy + qz * qz <= 2.3 ) return true;
 		}
 		return false;
 	}
@@ -69,56 +105,69 @@ class Mothership {
 
 	public static function data() : ShipData.ShipDataInfo {
 		if( cache != null ) return cache;
-		var solid = new haxe.ds.Vector<Bool>(LX * LY * LZ);
+		var kind = new haxe.ds.Vector<Int>(LX * LY * LZ);
 		inline function id( x : Int, y : Int, z : Int ) return x + y * LX + z * LX * LY;
-		inline function isSolid( x : Int, y : Int, z : Int ) return x >= 0 && y >= 0 && z >= 0 && x < LX && y < LY && z < LZ && solid[id(x, y, z)];
+		inline function get( x : Int, y : Int, z : Int ) return x >= 0 && y >= 0 && z >= 0 && x < LX && y < LY && z < LZ ? kind[id(x, y, z)] : 0;
+		// 1 = casco principal, 2 = capsula, 3 = brazo
 		for( x in 0...LX )
 			for( y in 0...LY )
 				for( z in 0...LZ )
-					solid[id(x, y, z)] = shape(x, y, z);
-		// el hangar: un hueco abierto por el costado -y
+					kind[id(x, y, z)] = mainHull(x, y, z) ? 1 : (pod(x, y, z) > 0 ? 2 : (strut(x, y, z) ? 3 : 0));
+		// el hangar: hueco abierto por el costado -y
 		for( x in HX0...HX1 )
-			for( y in 0...HY1 )
+			for( y in CY - W - 1...HY1 )
 				for( z in HZ0...HZ1 )
-					solid[id(x, y, z)] = false;
+					if( kind[id(x, y, z)] == 1 ) kind[id(x, y, z)] = 0;
+		inline function solid( x, y, z ) return get(x, y, z) != 0;
 		var cells = new Map<Int, BlockKind>();
 		inline function put( x : Int, y : Int, z : Int, b : BlockKind ) cells.set(id(x, y, z), b);
-		// casco: las celdas solidas que tocan el exterior o el hangar (la nave es hueca)
 		for( x in 0...LX )
 			for( y in 0...LY )
 				for( z in 0...LZ ) {
-					if( !solid[id(x, y, z)] ) continue;
-					if( isSolid(x - 1, y, z) && isSolid(x + 1, y, z) && isSolid(x, y - 1, z) && isSolid(x, y + 1, z) && isSolid(x, y, z - 1) && isSolid(x, y, z + 1) ) continue;
+					var k = kind[id(x, y, z)];
+					if( k == 0 ) continue;
+					if( solid(x - 1, y, z) && solid(x + 1, y, z) && solid(x, y - 1, z) && solid(x, y + 1, z) && solid(x, y, z - 1) && solid(x, y, z + 1) ) continue;
 					var b = BShipHull;
-					var side = !isSolid(x, y - 1, z) || !isSolid(x, y + 1, z);
-					var top = !isSolid(x, y, z + 1);
-					// ventanas en franjas en los costados; paneles alternos arriba; lineas de luz en los bordes
-					if( side && !top && z % 5 == 3 && x % 3 != 0 ) b = BShipGlass2;
-					else if( top && (Std.int(x / 6) + Std.int(y / 6)) % 2 == 0 ) b = BShipPlate;
-					else if( side && z % 5 == 0 ) b = BShipPlate;
-					if( top && x % 8 == 0 && y % 8 == 4 ) b = BShipLight;
+					var side = !solid(x, y - 1, z) || !solid(x, y + 1, z);
+					var top = !solid(x, y, z + 1);
+					var dz = z - CZ;
+					switch( k ) {
+					case 1:
+						// franjas de ventanas en cada cubierta, paneles en la parte de arriba y luces en el lomo
+						if( side && (dz == 5 || dz == -5) && x % 6 != 0 ) b = BShipGlass2;
+						else if( side && (dz == 2 || dz == -3 || dz == 8 || dz == -8) ) b = BShipPlate;
+						else if( top && (Std.int(x / 5) + Std.int(y / 7)) % 3 == 0 ) b = BShipPlate;
+						if( top && x % 10 == 0 && Math.abs(y - CY) < 3 ) b = BShipLight;
+						// culata: toberas
+						if( !solid(x - 1, y, z) && x <= MX0 + 1 && (y + z) % 3 != 0 ) b = BShipEngine;
+					case 2:
+						var p = PODS[0];
+						for( q in PODS ) if( x >= q.x && x < q.x + q.len && Math.abs(y - q.y) <= q.r + 1 && Math.abs(z - q.z) <= q.r + 1 ) p = q;
+						var fx = (x - p.x) / p.len;
+						if( fx < 0.08 ) b = BShipEngine; // tobera detras
+						else if( fx > 0.62 && fx < 0.72 && side ) b = BShipGlass2;
+						else if( Std.int(x / 3) % 3 == 0 ) b = BShipPlate;
+					case 3:
+						b = (x + y + z) % 3 == 0 ? BShipTubes : BShipPlate;
+					}
 					put(x, y, z, b);
 				}
-		// motores: la cara trasera (-x), en rejilla
-		for( y in 0...LY )
-			for( z in 0...LZ ) {
-				var x = 0;
-				while( x < LX && !solid[id(x, y, z)] ) x++;
-				if( x < LX && x < HULL0 ) put(x, y, z, BShipEngine);
-			}
-		// hangar: suelo de placas con el borde de luces, techo con luces y la barrera del borde (cristal en el suelo)
+		// antenas en la punta de cada capsula
+		for( p in PODS )
+			for( i in 0...7 ) put(p.x + p.len + i, Std.int(p.y), Std.int(p.z), i == 6 ? BShipLight : BShipTubes);
+		// hangar: suelo, techo con claraboyas, luces en la pared del fondo, bahias
+		var hy0 = CY - W;
 		for( x in HX0...HX1 )
-			for( y in 0...HY1 ) {
-				if( !isSolid(x, y, HZ0 - 1) ) continue;
+			for( y in hy0...HY1 ) {
+				if( !solid(x, y, HZ0 - 1) ) continue;
 				put(x, y, HZ0 - 1, BShipPlate);
-				// techo: grandes claraboyas de cristal (se ve el espacio), con vigas cada 8 y luces en las vigas
-				var beam = (x - HX0) % 8 == 0 || y % 8 == 0 || y >= HY1 - 8;
-				for( z in HZ1...DECK + 1 )
-					if( isSolid(x, y, z) ) put(x, y, z, beam ? (z == HZ1 && x % 4 == 2 ? BShipLight : BShipPlate) : BShipGlass);
+				var beam = (x - HX0) % 9 == 0 || (y - hy0) % 9 == 0 || y >= HY1 - 10;
+				for( z in HZ1...CZ + H + 1 )
+					if( solid(x, y, z) ) put(x, y, z, beam ? (z == HZ1 && x % 3 == 1 ? BShipLight : BShipPlate) : BGlass);
 			}
 		for( x in HX0...HX1 )
 			for( z in HZ0...HZ1 )
-				if( x % 4 == 1 && (z == HZ0 + 3 || z == HZ1 - 2) ) put(x, HY1, z, BShedWallLight);
+				if( x % 4 == 1 && (z == HZ0 + 3 || z == HZ1 - 3) ) put(x, HY1, z, BShedWallLight);
 		for( i in 0...BAYS ) {
 			var c = bay(i);
 			var bx = c.x - X0, by = c.y - Y0;
@@ -142,30 +191,17 @@ class Mothership {
 				put(x0 + dx, cy0, HZ0, robot ? BShipComputer : BShipPlate);
 				for( dy in 1...6 ) put(x0 + dx, cy0 + dy, HZ0 + 5, robot ? BShipLight : awn[i % awn.length]);
 			}
-			// postes
 			for( dz in 0...5 ) {
 				put(x0, cy0, HZ0 + dz, BShipTubes);
 				put(x0 + sw - 1, cy0, HZ0 + dz, BShipTubes);
 			}
 			if( !robot ) put(x0 + (sw >> 1), cy0 + 3, HZ0 + 4, BShipLight);
 		}
-		// contenedores de carga encima (es un comerciante)
-		var colors = [BStainRed, BStainOrange, BStainGreen, BStainPurple, BStainWhite];
-		var k = 0;
-		for( gx in 0...5 )
-			for( gy in 0...3 ) {
-				var x0 = 30 + gx * 10, y0 = 14 + gy * 12;
-				var top = LZ - 1;
-				while( top > 0 && !isSolid(x0 + 2, y0 + 2, top) ) top--;
-				if( top <= 0 || (gx + gy) % 2 == 1 ) continue;
-				var col = colors[k++ % colors.length];
-				for( dx in 0...6 ) for( dy in 0...4 ) for( dz in 1...4 ) put(x0 + dx, y0 + dy, top + dz, col);
-			}
 		var out = [];
 		for( key => b in cells ) {
 			var x = key % LX, y = Std.int(key / LX) % LY, z = Std.int(key / (LX * LY));
 			out.push({ x : X0 + x, y : Y0 + y, z : Z0 + z, id : Type.enumIndex(b) });
 		}
-		return cache = { sx : Const.SIZE, sy : Const.SIZE, sz : Z0 + LZ + 4, cells : out, entry : null, crafts : [] };
+		return cache = { sx : Const.SIZE, sy : Const.SIZE, sz : Z0 + LZ, cells : out, entry : null, crafts : [] };
 	}
 }

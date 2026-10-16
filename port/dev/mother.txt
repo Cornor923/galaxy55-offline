@@ -1,4 +1,4 @@
-﻿# nave nodriza: vista desde dentro del hangar (bahia) y desde fuera
+# nave nodriza: dentro del hangar (bahia) y desde fuera
 wait 3
 mothership
 wait 150
@@ -7,13 +7,10 @@ shot mother1
 look 1.0 0.6
 wait 5
 shot mother2
-tp 64 -4 52 1.57 -0.25
+tp 126 2 100 2.39 -0.5
 wait 30
 shot mother3
-tp 124 4 84 2.35 -0.42
+tp 2 126 95 -0.72 -0.45
 wait 30
 shot mother4
 quit
-
-
-
