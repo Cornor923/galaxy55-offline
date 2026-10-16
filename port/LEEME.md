@@ -1,7 +1,7 @@
 # Port nativo (Haxe 4 + Heaps + HashLink)
 
 Esta carpeta contiene el port del juego a una aplicación de escritorio nativa, sin Flash. Es trabajo en curso (con errores
-conocidos, ver `RESUMEN.md`); el juego original en Flash sigue intacto en `src/`, `libs/` y `release/`, y también en la rama `flash`.
+conocidos, ver `ERRORES.md` en la raíz); el juego original en Flash sigue intacto en `src/`, `libs/` y `release/`, y también en la rama `flash`.
 
 ## Jugar
 
@@ -72,4 +72,4 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - El modo creativo y su paleta son un añadido de este port.
 - El menú del ordenador de a bordo tiene un aspecto propio, como en la versión Flash (el original era una página web).
 - Todavía faltan: recetas del sintetizador, tienda, hangar, mapa de exploración, agua que fluye, sonido y ver el bloque en la mano.
-  Lista completa y al día en `RESUMEN.md`.
+  Lista completa en `PENDIENTES.md` y `ERRORES.md` (raíz del repositorio).

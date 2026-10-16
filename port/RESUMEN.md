@@ -1,5 +1,7 @@
 # Resumen del port de Galaxy 55 (leer esto primero)
 
+> Notas técnicas para quien desarrolla. Para jugadores: [`README.md`](../README.md), errores en [`ERRORES.md`](../ERRORES.md), lista de tareas en [`PENDIENTES.md`](../PENDIENTES.md) (los tres se mantienen a la vez que esta lista).
+
 ## Qué estamos haciendo
 Galaxy 55 (Motion Twin, 2012) era un juego de bloques en Flash. Este repo lo hacía funcionar sin servidor.
 Flash está muerto, así que estamos **portándolo a una aplicación nativa de escritorio**: Haxe 4 + Heaps moderno + HashLink
@@ -136,6 +138,7 @@ Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-rele
    - **Opción de calidad** (distancia de dibujado, caras de las hojas) para PC lentas; el valor por defecto sigue siendo la mejor calidad.
    - Vida, daño, curación, oxígeno y lava; bloques activables, cofres, `BFTransform`; sonido; partículas al romper; planeta Shed y Ciudad muerta completos.
 5. Decidir SDL (actual) o DirectX; empaquetar como instalable; multijugador y Steam.
+   - **Evaluar versión web** (Heaps JS/WebGL; pedida por la comunidad de Eternaltwin; NO probado). Trabajo: sustituir `sys.io.File`/`sys.FileSystem` por recursos incrustados o descargados; guardados en localStorage/IndexedDB; versión JS del shim `flash.Memory`; ratón bloqueado, mando y pantalla completa con APIs del navegador; comprobar los filtros por software del explorador y `Ship.captureFrames`. Riesgos: velocidad y memoria de la generación de mundos en JS, y los ~5 s de generación del explorador.
 6. Cuando el usuario lo apruebe: fusionar `port-hashlink` en `main` ("hacerlo oficial").
 
 
