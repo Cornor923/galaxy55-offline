@@ -154,6 +154,8 @@ class Explorer extends h2d.Object {
 	var shipAlpha = 1.;
 	var sectorEntrance = { x : 0., y : 0. };
 	var spawnAcc = 0.;
+	/** sistemas que se estan generando en segundo plano (cambio del port: el original congelaba la pantalla al generarlos) */
+	var jobs = new Map<Int, { room : ExpRoom, stars : ExpRoom, done : Bool }>();
 	static inline var COMMON_LOW_ALPHA = 0.5;
 	static inline var COMMON_HIGH_ALPHA = 0.85;
 	static inline var ANIM_SECTOR_ZOOM = 60;
@@ -467,6 +469,14 @@ class Explorer extends h2d.Object {
 			centerView();
 			return;
 		}
+		// si el sistema aun se esta generando en segundo plano, se espera (con el icono de carga girando)
+		var job = jobs.get(si.id);
+		if( job != null && !job.done ) {
+			loading(true);
+			tw.delay(50, function() gotoSolar(si, true));
+			return;
+		}
+		loading(false);
 		prepareSolar(si);
 		solar.root.visible = false;
 		worldSolar.visible = false;
@@ -517,7 +527,9 @@ class Explorer extends h2d.Object {
 		solar.viewY = solarStars.viewY = room.entrance.y;
 
 		// imagen del sistema para el zoom
+		var t2 = haxe.Timer.stamp();
 		setCache(snapshot());
+		if( Dev.trace ) Sys.println("tiempos: snapshot=" + Std.int((haxe.Timer.stamp() - t2) * 1000) + "ms");
 
 		// color del calor del sol
 		var c = mt.deepnight.Color.interpolateInt(room.sunColor, 0xF46800, 0.3);
@@ -584,12 +596,20 @@ class Explorer extends h2d.Object {
 		solarSpots = [];
 		if( worldSolar != null ) worldSolar.remove();
 
-		var room = new ExpRoom(si.seed, VW, VH);
-		room.generateSolarSystem(si);
+		var job = jobs.get(si.id);
+		var room : ExpRoom, stars : ExpRoom;
+		if( job != null && job.done ) {
+			room = job.room;
+			stars = job.stars;
+		} else {
+			var t0 = haxe.Timer.stamp();
+			var g = generateSystem(si);
+			room = g.room;
+			stars = g.stars;
+			if( Dev.trace ) Sys.println("tiempos: sistema y fondo=" + Std.int((haxe.Timer.stamp() - t0) * 1000) + "ms (sin segundo plano)");
+		}
+		jobs.remove(si.id);
 		solar = makeView(room);
-		var stars = new ExpRoom(si.seed, VW, VH);
-		stars.bgColor = room.bgColor;
-		stars.generateSolarStars();
 		solarStars = makeView(stars);
 		buildLayers(solarStars);
 		buildLayers(solar);
@@ -600,6 +620,31 @@ class Explorer extends h2d.Object {
 		for( pv in room.planetViews ) addPlanet(pv);
 		solar.viewX = solarStars.viewX = room.entrance.x;
 		solar.viewY = solarStars.viewY = room.entrance.y;
+	}
+
+	/** Room.generateSolarSystem + generateSolarStars: solo calcula imagenes (BitmapData por software), se puede hacer en otro hilo */
+	static function generateSystem( si : ExpSystem ) {
+		var room = new ExpRoom(si.seed, VW, VH);
+		room.generateSolarSystem(si);
+		var stars = new ExpRoom(si.seed, VW, VH);
+		stars.bgColor = room.bgColor;
+		stars.generateSolarStars();
+		return { room : room, stars : stars };
+	}
+
+	/** empieza a generar un sistema en segundo plano (mientras la nave vuela hacia el) */
+	function pregen( si : ExpSystem ) {
+		if( jobs.exists(si.id) ) return;
+		var job = { room : null, stars : null, done : false };
+		jobs.set(si.id, job);
+		sys.thread.Thread.create(function() {
+			var t0 = haxe.Timer.stamp();
+			var g = generateSystem(si);
+			job.room = g.room;
+			job.stars = g.stars;
+			job.done = true;
+			if( Dev.trace ) Sys.println("tiempos: sistema generado en segundo plano en " + Std.int((haxe.Timer.stamp() - t0) * 1000) + "ms");
+		});
 	}
 
 	/** processEnd de Manager.gotoSolar */
@@ -1092,6 +1137,7 @@ class Explorer extends h2d.Object {
 			if( !inSolar ) {
 				switch( sp.system.status ) {
 				case SOpen:
+					pregen(sp.system);
 					ship.onArriveDist = 0;
 					ship.onArrive = function() onReachSystem(sp);
 				case SLocked(cost):

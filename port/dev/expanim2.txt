@@ -7,6 +7,7 @@ wait 12
 wait 200
 expgo 2150 963
 wait 200
+trace 1
 expsys 3
 wait 150
 expinfo
