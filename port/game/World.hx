@@ -306,6 +306,8 @@ class World {
 
 	/** añadido del port para la nave nodriza (hecha en Minecraft): caida de la luz de las lamparas por bloque (null = la de cada bloque) */
 	public var lampFalloff : Null<Float> = null;
+	/** dibujar tambien la capa 0 (en los planetas es la roca madre y no se ve; en el hangar es el suelo del cobertizo) */
+	public var drawBottom = false;
 	/** añadido del port para la nave nodriza: luz minima en todo el mundo (0 = ninguna) */
 	public var minLight = 0;
 
@@ -681,7 +683,9 @@ class World {
 				var info = lightInfos[li];
 				if( light.get(p) >= info.p ) continue;
 				light.set(p, info.p);
-				flood([p], info.pw - info.f, info.f);
+				// la caida de la nave nodriza se fija despues de crear el mundo: aqui igual que en computeLight
+				var f = lampFalloff != null ? lampFalloff : info.f;
+				flood([p], info.pw - f, f);
 			}
 		}
 		useMask = false;
@@ -689,6 +693,11 @@ class World {
 			var dx = i % span - rOut, dy = Std.int(i / span) - rOut;
 			if( dx > rIn || dx < -rIn || dy > rIn || dy < -rIn )
 				light.blit(cols[i] << ZBITS, saved, i * HEIGHT, HEIGHT);
+			else if( minLight > 0 ) {
+				// la luz minima de la nave nodriza tambien al recalcular una zona (si no, al abrir una puerta todo se oscurecia)
+				var base = cols[i] << ZBITS;
+				for( z in 0...HEIGHT ) if( light.get(base | z) < minLight ) light.set(base | z, minLight);
+			}
 			mask.set(cols[i], 0);
 		}
 	}
@@ -981,7 +990,7 @@ class World {
 
 		for( y in cy * CSIZE...(cy + 1) * CSIZE )
 			for( x in cx * CSIZE...(cx + 1) * CSIZE )
-				for( z in 1...HEIGHT ) {
+				for( z in (drawBottom ? 0 : 1)...HEIGHT ) {
 					var id = voxel(x, y, z);
 					if( id == 0 ) continue;
 					var b = gen.blocks[id];
