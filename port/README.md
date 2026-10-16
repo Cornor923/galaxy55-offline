@@ -58,6 +58,18 @@ You need (Windows):
        haxe port\headless_flash.hxml  the same program for Flash (reference)
 
 `jugar.bat` looks for `hl` in the `PATH`; if it is elsewhere, set the `HL` variable to its path first.
+
+### DirectX version (optional)
+
+For machines without OpenGL 3.2 (for example virtual machines with a shared GPU), there is a DirectX 11 build:
+
+       haxelib dev hldx <folder-where-you-cloned-hashlink>/libs/directx
+       haxe port\game_dx.hxml       (-> port\out\galaxy55_dx.hl, run it with jugar_dx.bat)
+
+Known issue: if the `hldx` source is newer than your `directx.hdll` (HashLink 1.16 binary + hashlink from git), setting the
+display mode fails with "Primitive or library is missing". Fix it in `libs/directx/dx/Window.hx`, `set_displayMode`: wrap the
+body in `try { ... } catch( e : Dynamic ) { winSetFullscreen(win, mode != Windowed); }`. Using an `hldx` that matches your
+HashLink version avoids the problem.
 The game looks for the original graphics in `res\` (portable package) or, if missing, in `src\G55\fla\client\gfx\`; the `GALAXY55_RES` variable forces another folder.
 
 ### Other platforms

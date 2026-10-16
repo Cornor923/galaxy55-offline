@@ -90,6 +90,7 @@ class Ship {
 			idx.push(b); idx.push(b + 2); idx.push(b + 3);
 		}
 		var poly = new h3d.prim.Polygon(pts, idx);
+		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = uvs;
 		var tex = hxd.res.Any.fromBytes("ship_halo.png", Res.bytes("ship_halo.png")).toTexture();
 		tex.wrap = Repeat;

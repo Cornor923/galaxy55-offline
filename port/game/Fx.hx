@@ -68,6 +68,7 @@ class Fx {
 			idx.push(b + 1); idx.push(b + 3); idx.push(b + 2);
 		}
 		var poly = new h3d.prim.Polygon(pts, idx);
+		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = uvs;
 		beamTex = [];
 		for( n in ["lazer.png", "lazer2.png", "lazer3.png", "lazer4.png"] ) {

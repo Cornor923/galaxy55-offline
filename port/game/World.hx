@@ -860,6 +860,7 @@ class World {
 	function emitMesh( m : MeshBuf, kind : Int ) {
 		if( m.pts.length == 0 ) return;
 		var poly = new h3d.prim.Polygon(m.pts, m.idx);
+		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = m.uvs;
 		poly.colors = m.cols;
 		var mat = h3d.mat.Material.create(atlas);

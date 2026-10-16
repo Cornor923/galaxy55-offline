@@ -103,6 +103,7 @@ class IconMesh {
 		quad(m, [0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1], tile, 1);
 		quad(m, [1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1], tile, 1);
 		var poly = new h3d.prim.Polygon(m.pts, m.idx);
+		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = m.uvs;
 		poly.colors = m.cols;
 		return poly;
@@ -133,6 +134,7 @@ class IconMesh {
 				p.z = 0.5 + (p.z - 0.5) * scale;
 			}
 		var poly = new h3d.prim.Polygon(m.pts, m.idx);
+		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = m.uvs;
 		poly.colors = m.cols;
 		return poly;

@@ -173,6 +173,7 @@ class Parts {
 			}
 		}
 		var poly = new h3d.prim.Polygon(pts, idx);
+		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = uvs;
 		poly.colors = cols;
 		mesh = new h3d.scene.Mesh(poly, mat, world.root);

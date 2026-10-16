@@ -6,7 +6,10 @@
 - Fixes reported by Sekhmet (thank you!): inside a liquid the screen and fog take its colour, like the original
   (quicksand no longer looks transparent); no snow under water; water has side faces; submerged ice stays behind the
   water; star map texts translated.
-- Optional DirectX build (`haxe port\game_dx.hxml`), besides the OpenGL one.
+- Original French biome names (Terres Rouges, Rocaille sombre, Sables arides), found by Sekhmet on the old Twinpedia.
+- Optional DirectX build (`haxe port\game_dx.hxml`, `jugar_dx.bat`), besides the OpenGL one.
+- Mothership: piston doors open, floor and ceiling grates, doors that open, and lit rooms.
+- `jugar.bat` works even when the PATH has folders with parentheses.
 
 ## v0.2 — pre-release
 - Star map with the original animations (entering and leaving a system, hyperspace, flashes, server wait), common

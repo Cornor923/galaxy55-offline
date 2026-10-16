@@ -171,6 +171,7 @@ class Sky {
 		var idx = new hxd.IndexBuffer();
 		for( i in [0, 1, 2, 0, 2, 3] ) idx.push(i);
 		var poly = new h3d.prim.Polygon(pts, idx);
+		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = [new h3d.prim.UV(0, 0), new h3d.prim.UV(1, 0), new h3d.prim.UV(1, 1), new h3d.prim.UV(0, 1)];
 		var mat = h3d.mat.Material.create(tex);
 		mat.shadows = false;
@@ -259,6 +260,7 @@ class Sky {
 			var idx = new hxd.IndexBuffer();
 			for( i in [0, 1, 2, 0, 2, 3] ) idx.push(i);
 			var poly = new h3d.prim.Polygon(pts, idx);
+			poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 			poly.colors = [new h3d.col.Point(1, 1, 1), new h3d.col.Point(1, 1, 1), new h3d.col.Point(0, 0, 0), new h3d.col.Point(0, 0, 0)];
 			poly.uvs = [new h3d.prim.UV(0, 0), new h3d.prim.UV(1, 0), new h3d.prim.UV(1, 1), new h3d.prim.UV(0, 1)];
 			var mat = h3d.mat.Material.create(tex);
@@ -343,6 +345,7 @@ class Sky {
 				idx.push(b); idx.push(d); idx.push(c);
 			}
 		var poly = new h3d.prim.Polygon(pts, idx);
+		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.colors = cl;
 		var mat = h3d.mat.Material.create();
 		mat.shadows = false;
@@ -386,6 +389,7 @@ class Sky {
 			idx.push(b); idx.push(b + 2); idx.push(b + 3);
 		}
 		var poly = new h3d.prim.Polygon(pts, idx);
+		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.colors = cl;
 		var mat = h3d.mat.Material.create();
 		mat.shadows = false;
