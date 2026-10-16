@@ -26,6 +26,12 @@ los detalles técnicos de cada punto, en [`port/RESUMEN.md`](port/RESUMEN.md).
    - Linterna de casco: luz alrededor del jugador en cuevas.
    - Imán: los bloques sueltos llegan desde más lejos.
    - Traje térmico / tanque de oxígeno: aguantar lava, frío o el vacío (cuando haya oxígeno/daño).
+3c. **Ideas para el multijugador** (de Pvie, para más adelante):
+   - Naves de jugador: como máximo 17×17×14 (el hangar del original); aparcan dentro de bahías (nave nodriza, gremios).
+   - Naves de gremio: más grandes, con hangar compartido y permisos de quién puede romper bloques. No aparcan dentro:
+     se acoplan desde fuera con tubos de acoplamiento.
+   - Tiendas de jugadores: puestos en la zona de comercio de la nave nodriza (ya diseñada) o un mostrador en la nave de un gremio.
+   - Cuidar el rendimiento en el navegador (mundos pequeños y fijos, mallas que no se rehacen, límite de jugadores visibles).
 4. **Arreglar los errores** de [`ERRORES.md`](ERRORES.md).
 5. **Agua que fluye** (lógica de `Process.hx` del original) y textura animada.
 6. Ver el bloque elegido en la mano; opción de calidad para PC lentas.

@@ -9,29 +9,29 @@ import Common;
 class Mothership {
 
 	/** medidas (bloques) y posicion en el volumen de 128 */
-	public static inline var LX = 100;
-	public static inline var LY = 60;
-	public static inline var LZ = 36;
-	public static inline var X0 = 14;
-	public static inline var Y0 = 34;
-	public static inline var Z0 = 30;
+	public static inline var LX = 120;
+	public static inline var LY = 64;
+	public static inline var LZ = 40;
+	public static inline var X0 = 4;
+	public static inline var Y0 = 32;
+	public static inline var Z0 = 20;
 	/** cubierta principal: de z 0 a DECK; la proa (+x) en punta */
-	static inline var DECK = 15;
+	static inline var DECK = 22;
 	static inline var HULL0 = 12;
 	/** hangar: hueco interior abierto por el costado -y */
-	public static inline var HX0 = 34;
-	public static inline var HX1 = 76;
-	public static inline var HY1 = 36;
+	public static inline var HX0 = 14;
+	public static inline var HX1 = 79;
+	public static inline var HY1 = 40;
 	public static inline var HZ0 = 2;
-	public static inline var HZ1 = 13;
-	/** bahias: 3 a lo largo del hangar, de 12x12 */
+	public static inline var HZ1 = 20;
+	/** bahias: 3 a lo largo del hangar, de 19x19 (cabe la nave mas grande del hangar, 17x17x14) */
 	public static inline var BAYS = 3;
-	public static inline var BAY = 12;
+	public static inline var BAY = 19;
 
 	/** centro de la bahia i (coordenadas del volumen); z = encima del suelo */
 	public static function bay( i : Int ) {
 		var span = (HX1 - HX0) / BAYS;
-		return { x : X0 + Std.int(HX0 + span * (i + 0.5)), y : Y0 + 4 + Std.int((HY1 - 4) * 0.5), z : Z0 + HZ0 };
+		return { x : X0 + Std.int(HX0 + span * (i + 0.5)), y : Y0 + 2 + (BAY >> 1), z : Z0 + HZ0 };
 	}
 
 	/** media anchura de la cubierta en x (proa en punta) */
@@ -57,10 +57,10 @@ class Mothership {
 			return true;
 		}
 		// tres motores (cilindros) que salen por detras
-		for( ey in [cy - 18, cy, cy + 18] ) {
-			var ez = 7.5;
+		for( ey in [cy - 20, cy, cy + 20] ) {
+			var ez = 11.5;
 			var ddy = y + 0.5 - ey, ddz = z + 0.5 - ez;
-			if( x < HULL0 + 10 && ddy * ddy + ddz * ddz <= (ey == cy ? 42 : 30) ) return true;
+			if( x < HULL0 + 10 && ddy * ddy + ddz * ddz <= (ey == cy ? 80 : 56) ) return true;
 		}
 		return false;
 	}
@@ -126,18 +126,32 @@ class Mothership {
 					else if( edge ) put(bx + dx, by + dy, HZ0 - 1, BShedGroundArrow);
 				}
 		}
-		// mostrador del robot al fondo del hangar
-		var cx = (HX0 + HX1) >> 1;
-		for( dx in -4...5 ) {
-			put(cx + dx, HY1 - 2, HZ0, BShipPlate);
-			if( dx == 0 ) put(cx + dx, HY1 - 2, HZ0 + 1, BShipComputer);
+		// zona de comercio al fondo del hangar: el mostrador del robot en el centro y puestos a los lados
+		// (para las tiendas de jugadores en el multijugador), con toldos de colores
+		var awn = [BStainRed, BStainOrange, BStainGreen, BStainPurple, BStainWhite, BStainRed];
+		var stalls = 7, sw = 7;
+		var sx0 = ((HX0 + HX1) >> 1) - ((stalls * (sw + 1)) >> 1);
+		var cy0 = HY1 - 7;
+		for( i in 0...stalls ) {
+			var x0 = sx0 + i * (sw + 1);
+			var robot = i == stalls >> 1;
+			for( dx in 0...sw ) {
+				put(x0 + dx, cy0, HZ0, robot ? BShipComputer : BShipPlate);
+				for( dy in 1...6 ) put(x0 + dx, cy0 + dy, HZ0 + 5, robot ? BShipLight : awn[i % awn.length]);
+			}
+			// postes
+			for( dz in 0...5 ) {
+				put(x0, cy0, HZ0 + dz, BShipTubes);
+				put(x0 + sw - 1, cy0, HZ0 + dz, BShipTubes);
+			}
+			if( !robot ) put(x0 + (sw >> 1), cy0 + 3, HZ0 + 4, BShipLight);
 		}
 		// contenedores de carga encima (es un comerciante)
 		var colors = [BStainRed, BStainOrange, BStainGreen, BStainPurple, BStainWhite];
 		var k = 0;
 		for( gx in 0...5 )
 			for( gy in 0...3 ) {
-				var x0 = 20 + gx * 9, y0 = 14 + gy * 9;
+				var x0 = 30 + gx * 10, y0 = 14 + gy * 12;
 				var top = LZ - 1;
 				while( top > 0 && !isSolid(x0 + 2, y0 + 2, top) ) top--;
 				if( top <= 0 || (gx + gy) % 2 == 1 ) continue;

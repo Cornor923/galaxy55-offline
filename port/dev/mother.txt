@@ -4,14 +4,15 @@ mothership
 wait 150
 print pos
 shot mother1
-look 1.2 0.1
+look 1.0 0.05
 wait 5
 shot mother2
-tp 64 2 62 1.57 -0.3
+tp 64 -4 52 1.57 -0.25
 wait 30
 shot mother3
 tp 124 4 84 2.35 -0.42
 wait 30
 shot mother4
 quit
+
 
