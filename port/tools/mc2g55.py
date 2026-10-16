@@ -113,11 +113,22 @@ def empty_hangar(grid, W, L, H, cells, z, height, mirror=None):
     rows = y1 - y0 + 1
     removed = 0
     mold = {}
+    # franja abierta del hangar: columnas libres a media altura en las dos filas de los extremos, con 2 de margen hasta las
+    # paredes (las paredes tienen nervios y columnas cada pocas filas que no se deben tocar). Con molde en espejo, la franja
+    # es la del hangar simetrico.
+    if mirror is None:
+        open_x = [x for x in range(x0, x1 + 1)
+                  if all(not grid[idx(x, yy, zz)] for yy in (y0, y1) for zz in range(z + 3, z + 10))]
+        span = set(range(min(open_x) + 2, max(open_x) - 1)) if open_x else set()
+    else:
+        span = set(W - 1 - x for x in mirror)
+    ceiling = min(top, z + 14)            # las 2 capas de arriba son techo (vigas, luces): no se tocan
     for x in range(x0, x1 + 1):
+        if x not in span: continue
         if mirror is not None and (W - 1 - x) in mirror:
             air = mirror[W - 1 - x]
         else:
-            air = [sum(1 for y in range(y0, y1 + 1) if not grid[idx(x, y, zz)]) * 2 >= rows for zz in range(z, top)]
+            air = [sum(1 for y in range(y0, y1 + 1) if not grid[idx(x, y, zz)]) * 2 >= rows for zz in range(z, ceiling)]
         mold[x] = air
         # columna de interior: libre (en la mayoria de filas) hasta 8 por encima del suelo, sin contar una plataforma baja
         if not all(air[2:9]): continue
@@ -192,6 +203,114 @@ def find_hangars(grid, W, L, H, z=18, min_cells=500, min_h=14):
     print('hangares:', len(bays), bays)
     return bays
 
+def arrival_hangar(grid, W, L, H, K, home, bays):
+    """Añadido del port: el hangar de llegada (de momento la unica zona que se visita). Marca las plazas en el suelo, pone
+    el puesto del robot comerciante (mostrador con el ordenador que abre la tienda), una zona de carga, robots hechos de
+    bloques (comerciante, de carga y drones) y cierra las salidas del hangar. Devuelve la posicion del ordenador."""
+    def idx(x, y, z): return x + y * W + z * W * L
+    def put(x, y, z, k): grid[idx(x, y, z)] = K[k] if k else 0
+    def get(x, y, z): return grid[idx(x, y, z)]
+    fz = home[2]                         # se camina en z 18; el suelo es z 17
+    hx, hy = home[0], home[1]
+    # caja del hangar: suelo libre conexo alrededor de la llegada
+    seen = {(hx, hy)}; q = [(hx, hy)]
+    while q:
+        a, b = q.pop()
+        for c in ((a + 1, b), (a - 1, b), (a, b + 1), (a, b - 1)):
+            if c in seen or not (0 <= c[0] < W and 0 <= c[1] < L): continue
+            if get(c[0], c[1], fz) or not get(c[0], c[1], fz - 1): continue
+            seen.add(c); q.append(c)
+    x0 = min(c[0] for c in seen); x1 = max(c[0] for c in seen)
+    y0 = min(c[1] for c in seen); y1 = max(c[1] for c in seen)
+    # 1) plazas: contorno de 17x17 con lineas oscuras en el suelo y luces en las esquinas
+    mine = [b for b in bays if x0 <= b[0] <= x1 and y0 <= b[1] <= y1]
+    for (bx, by, _) in mine:
+        for i in range(-8, 9):
+            for (x, y) in ((bx + i, by - 8), (bx + i, by + 8), (bx - 8, by + i), (bx + 8, by + i)):
+                if get(x, y, fz - 1): put(x, y, fz - 1, 'BMotherDark')
+        for (x, y) in ((bx - 8, by - 8), (bx + 8, by - 8), (bx - 8, by + 8), (bx + 8, by + 8)):
+            put(x, y, fz - 1, 'BShipLight')
+    # franja libre junto al campo de fuerza, entre las plazas y la pared exterior
+    sx0 = max(b[0] for b in mine) + 10 if mine else x0
+    sx1 = x1 - 1
+    while sx1 > sx0 and any(get(sx1, y, fz) for y in range(y0, y1 + 1)): sx1 -= 1
+    cy = (y0 + y1) // 2
+    # 2) puesto del comerciante: mostrador (placas), ordenador en medio, toldo, estanteria con cajas y el robot detras
+    cx = sx0 + 1
+    for y in range(cy - 3, cy + 4):
+        put(cx, y, fz, 'BShipPlate')
+        put(cx + 4, y, fz + 4, 'BShipTubes')            # toldo
+        put(cx + 1, y, fz + 4, 'BShipTubes')
+        put(cx + 2, y, fz + 4, 'BShipTubes')
+        put(cx + 3, y, fz + 4, 'BShipTubes')
+    put(cx, cy, fz, 'BShipComputer')
+    for y in (cy - 3, cy + 3):                          # postes del toldo
+        for z in range(fz + 1, fz + 4): put(cx, y, z, 'BIron')
+    put(cx + 1, cy, fz + 4, 'BShipLight')
+    shelf = min(sx1, cx + 7)
+    for y in range(cy - 4, cy + 5):
+        for z in range(fz, fz + 4):
+            put(shelf, y, z, 'BShipWire' if z in (fz, fz + 2) else ('BChest' if (y + z) % 3 == 0 else 'BWoodPlank'))
+    put(shelf, cy, fz + 4, 'BShedWallLight')
+    robot_merchant(put, cx + 3, cy, fz)
+    # 3) zona de carga en la esquina del fondo, con un robot de carga
+    ly = y1 - 2
+    for (x, y, h) in ((sx0, ly, 3), (sx0 + 1, ly, 2), (sx0, ly - 1, 2), (sx0 + 3, ly + 1, 1), (sx0 + 4, ly + 1, 2), (sx0 + 2, ly - 3, 1)):
+        for z in range(fz, fz + h): put(x, y, z, 'BWoodPlank' if (x + y + z) % 2 else 'BShipWire')
+    robot_loader(put, sx0 + 3, ly - 2, fz)
+    # 4) drones flotando
+    for (x, y, z) in ((sx0 - 4, cy - 6, fz + 7), ((x0 + x1) // 2, y1 - 6, fz + 9)):
+        robot_drone(put, x, y, z)
+    # 5) cerrar las salidas: todo el aire que el jugador alcanzaria en el borde de la caja del hangar pasa a ser pared
+    bx0, bx1, by0, by1, bz0, bz1 = x0 - 1, x1 + 1, y0 - 1, y1 + 1, fz, fz + 15
+    reach = {(hx, hy, fz)}; q = [(hx, hy, fz)]; sealed = 0
+    while q:
+        a, b, c = q.pop()
+        for n in ((a+1,b,c),(a-1,b,c),(a,b+1,c),(a,b-1,c),(a,b,c+1),(a,b,c-1)):
+            if n in reach or get(*n): continue
+            if not (bx0 - 4 <= n[0] <= bx1 + 4 and by0 <= n[1] <= by1 and bz0 <= n[2] <= bz1):
+                continue
+            # hacia el campo de fuerza no se cierra: es la ventana del hangar al espacio
+            near_field = any(get(n[0] + d * k, n[1], n[2]) == K['BMotherField'] for d in (1, -1) for k in range(0, 5))
+            if near_field:
+                reach.add(n); q.append(n)
+                continue
+            if n[0] <= bx0 or n[0] >= bx1 or n[1] in (by0, by1) or n[2] == bz1:
+                # pared de cierre: casco con una fila de luces
+                light = n[2] == fz + 5 and (n[0] + n[1]) % 6 == 0
+                put(*n, 'BShedWallLight' if light else 'BMotherHull'); sealed += 1
+                continue
+            reach.add(n); q.append(n)
+    print('hangar de llegada x %d-%d y %d-%d: %d salidas tapadas, ordenador en %s' % (x0, x1, y0, y1, sealed, (cx, cy, fz)))
+    return (cx, cy, fz)
+
+def robot_merchant(put, x, y, z):
+    """Robot comerciante (añadido del port, hecho de bloques): ruedas, cuerpo, brazos sobre el mostrador y cabeza con luz."""
+    put(x, y, z, 'BShipTubes')
+    put(x, y, z + 1, 'BShipHull'); put(x, y, z + 2, 'BShipHull')
+    put(x, y - 1, z + 2, 'BIron'); put(x, y + 1, z + 2, 'BIron')       # brazos
+    put(x - 1, y - 1, z + 2, 'BShipPlate'); put(x - 1, y + 1, z + 2, 'BShipPlate')  # manos sobre el mostrador
+    put(x, y, z + 3, 'BShipGlassBlack')                                    # cabeza
+    put(x, y, z + 4, 'BLamp')                                              # luz de la antena
+
+def robot_loader(put, x, y, z):
+    """Robot de carga: base ancha, cuerpo de 2x2, cabeza y una caja en las pinzas."""
+    for dx in (0, 1):
+        for dy in (0, 1):
+            put(x + dx, y + dy, z, 'BShipTubes')
+            put(x + dx, y + dy, z + 1, 'BMotherPanel')
+            put(x + dx, y + dy, z + 2, 'BMotherPanel')
+    put(x, y, z + 3, 'BShipGlassBlack'); put(x + 1, y, z + 3, 'BShipLight')
+    put(x - 1, y, z + 2, 'BIron'); put(x - 1, y + 1, z + 2, 'BIron')       # pinzas
+    put(x - 2, y, z + 2, 'BWoodPlank'); put(x - 2, y + 1, z + 2, 'BWoodPlank')
+
+def robot_drone(put, x, y, z):
+    """Dron flotante: cuerpo oscuro, rotores a los lados y luz por debajo."""
+    put(x, y, z, 'BShipGlassBlack')
+    put(x - 1, y, z, 'BIronFence'); put(x + 1, y, z, 'BIronFence')
+    put(x, y - 1, z, 'BIronFence'); put(x, y + 1, z, 'BIronFence')
+    put(x, y, z - 1, 'BShipLight')
+
 def main(world, out):
     K = kinds()
     blocks = open_piston_doors(mcread.blocks(world, True))
@@ -237,11 +356,8 @@ def main(world, out):
         # ordenador, que abre la tienda) queda al lado, en el suelo libre del mismo hangar
         home = max((b for b in bays if b[1] > L // 2), key=lambda b: b[0], default=bays[0])
         sx, sy, sz = home
-        rx, ry = home[0], home[1] + 11
-        for dx in (-1, 0, 1):
-            grid[(rx + dx) + ry * W + sz * W * L] = K['BShipPlate']
-        grid[rx + ry * W + sz * W * L] = K['BShipComputer']
-        print('llegada', home, 'robot', (rx, ry, sz))
+        robot = arrival_hangar(grid, W, L, H, K, home, bays)
+        print('llegada', home, 'robot', robot)
     # 'G55N': como 'G55M' mas el numero de bahias y sus centros de suelo (x, y, z) antes de los datos comprimidos
     head = b'G55N' + struct.pack('<6H', W, L, H, sx, sy, sz) + struct.pack('<H', len(bays))
     for b in bays: head += struct.pack('<3H', *b)
