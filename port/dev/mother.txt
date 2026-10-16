@@ -1,0 +1,17 @@
+﻿# nave nodriza: vista desde dentro del hangar (bahia) y desde fuera
+wait 3
+mothership
+wait 150
+print pos
+shot mother1
+look 1.2 0.1
+wait 5
+shot mother2
+tp 64 2 62 1.57 -0.3
+wait 30
+shot mother3
+tp 124 4 84 2.35 -0.42
+wait 30
+shot mother4
+quit
+

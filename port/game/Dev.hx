@@ -111,6 +111,7 @@ class Dev {
 				case "trace": trace = true;
 				case "shop": app.openShop();
 				case "hangar": app.startHangar();
+				case "mothership": app.startMothership();
 				case "settop":
 					// pone un bloque encima del primero que haya en la columna (para probar el hangar)
 					var x = Std.parseInt(a[1]), y = Std.parseInt(a[2]), z = 14;

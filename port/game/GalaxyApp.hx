@@ -631,6 +631,18 @@ class GalaxyApp extends hxd.App {
 		screens = new Map();
 	}
 
+	/** nave nodriza (de momento solo para verla: --script con "mothership") */
+	public function startMothership() {
+		if( game == null || game.hangar != null ) return;
+		var cur = game.toInfo();
+		hangarReturn = cur;
+		var h : SaveInfo = Reflect.copy(cur);
+		h.inv = Inv.copy(cur.inv);
+		h.mothership = true;
+		leaveGame();
+		startGame(h);
+	}
+
 	public function startHangar() {
 		if( game == null || game.hangar != null ) return;
 		var cur = game.toInfo();
@@ -818,9 +830,15 @@ class GalaxyApp extends hxd.App {
 		clearUi();
 		hud.visible = false; msgText.visible = false;
 		loadInfo = info;
-		loadWorld = info.hangar == true
+		loadWorld = info.mothership == true
+			? new World(info.seed, "BIMoon", 1, s3d, atlas, false, null, Mothership.data())
+			: info.hangar == true
 			? new World(info.seed, "BIShed", 1, s3d, atlas, false, null, Hangar.shedData(Hangar.currentShip(info)))
 			: new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits);
+		if( info.mothership == true ) {
+			loadWorld.sky.fog.curve = 0.00001;
+			loadWorld.lightTop = Mothership.Z0 + Mothership.LZ + 4;
+		}
 		if( info.hangar == true ) {
 			loadWorld.sky.fog.curve = 0.00001; // EditShip: planet.curve = 0.00001
 			loadWorld.lightTop = Hangar.SZ; // y planet.lightHeight: el sol entra bajo el techo
@@ -851,7 +869,7 @@ class GalaxyApp extends hxd.App {
 		hud.visible = true;
 		autosaveTimer = 0;
 		captureMouse(true);
-		if( loadInfo.px < 0 && loadInfo.hangar != true ) {
+		if( loadInfo.px < 0 && loadInfo.hangar != true && loadInfo.mothership != true ) {
 			// partida nueva: se crea el archivo enseguida para que aparezca en la lista
 			saveGame(false);
 		}
@@ -1013,7 +1031,7 @@ class GalaxyApp extends hxd.App {
 	function saveGame( notify : Bool ) {
 		if( game == null ) return;
 		// en el hangar se guarda la partida tal como estaba al entrar
-		var ok = SaveData.write(game.hangar != null ? hangarReturn : game.toInfo(), captureThumb());
+		var ok = SaveData.write(game.hangar != null || game.info.mothership == true ? hangarReturn : game.toInfo(), captureThumb());
 		if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
 	}
 

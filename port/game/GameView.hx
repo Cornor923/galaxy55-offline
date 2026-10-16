@@ -110,6 +110,16 @@ class GameView {
 		fx = new Fx(world, atlas);
 		parts = new Parts(world, atlas);
 		hand = new Hand(world, atlas);
+		if( info.mothership == true ) {
+			// nave nodriza del robot comerciante: se aparece en la primera bahia
+			var b = Mothership.bay(0);
+			px = b.x + 0.5;
+			py = b.y + 0.5;
+			pz = b.z;
+			yaw = Math.PI / 2;
+			pitch = 0;
+			return;
+		}
 		if( info.hangar == true ) {
 			// hangar (EditShip): el cobertizo con la nave; sin la nave colgada encima
 			hangar = new Hangar(world);
@@ -327,7 +337,7 @@ class GameView {
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateBobbing(realDt * 60);
 		if( hangar != null ) hangarUpdate(tmod);
-		else {
+		else if( ship != null ) {
 			ship.update(this, tmod);
 			message = ship.message(this);
 		}

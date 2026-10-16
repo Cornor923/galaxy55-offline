@@ -55,6 +55,8 @@ typedef SaveInfo = {
 	@:optional var shipData : String;
 	/** solo mientras se esta en el hangar (no se guarda) */
 	@:optional var hangar : Bool;
+	/** solo mientras se esta en la nave nodriza (no se guarda) */
+	@:optional var mothership : Bool;
 	/** contenido de las cantinas (cofres): clave "s:x,y,z" en la nave o "p<planeta>:x,y,z" en un planeta */
 	@:optional var chests : Array<{ key : String, t : Protocol.BlockInventory }>;
 }
