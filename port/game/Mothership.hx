@@ -103,8 +103,39 @@ class Mothership {
 
 	static var cache : ShipData.ShipDataInfo;
 
+	/** tamano del mundo (en trozos de 128) y aparicion; cambian si la nave se carga de un archivo */
+	public static var sizeChunks = 1;
+	public static var spawnAt : { x : Int, y : Int, z : Int };
+
+	/** nave importada (port/tools/mc2g55.py): mothership.bin en GALAXY55_MOTHERSHIP o en res/ */
+	static function fromFile() : ShipData.ShipDataInfo {
+		var p = Sys.getEnv("GALAXY55_MOTHERSHIP");
+		if( p == null || p == "" ) p = Res.path("mothership.bin");
+		if( !sys.FileSystem.exists(p) ) return null;
+		var b = sys.io.File.getBytes(p);
+		if( b.getString(0, 4) != "G55M" ) return null;
+		var w = b.getUInt16(4), l = b.getUInt16(6), h = b.getUInt16(8);
+		var sx = b.getUInt16(10), sy = b.getUInt16(12), sz = b.getUInt16(14);
+		var g = haxe.zip.Uncompress.run(b.sub(16, b.length - 16));
+		sizeChunks = Std.int(Math.max(1, Math.ceil((Math.max(w, l) + 32) / Const.SIZE)));
+		var size = sizeChunks * Const.SIZE;
+		var ox = (size - w) >> 1, oy = (size - l) >> 1, oz = 24;
+		var out = [];
+		var i = 0;
+		for( z in 0...h )
+			for( y in 0...l )
+				for( x in 0...w ) {
+					var k = g.get(i++);
+					if( k != 0 ) out.push({ x : ox + x, y : oy + y, z : oz + z, id : k });
+				}
+		spawnAt = { x : ox + sx, y : oy + sy, z : oz + sz };
+		return { sx : size, sy : size, sz : oz + h, cells : out, entry : null, crafts : [] };
+	}
+
 	public static function data() : ShipData.ShipDataInfo {
 		if( cache != null ) return cache;
+		var f = fromFile();
+		if( f != null ) return cache = f;
 		var kind = new haxe.ds.Vector<Int>(LX * LY * LZ);
 		inline function id( x : Int, y : Int, z : Int ) return x + y * LX + z * LX * LY;
 		inline function get( x : Int, y : Int, z : Int ) return x >= 0 && y >= 0 && z >= 0 && x < LX && y < LY && z < LZ ? kind[id(x, y, z)] : 0;

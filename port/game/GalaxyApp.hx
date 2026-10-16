@@ -831,7 +831,7 @@ class GalaxyApp extends hxd.App {
 		hud.visible = false; msgText.visible = false;
 		loadInfo = info;
 		loadWorld = info.mothership == true
-			? new World(info.seed, "BIMoon", 1, s3d, atlas, false, null, Mothership.data())
+			? new World(info.seed, "BIMoon", (Mothership.data() != null ? Mothership.sizeChunks : 1), s3d, atlas, false, null, Mothership.data())
 			: info.hangar == true
 			? new World(info.seed, "BIShed", 1, s3d, atlas, false, null, Hangar.shedData(Hangar.currentShip(info)))
 			: new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits);

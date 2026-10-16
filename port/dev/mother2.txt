@@ -1,0 +1,16 @@
+# nave nodriza importada: donde aparece el jugador y vistas de fuera
+wait 3
+mothership
+wait 400
+print pos
+shot hades1
+look 3.14 0.2
+wait 5
+shot hades2
+tp 192 30 110 1.57 -0.5
+wait 60
+shot hades3
+tp 340 192 120 3.14 -0.45
+wait 60
+shot hades4
+quit

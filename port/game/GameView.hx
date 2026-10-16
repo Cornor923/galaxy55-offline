@@ -112,7 +112,8 @@ class GameView {
 		hand = new Hand(world, atlas);
 		if( info.mothership == true ) {
 			// nave nodriza del robot comerciante: se aparece en la primera bahia
-			var b = Mothership.bay(0);
+			Mothership.data();
+			var b = Mothership.spawnAt != null ? Mothership.spawnAt : Mothership.bay(0);
 			px = b.x + 0.5;
 			py = b.y + 0.5;
 			pz = b.z;
