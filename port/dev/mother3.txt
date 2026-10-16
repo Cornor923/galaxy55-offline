@@ -1,0 +1,10 @@
+wait 3
+ship
+wait 5
+mothership
+wait 300
+print pos
+hangarexit
+wait 200
+print pos
+quit

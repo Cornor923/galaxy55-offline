@@ -565,17 +565,19 @@ class GalaxyApp extends hxd.App {
 
 	/** Ordenador de a bordo (Game.openComputerMenu): despegar, modificar la nave, comerciar. Por ahora solo se puede cerrar. */
 	function buildComputer() : Screen {
-		var s = panelFor(640, 480, Lang.t("computer.title"));
+		var s = panelFor(640, 560, Lang.t("computer.title"));
 		var x = (W - 540) * 0.5;
 		var y = 215.;
 		var takeoff = new Button(s, Lang.t("computer.takeoff"));
 		var edit = new Button(s, Lang.t("computer.edit"));
 		var trade = new Button(s, Lang.t("computer.trade"));
+		var visit = new Button(s, Lang.t("computer.mothership"));
 		var close = new Button(s, Lang.t("computer.close"));
 		s.add(takeoff, x, y);
 		s.add(edit, x, y + 62);
 		s.add(trade, x, y + 124);
-		s.add(close, x, y + 200);
+		s.add(visit, x, y + 186);
+		s.add(close, x, y + 262);
 		var soon = function() {
 			resume();
 			showToast(Lang.t("computer.soon"));
@@ -583,6 +585,7 @@ class GalaxyApp extends hxd.App {
 		takeoff.onActivate = startExplorer;
 		edit.onActivate = startHangar;
 		trade.onActivate = openShop;
+		visit.onActivate = startMothership;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
 		return s;
@@ -859,6 +862,7 @@ class GalaxyApp extends hxd.App {
 		invBar = new InvBar(s2d, game.inv, atlas, W);
 		game.onComputer = openComputer;
 		game.onChest = openChest;
+		if( game.info.mothership == true ) game.onHangarExit = backFromHangar;
 		if( game.hangar != null ) {
 			game.onHangarExit = exitHangar;
 			hangarOrig = haxe.crypto.Base64.encode(game.hangarShip());

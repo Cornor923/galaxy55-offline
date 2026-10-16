@@ -658,6 +658,11 @@ class GameView {
 	/** Hero.gotoShip: aparece en la nave (encima del teletransportador) o en el suelo, bajo ella */
 	public function gotoShip( inside : Bool ) {
 		enteringShip = -1;
+		if( ship == null ) {
+			// en la nave nodriza (o el hangar) Mayus+K vuelve a tu nave
+			if( onHangarExit != null && hangar == null ) onHangarExit();
+			return;
+		}
 		px = ship.x + 0.5;
 		py = ship.y + 0.5;
 		pz = inside ? ship.start.z : ship.z;
