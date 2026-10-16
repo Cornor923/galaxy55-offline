@@ -175,9 +175,10 @@ class Market {
 	/** lo que paga por 1 unidad ahora (siempre menos de lo que cuesta comprarla) */
 	public function sellPrice( w : Ware ) : Int {
 		var it = item(w);
-		var f = Math.max(0.25, Math.min(1.2, 1 - 0.2 * it.pressure));
-		var p = Std.int(Math.max(1, Math.round(w.base * 0.5 * f)));
-		return Std.int(Math.min(p, Math.max(1, buyPrice(w) - 1)));
+		// con mucha presion llega a 0: vender montones de algo comun deja de dar creditos
+		var f = Math.max(0, Math.min(1.2, 1 - 0.3 * it.pressure));
+		var p = Std.int(Math.floor(w.base * 0.5 * f));
+		return Std.int(Math.min(p, buyPrice(w) - 1));
 	}
 
 	/** compra `n` unidades (o las que se puedan pagar); devuelve cuantas y lo que costaron */
@@ -195,15 +196,18 @@ class Market {
 		return { n : done, cost : cost };
 	}
 
-	/** vende `n` unidades; devuelve lo que cobraste */
-	public function sell( w : Ware, n : Int ) : Int {
+	/** vende hasta `n` unidades (para si ya no paga nada); devuelve cuantas y lo que cobraste */
+	public function sell( w : Ware, n : Int ) : { n : Int, gain : Int } {
 		var it = item(w);
-		var gain = 0;
-		for( i in 0...n ) {
-			gain += sellPrice(w);
+		var done = 0, gain = 0;
+		while( done < n ) {
+			var p = sellPrice(w);
+			if( p <= 0 ) break;
+			gain += p;
 			it.stock++;
 			it.pressure += 1 / REF;
+			done++;
 		}
-		return gain;
+		return { n : done, gain : gain };
 	}
 }

@@ -1,0 +1,19 @@
+﻿# tienda del robot: vender hierro varias veces (el precio baja), comprar madera y cargas, captura
+wait 3
+ship
+wait 10
+print credits
+shop
+wait 5
+sell BMinAluminium 20
+sell BMinAluminium 20
+sell BMinAluminium 10
+buy BWood 20
+buy c1 5
+print inv
+print credits
+wait 5
+shot shop1
+shopclose
+quit
+

@@ -188,12 +188,15 @@ class Shop extends h2d.Object {
 			for( s in inv.inv.t ) if( s != null && s.k == w.block.index ) have += s.n;
 		n = Std.int(Math.min(n, have));
 		if( n <= 0 ) return;
+		var r = market.sell(w, n);
+		n = r.n;
+		if( n <= 0 ) return;
 		if( w.charge != null ) {
 			for( c in inv.inv.charges ) if( c.c == Type.enumIndex(w.charge) ) c.n -= n;
 			inv.display();
 		} else
 			inv.useBlocks(w.block, n);
-		credits += market.sell(w, n);
+		credits += r.gain;
 		if( onCredits != null ) onCredits(credits);
 		refresh();
 	}
