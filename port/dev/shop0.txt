@@ -8,7 +8,9 @@ wait 5
 sell BMinAluminium 20
 sell BMinAluminium 20
 sell BMinAluminium 10
-buy BWood 20
+sell BMinAluminium 10
+buy BWood 40
+buy BWood 40
 buy c1 5
 print inv
 print credits
@@ -16,4 +18,5 @@ wait 5
 shot shop1
 shopclose
 quit
+
 

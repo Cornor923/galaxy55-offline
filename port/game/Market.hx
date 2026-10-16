@@ -1,17 +1,18 @@
-﻿import Common;
+import Common;
 
-/** Estado de una mercancia del comerciante: cuantas tiene y cuanto se le ha vendido o comprado ultimamente. */
+/** Estado de una mercancia del comerciante. */
 typedef MarketItem = {
 	/** clave: "b<indice de bloque>" o "c<indice de carga>" */
 	var key : String;
-	var stock : Int;
-	/** presion: sube al venderle, baja al comprarle; vuelve a 0 con el tiempo */
-	var pressure : Float;
+	/** cuanto se le ha comprado ultimamente; COMPARTIDO entre los jugadores del sector (sube el precio de compra, con tope) */
+	@:optional var bought : Float;
+	/** cuanto le ha vendido ESTE jugador ultimamente; PERSONAL (baja lo que te paga, hasta 0) */
+	@:optional var sold : Float;
 }
 
 /** Mercado guardado en la partida (todo es serializable a JSON, pensado para que un servidor pueda compartirlo luego). */
 typedef MarketInfo = {
-	/** segundos de juego del ultimo calculo (para que precios y existencias se recuperen con el tiempo) */
+	/** segundos de juego del ultimo calculo (para que los precios se recuperen con el tiempo) */
 	var time : Float;
 	var items : Array<MarketItem>;
 }
@@ -27,23 +28,22 @@ typedef Ware = {
 
 /**
  * Comercio dinamico con el robot comerciante (anadido del port; el original tenia una tienda web con precios fijos).
- *
- * Reglas:
- * - Mercancias: los bloques con precio en los datos del original (los de la paleta creativa) y las cargas con precio.
- * - Comprar cuesta el precio base; vender da la mitad (como la tienda de la version Flash). Sobre eso:
- *   * la PRESION de cada mercancia sube 1 por cada REF unidades que le vendes y baja al comprarle. Con presion alta el
- *     robot paga menos y vende mas barato (hay mucho); con presion negativa, al reves. Se reduce a la mitad cada 10 min de juego;
- *   * las EXISTENCIAS: lo que le vendes lo guarda y lo que compras se lo quitas. Cada mercancia tiene un nivel normal
- *     (mas unidades cuanto mas barata) y se repone o se vende sola hacia el, 1 unidad por minuto de juego.
- *     Si quedan pocas, sube el precio de compra (hasta +50 %); sin existencias no se puede comprar.
- * - Los precios se calculan por unidad, asi que vender mucho de golpe baja el precio de las ultimas.
+ * Pensado para que nadie se frustre ni pueda perjudicar a otro jugador:
+ * - El robot NUNCA se queda sin nada: siempre se puede comprar.
+ * - Comprar cuesta el precio base. Cada REF unidades compradas suben `bought` en 1 y el precio un 50 %, con tope del
+ *   doble (MAX_BUY). En multijugador `bought` lo comparte el sector: lo peor que hace otro es encarecer algo un rato.
+ * - Vender da la mitad del precio base. Cada REF unidades vendidas suben `sold` en 1 y bajan lo que te paga un 30 %;
+ *   llega a 0 (contra el farmeo de cosas comunes) y entonces el robot no lo acepta. `sold` es personal: lo que vendes
+ *   tu no baja el precio a los demas.
+ * - Vender siempre da menos que comprar, asi que comprar y revender pierde dinero.
+ * - Las dos cosas se reducen a la mitad cada HALF_LIFE segundos de juego.
  */
 class Market {
 
 	public static inline var START_CREDITS = 500;
 	static inline var REF = 20.;
 	static inline var HALF_LIFE = 600.;
-	static inline var RESTOCK = 60.;
+	static inline var MAX_BUY = 2.;
 
 	/**
 	 * Precios propios del port (cambio respecto al original): en los datos casi todo vale 100. Se agrupan por lo comun
@@ -106,77 +106,56 @@ class Market {
 	public static function wareOfBlock( b : Block ) : Ware return ware("b" + b.index);
 	public static function wareOfCharge( c : ChargeKind ) : Ware return ware("c" + Type.enumIndex(c));
 
-	/** existencias normales de una mercancia: mas cuanto mas barata, con algo de variacion fija por sector */
-	public static function normalStock( w : Ware, seed : Int ) : Int {
-		var h = (seed * 31 + w.key.length * 7 + w.base) & 0xFFFF;
-		for( i in 0...w.key.length ) h = (h * 33 + w.key.charCodeAt(i)) & 0xFFFF;
-		var n = Std.int(4000 / (w.base + 20));
-		n = Std.int(n * (0.6 + (h % 100) / 125));
-		return Std.int(Math.max(2, Math.min(64, n)));
-	}
-
-	public static function create( seed : Int ) : MarketInfo {
-		return { time : 0, items : [for( w in wares ) { key : w.key, stock : normalStock(w, seed), pressure : 0. }] };
+	public static function create() : MarketInfo {
+		return { time : 0, items : [] };
 	}
 
 	public var info(default, null) : MarketInfo;
-	var seed : Int;
 	var items = new Map<String, MarketItem>();
 
-	public function new( info : MarketInfo, seed : Int ) {
-		if( info == null ) info = create(seed);
+	public function new( info : MarketInfo ) {
+		if( info == null ) info = create();
 		this.info = info;
-		this.seed = seed;
+		// partidas antiguas: tenian stock y pressure, se descartan
+		info.items = [for( i in info.items ) if( i.bought != null || i.sold != null ) i];
 		for( i in info.items ) items.set(i.key, i);
-		for( w in wares )
-			if( !items.exists(w.key) ) {
-				var it = { key : w.key, stock : normalStock(w, seed), pressure : 0. };
-				info.items.push(it);
-				items.set(w.key, it);
-			}
 	}
 
-	/** el tiempo de juego avanza: la presion se calma y las existencias vuelven a su nivel normal */
+	/** el tiempo de juego avanza: los precios vuelven poco a poco a lo normal */
 	public function advance( now : Float ) {
 		var dt = now - info.time;
-		if( dt <= 0 ) {
-			info.time = now;
-			return;
-		}
+		info.time = now;
+		if( dt <= 0 ) return;
 		var k = Math.pow(0.5, dt / HALF_LIFE);
-		var steps = Std.int(dt / RESTOCK);
 		for( it in info.items ) {
-			it.pressure *= k;
-			if( Math.abs(it.pressure) < 0.01 ) it.pressure = 0;
-			if( steps > 0 ) {
-				var w = ware(it.key);
-				if( w == null ) continue;
-				var n = normalStock(w, seed);
-				if( it.stock < n ) it.stock = Std.int(Math.min(n, it.stock + steps));
-				else if( it.stock > n ) it.stock = Std.int(Math.max(n, it.stock - steps));
-			}
+			it.bought *= k;
+			it.sold *= k;
+			if( it.bought < 0.01 ) it.bought = 0;
+			if( it.sold < 0.01 ) it.sold = 0;
 		}
-		// el resto de tiempo que no llego a un minuto se conserva
-		info.time = steps > 0 ? info.time + steps * RESTOCK : info.time;
-		if( dt > HALF_LIFE * 4 ) info.time = now;
+		info.items = [for( it in info.items ) if( it.bought > 0 || it.sold > 0 ) it];
+		items = [for( it in info.items ) it.key => it];
 	}
 
-	public inline function item( w : Ware ) return items.get(w.key);
+	public function item( w : Ware ) : MarketItem {
+		var it = items.get(w.key);
+		if( it == null ) {
+			it = { key : w.key, bought : 0., sold : 0. };
+			items.set(w.key, it);
+			info.items.push(it);
+		}
+		return it;
+	}
 
 	/** lo que cuesta comprarle 1 unidad ahora */
 	public function buyPrice( w : Ware ) : Int {
-		var it = item(w);
-		var n = normalStock(w, seed);
-		var scarcity = Math.max(0, Math.min(1, 1 - it.stock / n));
-		var f = Math.max(0.6, Math.min(1.6, 1 - 0.15 * it.pressure));
-		return Std.int(Math.max(1, Math.round(w.base * (1 + 0.5 * scarcity) * f)));
+		var f = Math.min(MAX_BUY, 1 + 0.5 * item(w).bought);
+		return Std.int(Math.max(1, Math.round(w.base * f)));
 	}
 
-	/** lo que paga por 1 unidad ahora (siempre menos de lo que cuesta comprarla) */
+	/** lo que te paga por 1 unidad ahora (puede ser 0; siempre menos de lo que cuesta comprarla) */
 	public function sellPrice( w : Ware ) : Int {
-		var it = item(w);
-		// con mucha presion llega a 0: vender montones de algo comun deja de dar creditos
-		var f = Math.max(0, Math.min(1.2, 1 - 0.3 * it.pressure));
+		var f = Math.max(0, 1 - 0.3 * item(w).sold);
 		var p = Std.int(Math.floor(w.base * 0.5 * f));
 		return Std.int(Math.min(p, buyPrice(w) - 1));
 	}
@@ -185,12 +164,11 @@ class Market {
 	public function buy( w : Ware, n : Int, credits : Int ) : { n : Int, cost : Int } {
 		var it = item(w);
 		var done = 0, cost = 0;
-		while( done < n && it.stock > 0 ) {
+		while( done < n ) {
 			var p = buyPrice(w);
 			if( cost + p > credits ) break;
 			cost += p;
-			it.stock--;
-			it.pressure -= 1 / REF;
+			it.bought += 1 / REF;
 			done++;
 		}
 		return { n : done, cost : cost };
@@ -204,8 +182,7 @@ class Market {
 			var p = sellPrice(w);
 			if( p <= 0 ) break;
 			gain += p;
-			it.stock++;
-			it.pressure += 1 / REF;
+			it.sold += 1 / REF;
 			done++;
 		}
 		return { n : done, gain : gain };

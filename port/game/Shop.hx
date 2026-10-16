@@ -108,7 +108,7 @@ class Shop extends h2d.Object {
 			var wi = page * per + i;
 			if( wi >= Market.wares.length ) break;
 			var w = Market.wares[wi];
-			cell(right, (i % RCOLS) * CELL, Std.int(i / RCOLS) * (CELL + 18), w, market.item(w).stock, market.buyPrice(w), false);
+			cell(right, (i % RCOLS) * CELL, Std.int(i / RCOLS) * (CELL + 18), w, -1, market.buyPrice(w), false);
 		}
 		showInfo();
 	}
@@ -118,7 +118,7 @@ class Shop extends h2d.Object {
 		c.x = x;
 		c.y = y;
 		var g = new h2d.Graphics(c);
-		var empty = n <= 0;
+		var empty = sell ? price <= 0 : false;
 		var draw = function(on : Bool) {
 			g.clear();
 			Theme.rect(g, 1, 1, CELL - 2, CELL - 2, on ? Theme.ACCENT : 0xFFFFFF, on ? 0.3 : 0.06);
@@ -129,7 +129,7 @@ class Shop extends h2d.Object {
 		bm.x = 6;
 		bm.y = 4;
 		if( empty ) bm.alpha = 0.3;
-		Theme.text(c, "" + n, 1.2, empty ? Theme.DIM : Theme.TEXT, 3, CELL - 20);
+		if( n >= 0 ) Theme.text(c, "" + n, 1.2, Theme.TEXT, 3, CELL - 20);
 		Theme.text(c, "" + price, 1.2, sell ? Theme.CYAN : Theme.ACCENT, 3, CELL + 1);
 		var it = new h2d.Interactive(CELL - 2, CELL - 2, c);
 		it.enableRightButton = true;
@@ -153,8 +153,9 @@ class Shop extends h2d.Object {
 		}
 		var w = hover;
 		var name = w.block.getName();
-		info.text = name + "   " + Lang.t("shop.buy") + " " + market.buyPrice(w) + "   " + Lang.t("shop.sell") + " " + market.sellPrice(w)
-			+ "   " + Lang.t("shop.stock") + " " + market.item(w).stock;
+		var sp = market.sellPrice(w);
+		info.text = name + "   " + Lang.t("shop.buy") + " " + market.buyPrice(w) + "   "
+			+ (sp > 0 ? Lang.t("shop.sell") + " " + sp : Lang.t("shop.full"));
 	}
 
 	/** compra hasta `n`, limitado por los creditos, las existencias y el sitio del inventario */

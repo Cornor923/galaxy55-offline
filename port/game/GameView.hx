@@ -130,7 +130,7 @@ class GameView {
 	function get_market() {
 		if( market == null ) {
 			if( info.credits == null ) info.credits = Market.START_CREDITS;
-			market = new Market(info.market, info.uni != null ? info.uni.seed : info.seed);
+			market = new Market(info.market);
 			info.market = market.info;
 		}
 		market.advance(playSeconds);

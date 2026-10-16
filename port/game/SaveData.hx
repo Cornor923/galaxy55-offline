@@ -94,7 +94,7 @@ class SaveData {
 	static function readMarket( o : Dynamic ) : Market.MarketInfo {
 		try {
 			if( o == null || o.items == null ) return null;
-			return { time : o.time != null ? o.time : 0, items : [for( i in (o.items : Array<Dynamic>) ) { key : Std.string(i.key), stock : Std.int(i.stock), pressure : (i.pressure : Float) }] };
+			return { time : o.time != null ? o.time : 0, items : [for( i in (o.items : Array<Dynamic>) ) { key : Std.string(i.key), bought : i.bought != null ? (i.bought : Float) : null, sold : i.sold != null ? (i.sold : Float) : null }] };
 		} catch( e : Dynamic ) {
 			return null;
 		}
