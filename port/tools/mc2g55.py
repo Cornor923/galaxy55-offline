@@ -235,24 +235,29 @@ def arrival_hangar(grid, W, L, H, K, home, bays):
     sx1 = x1 - 1
     while sx1 > sx0 and any(get(sx1, y, fz) for y in range(y0, y1 + 1)): sx1 -= 1
     cy = (y0 + y1) // 2
-    # 2) puesto del comerciante: mostrador (placas), ordenador en medio, toldo, estanteria con cajas y el robot detras
-    cx = sx0 + 1
+    # 2) puesto del comerciante, en el centro de los 8 hangares (lo pidio el usuario): pegado al muro central, entre las dos
+    # filas de hangares, con el mostrador mirando a los hangares de la derecha. Estanteria con cajas contra el muro, el
+    # robot detras del mostrador, toldo con luz y el ordenador (abre la tienda) en el mostrador.
+    mid = W // 2
+    # el pasillo entre las dos filas centrales de hangares: el mayor hueco entre plazas
+    ys = sorted(set(b[1] for b in bays))
+    gap = max(zip(ys, ys[1:]), key=lambda p: p[1] - p[0])
+    cy = (gap[0] + gap[1]) // 2
+    sh = mid + 1                                        # estanteria, contra el muro
+    while get(sh, cy, fz): sh += 1
+    cx = sh + 5                                         # mostrador
     for y in range(cy - 3, cy + 4):
         put(cx, y, fz, 'BShipPlate')
-        put(cx + 4, y, fz + 4, 'BShipTubes')            # toldo
-        put(cx + 1, y, fz + 4, 'BShipTubes')
-        put(cx + 2, y, fz + 4, 'BShipTubes')
-        put(cx + 3, y, fz + 4, 'BShipTubes')
+        for x in range(sh, cx + 1): put(x, y, fz + 4, 'BShipTubes')   # toldo
     put(cx, cy, fz, 'BShipComputer')
     for y in (cy - 3, cy + 3):                          # postes del toldo
         for z in range(fz + 1, fz + 4): put(cx, y, z, 'BIron')
-    put(cx + 1, cy, fz + 4, 'BShipLight')
-    shelf = min(sx1, cx + 7)
+    put(cx - 1, cy, fz + 4, 'BShipLight')
     for y in range(cy - 4, cy + 5):
         for z in range(fz, fz + 4):
-            put(shelf, y, z, 'BShipWire' if z in (fz, fz + 2) else ('BChest' if (y + z) % 3 == 0 else 'BWoodPlank'))
-    put(shelf, cy, fz + 4, 'BShedWallLight')
-    robot_merchant(put, cx + 3, cy, fz)
+            put(sh, y, z, 'BShipWire' if z in (fz, fz + 2) else ('BChest' if (y + z) % 3 == 0 else 'BWoodPlank'))
+    put(sh, cy, fz + 4, 'BShedWallLight')
+    robot_merchant(put, cx - 3, cy, fz, -1)
     # 3) zona de carga en la esquina del fondo, con un robot de carga
     ly = y1 - 2
     for (x, y, h) in ((sx0, ly, 3), (sx0 + 1, ly, 2), (sx0, ly - 1, 2), (sx0 + 3, ly + 1, 1), (sx0 + 4, ly + 1, 2), (sx0 + 2, ly - 3, 1)):
@@ -261,35 +266,16 @@ def arrival_hangar(grid, W, L, H, K, home, bays):
     # 4) drones flotando
     for (x, y, z) in ((sx0 - 4, cy - 6, fz + 7), ((x0 + x1) // 2, y1 - 6, fz + 9)):
         robot_drone(put, x, y, z)
-    # 5) cerrar las salidas: todo el aire que el jugador alcanzaria en el borde de la caja del hangar pasa a ser pared
-    bx0, bx1, by0, by1, bz0, bz1 = x0 - 1, x1 + 1, y0 - 1, y1 + 1, fz, fz + 15
-    reach = {(hx, hy, fz)}; q = [(hx, hy, fz)]; sealed = 0
-    while q:
-        a, b, c = q.pop()
-        for n in ((a+1,b,c),(a-1,b,c),(a,b+1,c),(a,b-1,c),(a,b,c+1),(a,b,c-1)):
-            if n in reach or get(*n): continue
-            if not (bx0 - 4 <= n[0] <= bx1 + 4 and by0 <= n[1] <= by1 and bz0 <= n[2] <= bz1):
-                continue
-            # hacia el campo de fuerza no se cierra: es la ventana del hangar al espacio
-            near_field = any(get(n[0] + d * k, n[1], n[2]) == K['BMotherField'] for d in (1, -1) for k in range(0, 5))
-            if near_field:
-                reach.add(n); q.append(n)
-                continue
-            if n[0] <= bx0 or n[0] >= bx1 or n[1] in (by0, by1) or n[2] == bz1:
-                # pared de cierre: casco con una fila de luces
-                light = n[2] == fz + 5 and (n[0] + n[1]) % 6 == 0
-                put(*n, 'BShedWallLight' if light else 'BMotherHull'); sealed += 1
-                continue
-            reach.add(n); q.append(n)
-    print('hangar de llegada x %d-%d y %d-%d: %d salidas tapadas, ordenador en %s' % (x0, x1, y0, y1, sealed, (cx, cy, fz)))
+    print('hangar de llegada x %d-%d y %d-%d, ordenador del robot en %s' % (x0, x1, y0, y1, (cx, cy, fz)))
     return (cx, cy, fz)
 
-def robot_merchant(put, x, y, z):
-    """Robot comerciante (añadido del port, hecho de bloques): ruedas, cuerpo, brazos sobre el mostrador y cabeza con luz."""
+def robot_merchant(put, x, y, z, face=1):
+    """Robot comerciante (añadido del port, hecho de bloques): ruedas, cuerpo, brazos hacia el mostrador y cabeza con luz.
+    face: hacia donde mira en x (+1 o -1); el mostrador esta delante."""
     put(x, y, z, 'BShipTubes')
     put(x, y, z + 1, 'BShipHull'); put(x, y, z + 2, 'BShipHull')
     put(x, y - 1, z + 2, 'BIron'); put(x, y + 1, z + 2, 'BIron')       # brazos
-    put(x - 1, y - 1, z + 2, 'BShipPlate'); put(x - 1, y + 1, z + 2, 'BShipPlate')  # manos sobre el mostrador
+    put(x - face, y - 1, z + 2, 'BShipPlate'); put(x - face, y + 1, z + 2, 'BShipPlate')  # manos hacia el mostrador
     put(x, y, z + 3, 'BShipGlassBlack')                                    # cabeza
     put(x, y, z + 4, 'BLamp')                                              # luz de la antena
 
