@@ -28,8 +28,8 @@ It was shut down and its server no longer exists. This project ports it to a **n
 1. Download the zip from the [pre-release v0.2](../../releases/tag/v0.2) and **unzip everything** (keep all its folders).
 2. Check that there is a **`res/`** folder next to `galaxy55.hl` (with `texture.png`, `lazer.png`… inside). If you see loose files named
    like `res\texture.png` instead, extraction failed: unzip again with a different program. (Symptom: `Can't read res/texture.png`.)
-3. Windows: double-click `jugar.bat`. Other systems: get a [HashLink](https://github.com/HaxeFoundation/hashlink) build for your platform,
-   copy `galaxy55.hl` there as `hlboot.dat`, put `res/` next to it and run `hl`. (A player got it running on Linux this way; we have not tested it.)
+3. Windows: double-click `jugar.bat`. **Linux / macOS (not tested by us):** download the `galaxy55-offline-v0.2-linux-mac.zip` from the release,
+   install [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` on macOS) and run `sh jugar.sh`. (A player got it running on Linux; tell us how it goes.)
    The language (Spanish, English, French) is changed in Options.
 
 ## What works today
@@ -103,8 +103,8 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 1. Descarga el zip de la [pre-release v0.2](../../releases/tag/v0.2) y **descomprímelo entero** (con todas sus carpetas).
 2. Comprueba que hay una carpeta **`res/`** junto a `galaxy55.hl` (con `texture.png`, `lazer.png`… dentro). Si en vez de eso ves
    archivos sueltos llamados `res\texture.png`, la extracción falló: vuelve a descomprimir con otro programa. (Síntoma: `Can't read res/texture.png`.)
-3. Windows: doble clic en `jugar.bat`. Otros sistemas: usa una compilación de [HashLink](https://github.com/HaxeFoundation/hashlink) para tu plataforma,
-   copia `galaxy55.hl` como `hlboot.dat` en su carpeta, pon ahí `res/` y ejecuta `hl`. (Un jugador lo ha hecho funcionar en Linux así; no lo hemos probado nosotros.)
+3. Windows: doble clic en `jugar.bat`. **Linux / macOS (sin probar por nosotros):** descarga `galaxy55-offline-v0.2-linux-mac.zip` de la release,
+   instala [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` en macOS) y ejecuta `sh jugar.sh`. (Un jugador lo ha hecho funcionar en Linux; cuéntanos qué tal.)
    El idioma (español, inglés, francés) se cambia en Opciones.
 
 ### Qué funciona hoy
