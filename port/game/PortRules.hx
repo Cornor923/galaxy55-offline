@@ -47,6 +47,13 @@ class PortRules {
 		hidden.shadeUp = snow.shadeUp;
 		hidden.shadeDown = snow.shadeDown;
 		hidden.special = null;
+		// en el original algunos bloques llevan BFNoDrop y desaparecen al romperlos (turbo minero, tornillos, lampara de
+		// minero, hielo...). Aqui se pueden comprar y fabricar, asi que al romperlos se recuperan.
+		for( k in [BMiningGenerator, BWoodScrew, BIronLight, BFreezer, BIce, BFrozenRock, BStainEmpty] ) {
+			var b = Block.get(k);
+			b.drop = b;
+			b.dropCount = 1;
+		}
 		for( r in BREAKABLE ) {
 			var b = Block.get(r.k);
 			b.props.set(PCanPick);

@@ -742,7 +742,13 @@ class World {
 		if( neg ) {
 			shv[0] = shv[1] = shv[2] = shv[3] = shade;
 		} else if( uniform ) {
-			var l = lightAt(cx + ox, cy + oy, cz + oz) * shade / LBASE;
+			var l : Float = lightAt(cx + ox, cy + oy, cz + oz);
+			// cambio del port: si al lado hay otro bloque que no deja pasar la luz (p. ej. dos hierros juntos), la cara
+			// salia negra; se usa la luz mas alta alrededor del bloque
+			if( l == 0 ) {
+				l = (Math.max(Math.max(lightAt(cx + 1, cy, cz), lightAt(cx - 1, cy, cz)), Math.max(Math.max(lightAt(cx, cy + 1, cz), lightAt(cx, cy - 1, cz)), Math.max(lightAt(cx, cy, cz + 1), lightAt(cx, cy, cz - 1)))));
+			}
+			l = l * shade / LBASE;
 			shv[0] = shv[1] = shv[2] = shv[3] = l;
 		} else {
 			var nx = cx + ox, ny = cy + oy, nz = cz + oz;
