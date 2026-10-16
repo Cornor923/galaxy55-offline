@@ -724,6 +724,7 @@ class GalaxyApp extends hxd.App {
 		game = new GameView(s3d, loadWorld, loadInfo, atlas);
 		invBar = new InvBar(s2d, game.inv, atlas, W);
 		game.onComputer = openComputer;
+		game.onChest = openChest;
 		loadWorld = null;
 		ui.removeChildren();
 		bar = null;
@@ -802,6 +803,27 @@ class GalaxyApp extends hxd.App {
 	}
 
 	public var shop : Shop;
+	public var chest : Chest;
+
+	/** Cantina de ESCorp (cofre) */
+	public function openChest( box : Protocol.BlockInventory ) {
+		if( game == null || chest != null || shop != null ) return;
+		chest = new Chest(s2d, atlas, game.inv, box);
+		chest.onClose = closeChest;
+		paletteOpen = true;
+		captureMouse(false);
+	}
+
+	function closeChest() {
+		if( chest == null ) return;
+		chest.remove();
+		chest = null;
+		paletteOpen = false;
+		if( game != null && state == Playing ) {
+			captureMouse(true);
+			game.releaseAction();
+		}
+	}
 
 	/** tienda del robot comerciante (por ahora desde el ordenador de a bordo; luego estara en la nave nodriza) */
 	public function openShop() {
@@ -1029,7 +1051,9 @@ class GalaxyApp extends hxd.App {
 		if( state == Playing && game != null ) {
 			var K = hxd.Key;
 			if( paletteOpen ) {
-				if( shop != null ) {
+				if( chest != null ) {
+					if( K.isPressed(K.ESCAPE) ) closeChest();
+				} else if( shop != null ) {
 					if( K.isPressed(K.ESCAPE) ) closeShop();
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
 				game.updateCamera();

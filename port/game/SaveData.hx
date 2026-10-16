@@ -51,6 +51,8 @@ typedef SaveInfo = {
 	@:optional var credits : Int;
 	/** precios y existencias del robot comerciante (Market) */
 	@:optional var market : Market.MarketInfo;
+	/** contenido de las cantinas (cofres): clave "s:x,y,z" en la nave o "p<planeta>:x,y,z" en un planeta */
+	@:optional var chests : Array<{ key : String, t : Protocol.BlockInventory }>;
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
@@ -100,6 +102,15 @@ class SaveData {
 		}
 	}
 
+	static function readChests( o : Dynamic ) : Array<{ key : String, t : Protocol.BlockInventory }> {
+		try {
+			if( o == null ) return [];
+			return [for( c in (o : Array<Dynamic>) ) { key : Std.string(c.key), t : [for( s in (c.t : Array<Dynamic>) ) s == null ? null : { k : Std.int(s.k), n : Std.int(s.n) }] }];
+		} catch( e : Dynamic ) {
+			return [];
+		}
+	}
+
 	/** inventario guardado; si falta o esta mal formado se usa el inicial */
 	static function readInv( o : Dynamic ) : Protocol.InventoryInfos {
 		try {
@@ -141,7 +152,7 @@ class SaveData {
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true,
-					creative : o.creative == true, inv : readInv(o.inv), uni : readUni(o.uni), credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market),
+					creative : o.creative == true, inv : readInv(o.inv), uni : readUni(o.uni), credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), chests : readChests(o.chests),
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 			};
 		} catch( e : Dynamic ) {

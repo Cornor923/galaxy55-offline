@@ -1,0 +1,18 @@
+﻿# cantina (cofre): se coloca en la nave, se abre, se pasan bloques, se cierra y se vuelve a abrir
+wait 3
+ship
+wait 10
+setl 62 61 3 BChest
+wait 5
+activatel 62 61 3
+wait 5
+chestclick 1 0
+chestclick 0 0
+chestclick 1 2
+chestclick 0 3
+wait 5
+shot chest1
+print inv
+shot chest2
+quit
+

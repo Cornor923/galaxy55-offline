@@ -622,6 +622,7 @@ class GameView {
 			case BShipComputer: onComputer();
 			case BCrafterComputer: ship.activateCraft(x, y, z, this);
 			default:
+				if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
 			}
 		} else if( b.toggle != null ) {
 			// Process.toggle: se cambia toda la columna del mismo bloque (una puerta mide varios bloques de alto)
@@ -828,7 +829,44 @@ class GameView {
 	}
 
 	/** Game.blockBreak: suelta lo que corresponda (con su probabilidad) y quita el bloque. */
+	/** clave de una cantina: en la nave, coordenadas de la nave (se mueve de planeta en planeta); si no, planeta y celda */
+	function chestKey( x : Int, y : Int, z : Int ) : String {
+		if( z >= World.SHIP_Z )
+			return "s:" + Std.int(@:privateAccess world.shipLocal(x, world.shipDX)) + "," + Std.int(@:privateAccess world.shipLocal(y, world.shipDY)) + "," + (z - World.SHIP_Z);
+		return "p" + (info.uni != null ? info.uni.planetId : 0) + ":" + wrapI(x) + "," + wrapI(y) + "," + z;
+	}
+
+	/** contenido de la cantina (se crea vacia con las casillas de BFContainer) */
+	public function chestBox( x : Int, y : Int, z : Int, b : Block ) : Protocol.BlockInventory {
+		if( info.chests == null ) info.chests = [];
+		var k = chestKey(x, y, z);
+		for( c in info.chests ) if( c.key == k ) return c.t;
+		var size = 4;
+		for( f in b.flags ) switch( f ) { case BFContainer(s): size = s; default: }
+		var c = { key : k, t : [for( i in 0...size ) null] };
+		info.chests.push(c);
+		return c.t;
+	}
+
+	/** al romper una cantina, lo que tenia sale suelto (cambio del port: el original no lo resolvia) */
+	function breakChest( x : Int, y : Int, z : Int ) {
+		if( info.chests == null ) return;
+		var k = chestKey(x, y, z);
+		for( c in info.chests )
+			if( c.key == k ) {
+				for( s in c.t ) if( s != null ) {
+					var d = drops.add(x + 0.5, y + 0.5, z + 0.5, Block.all[s.k]);
+					d.n = s.n;
+				}
+				info.chests.remove(c);
+				return;
+			}
+	}
+
+	public var onChest : Protocol.BlockInventory -> Void;
+
 	public function breakBlock( x : Int, y : Int, z : Int, b : Block ) {
+		if( b.hasProp(PContainer) ) breakChest(x, y, z);
 		var get = b.getDrop();
 		if( get != null && !creative ) {
 			var chance = b.getMain().getDropChance();

@@ -110,6 +110,7 @@ class Dev {
 				case "jet": g.debugJet = a[1] == "1";
 				case "trace": trace = true;
 				case "shop": app.openShop();
+				case "chestclick": if( app.chest != null ) app.chest.click(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "shopclose": if( app.shop != null ) @:privateAccess app.closeShop();
 				case "buy", "sell":
 					// buy CLAVE n / sell CLAVE n (clave de Market: b<bloque> o c<carga>; o el nombre del bloque, p.ej. BWood)

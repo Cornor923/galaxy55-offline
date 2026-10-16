@@ -34,6 +34,8 @@ class Lang {
 		"shop.credits" => ["Créditos:", "Credits:", "Crédits :"],
 		"shop.buy" => ["comprar", "buy", "acheter"],
 		"shop.sell" => ["vender", "sell", "vendre"],
+		"chest.yours" => ["Tu inventario", "Your inventory", "Ton inventaire"],
+		"chest.hint" => ["Clic: coger y dejar. Mayús: la mitad. Ctrl: una.", "Click: pick up and drop. Shift: half. Ctrl: one.", "Clic : prendre et poser. Maj : la moitié. Ctrl : un."],
 		"shop.nosale" => ["el robot no compra esto", "the robot does not buy this", "le robot n'achete pas ca"],
 		"shop.full" => ["el robot ya tiene demasiado de esto, vuelve mas tarde", "the robot has too much of this, come back later", "le robot en a trop, reviens plus tard"],
 		"computer.close" => ["Cerrar", "Close", "Fermer"],
