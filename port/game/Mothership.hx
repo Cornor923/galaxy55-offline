@@ -161,6 +161,27 @@ class Mothership {
 		return { sx : size, sy : size, sz : oz + h, cells : out, entry : null, crafts : [] };
 	}
 
+	/** donde aparece el jugador en la nave nodriza: encima del teletransportador de su nave aparcada (null = la plaza) */
+	public static var shipSpawn : { x : Float, y : Float, z : Float };
+
+	/**
+	 * La nave nodriza con la nave del jugador aparcada en su plaza (añadido del port): la nave (la del hangar, o la de serie)
+	 * se pone centrada en la plaza de llegada, apoyada en el suelo, y el jugador aparece sobre su teletransportador.
+	 */
+	public static function withShip( ship : haxe.io.Bytes ) : ShipData.ShipDataInfo {
+		var base = data();
+		shipSpawn = null;
+		if( base == null || spawnAt == null || ship == null ) return base;
+		var s = try ShipData.load(ship) catch( e : Dynamic ) null;
+		if( s == null ) return base;
+		var dx = (Const.SIZE - s.sx) >> 1, dy = (Const.SIZE - s.sy) >> 1;
+		var ox = spawnAt.x - (s.sx >> 1), oy = spawnAt.y - (s.sy >> 1), oz = spawnAt.z;
+		var cells = base.cells.copy();
+		for( c in s.cells ) cells.push({ x : ox + c.x - dx, y : oy + c.y - dy, z : oz + c.z - 1, id : c.id });
+		if( s.entry != null ) shipSpawn = { x : ox + s.entry.x - dx + 0.5, y : oy + s.entry.y - dy + 0.5, z : oz + s.entry.z - 1 + 1. };
+		return { sx : base.sx, sy : base.sy, sz : base.sz, cells : cells, entry : null, crafts : [] };
+	}
+
 	public static function data() : ShipData.ShipDataInfo {
 		if( cache != null ) return cache;
 		var f = fromFile();

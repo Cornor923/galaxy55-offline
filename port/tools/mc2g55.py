@@ -32,7 +32,8 @@ RULES = [
     ('sea_lantern', 'BShedWallLight'), ('glowstone', 'BLamp'), ('redstone_lamp', 'BLamp'), ('lantern', 'BLamp'),
     ('end_rod', 'BLamp'), ('shroomlight', 'BLamp'),
     # cristal
-    ('blue_stained_glass', 'BMotherField'),   # la pared de los hangares que da al espacio: campo de fuerza
+    ('light_blue_stained_glass', 'BMotherField'), ('blue_stained_glass', 'BMotherField'),   # la pared de los hangares
+    ('cyan_stained_glass', 'BMotherField'),   # ranuras que dan al espacio: tambien campo de fuerza (el cristal parecia un hueco)
     ('tinted_glass', 'BShipGlassBlack'), ('black_stained_glass', 'BShipGlassBlack'), ('glass', 'BGlass'),
     ('iron_bars', 'BIronFence'),
     # metal y piedra de la nave
@@ -99,7 +100,35 @@ def special(n, pr):
         return 'BShipDoorY' if f in ('north', 'south') else 'BShipDoor'
     return None
 
-def empty_hangar(grid, W, L, H, cells, z, height, mirror=None):
+def hull_cells(grid, W, L, H, z0, z1):
+    """Columnas (x, y) a menos de 3 casillas del espacio exterior en alguna capa z0..z1: el casco, que nunca se vacia.
+    El espacio exterior es el aire conectado con el borde del mapa."""
+    out = bytearray(W * L * H)
+    def idx(x, y, z): return x + y * W + z * W * L
+    q = []
+    for z in range(H):
+        for y in range(L):
+            for x in (0, W - 1):
+                if not grid[idx(x, y, z)] and not out[idx(x, y, z)]: out[idx(x, y, z)] = 1; q.append((x, y, z))
+        for x in range(W):
+            for y in (0, L - 1):
+                if not grid[idx(x, y, z)] and not out[idx(x, y, z)]: out[idx(x, y, z)] = 1; q.append((x, y, z))
+    while q:
+        a, b, c = q.pop()
+        for n in ((a+1,b,c),(a-1,b,c),(a,b+1,c),(a,b-1,c),(a,b,c+1),(a,b,c-1)):
+            if 0 <= n[0] < W and 0 <= n[1] < L and 0 <= n[2] < H:
+                i = idx(*n)
+                if not out[i] and not grid[i]: out[i] = 1; q.append(n)
+    hull = set()
+    for z in range(z0, z1 + 1):
+        for y in range(L):
+            for x in range(W):
+                if out[idx(x, y, z)]:
+                    for i in range(-3, 4):
+                        for j in range(-3, 4): hull.add((x + i, y + j))
+    return hull
+
+def empty_hangar(grid, W, L, H, cells, z, height, mirror=None, hull=None):
     """Quita las naves de adorno y sus pasarelas de atraque de un hangar (lo pidio el usuario, para dejar sitio a las naves
     de los jugadores). La nave ocupa solo parte de las filas del hangar: en cada columna x del interior, lo que esta vacio
     en la mayoria de las filas se vacia en todas. Las columnas de pared (llenas en la mayoria de filas) no se tocan, y el
@@ -123,6 +152,14 @@ def empty_hangar(grid, W, L, H, cells, z, height, mirror=None):
     else:
         span = set(W - 1 - x for x in mirror)
     ceiling = min(top, z + 14)            # las 2 capas de arriba son techo (vigas, luces): no se tocan
+    # pared real de cada fila: desde los bordes de la caja hacia dentro, la primera columna libre a media altura
+    wall_lo = {}; wall_hi = {}
+    for y in range(y0 - 1, y1 + 2):
+        lo = x0 - 1
+        while lo <= x1 and grid[idx(lo + 1, y, z + 5)]: lo += 1
+        hi = x1 + 1
+        while hi >= x0 and grid[idx(hi - 1, y, z + 5)]: hi -= 1
+        wall_lo[y] = lo; wall_hi[y] = hi
     for x in range(x0, x1 + 1):
         if x not in span: continue
         if mirror is not None and (W - 1 - x) in mirror:
@@ -135,6 +172,9 @@ def empty_hangar(grid, W, L, H, cells, z, height, mirror=None):
         # con molde en espejo se vacia tambien una fila mas por cada lado (las naves de adorno asoman fuera del suelo libre)
         ya, yb = (y0 - 1, y1 + 1) if mirror is not None else (y0, y1)
         for y in range(ya, yb + 1):
+            # en cada fila, 2 de margen hasta la pared real de esa fila (en la proa el casco se curva hacia dentro)
+            if x < wall_lo[y] + 2 or x > wall_hi[y] - 2: continue
+            if hull is not None and (x, y) in hull: continue
             for i, zz in enumerate(range(z, min(top, z + len(air)))):
                 if air[i] and grid[idx(x, y, zz)]:
                     grid[idx(x, y, zz)] = 0
@@ -173,10 +213,11 @@ def find_hangars(grid, W, L, H, z=18, min_cells=500, min_h=14):
     # de adorno tan grandes que tapan el suelo y no se detectan bien). Primero la derecha; su molde vacia la izquierda.
     halls += [([(W - 1 - a, b) for a, b in cells], h) for cells, h in list(halls)]
     molds = {}
+    hull = hull_cells(grid, W, L, H, z, z + 14)
     for cells, height in halls:
         y0 = min(c[1] for c in cells); x0 = min(c[0] for c in cells)
         mirror = molds.get(y0) if x0 < W // 2 else None
-        mold = empty_hangar(grid, W, L, H, cells, z, height, mirror)
+        mold = empty_hangar(grid, W, L, H, cells, z, height, mirror, hull)
         if x0 >= W // 2: molds[y0] = mold
     for cells, height in halls:
         # se vacio: recalcular el suelo libre

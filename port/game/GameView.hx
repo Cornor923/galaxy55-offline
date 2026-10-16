@@ -117,6 +117,13 @@ class GameView {
 			px = b.x + 0.5;
 			py = b.y + 0.5;
 			pz = b.z;
+			// sobre el teletransportador de tu nave, aparcada en tu plaza
+			var s = Mothership.shipSpawn;
+			if( s != null ) {
+				px = s.x;
+				py = s.y;
+				pz = s.z;
+			}
 			yaw = Math.PI / 2;
 			pitch = 0;
 			// robots (añadido del port): el comerciante del puesto y los drones
