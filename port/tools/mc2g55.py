@@ -235,7 +235,7 @@ def arrival_hangar(grid, W, L, H, K, home, bays):
     y0 = min(c[1] for c in seen); y1 = max(c[1] for c in seen)
     # 1) plazas: contorno de 17x17 con lineas oscuras en el suelo y luces en las esquinas
     mine = [b for b in bays if x0 <= b[0] <= x1 and y0 <= b[1] <= y1]
-    for (bx, by, _) in mine:
+    for (bx, by, _) in bays:                            # todas las plazas de los 8 hangares
         for i in range(-8, 9):
             for (x, y) in ((bx + i, by - 8), (bx + i, by + 8), (bx - 8, by + i), (bx + 8, by + i)):
                 if get(x, y, fz - 1): put(x, y, fz - 1, 'BMotherDark')
