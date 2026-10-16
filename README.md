@@ -20,6 +20,27 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 | **Notas técnicas del desarrollo** | [`port/RESUMEN.md`](port/RESUMEN.md) |
 | **La versión Flash (archivada)** | [`docs/flash/README_flash.md`](docs/flash/README_flash.md), rama [`flash`](../../tree/flash), etiqueta [`flash-version`](../../tree/flash-version) |
 
+## Jugar en 3 pasos
+
+1. Descarga el zip de la [pre-release v0.1](../../releases/tag/v0.1) y **descomprímelo entero** (con todas sus carpetas).
+2. Comprueba que hay una carpeta **`res/`** junto a `galaxy55.hl` (con `texture.png`, `lazer.png`... dentro). Si en vez de eso ves
+   archivos sueltos llamados `res	exture.png`, la extracción falló: vuelve a descomprimir con otro programa.
+3. Windows: doble clic en `jugar.bat`. Otros sistemas: usa una compilación de [HashLink](https://github.com/HaxeFoundation/hashlink) para tu plataforma,
+   copia `galaxy55.hl` como `hlboot.dat` en su carpeta, pon ahí `res/` y ejecuta `hl`. (Un jugador lo ha hecho funcionar en Linux así; no lo hemos probado nosotros.)
+   El idioma (español, inglés, francés) se cambia en Opciones.
+
+## Errores conocidos (resumen)
+
+Lista completa y numerada en [`ERRORES.md`](ERRORES.md). Los principales:
+- Borrar una partida desde el menú no funciona.
+- Fallos de luz en bloques no cuadrados; bloques blancos y hojas de abeto raras en invierno; curvatura del planeta exagerada.
+- Al romper un bloque no hay partículas; no se pueden romper las cosas colgadas ni las plantas del suelo.
+- En la nave: no se puede quitar la fuente de cascada y el sintetizador no gasta los bloques puestos.
+- Mapa de estrellas: entrada, salida y aterrizaje son un fundido simple, no las animaciones del original.
+- El agua no fluye. Faltan la tienda, el hangar y el sonido.
+
+**¿Has encontrado otro?** Cuéntalo en un *issue* de GitHub o por Discord, con lo que hacías y una captura si puedes.
+
 ## Qué funciona hoy
 
 Menú de inicio, partidas guardadas, planetas idénticos a los del original (verificado por hash contra Flash),
@@ -49,5 +70,5 @@ por Motion Twin. Gracias a la comunidad de Eternaltwin por conservar documentaci
 
 Native Windows port (Haxe 4 + Heaps + HashLink) of Motion Twin's 2012 Flash game *Galaxy 55*, running offline with no
 server, built from their public source archive. Work in progress. Download: [release v0.1](../../releases/tag/v0.1).
-Known bugs: [`ERRORES.md`](ERRORES.md) · roadmap: [`PENDIENTES.md`](PENDIENTES.md) · Flash version (archived):
+Unzip the whole package: the `res/` folder must sit next to `galaxy55.hl` (otherwise: "Can't read res/texture.png"). Other platforms: grab a HashLink build, rename `galaxy55.hl` to `hlboot.dat`, add `res/`, run `hl`. Language: Options menu. Known bugs (Spanish table): [`ERRORES.md`](ERRORES.md) · roadmap: [`PENDIENTES.md`](PENDIENTES.md) · Flash version (archived):
 [`docs/flash/`](docs/flash/README_flash.md). CC BY-NC-SA 4.0, non-commercial, credit to Motion Twin.
