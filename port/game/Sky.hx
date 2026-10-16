@@ -84,6 +84,184 @@ class Sky {
 		root.visible = v;
 	}
 
+	// ---------------------------------------------------------------- espacio (nave nodriza, anadido del port)
+
+	var space : h3d.scene.Object;
+	var shooting : Array<{ m : h3d.scene.Mesh, t : Float, life : Float, dx : Float, dy : Float, dz : Float }>;
+	var nextShoot = 2.;
+
+	/** cielo de espacio abierto: nebulosas de colores, galaxias que giran despacio, estrellas de colores y estrellas fugaces */
+	public function makeSpace() {
+		fog.fogK = 0.0025;
+		space = new h3d.scene.Object(root);
+		var rnd = new hxd.Rand(5555);
+		var cols = [0x6A3FD0, 0xD04F9A, 0x2F8FD8, 0x38C0A8, 0xE07A3A];
+		// nebulosas: manchas grandes y suaves
+		var neb = nebulaTex(256, rnd);
+		for( i in 0...7 ) billboard(space, neb, dirRand(rnd), 220 + rnd.rand() * 200, cols[i % cols.length], 0.55, rnd.rand() * 6.28);
+		// galaxias espirales
+		var gal = galaxyTex(256, rnd);
+		for( i in 0...5 ) billboard(space, gal, dirRand(rnd), 60 + rnd.rand() * 70, cols[(i + 2) % cols.length] | 0x303030, 0.9, rnd.rand() * 6.28);
+		// estrellas de colores (las blancas ya estan en buildStars)
+		if( stars != null ) {
+			var poly = Std.downcast(stars.primitive, h3d.prim.Polygon);
+			if( poly != null ) {
+				for( i in 0...poly.colors.length >> 2 ) {
+					var c = rnd.random(5) == 0 ? rgb(cols[rnd.random(cols.length)]) : null;
+					if( c == null ) continue;
+					for( j in 0...4 ) {
+						var p = poly.colors[i * 4 + j];
+						p.set(p.x * (0.5 + c.x), p.y * (0.5 + c.y), p.z * (0.5 + c.z));
+					}
+				}
+				poly.dispose();
+			}
+		}
+		shooting = [];
+	}
+
+	static function dirRand( rnd : hxd.Rand ) {
+		var z = rnd.srand() * 0.9;
+		var a = rnd.rand() * Math.PI * 2;
+		var r = Math.sqrt(1 - z * z);
+		return new h3d.col.Point(Math.cos(a) * r, Math.sin(a) * r, z);
+	}
+
+	function billboard( parent : h3d.scene.Object, tex : h3d.mat.Texture, d : h3d.col.Point, size : Float, color : Int, alpha : Float, rot : Float ) {
+		var R = 600.;
+		var ux = -d.y, uy = d.x, uz = 0.;
+		var ul = Math.sqrt(ux * ux + uy * uy);
+		if( ul < 1e-4 ) { ux = 1; uy = 0; ul = 1; }
+		ux /= ul; uy /= ul;
+		var vx = d.y * uz - d.z * uy, vy = d.z * ux - d.x * uz, vz = d.x * uy - d.y * ux;
+		var c = Math.cos(rot), s = Math.sin(rot);
+		var ax = ux * c + vx * s, ay = uy * c + vy * s, az = uz * c + vz * s;
+		var bx = vx * c - ux * s, by = vy * c - uy * s, bz = vz * c - uz * s;
+		var h = size * 0.5;
+		var cx = d.x * R, cy = d.y * R, cz = d.z * R;
+		var pts = [
+			new h3d.col.Point(cx - ax * h - bx * h, cy - ay * h - by * h, cz - az * h - bz * h),
+			new h3d.col.Point(cx + ax * h - bx * h, cy + ay * h - by * h, cz + az * h - bz * h),
+			new h3d.col.Point(cx + ax * h + bx * h, cy + ay * h + by * h, cz + az * h + bz * h),
+			new h3d.col.Point(cx - ax * h + bx * h, cy - ay * h + by * h, cz - az * h + bz * h),
+		];
+		var idx = new hxd.IndexBuffer();
+		for( i in [0, 1, 2, 0, 2, 3] ) idx.push(i);
+		var poly = new h3d.prim.Polygon(pts, idx);
+		poly.uvs = [new h3d.prim.UV(0, 0), new h3d.prim.UV(1, 0), new h3d.prim.UV(1, 1), new h3d.prim.UV(0, 1)];
+		var mat = h3d.mat.Material.create(tex);
+		mat.shadows = false;
+		mat.mainPass.enableLights = false;
+		mat.mainPass.culling = None;
+		mat.mainPass.depthWrite = false;
+		mat.blendMode = Add;
+		var col = rgb(color);
+		mat.color.set(col.x * alpha, col.y * alpha, col.z * alpha, 1);
+		return new h3d.scene.Mesh(poly, mat, parent);
+	}
+
+	/** mancha de nebulosa: varias gotas suaves superpuestas */
+	static function nebulaTex( n : Int, rnd : hxd.Rand ) {
+		var acc = new haxe.ds.Vector<Float>(n * n);
+		for( i in 0...n * n ) acc[i] = 0;
+		for( k in 0...26 ) {
+			var cx = n * (0.3 + rnd.rand() * 0.4), cy = n * (0.3 + rnd.rand() * 0.4), r = n * (0.08 + rnd.rand() * 0.2);
+			for( y in 0...n ) for( x in 0...n ) {
+				var dx = (x - cx) / r, dy = (y - cy) / r;
+				var d = dx * dx + dy * dy;
+				if( d < 1 ) acc[x + y * n] += (1 - d) * (1 - d) * 0.25;
+			}
+		}
+		return toTex(acc, n);
+	}
+
+	/** galaxia espiral: brazos de puntos y un nucleo brillante */
+	static function galaxyTex( n : Int, rnd : hxd.Rand ) {
+		var acc = new haxe.ds.Vector<Float>(n * n);
+		for( i in 0...n * n ) acc[i] = 0;
+		var c = n * 0.5;
+		for( k in 0...9000 ) {
+			var arm = rnd.random(2) * Math.PI;
+			var t = Math.pow(rnd.rand(), 0.7);
+			var a = arm + t * 7 + rnd.srand() * 0.35;
+			var rr = t * n * 0.45;
+			var x = Std.int(c + Math.cos(a) * rr), y = Std.int(c + Math.sin(a) * rr * 0.55);
+			if( x >= 1 && y >= 1 && x < n - 1 && y < n - 1 ) {
+				acc[x + y * n] += 0.18;
+				acc[x + 1 + y * n] += 0.06;
+				acc[x + (y + 1) * n] += 0.06;
+			}
+		}
+		for( y in 0...n ) for( x in 0...n ) {
+			var dx = (x - c) / (n * 0.12), dy = (y - c) / (n * 0.07);
+			var d = dx * dx + dy * dy;
+			if( d < 1 ) acc[x + y * n] += (1 - d) * 1.2;
+		}
+		return toTex(acc, n);
+	}
+
+	static function toTex( acc : haxe.ds.Vector<Float>, n : Int ) {
+		var px = hxd.Pixels.alloc(n, n, BGRA);
+		for( y in 0...n ) for( x in 0...n ) {
+			// borde suave para que no se vea el cuadrado
+			var ex = Math.min(x, n - 1 - x) / (n * 0.15), ey = Math.min(y, n - 1 - y) / (n * 0.15);
+			var edge = Math.min(1, Math.min(ex, ey));
+			var v = Math.min(1, acc[x + y * n]) * edge;
+			var b = Std.int(v * 255);
+			px.setPixel(x, y, 0xFF000000 | (b << 16) | (b << 8) | b);
+		}
+		var t = h3d.mat.Texture.fromPixels(px);
+		t.filter = Linear;
+		return t;
+	}
+
+	/** gira el cielo de espacio muy despacio y lanza estrellas fugaces de vez en cuando */
+	public function update( dt : Float ) {
+		if( space == null ) return;
+		space.rotate(0, 0, dt * 0.004);
+		nextShoot -= dt;
+		if( nextShoot <= 0 ) {
+			nextShoot = 1.5 + Math.random() * 4;
+			var d = dirRand(new hxd.Rand(Std.random(100000)));
+			if( d.z < 0.05 ) d.z = Math.abs(d.z) + 0.15;
+			var tex = h3d.mat.Texture.fromColor(0xFFFFFF);
+			var len = 40.;
+			var dir = new h3d.col.Point(Math.random() - 0.5, Math.random() - 0.5, -0.3);
+			dir.normalize();
+			var R = 560.;
+			var p0 = new h3d.col.Point(d.x * R, d.y * R, d.z * R);
+			var pts = [p0.clone(), p0.clone(), new h3d.col.Point(p0.x - dir.x * len, p0.y - dir.y * len, p0.z - dir.z * len + 1.2), new h3d.col.Point(p0.x - dir.x * len, p0.y - dir.y * len, p0.z - dir.z * len)];
+			pts[1].z += 1.6;
+			var idx = new hxd.IndexBuffer();
+			for( i in [0, 1, 2, 0, 2, 3] ) idx.push(i);
+			var poly = new h3d.prim.Polygon(pts, idx);
+			poly.colors = [new h3d.col.Point(1, 1, 1), new h3d.col.Point(1, 1, 1), new h3d.col.Point(0, 0, 0), new h3d.col.Point(0, 0, 0)];
+			poly.uvs = [new h3d.prim.UV(0, 0), new h3d.prim.UV(1, 0), new h3d.prim.UV(1, 1), new h3d.prim.UV(0, 1)];
+			var mat = h3d.mat.Material.create(tex);
+			mat.shadows = false;
+			mat.mainPass.enableLights = false;
+			mat.mainPass.culling = None;
+			mat.mainPass.depthWrite = false;
+			mat.blendMode = Add;
+			mat.mainPass.addShader(new h3d.shader.VertexColor());
+			var m = new h3d.scene.Mesh(poly, mat, root);
+			shooting.push({ m : m, t : 0., life : 0.9, dx : dir.x * 520, dy : dir.y * 520, dz : dir.z * 520 });
+		}
+		for( s in shooting.copy() ) {
+			s.t += dt;
+			s.m.x += s.dx * dt;
+			s.m.y += s.dy * dt;
+			s.m.z += s.dz * dt;
+			s.m.material.color.a = 1 - s.t / s.life;
+			s.m.material.color.set(1 - s.t / s.life, 1 - s.t / s.life, 1 - s.t / s.life, 1);
+			if( s.t >= s.life ) {
+				s.m.remove();
+				s.m.primitive.dispose();
+				shooting.remove(s);
+			}
+		}
+	}
+
 	public function dispose() {
 		dome.primitive.dispose();
 		if( stars != null ) stars.primitive.dispose();

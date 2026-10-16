@@ -111,7 +111,10 @@ class Mothership {
 			for( y in 0...HY1 ) {
 				if( !isSolid(x, y, HZ0 - 1) ) continue;
 				put(x, y, HZ0 - 1, BShipPlate);
-				if( isSolid(x, y, HZ1) ) put(x, y, HZ1, x % 4 == 2 && y % 4 == 2 ? BShipLight : BShipPlate);
+				// techo: grandes claraboyas de cristal (se ve el espacio), con vigas cada 8 y luces en las vigas
+				var beam = (x - HX0) % 8 == 0 || y % 8 == 0 || y >= HY1 - 8;
+				for( z in HZ1...DECK + 1 )
+					if( isSolid(x, y, z) ) put(x, y, z, beam ? (z == HZ1 && x % 4 == 2 ? BShipLight : BShipPlate) : BShipGlass);
 			}
 		for( x in HX0...HX1 )
 			for( z in HZ0...HZ1 )

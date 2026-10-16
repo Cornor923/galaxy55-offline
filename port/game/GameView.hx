@@ -1004,6 +1004,7 @@ class GameView {
 		c.target.set(px + Math.cos(yaw) * cp, py + Math.sin(yaw) * cp, ez + Math.sin(pitch));
 		c.up.set(0, 0, 1);
 		world.sky.follow(px, py, ez);
+		world.sky.update(1 / 60);
 		world.updateWrap(px, py);
 	}
 }

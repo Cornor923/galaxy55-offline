@@ -838,6 +838,7 @@ class GalaxyApp extends hxd.App {
 		if( info.mothership == true ) {
 			loadWorld.sky.fog.curve = 0.00001;
 			loadWorld.lightTop = Mothership.Z0 + Mothership.LZ + 4;
+			loadWorld.sky.makeSpace();
 		}
 		if( info.hangar == true ) {
 			loadWorld.sky.fog.curve = 0.00001; // EditShip: planet.curve = 0.00001
