@@ -241,12 +241,6 @@ class Ship {
 		if( c == null || c.curCraft == null ) return;
 		var cur = c.curCraft;
 		var blocks = c.engine.getBlocks(true);
-		var hasInv = true;
-		for( b in blocks )
-			if( !g.inv.hasBlocks(b.b, b.n) ) {
-				hasInv = false;
-				break;
-			}
 		var out = Block.get(cur.out);
 		var n = cur.count != null ? cur.count : 1;
 		var p = outPos(c);
@@ -254,21 +248,18 @@ class Ship {
 			var d = g.drops.add(p.x, p.y, p.z, out);
 			d.delay = 30;
 		}
-		if( hasInv ) {
-			if( !g.creative )
-				for( b in blocks ) g.inv.useBlocks(b.b, b.n);
-		} else {
-			c.engine.clear();
-			g.drops.remove(c.preview);
-			c.preview = null;
-			c.curCraft = null;
-			c.curText = null;
-			for( b in blocks )
-				for( q in b.pos ) {
-					var x = c.x + q.x + planet.shipDX, y = c.y + q.y + planet.shipDY, z = c.z + q.z + World.SHIP_Z;
-					g.removeShipBlock(x, y, z, b.b);
-				}
-		}
+		// cambio del port: siempre se gastan los bloques puestos en la zona. El original (ShipLogic.activateBlock, hasInv) gastaba
+		// los del inventario si los habia y dejaba la zona como plantilla; quien juega espera que desaparezca lo que ve.
+		c.engine.clear();
+		g.drops.remove(c.preview);
+		c.preview = null;
+		c.curCraft = null;
+		c.curText = null;
+		for( b in blocks )
+			for( q in b.pos ) {
+				var x = c.x + q.x + planet.shipDX, y = c.y + q.y + planet.shipDY, z = c.z + q.z + World.SHIP_Z;
+				g.removeShipBlock(x, y, z, b.b);
+			}
 	}
 
 	// ---------------------------------------------------------------- imagenes de la nave para el mapa (r3d.Capture)

@@ -1,0 +1,23 @@
+# hierbas rompibles (PortRules): se pone una hierba de Marte delante, se apunta y se excava
+wait 3
+planet
+wait 20
+tp 64 64 top 0 0
+wait 20
+set 66 64 85 BMarsHerb1
+wait 5
+lookat 66.5 64.5 85.4
+slot 0
+wait 5
+print select
+key dig
+wait 30
+print select
+wait 90
+unkey
+wait 60
+print select
+print block 66 64 85
+print drops
+print inv
+quit

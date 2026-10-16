@@ -155,6 +155,7 @@ class GalaxyApp extends hxd.App {
 	var paletteOpen = false;
 
 	override function init() {
+		PortRules.apply();
 		for( a in Sys.args() ) {
 			if( StringTools.startsWith(a, "--shot=") ) shotPath = a.substr(7);
 			else if( StringTools.startsWith(a, "--screen=") ) shotScreen = a.substr(9);

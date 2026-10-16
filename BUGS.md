@@ -9,9 +9,7 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 
 | # | Where | What happens |
 |---|---|---|
-| 3 | Ship | Crafting in the **synthesizer** does not remove the blocks placed in its area (the inventory is used if you have those blocks, as in the original; whether to change this is undecided). |
 | 4 | Lighting | **Non-square blocks** (half blocks, models...) are lit differently from their neighbours. |
-| 6 | Digging | **Ground herbs** and **ice stalactites** cannot be broken. *The original does the same* (they have `BFDetail`); vines can be broken. Kept as is unless decided otherwise. |
 | 7 | Winter | There are **plain white blocks** without texture. |
 | 8 | Winter | **Spruce leaves** drop material; in the original they may not. |
 | 9 | Rendering | The planet **curvature** is stronger than it should be. |
@@ -27,6 +25,8 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 - v0.2: particles when breaking a block; dropped blocks spin at the original speed.
 - v0.2: Dead city can be chosen in New game (Shed not yet).
 - v0.2: the selected block is shown in the hand.
+- v0.2 (change from the original): the synthesizer always uses up the blocks placed in its area.
+- v0.2 (change from the original): ground herbs and ice stalactites can be broken; they give tall grass (33 %) or ice (7 %), like the original's plants and black ice.
 
 - Appearing "in the sky" when entering the synthesizer (not seen again).
 - Synthesizer blocks duplicating when placed.

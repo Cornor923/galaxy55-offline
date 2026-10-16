@@ -9,9 +9,7 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 
 | # | Dónde | Qué pasa |
 |---|---|---|
-| 3 | Nave | Al fabricar en el **sintetizador** no desaparecen los bloques puestos en la zona (se gasta el inventario si tienes esos bloques, como en el original; falta decidir si cambiarlo). |
 | 4 | Luz | Los bloques que **no son cuadrados** (medios bloques, modelos…) tienen la luz mal respecto a los vecinos. |
-| 6 | Excavar | Las **hierbas del suelo** y las **estalactitas de hielo** no se pueden romper. *Es así en el original* (llevan `BFDetail`); las enredaderas sí se rompen. Se deja igual salvo que se decida lo contrario. |
 | 7 | Invierno | Hay **bloques blancos lisos** sin textura. |
 | 8 | Invierno | Las **hojas del abeto** sueltan material; puede que en el original no. |
 | 9 | Render | La **curvatura** del planeta se nota más de la cuenta. |
@@ -27,6 +25,8 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 - v0.2: partículas al romper un bloque; los bloques sueltos giran a la velocidad del original.
 - v0.2: Ciudad muerta se puede elegir en Nueva partida (Shed todavía no).
 - v0.2: se ve el bloque elegido en la mano.
+- v0.2 (cambio respecto al original): el sintetizador gasta siempre los bloques puestos en su zona.
+- v0.2 (cambio respecto al original): las hierbas del suelo y las estalactitas de hielo se rompen; dan hierba alta (33 %) o hielo (7 %), como las plantas y el hielo negro del original.
 
 - Aparecía «en el cielo» al entrar en el sintetizador (no se ha vuelto a ver).
 - Los bloques del sintetizador se duplicaban al colocarlos.
