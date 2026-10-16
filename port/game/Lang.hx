@@ -75,6 +75,7 @@ class Lang {
 		"biome.BIMars" => ["Marte", "Mars", "Mars"],
 		"biome.BIWinterPeaks" => ["Cumbres nevadas", "Winter peaks", "Sommets enneigés"],
 		"biome.BIAcidForest" => ["Bosque ácido", "Acid forest", "Forêt acide"],
+		"biome.BIDeadCity" => ["Ciudad muerta", "Dead city", "Cité morte"],
 		"biome.random" => ["Aleatorio", "Random", "Aléatoire"],
 	];
 

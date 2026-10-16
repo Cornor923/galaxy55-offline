@@ -75,6 +75,8 @@ class GalaxyApp extends hxd.App {
 	static inline var W = 1280;
 	static inline var H = 720;
 	static var BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
+	/** se pueden elegir pero no salen al azar: en el original la Ciudad Muerta tenia probabilidad 0 */
+	static var EXTRA_BIOMES = ["BIDeadCity"];
 
 	var state : State = Boot;
 	var atlas : h3d.mat.Texture;
@@ -364,7 +366,7 @@ class GalaxyApp extends hxd.App {
 		nSeed.numeric = true;
 		nSeed.maxLen = 9;
 		var names = [Lang.t("biome.random")];
-		for( b in BIOMES ) names.push(Lang.t("biome." + b));
+		for( b in BIOMES.concat(EXTRA_BIOMES) ) names.push(Lang.t("biome." + b));
 		nBiome = new Selector(s, Lang.t("biome"), names);
 		nSize = new Selector(s, Lang.t("size"), [Lang.t("size.small"), Lang.t("size.normal"), Lang.t("size.large")]);
 		nSize.index = 0;
@@ -382,7 +384,7 @@ class GalaxyApp extends hxd.App {
 		create.onActivate = function() {
 			var seed = Std.parseInt(nSeed.text);
 			if( seed == null || seed <= 0 ) seed = randomSeed();
-			var biome = nBiome.index == 0 ? BIOMES[seed % BIOMES.length] : BIOMES[nBiome.index - 1];
+			var biome = nBiome.index == 0 ? BIOMES[seed % BIOMES.length] : BIOMES.concat(EXTRA_BIOMES)[nBiome.index - 1];
 			var name = StringTools.trim(nName.text);
 			if( name == "" ) name = "Planeta";
 			var info = SaveData.create(name, seed, biome, nSize.index + 1);
