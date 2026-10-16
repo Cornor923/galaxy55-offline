@@ -9,12 +9,9 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 
 | # | Dónde | Qué pasa |
 |---|---|---|
-| 1 | Partidas | **Borrar una partida desde el menú no funciona.** |
-| 2 | Nave | El bloque de **fuente de cascada** puesto en la nave no se puede quitar. |
 | 3 | Nave | Al fabricar en el **sintetizador** no desaparecen los bloques puestos en la zona (se gasta el inventario si tienes esos bloques, como en el original; falta decidir si cambiarlo). |
 | 4 | Luz | Los bloques que **no son cuadrados** (medios bloques, modelos…) tienen la luz mal respecto a los vecinos. |
-| 5 | Excavar | Al romper un bloque **no hay animación de partículas** y el bloque suelto **gira demasiado rápido**. |
-| 6 | Excavar | No se pueden romper las cosas **colgadas** (estalactitas, enredaderas) ni las **plantas del suelo**. |
+| 6 | Excavar | Las **hierbas del suelo** y las **estalactitas de hielo** no se pueden romper. *Es así en el original* (llevan `BFDetail`); las enredaderas sí se rompen. Se deja igual salvo que se decida lo contrario. |
 | 7 | Invierno | Hay **bloques blancos lisos** sin textura. |
 | 8 | Invierno | Las **hojas del abeto** sueltan material; puede que en el original no. |
 | 9 | Render | La **curvatura** del planeta se nota más de la cuenta. |
@@ -22,10 +19,14 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 | 11 | Render | La **capa 0** (roca madre) vista desde abajo se ve como un plano liso. |
 | 12 | Agua | El agua **no fluye**, y se congela al tocar hielo (por confirmar si es lo esperado). |
 | 13 | Mapa de estrellas | La **entrada y salida del sistema solar** y el **aterrizaje** son un simple fundido, no las animaciones del original; la salida del sistema es demasiado rápida (el original deja pasar la última órbita y te saca después). |
-| 14 | Mundo | **Ciudad Muerta** y **Shed** no se pueden elegir aún (el generador existe y es idéntico al original). |
-| 15 | General | No se ve el bloque elegido en la mano. |
 
 ## Arreglados
+
+- v0.2: borrar una partida desde el menú.
+- v0.2: la fuente de cascada se puede quitar (se apunta igual que en el original).
+- v0.2: partículas al romper un bloque; los bloques sueltos giran a la velocidad del original.
+- v0.2: Ciudad muerta se puede elegir en Nueva partida (Shed todavía no).
+- v0.2: se ve el bloque elegido en la mano.
 
 - Aparecía «en el cielo» al entrar en el sintetizador (no se ha vuelto a ver).
 - Los bloques del sintetizador se duplicaban al colocarlos.

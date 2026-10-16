@@ -1,0 +1,13 @@
+# bloque en la mano
+wait 3
+planet
+wait 20
+tp 64 64 top 0.8 -0.2
+wait 30
+slot 1
+wait 10
+shot hand1
+slot 6
+wait 10
+shot hand2
+quit

@@ -57,6 +57,7 @@ class GameView {
 	public var drops : Drops;
 	var fx : Fx;
 	var parts : Parts;
+	var hand : Hand;
 	/** la nave: el jugador empieza dentro y baja al planeta por el teletransportador (Game.placeShip) */
 	public var ship(default, null) : Ship;
 	/** progreso del teletransporte (Hero.enteringShip): -1 = recien llegado, 0..1.5 = entrando; a 1.5 se transporta */
@@ -108,6 +109,7 @@ class GameView {
 		drops = new Drops(world, atlas);
 		fx = new Fx(world, atlas);
 		parts = new Parts(world, atlas);
+		hand = new Hand(world, atlas);
 		ship = new Ship(world, atlas, s3d, info.shipEdits);
 		ship.initCrafts(this);
 		if( info.px < 0 ) {
@@ -293,6 +295,7 @@ class GameView {
 		drops.update(this, tmod);
 		fx.update(this, realDt, tmod);
 		parts.update(tmod, s3d.camera, px, py);
+		hand.update(inv.getCurrentBlock(), s3d.camera, bobX, bobY);
 	}
 
 	/** solo pruebas: recorre el rayo de la mira y cuenta la primera celda ocupada y por que se descarta */
@@ -329,6 +332,7 @@ class GameView {
 		ship.dispose();
 		fx.dispose();
 		parts.dispose();
+		hand.dispose();
 		drops.dispose();
 	}
 
