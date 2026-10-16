@@ -217,8 +217,7 @@ class DataGen {
 		{ id : BDarkLeaves, type : BTTransp, texture : [], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFColor(0x202320)], matter : BGreenLeaves, name : null, basePrice : null },
 		{ id : BMotherHull, type : BTFull, texture : [60,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage du vaisseau-mère", basePrice : null },
 		{ id : BMotherPanel, type : BTFull, texture : [61,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Panneau du vaisseau-mère", basePrice : null },
-		{ id : BMotherDark, type : BTFull, texture : [62,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage sombre du vaisseau-mère", basePrice : null },
-		{ id : BMotherGlass, type : BTAlpha, texture : [63,61], texUp : [], texDown : [], shadeX : 2.0, shadeY : 2.0, shadeUp : 2.0, shadeDown : 2.0, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Verre du vaisseau-mère", basePrice : null }
+		{ id : BMotherDark, type : BTFull, texture : [62,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage sombre du vaisseau-mère", basePrice : null }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [

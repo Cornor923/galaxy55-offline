@@ -32,7 +32,7 @@ RULES = [
     ('sea_lantern', 'BShedWallLight'), ('glowstone', 'BLamp'), ('redstone_lamp', 'BLamp'), ('lantern', 'BLamp'),
     ('end_rod', 'BLamp'), ('shroomlight', 'BLamp'),
     # cristal
-    ('tinted_glass', 'BShipGlassBlack'), ('black_stained_glass', 'BShipGlassBlack'), ('glass', 'BMotherGlass'),
+    ('tinted_glass', 'BShipGlassBlack'), ('black_stained_glass', 'BShipGlassBlack'), ('glass', 'BGlass'),
     ('iron_bars', 'BIronFence'),
     # metal y piedra de la nave
     ('quartz', 'BShipHull'), ('iron_block', 'BShipHull'), ('white_concrete', 'BShipHull'),
@@ -86,59 +86,98 @@ def special(n, pr):
         return 'BShipDoorY' if f in ('north', 'south') else 'BShipDoor'
     return None
 
-def add_hangar(grid, W, L, H, K):
-    """Añadido del port: modulo de hangar pegado al costado +x del ala derecha de la Hades. Tres bahias de 19x19x18
-    (caben las naves del hangar del original, 17x17x14), abiertas al espacio por fuera, con el suelo al nivel del ala (z 18)
-    y un pasillo de 3x3 de cada bahia al interior. Devuelve la rejilla ampliada, el nuevo ancho y los centros del suelo de cada bahia."""
-    WALL_X = 105                       # primera columna fuera de la pared del ala (que acaba en x 104)
-    BAY, N = 19, 3
-    Y0 = 184                           # pared inicial; tramo recto del ala: y 178..252
-    FZ = 17                            # suelo del hangar; se camina en z 18, como en el ala
-    TOP = FZ + 1 + 18                  # techo
-    NW = WALL_X + 1 + BAY + 1          # nueva anchura: pared interior + bahia + reborde exterior
-    g2 = bytearray(NW * L * H)
-    for z in range(H):
-        for y in range(L):
-            r = (y * W + z * W * L)
-            g2[y * NW + z * NW * L: y * NW + z * NW * L + W] = grid[r:r + W]
-    def put(x, y, z, k):
-        g2[x + y * NW + z * NW * L] = K[k] if k else 0
-    def get(x, y, z): return g2[x + y * NW + z * NW * L]
-    y1 = Y0 + N * (BAY + 1)
-    bays = []
-    for y in range(Y0, y1 + 1):
-        wall = (y - Y0) % (BAY + 1) == 0
-        for x in range(WALL_X, NW):
-            for z in range(FZ, TOP + 1):
-                inner = x == WALL_X
-                if z == FZ:
-                    # suelo con franjas oscuras en el borde exterior; el reborde de fuera sobresale como pista
-                    put(x, y, z, 'BMotherDark' if x >= NW - 2 else 'BMotherPanel')
-                elif z == TOP:
-                    put(x, y, z, 'BShipLight' if (not wall and (x - WALL_X) % 5 == 3 and (y - Y0) % 5 == 3) else 'BMotherHull')
-                elif inner or wall:
-                    if x == NW - 1 and not inner: put(x, y, z, 'BMotherDark')   # canto exterior de los tabiques
-                    elif wall and not inner and z in (FZ + 6, FZ + 12) and x % 4 == 0: put(x, y, z, 'BShedWallLight')
-                    else: put(x, y, z, 'BMotherHull')
-                else:
-                    put(x, y, z, None)
-    for i in range(N):
-        cy = Y0 + 1 + i * (BAY + 1) + BAY // 2
-        cx = WALL_X + 1 + BAY // 2
-        bays.append((cx, cy, FZ + 1))
-        # pasillo 3x3 hacia el interior del ala, hasta encontrar aire
-        for x in range(WALL_X, WALL_X - 16, -1):
-            hit_air = x < WALL_X and all(get(x, cy + d, FZ + 1) == 0 for d in (-1, 0, 1))
-            for d in (-1, 0, 1):
-                for z in (FZ + 1, FZ + 2, FZ + 3):
-                    put(x, cy + d, z, None)
-                if get(x, cy + d, FZ) == 0: put(x, cy + d, FZ, 'BMotherPanel')
-            if hit_air: break
-        # luces a los lados de la entrada
-        for d in (-2, 2):
-            put(WALL_X, cy + d, FZ + 2, 'BShedWallLight')
-    print('hangar: bahias en', bays)
-    return g2, NW, bays
+def empty_hangar(grid, W, L, H, cells, z, height, mirror=None):
+    """Quita las naves de adorno y sus pasarelas de atraque de un hangar (lo pidio el usuario, para dejar sitio a las naves
+    de los jugadores). La nave ocupa solo parte de las filas del hangar: en cada columna x del interior, lo que esta vacio
+    en la mayoria de las filas se vacia en todas. Las columnas de pared (llenas en la mayoria de filas) no se tocan, y el
+    suelo, las plataformas y el techo quedan como estan.
+    mirror: molde de otro hangar ya vaciado (x -> lista de aire por altura), para el hangar simetrico del otro ala: la nave
+    de adorno de algunos ocupa casi todas las filas y la mayoria no basta. Devuelve el molde de este hangar."""
+    x0 = min(c[0] for c in cells); x1 = max(c[0] for c in cells)
+    y0 = min(c[1] for c in cells); y1 = max(c[1] for c in cells)
+    top = z + height                     # primera capa del techo
+    def idx(x, y, zz): return x + y * W + zz * W * L
+    rows = y1 - y0 + 1
+    removed = 0
+    mold = {}
+    for x in range(x0, x1 + 1):
+        if mirror is not None and (W - 1 - x) in mirror:
+            air = mirror[W - 1 - x]
+        else:
+            air = [sum(1 for y in range(y0, y1 + 1) if not grid[idx(x, y, zz)]) * 2 >= rows for zz in range(z, top)]
+        mold[x] = air
+        # columna de interior: libre (en la mayoria de filas) hasta 8 por encima del suelo, sin contar una plataforma baja
+        if not all(air[2:9]): continue
+        # con molde en espejo se vacia tambien una fila mas por cada lado (las naves de adorno asoman fuera del suelo libre)
+        ya, yb = (y0 - 1, y1 + 1) if mirror is not None else (y0, y1)
+        for y in range(ya, yb + 1):
+            for i, zz in enumerate(range(z, min(top, z + len(air)))):
+                if air[i] and grid[idx(x, y, zz)]:
+                    grid[idx(x, y, zz)] = 0
+                    removed += 1
+    if removed: print('hangar x %d-%d y %d-%d: quitados %d bloques de adorno' % (x0, x1, y0, y1, removed))
+    return mold
+
+def find_hangars(grid, W, L, H, z=18, min_cells=500, min_h=14):
+    """Los hangares de la Hades (capa 42 del juego = z 18 del mapa): salas grandes de suelo libre con al menos 14 de alto
+    (caben las naves del hangar del original, 17x17x14). Devuelve el centro del suelo de cada una, ordenados por y y x."""
+    def at(x, y, zz): return grid[x + y * W + zz * W * L]
+    def clear(a, b):
+        h = 0
+        while z + h < H and not at(a, b, z + h): h += 1
+        return h
+    seen = bytearray(W * L); bays = []; halls = []
+    for y0 in range(L):
+        for x0 in range(W):
+            if seen[x0 + y0 * W] or at(x0, y0, z) or not at(x0, y0, z - 1): continue
+            q = [(x0, y0)]; seen[x0 + y0 * W] = 1; cells = []
+            while q:
+                a, b = q.pop(); cells.append((a, b))
+                for c in ((a + 1, b), (a - 1, b), (a, b + 1), (a, b - 1)):
+                    if not (0 <= c[0] < W and 0 <= c[1] < L) or seen[c[0] + c[1] * W]: continue
+                    if at(c[0], c[1], z) or not at(c[0], c[1], z - 1): continue
+                    seen[c[0] + c[1] * W] = 1; q.append(c)
+            if len(cells) < min_cells or min(c[0] for c in cells) < W // 2: continue
+            hs = sorted(clear(a, b) for a, b in cells)
+            if hs[len(hs) // 2] < min_h: continue
+            halls.append((cells, hs[-1]))
+    # la Hades es simetrica: los hangares del ala izquierda son el espejo de los de la derecha (en la izquierda hay naves
+    # de adorno tan grandes que tapan el suelo y no se detectan bien). Primero la derecha; su molde vacia la izquierda.
+    halls += [([(W - 1 - a, b) for a, b in cells], h) for cells, h in list(halls)]
+    molds = {}
+    for cells, height in halls:
+        y0 = min(c[1] for c in cells); x0 = min(c[0] for c in cells)
+        mirror = molds.get(y0) if x0 < W // 2 else None
+        mold = empty_hangar(grid, W, L, H, cells, z, height, mirror)
+        if x0 >= W // 2: molds[y0] = mold
+    for cells, height in halls:
+        # se vacio: recalcular el suelo libre
+        cells = [c for c in ((a, b) for a in range(min(c[0] for c in cells), max(c[0] for c in cells) + 1)
+                                      for b in range(min(c[1] for c in cells), max(c[1] for c in cells) + 1))
+                 if not at(c[0], c[1], z) and at(c[0], c[1], z - 1)]
+        if True:
+            cx = sum(c[0] for c in cells) // len(cells); cy = sum(c[1] for c in cells) // len(cells)
+            # hueco libre de 17x17x14 (nave maxima del hangar) mas cercano al centro: algunos hangares ya tienen naves de adorno
+            # hasta 2 plazas por hangar, sin solaparse
+            free = set(c for c in cells if clear(*c) >= min_h)
+            found = 0
+            for _ in range(2):
+                best = None
+                # empezando por una esquina, asi caben dos en los hangares anchos
+                ex = min(c[0] for c in free) if free else cx; ey = min(c[1] for c in free) if free else cy
+                for (a, b) in sorted(free, key=lambda c: (c[0] - ex) ** 2 + (c[1] - ey) ** 2):
+                    if all((a + i, b + j) in free for i in range(-8, 9) for j in range(-8, 9)):
+                        best = (a, b); break
+                if best is None: break
+                bays.append((best[0], best[1], z)); found += 1
+                for i in range(-9, 10):
+                    for j in range(-9, 10):
+                        free.discard((best[0] + i, best[1] + j))
+            if found == 0:
+                print('hangar sin hueco libre de 17x17 cerca de', cx, cy)
+    bays.sort(key=lambda b: (b[1], b[0]))
+    print('hangares:', len(bays), bays)
+    return bays
 
 def main(world, out):
     K = kinds()
@@ -169,7 +208,7 @@ def main(world, out):
         if g is None: continue
         gx, gy, gz = x - x0, (z1 - z), y - y0
         grid[gx + gy * W + gz * W * L] = K[g]
-    grid, W, bays = add_hangar(grid, W, L, H, K)
+    bays = find_hangars(grid, W, L, H)
     # aparicion: donde estaba el jugador
     sx, sy, sz = W // 2, L // 2, H
     pd = os.path.join(world, 'playerdata')
