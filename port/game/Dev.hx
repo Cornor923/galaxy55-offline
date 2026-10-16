@@ -121,6 +121,7 @@ class Dev {
 				case "hangarexit": if( g.onHangarExit != null ) g.onHangarExit();
 				case "chestclick": if( app.chest != null ) app.chest.click(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "shopclose": if( app.shop != null ) @:privateAccess app.closeShop();
+				case "shopnav": if( app.shop != null ) app.shop.devNav(Std.parseInt(a[1]), Std.parseInt(a[2]), a[3] == "a");
 				case "buy", "sell":
 					// buy CLAVE n / sell CLAVE n (clave de Market: b<bloque> o c<carga>; o el nombre del bloque, p.ej. BWood)
 					var w = Market.ware(a[1]);

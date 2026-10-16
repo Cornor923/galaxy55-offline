@@ -29,7 +29,7 @@ class Lang {
 		"shop.title" => ["Robot comerciante", "Merchant robot", "Robot marchand"],
 		"shop.yours" => ["Lo que llevas (clic: vender)", "Your items (click: sell)", "Ton inventaire (clic : vendre)"],
 		"shop.robot" => ["Lo que vende el robot (clic: comprar)", "Robot's stock (click: buy)", "Stock du robot (clic : acheter)"],
-		"shop.hint" => ["Mayús + clic: 10 unidades. Rueda: página. Los precios cambian según lo que se compra y se vende.", "Shift + click: 10 units. Wheel: page. Prices change with what is bought and sold.", "Maj + clic : 10 unités. Molette : page. Les prix changent selon ce qui est acheté et vendu."],
+		"shop.hint" => ["Mayús + clic: 10 unidades. Rueda: página. Mando: A 1, X 10, LB/RB página, B cerrar. Los precios cambian según lo que se compra y se vende.", "Shift + click: 10 units. Wheel: page. Gamepad: A 1, X 10, LB/RB page, B close. Prices change with what is bought and sold.", "Maj + clic : 10 unités. Molette : page. Manette : A 1, X 10, LB/RB page, B fermer. Les prix changent selon ce qui est acheté et vendu."],
 		"shop.close" => ["Cerrar", "Close", "Fermer"],
 		"shop.credits" => ["Créditos:", "Credits:", "Crédits :"],
 		"shop.buy" => ["comprar", "buy", "acheter"],

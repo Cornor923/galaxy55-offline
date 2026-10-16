@@ -1223,7 +1223,7 @@ class GalaxyApp extends hxd.App {
 				if( chest != null ) {
 					chest.update(dt, pad);
 				} else if( shop != null ) {
-					if( K.isPressed(K.ESCAPE) ) closeShop();
+					shop.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
 				game.updateCamera();
 			} else if( game.creative && K.isPressed(K.I) ) {

@@ -31,6 +31,12 @@ class Shop extends h2d.Object {
 	var pageText : h2d.Text;
 	var hover : Ware;
 	var hoverSell = false;
+	/** casillas de cada lado (0 = lo que llevas, 7 columnas; 1 = el robot, RCOLS columnas) para moverse con mando/teclado */
+	var cells : Array<Array<{ x : Float, y : Float, w : Ware, sell : Bool, name : String }>> = [[], []];
+	/** casilla marcada con el mando o las flechas [lado, indice] (null = solo raton) */
+	var focus : Array<Int>;
+	var focusG : h2d.Graphics;
+	var navCooldown = 0.;
 
 	public function new( parent : h2d.Object, atlas : h3d.mat.Texture, market : Market, inv : Inv, credits : Int ) {
 		super(parent);
@@ -65,7 +71,110 @@ class Shop extends h2d.Object {
 		right = new h2d.Object(this);
 		right.x = px + 470;
 		right.y = py + 100;
+		focusG = new h2d.Graphics(this);
 		refresh();
+	}
+
+	/**
+	 * Mando y teclado (añadido del port; los botones son los de la tienda de la version Flash, input/Pad.hx): cruceta/stick
+	 * o flechas eligen casilla (al pasar el borde se cambia de lado), A/Intro = 1 unidad, X = 10, LB/RB = pagina, B/Esc = cerrar.
+	 */
+	public function update( dt : Float, pad : hxd.Pad ) {
+		var K = hxd.Key;
+		if( navCooldown > 0 ) navCooldown -= dt;
+		var dx = 0, dy = 0, page = 0;
+		if( K.isPressed(K.LEFT) ) dx = -1;
+		if( K.isPressed(K.RIGHT) ) dx = 1;
+		if( K.isPressed(K.UP) ) dy = -1;
+		if( K.isPressed(K.DOWN) ) dy = 1;
+		var one = K.isPressed(K.ENTER) || K.isPressed(K.NUMPAD_ENTER), ten = false, back = K.isPressed(K.ESCAPE);
+		if( pad != null ) {
+			if( pad.isPressed(pad.config.dpadLeft) ) dx = -1;
+			if( pad.isPressed(pad.config.dpadRight) ) dx = 1;
+			if( pad.isPressed(pad.config.dpadUp) ) dy = -1;
+			if( pad.isPressed(pad.config.dpadDown) ) dy = 1;
+			if( navCooldown <= 0 ) {
+				if( pad.xAxis < -0.6 ) { dx = -1; navCooldown = 0.18; }
+				else if( pad.xAxis > 0.6 ) { dx = 1; navCooldown = 0.18; }
+				else if( pad.yAxis < -0.6 ) { dy = -1; navCooldown = 0.18; }
+				else if( pad.yAxis > 0.6 ) { dy = 1; navCooldown = 0.18; }
+			}
+			if( pad.isPressed(pad.config.LB) ) page = -1;
+			if( pad.isPressed(pad.config.RB) ) page = 1;
+			if( pad.isPressed(pad.config.A) ) one = true;
+			if( pad.isPressed(pad.config.X) ) ten = true;
+			if( pad.isPressed(pad.config.B) ) back = true;
+		}
+		if( back ) {
+			if( onClose != null ) onClose();
+			return;
+		}
+		if( page != 0 ) scroll(page);
+		if( dx != 0 || dy != 0 ) {
+			if( focus == null ) focus = [1, 0];
+			else moveFocus(dx, dy);
+			drawFocus();
+		}
+		if( focus != null && (one || ten) ) {
+			var c = cells[focus[0]][focus[1]];
+			if( c != null && c.w != null ) {
+				if( c.sell ) doSell(c.w, ten ? 10 : 1) else doBuy(c.w, ten ? 10 : 1);
+			}
+		}
+	}
+
+	/** solo pruebas (Dev "shopnav"): como pulsar la cruceta (dx, dy) y, si buy, el boton A */
+	public function devNav( dx : Int, dy : Int, buy : Bool ) {
+		if( focus == null ) focus = [1, 0] else if( dx != 0 || dy != 0 ) moveFocus(dx, dy);
+		drawFocus();
+		var c = cells[focus[0]][focus[1]];
+		if( buy && c != null && c.w != null ) { if( c.sell ) doSell(c.w, 1) else doBuy(c.w, 1); }
+	}
+
+	function moveFocus( dx : Int, dy : Int ) {
+		var side = focus[0], i = focus[1];
+		var cols = side == 0 ? 7 : RCOLS;
+		var n = cells[side].length;
+		if( n == 0 ) { focus = [1 - side, 0]; return; }
+		var cx = i % cols, cy = Std.int(i / cols);
+		cx += dx;
+		cy += dy;
+		// al pasar el borde, al otro lado (misma fila)
+		if( cx < 0 || cx >= cols ) {
+			var other = 1 - side;
+			var ocols = other == 0 ? 7 : RCOLS;
+			if( cells[other].length > 0 ) {
+				var ox = dx > 0 ? 0 : ocols - 1;
+				var oi = Std.int(Math.min(cells[other].length - 1, cy * ocols + ox));
+				focus = [other, oi];
+			}
+			return;
+		}
+		var rows = Std.int((n + cols - 1) / cols);
+		if( cy < 0 ) cy = rows - 1 else if( cy >= rows ) cy = 0;
+		var ni = cy * cols + cx;
+		if( ni >= n ) ni = n - 1;
+		focus = [side, ni];
+	}
+
+	function drawFocus() {
+		focusG.clear();
+		if( focus == null ) return;
+		if( focus[1] >= cells[focus[0]].length ) focus[1] = cells[focus[0]].length - 1;
+		if( focus[1] < 0 ) { focus = null; return; }
+		var c = cells[focus[0]][focus[1]];
+		var o = focus[0] == 0 ? left : right;
+		var x = o.x + c.x, y = o.y + c.y;
+		Theme.rect(focusG, x - 1, y - 1, CELL + 2, 3, Theme.ACCENT);
+		Theme.rect(focusG, x - 1, y + CELL - 2, CELL + 2, 3, Theme.ACCENT);
+		Theme.rect(focusG, x - 1, y - 1, 3, CELL + 2, Theme.ACCENT);
+		Theme.rect(focusG, x + CELL - 2, y - 1, 3, CELL + 2, Theme.ACCENT);
+		if( c.w != null ) {
+			hover = c.w;
+			hoverSell = c.sell;
+			showInfo();
+		} else
+			info.text = c.name != null ? c.name + "   " + Lang.t("shop.nosale") : "";
 	}
 
 	function pages() return Std.int((Market.wares.length + RCOLS * RROWS - 1) / (RCOLS * RROWS));
@@ -83,24 +192,29 @@ class Shop extends h2d.Object {
 		pageText.text = (page + 1) + " / " + pages();
 		// lo que llevas: todas las casillas del inventario, una por una (las que el robot no compra salen apagadas), y las cargas
 		left.removeChildren();
+		cells = [[], []];
 		var i = 0;
 		for( st in inv.inv.t ) {
 			var x = (i % 7) * CELL, y = Std.int(i / 7) * (CELL + 18);
 			i++;
 			if( st == null ) {
 				emptyCell(left, x, y);
+				cells[0].push({ x : x, y : y, w : null, sell : true, name : null });
 				continue;
 			}
 			var b = Block.all[st.k];
 			var w = Market.wareOfBlock(b);
 			if( w == null ) noSaleCell(left, x, y, b, st.n);
 			else cell(left, x, y, w, st.n, market.sellPrice(w), true);
+			cells[0].push({ x : x, y : y, w : w, sell : true, name : b.getName() });
 		}
 		for( c in inv.inv.charges ) {
 			if( c.n <= 0 ) continue;
 			var w = Market.wareOfCharge(Type.createEnumIndex(ChargeKind, c.c));
 			if( w == null ) continue;
-			cell(left, (i % 7) * CELL, Std.int(i / 7) * (CELL + 18), w, c.n, market.sellPrice(w), true);
+			var x = (i % 7) * CELL, y = Std.int(i / 7) * (CELL + 18);
+			cell(left, x, y, w, c.n, market.sellPrice(w), true);
+			cells[0].push({ x : x, y : y, w : w, sell : true, name : null });
 			i++;
 		}
 		// lo que tiene el robot
@@ -110,9 +224,12 @@ class Shop extends h2d.Object {
 			var wi = page * per + i;
 			if( wi >= Market.wares.length ) break;
 			var w = Market.wares[wi];
-			cell(right, (i % RCOLS) * CELL, Std.int(i / RCOLS) * (CELL + 18), w, -1, market.buyPrice(w), false);
+			var x = (i % RCOLS) * CELL, y = Std.int(i / RCOLS) * (CELL + 18);
+			cell(right, x, y, w, -1, market.buyPrice(w), false);
+			cells[1].push({ x : x, y : y, w : w, sell : false, name : null });
 		}
 		showInfo();
+		if( focus != null ) drawFocus();
 	}
 
 	function cell( parent : h2d.Object, x : Float, y : Float, w : Ware, n : Int, price : Int, sell : Bool ) {
