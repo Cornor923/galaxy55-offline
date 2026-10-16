@@ -1,5 +1,7 @@
 # Novedades (versión nativa)
 
+[English: `CHANGELOG.en.md`](CHANGELOG.en.md)
+
 ## v0.1 — pre-release
 Primera versión nativa publicada: menús y partidas guardadas, planetas idénticos a los de Flash, excavar/colocar/jetpack,
 modo creativo, nave (teletransportador, puertas, sintetizador con recetas originales, ordenador), mapa de estrellas

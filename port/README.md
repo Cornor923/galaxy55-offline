@@ -1,0 +1,83 @@
+# Native port (Haxe 4 + Heaps + HashLink)
+
+[Español: `LEEME.md`](LEEME.md)
+
+This folder contains the port of the game to a native desktop application, with no Flash. It is work in progress (with known
+bugs, see `BUGS.md` in the repository root); the original Flash game remains untouched in `src/`, `libs/` and `release/`, and in the `flash` branch.
+
+## Play
+
+Build it (see below) and double-click `jugar.bat`, or download the portable zip from the
+[release](../../../releases/tag/v0.1). The start menu offers Continue, New game, Load game, Options and Quit.
+In New game you choose name, seed, biome, size and mode: **Adventure** (as in the original) or **Creative** (our addition).
+Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable).
+The save format may change between versions: do not count on today's saves working forever.
+
+## Controls
+
+They are the original game's (movement and physics are a copy of `ent/Hero.hx` and `Game.moveHero`).
+
+| Action | Keys |
+|---|---|
+| Move | W/Z/Up forward, S/Down back, A/D and Left/Right sideways (in Options they can turn, as in the original) |
+| Look | mouse (or gamepad) |
+| Jump and jetpack | Space or Ctrl; in the air, jetpack (uses fuel, recharges on the ground) |
+| Walk slowly | X |
+| Helmet | H takes it off or puts it on |
+| Dig or place | left click, E or Shift (hold). With an empty hand you dig; with a block you place it if something supports it |
+| Choose slot | 1-0 or mouse wheel; Tab = digger (empty hand) |
+| Drop the selected stack | R or Del |
+| Activate (on-board computer, doors) | aim, press and release |
+| Return to the ship | Shift+K, or step into the landing light beam |
+| Creative: block palette | I (click = put the block in the selected slot, wheel = page) |
+| Pause | Esc |
+| Quick save | F5 |
+
+There is no run button, as in the original. Gamepad: left stick moves, right stick looks, A jumps and jetpack, B walks slowly,
+RT digs, LT places, Back helmet, Start pause. Menus: arrows/Enter/Esc, mouse or gamepad.
+
+## Build
+
+You need (Windows):
+1. **Haxe 4.3.x** (https://haxe.org/download/) and **HashLink 1.16** for Windows (https://github.com/HaxeFoundation/hashlink/releases).
+   Put the folders in the `PATH`; `haxe` and `hl` must work in a terminal.
+2. Haxe libraries:
+
+       haxelib install format
+       haxelib git heaps https://github.com/HeapsIO/heaps
+       haxelib git hashlink https://github.com/HaxeFoundation/hashlink
+       haxelib dev hlsdl <folder-where-you-cloned-hashlink>/libs/sdl
+
+   (`hlsdl` needs the HashLink source: clone that repository and point `haxelib dev` to its `libs/sdl` folder.)
+   This is how the development machine was set up (Heaps from the main branch, HashLink 1.16, no admin rights). **It has not been tested from scratch on another machine**: if something fails, open an *issue*.
+3. From the repository root:
+
+       haxe port\game.hxml          full game with menus   (-> port\out\galaxy55.hl)
+       haxe port\render.hxml        render technical test  (-> port\out\render.hl)
+       haxe port\headless.hxml      screenless planet generator, HashLink
+       haxe port\headless_flash.hxml  the same program for Flash (reference)
+
+`jugar.bat` looks for `hl` in the `PATH`; if it is elsewhere, set the `HL` variable to its path first.
+The game looks for the original graphics in `res\` (portable package) or, if missing, in `src\G55\fla\client\gfx\`; the `GALAXY55_RES` variable forces another folder.
+
+### Other platforms
+
+Get a HashLink build for your platform, copy `galaxy55.hl` into its folder as `hlboot.dat`, put the `res/` folder next to it and run `hl`.
+A player got it running on Linux this way; we have not tested it.
+
+## What is here
+
+- `game/` the game: menus (`GalaxyApp`, `Ui`), languages (`Lang`), settings (`Settings`), saves (`SaveData`), planet, light and meshing (`World`),
+  block models (`Models`), sky and fog (`Sky`), snow (`Snow`), player, digging and placing (`GameView`), inventory (`Inv`, `InvBar`, `Palette`),
+  effects and drops (`Fx`, `Drops`) and the ship (`Ship`, `ShipData`).
+- `shim/` `flash.*` compatibility layer so the original generators compile in HashLink.
+- `headless/` verification programs: worlds are identical to the Flash ones (Adler-32 hash, water and blocks); they also read the ship and the saves.
+
+## Differences from the original
+
+- Sky, gradient and fog use the original colours of each biome. The stars are this port's.
+- Snow in the winter biome is an addition of this port: the original does not have it.
+- Creative mode and its palette are an addition of this port.
+- The on-board computer menu has its own look, as in the Flash version (the original was a web page).
+- Still missing: shop, hangar, flowing water, sound and seeing the block in the hand.
+  See `TODO.md` in the repository root.

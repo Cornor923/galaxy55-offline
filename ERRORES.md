@@ -1,5 +1,7 @@
 # Errores conocidos (versión nativa)
 
+[English: `BUGS.md`](BUGS.md)
+
 Si encuentras uno que no está aquí, abre un *issue* con lo que hacías y, si puedes, una captura.
 Los que están **arreglados** se mueven al final. Los detalles técnicos están en [`port/RESUMEN.md`](port/RESUMEN.md).
 
@@ -21,7 +23,7 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 | 12 | Agua | El agua **no fluye**, y se congela al tocar hielo (por confirmar si es lo esperado). |
 | 13 | Mapa de estrellas | La **entrada y salida del sistema solar** y el **aterrizaje** son un simple fundido, no las animaciones del original; la salida del sistema es demasiado rápida (el original deja pasar la última órbita y te saca después). |
 | 14 | Mundo | **Ciudad Muerta** y **Shed** no se pueden elegir aún (el generador existe y es idéntico al original). |
-| 15 | General | **No hay sonido**, no se ve el bloque elegido en la mano, no hay tienda ni hangar. |
+| 15 | General | No se ve el bloque elegido en la mano. |
 
 ## Arreglados
 

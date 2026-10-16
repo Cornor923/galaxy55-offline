@@ -1,5 +1,7 @@
 # Port nativo (Haxe 4 + Heaps + HashLink)
 
+[English: `README.md`](README.md)
+
 Esta carpeta contiene el port del juego a una aplicación de escritorio nativa, sin Flash. Es trabajo en curso (con errores
 conocidos, ver `ERRORES.md` en la raíz); el juego original en Flash sigue intacto en `src/`, `libs/` y `release/`, y también en la rama `flash`.
 

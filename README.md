@@ -16,12 +16,12 @@ It was shut down and its server no longer exists. This project ports it to a **n
 | I want to… | Look at |
 |---|---|
 | **Play without compiling** | [pre-release v0.1](../../releases/tag/v0.1): download the zip, unzip it, run `jugar.bat` |
-| **Controls and how to build** | [`port/LEEME.md`](port/LEEME.md) (Spanish) |
-| **See or report bugs** | [`ERRORES.md`](ERRORES.md) (known bugs, Spanish table); to report a new one, open an *issue* or message me |
-| **See what is missing** | [`PENDIENTES.md`](PENDIENTES.md) (to-do list, Spanish) |
-| **See what changed** | [`CHANGELOG.md`](CHANGELOG.md) |
-| **Developer notes** | [`port/RESUMEN.md`](port/RESUMEN.md) |
-| **The Flash version (archived)** | [`docs/flash/README_flash.md`](docs/flash/README_flash.md), branch [`flash`](../../tree/flash), tag [`flash-version`](../../tree/flash-version) |
+| **Controls and how to build** | [`port/README.md`](port/README.md) |
+| **See or report bugs** | [`BUGS.md`](BUGS.md) (known bugs); to report a new one, open an *issue* or message me |
+| **See what is missing** | [`TODO.md`](TODO.md) (to-do list) |
+| **See what changed** | [`CHANGELOG.en.md`](CHANGELOG.en.md) |
+| **Developer notes** | [`port/RESUMEN.md`](port/RESUMEN.md) (Spanish) |
+| **The Flash version (archived)** | [`docs/flash/README_flash.md`](docs/flash/README_flash.md) (Spanish, English summary at the end), branch [`flash`](../../tree/flash), tag [`flash-version`](../../tree/flash-version) |
 
 ## Play in 3 steps
 
@@ -42,11 +42,11 @@ and the **star map** (sector, solar systems, scanning and landing).
 
 ![Star map: solar system](docs/img/mapa-estrellas.jpg)
 
-Still missing: the shop, the hangar, sound, flowing water, and the exact travel animations of the star map. See [`PENDIENTES.md`](PENDIENTES.md).
+Still missing: the shop, the hangar, sound, flowing water, and the exact travel animations of the star map. See [`TODO.md`](TODO.md).
 
 ## Known bugs (summary)
 
-Full numbered list in [`ERRORES.md`](ERRORES.md). The main ones:
+Full numbered list in [`BUGS.md`](BUGS.md). The main ones:
 - Deleting a saved game from the menu does not work.
 - Lighting errors on non-square blocks; plain white blocks and odd spruce leaves in the winter biome; planet curvature too strong.
 - No particles when breaking a block; hanging things and ground plants cannot be broken.

@@ -1,5 +1,7 @@
 # Pendientes (versión nativa)
 
+[English: `TODO.md`](TODO.md)
+
 Orden aproximado. Lo ya hecho está en [`CHANGELOG.md`](CHANGELOG.md); los fallos, en [`ERRORES.md`](ERRORES.md);
 los detalles técnicos de cada punto, en [`port/RESUMEN.md`](port/RESUMEN.md).
 
