@@ -690,7 +690,7 @@ class GameView {
 		if( b.activable != null ) {
 			var ok = switch( b.activable ) {
 				case WEverywhere: true;
-				case WInShip: z >= World.SHIP_Z;
+				case WInShip: z >= World.SHIP_Z || info.mothership == true; // la nave nodriza cuenta como nave
 				case WOnPlanet: z < World.SHIP_Z;
 			};
 			if( !ok ) return;

@@ -59,6 +59,19 @@ class Atlas {
 			{ dst : tileOf(BMotherPanel), src : tileOf(BShipHull), k : 0.95, add : 0 },
 			{ dst : tileOf(BMotherDark), src : tileOf(BShedWall), k : 0.6, add : 18 }, // gris oscuro como la pizarra profunda de Minecraft (antes se veia negro)
 		];
+		// campo de fuerza de los hangares (añadido del port): deja pasar las naves pero no el vacio. Azul translucido con
+		// rayos laser horizontales; las lineas son solo horizontales para que no se vean juntas de bloque
+		var ft = tileOf(BMotherField);
+		var fx0 = (ft & 63) << 5, fy0 = (ft >> 6) << 5;
+		for( y in 0...32 )
+			for( x in 0...32 ) {
+				var c = switch( y & 7 ) {
+					case 0: 0xC8B4F0FF;            // rayo
+					case 1, 7: 0x7050C8FF;         // halo del rayo
+					default: 0x302878E0;           // campo
+				};
+				pix.setPixel(fx0 + x, fy0 + y, c);
+			}
 		for( j in jobs ) {
 			var sx = (j.src & 63) << 5, sy = (j.src >> 6) << 5;
 			var dx = (j.dst & 63) << 5, dy = (j.dst >> 6) << 5;

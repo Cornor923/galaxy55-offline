@@ -704,6 +704,17 @@ class GalaxyApp extends hxd.App {
 		};
 	}
 
+	/** vuelta de la nave nodriza: lo comprado y vendido al robot (inventario, creditos, mercado) se lleva a la partida */
+	function backFromMothership() {
+		if( hangarReturn != null && game != null ) {
+			var m = game.toInfo();
+			hangarReturn.inv = Inv.copy(game.inv.inv);
+			hangarReturn.credits = m.credits;
+			hangarReturn.market = m.market;
+		}
+		backFromHangar();
+	}
+
 	function backFromHangar() {
 		var info = hangarReturn;
 		hangarReturn = null;
@@ -775,6 +786,11 @@ class GalaxyApp extends hxd.App {
 
 	function openComputer() {
 		if( state != Playing ) return;
+		// en la nave nodriza el ordenador es el mostrador del robot comerciante (provisional): abre la tienda
+		if( game != null && game.info.mothership == true ) {
+			openShop();
+			return;
+		}
 		state = Paused;
 		captureMouse(false);
 		hud.visible = false; msgText.visible = false;
@@ -869,7 +885,7 @@ class GalaxyApp extends hxd.App {
 		invBar = new InvBar(s2d, game.inv, atlas, W);
 		game.onComputer = openComputer;
 		game.onChest = openChest;
-		if( game.info.mothership == true ) game.onHangarExit = backFromHangar;
+		if( game.info.mothership == true ) game.onHangarExit = backFromMothership;
 		if( game.hangar != null ) {
 			game.onHangarExit = exitHangar;
 			hangarOrig = haxe.crypto.Base64.encode(game.hangarShip());

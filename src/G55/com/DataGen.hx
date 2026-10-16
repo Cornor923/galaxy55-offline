@@ -217,7 +217,8 @@ class DataGen {
 		{ id : BDarkLeaves, type : BTTransp, texture : [], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFColor(0x202320)], matter : BGreenLeaves, name : null, basePrice : null },
 		{ id : BMotherHull, type : BTFull, texture : [60,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage du vaisseau-mère", basePrice : null },
 		{ id : BMotherPanel, type : BTFull, texture : [61,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Panneau du vaisseau-mère", basePrice : null },
-		{ id : BMotherDark, type : BTFull, texture : [62,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage sombre du vaisseau-mère", basePrice : null }
+		{ id : BMotherDark, type : BTFull, texture : [62,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage sombre du vaisseau-mère", basePrice : null },
+		{ id : BMotherField, type : BTAlpha, texture : [63,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(6.0),BFNoShade], matter : null, name : "Champ de force du hangar", basePrice : null }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [

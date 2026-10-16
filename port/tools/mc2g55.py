@@ -32,6 +32,7 @@ RULES = [
     ('sea_lantern', 'BShedWallLight'), ('glowstone', 'BLamp'), ('redstone_lamp', 'BLamp'), ('lantern', 'BLamp'),
     ('end_rod', 'BLamp'), ('shroomlight', 'BLamp'),
     # cristal
+    ('blue_stained_glass', 'BMotherField'),   # la pared de los hangares que da al espacio: campo de fuerza
     ('tinted_glass', 'BShipGlassBlack'), ('black_stained_glass', 'BShipGlassBlack'), ('glass', 'BGlass'),
     ('iron_bars', 'BIronFence'),
     # metal y piedra de la nave
@@ -50,6 +51,9 @@ RULES = [
     ('chest', 'BChest'),
 ]
 
+# de momento solo se visita el hangar: las puertas se dejan cerradas y tapadas (lo pidio el usuario). True = abrirlas.
+OPEN_DOORS = False
+
 FACING = {'north': (0, 0, -1), 'south': (0, 0, 1), 'east': (1, 0, 0), 'west': (-1, 0, 0), 'up': (0, 1, 0), 'down': (0, -1, 0)}
 
 def open_piston_doors(blocks):
@@ -63,6 +67,13 @@ def open_piston_doors(blocks):
         if d is None: continue
         head = (b[0], b[1], b[2])
         front = (b[0] + d[0], b[1] + d[1], b[2] + d[2])
+        if not OPEN_DOORS:
+            # cerrada y tapada: el cristal que la cierra pasa a ser pared
+            if front in at:
+                j = at[front]
+                moved[front] = (front[0], front[1], front[2], 'polished_andesite', {})
+                gone.add(j)
+            continue
         gone.add(at[head])
         if b[4].get('type') == 'sticky' and front in at:
             j = at[front]
@@ -71,7 +82,7 @@ def open_piston_doors(blocks):
     out = [b for i, b in enumerate(blocks) if i not in gone]
     for (x, y, z), b in moved.items():
         out.append((x, y, z, b[3], b[4]))
-    print('puertas de piston abiertas:', len(moved))
+    print('puertas de piston', 'abiertas:' if OPEN_DOORS else 'tapadas:', len(moved))
     return out
 
 def special(n, pr):
@@ -80,6 +91,8 @@ def special(n, pr):
         # rejillas de suelo y techo: cerradas arriba ocupan la parte alta (el suelo queda a la misma altura), abajo como placa
         if pr.get('open') == 'true': return ''
         return 'BMotherPanel' if pr.get('half') == 'top' else 'BShipPlate'
+    if n.endswith('_door') and not OPEN_DOORS:
+        return 'BMotherPanel'
     if n.endswith('_door'):
         # puertas de la nave del original (bloque de 1 de alto que se abre al usarlo, BFToggle): una por cada mitad de la de Minecraft
         f = pr.get('facing')
@@ -219,6 +232,16 @@ def main(world, out):
             sx, sy, sz = int(p[0]) - x0, z1 - int(p[2]), int(p[1]) - y0
             break
     sx, sy, sz = [max(0, min(v, m - 1)) for v, m in ((sx, W), (sy, L), (sz, H))]
+    if bays:
+        # de momento solo se visita el hangar: se aparece en una plaza y el robot comerciante (provisional: mostrador con
+        # ordenador, que abre la tienda) queda al lado, en el suelo libre del mismo hangar
+        home = max((b for b in bays if b[1] > L // 2), key=lambda b: b[0], default=bays[0])
+        sx, sy, sz = home
+        rx, ry = home[0], home[1] + 11
+        for dx in (-1, 0, 1):
+            grid[(rx + dx) + ry * W + sz * W * L] = K['BShipPlate']
+        grid[rx + ry * W + sz * W * L] = K['BShipComputer']
+        print('llegada', home, 'robot', (rx, ry, sz))
     # 'G55N': como 'G55M' mas el numero de bahias y sus centros de suelo (x, y, z) antes de los datos comprimidos
     head = b'G55N' + struct.pack('<6H', W, L, H, sx, sy, sz) + struct.pack('<H', len(bays))
     for b in bays: head += struct.pack('<3H', *b)
