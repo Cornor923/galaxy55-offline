@@ -12,7 +12,6 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 | 4 | Lighting | **Non-square blocks** (half blocks, models...) are lit differently from their neighbours. |
 | 7 | Winter | There are **plain white blocks** without texture. |
 | 8 | Winter | **Spruce leaves** drop material; in the original they may not. |
-| 9 | Rendering | The planet **curvature** is stronger than it should be. |
 | 10 | Rendering | Dropped **crystals** (charges) look too wide. |
 | 11 | Rendering | **Layer 0** (bedrock) seen from below looks like a flat plane. |
 | 12 | Water | Water **does not flow**, and it freezes when touching ice (not yet confirmed whether the original does that). |
@@ -23,6 +22,7 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 - v0.2: the cascade source can be removed (targeting now works as in the original).
 - v0.2: particles when breaking a block; dropped blocks spin at the original speed.
 - v0.2: Dead city can be chosen in New game (Shed not yet).
+- v0.2 (change from the original): planet curvature is 60 % of the original one (it was too noticeable, especially on small planets).
 - v0.2: the selected block is shown in the hand.
 - v0.2: star map with the original animations: entering and leaving a system (zoom, hyperspace, flashes; leaving lets you cross the ring and ejects you a moment later), scanning (fade, name and bar) and landing; common background with maelstrom.
 - v0.2 (change from the original): the synthesizer always uses up the blocks placed in its area.

@@ -303,7 +303,7 @@ class GameView {
 		var cp = Math.cos(pitch);
 		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
 		var ex = px, ey = py, ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
-		var curve = 2.0 / world.size;
+		var curve = World.curve(world.size);
 		var out = [];
 		var t = 0.;
 		var last = "";
@@ -641,7 +641,7 @@ class GameView {
 		var cp = Math.cos(pitch);
 		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
 		var ex = px, ey = py, ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
-		var curve = 2.0 / world.size;
+		var curve = World.curve(world.size);
 		var lx = 0, ly = 0, lz = 0, have = false;
 		var t = 0.;
 		while( t < 7.0 ) {

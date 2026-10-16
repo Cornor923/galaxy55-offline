@@ -23,6 +23,13 @@ class World {
 	public var seed(default, null) : Int;
 	public var biomeName(default, null) : String;
 	public var size(default, null) : Int;
+
+	/**
+	 * Curvatura del planeta. El original usa curve = 2 / totalSize (AbstractGame); el port la reduce (CURVE_K) porque se notaba
+	 * demasiado. Se usa en el dibujo (Sky.FogShader) y al apuntar (GameView.pick), que tienen que coincidir.
+	 */
+	public static inline var CURVE_K = 0.6;
+	public static inline function curve( size : Int ) : Float return CURVE_K * 2.0 / size;
 	public var faces(default, null) = 0;
 	public var failed(default, null) = false;
 	public var progress(default, null) = 0.;
@@ -91,7 +98,7 @@ class World {
 			ownSky = false;
 		} else {
 			sky = new Sky(root, biome, menuFog);
-			sky.fog.curve = 2.0 / size; // curvatura del planeta, igual que AbstractGame: curve = 2 / totalSize
+			sky.fog.curve = curve(size);
 		}
 		gen = new gen.DetailsGenerator(size, seed);
 		var bd = Data.getBiome(biome);
