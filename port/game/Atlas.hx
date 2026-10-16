@@ -47,7 +47,34 @@ class Atlas {
 	}
 
 	/** Si ya se asignaron las casillas de color (segunda vez), solo se repinta el atlas nuevo con las mismas casillas. */
+	/**
+	 * Texturas de los bloques de la nave nodriza (anadido del port): versiones en gris de casillas del original,
+	 * pintadas en casillas vacias del atlas (las que indica DataGen para BMother*).
+	 */
+	static function motherTiles( pix : hxd.Pixels ) {
+		inline function tileOf( k : BlockKind ) return Block.get(k).tlr;
+		var jobs = [
+			{ dst : tileOf(BMotherHull), src : tileOf(BShedWall), k : 1.25, add : 8 },
+			{ dst : tileOf(BMotherPanel), src : tileOf(BShipHull), k : 0.95, add : 0 },
+			{ dst : tileOf(BMotherDark), src : tileOf(BShedWall), k : 0.55, add : 0 },
+		];
+		for( j in jobs ) {
+			var sx = (j.src & 63) << 5, sy = (j.src >> 6) << 5;
+			var dx = (j.dst & 63) << 5, dy = (j.dst >> 6) << 5;
+			for( y in 0...32 )
+				for( x in 0...32 ) {
+					var c = pix.getPixel(sx + x, sy + y);
+					var r = (c >> 16) & 0xFF, g = (c >> 8) & 0xFF, b = c & 0xFF;
+					var l = Std.int(Math.min(255, (r * 0.3 + g * 0.59 + b * 0.11) * j.k + j.add));
+					// un toque azulado, como el metal de las naves
+					var lb = Std.int(Math.min(255, l * 1.06));
+					pix.setPixel(dx + x, dy + y, 0xFF000000 | (l << 16) | (l << 8) | lb);
+				}
+		}
+	}
+
 	static function patch( pix : hxd.Pixels, again = false ) {
+		motherTiles(pix);
 		// el original empieza en 4095, que coincide con el valor "sin textura" (0xFFF) del mallador y dejaba invisible el primer bloque
 		var lastTex = 4094;
 		for( b in Block.all )

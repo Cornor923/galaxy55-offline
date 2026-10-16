@@ -36,11 +36,11 @@ RULES = [
     ('iron_bars', 'BIronFence'),
     # metal y piedra de la nave
     ('quartz', 'BShipHull'), ('iron_block', 'BShipHull'), ('white_concrete', 'BShipHull'),
-    ('stone_brick', 'BShedWall'), ('chiseled_stone', 'BShedWall'),
-    ('deepslate_tile', 'BShipTubes'), ('deepslate_brick', 'BShipTubes'), ('deepslate', 'BShipWire'),
-    ('blackstone', 'BShipWire'), ('basalt', 'BShipWire'), ('netherite', 'BShipTubes'), ('coal_block', 'BShipTubes'),
+    ('stone_brick', 'BMotherHull'), ('chiseled_stone', 'BMotherHull'),
+    ('deepslate_tile', 'BMotherDark'), ('deepslate_brick', 'BMotherDark'), ('deepslate', 'BMotherDark'),
+    ('blackstone', 'BMotherDark'), ('basalt', 'BMotherDark'), ('netherite', 'BShipTubes'), ('coal_block', 'BShipTubes'),
     ('gray_concrete', 'BShipWire'), ('gray_wool', 'BShipWire'), ('black_wool', 'BShipTubes'), ('redstone_block', 'BRawRed'),
-    ('andesite', 'BRockWallSquare'), ('smooth_stone', 'BRockWall'), ('cobble', 'BRockWall'), ('stone', 'BRockWall'),
+    ('andesite', 'BMotherPanel'), ('smooth_stone', 'BMotherPanel'), ('cobble', 'BMotherDark'), ('stone', 'BMotherPanel'),
     # colores
     ('yellow_terracotta', 'BAutumnStraw'), ('light_blue_terracotta', 'BBlueCrystalDense'), ('blue_terracotta', 'BMarsBlueRock'),
     # naturaleza (jardines)

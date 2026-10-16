@@ -214,7 +214,10 @@ class DataGen {
 		{ id : BDeadSoil, type : BTFull, texture : [], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFColor(0x444240)], matter : BSoil, name : null, basePrice : null },
 		{ id : BDeadSwamp, type : BTFull, texture : [], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFColor(0x5F655A)], matter : null, name : null, basePrice : null },
 		{ id : BDeadTree, type : BTFull, texture : [], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFColor(0x1C1A16)], matter : BWood, name : null, basePrice : null },
-		{ id : BDarkLeaves, type : BTTransp, texture : [], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFColor(0x202320)], matter : BGreenLeaves, name : null, basePrice : null }
+		{ id : BDarkLeaves, type : BTTransp, texture : [], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFColor(0x202320)], matter : BGreenLeaves, name : null, basePrice : null },
+		{ id : BMotherHull, type : BTFull, texture : [60,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage du vaisseau-mère", basePrice : null },
+		{ id : BMotherPanel, type : BTFull, texture : [61,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Panneau du vaisseau-mère", basePrice : null },
+		{ id : BMotherDark, type : BTFull, texture : [62,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage sombre du vaisseau-mère", basePrice : null }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [

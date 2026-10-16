@@ -236,6 +236,10 @@ enum BlockKind {
 	BDeadSwamp;
 	BDeadTree;
 	BDarkLeaves;
+	// anadidos del port: bloques de la nave nodriza (texturas generadas en port/game/Atlas.hx)
+	BMotherHull;
+	BMotherPanel;
+	BMotherDark;
 }
 
 enum BlockModel {
