@@ -142,6 +142,10 @@ def empty_hangar(grid, W, L, H, cells, z, height, mirror=None):
     if removed: print('hangar x %d-%d y %d-%d: quitados %d bloques de adorno' % (x0, x1, y0, y1, removed))
     return mold
 
+# centros de las plazas de naves (capa de los hangares), marcados por el usuario en un plano
+BAY_X = 32
+BAY_ROWS = (154, 171, 206, 224, 250)
+
 def find_hangars(grid, W, L, H, z=18, min_cells=500, min_h=14):
     """Los hangares de la Hades (capa 42 del juego = z 18 del mapa): salas grandes de suelo libre con al menos 14 de alto
     (caben las naves del hangar del original, 17x17x14). Devuelve el centro del suelo de cada una, ordenados por y y x."""
@@ -199,9 +203,16 @@ def find_hangars(grid, W, L, H, z=18, min_cells=500, min_h=14):
                         free.discard((best[0] + i, best[1] + j))
             if found == 0:
                 print('hangar sin hueco libre de 17x17 cerca de', cx, cy)
-    bays.sort(key=lambda b: (b[1], b[0]))
-    print('hangares:', len(bays), bays)
-    return bays
+    # plazas elegidas por el usuario sobre el plano, simetricas: x 32 a la izquierda y su espejo a la derecha; dos por
+    # hangar en H3-H6 y una en H7 y H8. Se comprueba que en cada una quepa una nave de 17x17x14.
+    chosen = []
+    for y in BAY_ROWS:
+        for x in (BAY_X, W - 1 - BAY_X):
+            ok = all(clear(x + i, y + j) >= min_h for i in range(-8, 9) for j in range(-8, 9))
+            if not ok: print('aviso: la plaza', (x, y), 'no esta libre del todo (17x17x14)')
+            chosen.append((x, y, z))
+    print('hangares: plazas', len(chosen), chosen)
+    return chosen
 
 def arrival_hangar(grid, W, L, H, K, home, bays):
     """Añadido del port: el hangar de llegada (de momento la unica zona que se visita). Marca las plazas en el suelo, pone
