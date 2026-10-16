@@ -1152,12 +1152,12 @@ class Explorer extends h2d.Object {
 				ship.onArriveDist = 30;
 				ship.onArrive = function() {
 					if( winSpot == sp ) return;
-					var bname = ExpOffline.BNAMES[ExpOffline.biomeIndex(p.biome)];
+					var bname = ExpOffline.biomeName(p.biome);
 					switch( p.status ) {
 					case PUnexplored:
-						openWindow(sp, p.name, bname, "Escanear", function() startScan(p));
+						openWindow(sp, p.name, bname, Lang.t("exp.scan"), function() startScan(p));
 					case PActive, PInvited:
-						openWindow(sp, p.name, bname, "Aterrizar", function() landPlanet(p));
+						openWindow(sp, p.name, bname, Lang.t("exp.land"), function() landPlanet(p));
 					case PAbandonned, PForbidden:
 						openWindow(sp, p.name, bname, null, function() {});
 					}

@@ -18,6 +18,7 @@ class Atlas {
 			patch(pix);
 		} else
 			patch(pix, true);
+		pix.convert(RGBA); // DirectX no acepta BGRA
 		var t = h3d.mat.Texture.fromPixels(pix);
 		t.filter = Nearest;
 		t.mipMap = None;

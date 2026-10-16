@@ -80,6 +80,29 @@ class Sky {
 		root.setPosition(x, y, z);
 	}
 
+	var liquidCol : Null<Int> = null;
+	var dryK = 0.;
+
+	/** como Game.getEffects del original: con la camara dentro de un liquido con BFColor, la niebla toma su color y se espesa (col null = fuera) */
+	public function setLiquid( col : Null<Int>, power : Float ) {
+		if( col == null ) {
+			if( liquidCol != null ) {
+				fog.c0 = rgb(cols[0]);
+				fog.c1 = rgb(cols[1]);
+				fog.c2 = rgb(cols[2]);
+				fog.fogK = dryK;
+				liquidCol = null;
+			}
+			return;
+		}
+		if( liquidCol == null ) dryK = fog.fogK;
+		liquidCol = col;
+		fog.c0 = rgb(col);
+		fog.c1 = rgb(col);
+		fog.c2 = rgb(col);
+		fog.fogK = 0.01 * power;
+	}
+
 	public function setVisible( v : Bool ) {
 		root.visible = v;
 	}
@@ -210,6 +233,7 @@ class Sky {
 			var b = Std.int(v * 255);
 			px.setPixel(x, y, 0xFF000000 | (b << 16) | (b << 8) | b);
 		}
+		px.convert(RGBA); // DirectX no acepta BGRA
 		var t = h3d.mat.Texture.fromPixels(px);
 		t.filter = Linear;
 		return t;

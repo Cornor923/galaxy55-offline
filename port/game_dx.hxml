@@ -1,0 +1,15 @@
+--macro allowPackage('flash')
+-cp port/game
+-cp port/explore
+-cp libs/libs-haxe3
+-cp libs/libs-haxe2
+-cp src/G55/com
+-cp src/G55/fla/client/src
+-cp stubs
+-cp port/shim
+-lib heaps
+-lib hldx
+-D haxe3
+-main GalaxyApp
+-hl port/out/galaxy55_dx.hl
+-D hl-ver=1.16.0

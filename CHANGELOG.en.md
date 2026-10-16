@@ -2,6 +2,12 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md)
 
+## In development
+- Fixes reported by Sekhmet (thank you!): inside a liquid the screen and fog take its colour, like the original
+  (quicksand no longer looks transparent); no snow under water; water has side faces; submerged ice stays behind the
+  water; star map texts translated.
+- Optional DirectX build (`haxe port\game_dx.hxml`), besides the OpenGL one.
+
 ## v0.2 — pre-release
 - Star map with the original animations (entering and leaving a system, hyperspace, flashes, server wait), common
   background with maelstrom; systems are generated in the background so it no longer freezes.

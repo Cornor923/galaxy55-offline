@@ -2,6 +2,12 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## En desarrollo
+- Arreglos reportados por Sekhmet (¡gracias!): dentro de un líquido la pantalla y la niebla toman su color, como en el
+  original (la arena movediza ya no parece transparente); no nieva bajo el agua; el agua tiene caras laterales; el hielo
+  sumergido queda detrás del agua; textos del mapa de estrellas traducidos.
+- Versión DirectX opcional (`haxe port\game_dx.hxml`), además de la de OpenGL.
+
 ## v0.2 — pre-release
 - Mapa de estrellas con las animaciones del original (entrar y salir de un sistema, hiperespacio, destellos, espera del
   servidor), fondo común con remolino; el sistema se genera en segundo plano y ya no se congela.

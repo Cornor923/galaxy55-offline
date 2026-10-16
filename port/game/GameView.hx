@@ -999,6 +999,33 @@ class GameView {
 
 	// ---------------------------------------------------------------- camara
 
+	/** color y opacidad del velo de pantalla dentro de un liquido (Game.getEffects: fades), null fuera */
+	public var liquidFade(default, null) : { a : Float, col : Int } = null;
+	var liquidTime = 0.;
+
+	/** Game.getEffects + Hero.inWaterBlock del original: el bloque en los ojos, si es liquido con BFColor(c, alpha), tine la pantalla y la niebla */
+	function updateLiquidView( ez : Float ) {
+		liquidTime += 1 / 60;
+		liquidFade = null;
+		var b = world.block(Math.floor(px), Math.floor(py), Std.int(ez));
+		if( b != null && b.hasFlag(BFLiquid) )
+			for( f in b.flags )
+				switch( f ) {
+				case BFColor(c, alpha):
+					if( alpha == null ) alpha = 0.65;
+					// el original suma ruido de Perlin a la densidad; aqui una oscilacion suave equivalente
+					var power = 60 * alpha + Math.sin(liquidTime * 0.7 + px * 0.3) * 10;
+					world.sky.setLiquid(c, power);
+					var a = alpha + Math.sin(Math.PI * 2 * (liquidTime % 2.5) / 2.5) * 0.08;
+					if( a > 0.999 ) a = 0.999;
+					if( a < 0.3 ) a = 0.3;
+					liquidFade = { a : a, col : c };
+					return;
+				default:
+				}
+		world.sky.setLiquid(null, 0);
+	}
+
 	public function updateCamera() {
 		var cp = Math.cos(pitch);
 		var c = s3d.camera;
@@ -1011,6 +1038,7 @@ class GameView {
 		c.up.set(0, 0, 1);
 		world.sky.follow(px, py, ez);
 		world.sky.update(1 / 60);
+		updateLiquidView(ez);
 		world.updateWrap(px, py);
 	}
 }

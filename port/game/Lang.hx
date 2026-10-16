@@ -112,6 +112,11 @@ class Lang {
 		"biome.BIAcidForest" => ["Bosque ácido", "Acid forest", "Forêt acide"],
 		"biome.BIDeadCity" => ["Ciudad muerta", "Dead city", "Cité morte"],
 		"biome.random" => ["Aleatorio", "Random", "Aléatoire"],
+		// mapa de estrellas (textos de exp.OfflineData)
+		"exp.system" => ["Sistema", "System", "Système"],
+		"exp.sector" => ["Sector", "Sector", "Secteur"],
+		"exp.land" => ["Aterrizar", "Land", "Atterrir"],
+		"exp.scan" => ["Escanear", "Scan", "Scanner cette planète"],
 	];
 
 	public static function t( key : String ) : String {

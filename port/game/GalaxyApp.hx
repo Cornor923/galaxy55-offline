@@ -101,6 +101,8 @@ class GalaxyApp extends hxd.App {
 
 	var ui : h2d.Object;
 	var dim : h2d.Bitmap;
+	/** velo del color del liquido con la camara dentro (fades del original) */
+	var liquidVeil : h2d.Bitmap;
 	var screens = new Map<String, Screen>();
 	var current : Screen;
 	var currentName = "";
@@ -196,6 +198,8 @@ class GalaxyApp extends hxd.App {
 		// atlas con los parches del original (colores planos BFColor, opacidades BFAlpha)
 		atlas = Atlas.build(png);
 
+		liquidVeil = new h2d.Bitmap(h2d.Tile.fromColor(0xFFFFFF, W, H), s2d);
+		liquidVeil.visible = false;
 		dim = new h2d.Bitmap(h2d.Tile.fromColor(0x000000, W, H, 0.0), s2d);
 		snow = new Snow(s2d);
 		ui = new h2d.Object(s2d);
@@ -1263,6 +1267,14 @@ class GalaxyApp extends hxd.App {
 		snow.visible = snowWorld != null && snowWorld.biomeName == "BIWinterPeaks" && dim.alpha < 0.5;
 		// dentro de la nave no nieva (la nave flota sobre el planeta)
 		if( snow.visible && (state == Playing || state == Paused) && game != null && game.pz >= World.SHIP_Z - 1 ) snow.visible = false;
+		// dentro de un liquido: velo de su color y sin nieve (reporte de Sekhmet: nevaba bajo el agua)
+		var lf = (state == Playing || state == Paused) && game != null ? game.liquidFade : null;
+		liquidVeil.visible = lf != null;
+		if( lf != null ) {
+			liquidVeil.color.setColor(0xFF000000 | lf.col);
+			liquidVeil.alpha = lf.a;
+			snow.visible = false;
+		}
 		if( snow.visible ) {
 			var ww = engine.width, wh = engine.height;
 			var scale = Math.min(ww / W, wh / H);
@@ -1655,6 +1667,12 @@ class GalaxyApp extends hxd.App {
 	}
 
 	static function main() {
+		// en pruebas (--shot/--script) el error va a stderr y se cierra, sin ventana encima del escritorio
+		if( Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--shot=") || StringTools.startsWith(a, "--script=")) )
+			hxd.System.reportError = function(e:Dynamic) {
+				Sys.stderr().writeString(Std.string(e) + "\n" + haxe.CallStack.toString(haxe.CallStack.exceptionStack()) + "\n");
+				Sys.exit(1);
+			};
 		new GalaxyApp();
 	}
 }

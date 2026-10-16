@@ -13,9 +13,12 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 | 8 | Winter | **Spruce leaves** drop material; in the original they may not. |
 | 10 | Rendering | Dropped **crystals** (charges) look too wide. |
 | 11 | Rendering | **Layer 0** (bedrock) seen from below looks like a flat plane. |
-| 12 | Water | Water **does not flow**, and it freezes when touching ice (not yet confirmed whether the original does that). |
+| 12 | Water | Water **does not flow**, and it freezes when touching ice. According to Sekhmet, in the original the cascade did not freeze next to ice: it is a port bug. It will be fixed with flowing water. |
 
 ## Fixed
+
+- Next version (reported by Sekhmet): quicksand and water no longer look transparent from inside (screen tint and fog in the liquid's colour, like the original); it no longer snows under water; water has side and bottom faces; submerged ice stays behind the water; star map texts follow the chosen language.
+- Next version: the game also runs with DirectX (`port/game_dx.hxml`), useful where OpenGL 3.2 is missing (e.g. virtual machines).
 
 - v0.2 (change from the original): snow mounds hiding a plant (`BWinterHidden`) look like regular snow, without their own glow.
 - v0.2: deleting a saved game from the menu (Delete button, then pick the save; the confirmation no longer opens twice).

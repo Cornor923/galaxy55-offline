@@ -18,7 +18,7 @@ technical details of each item are in [`port/RESUMEN.md`](port/RESUMEN.md) (Span
    jump boots, anti-slip boots (ice), shock absorbers (fall damage), better digger, bigger bag, helmet lamp,
    magnet (pick up drops from farther), thermal suit / oxygen tank (once health and oxygen exist).
 4. **Fix the bugs** in [`BUGS.md`](BUGS.md).
-5. **Flowing water** (the original `Process.hx` logic) and animated texture.
+5. **Flowing water** (the original `Process.hx` logic) and animated texture. See Sekhmet's notes on cascades, lava and sea level in `PENDIENTES.md` point 5.
 6. Show the selected block in the hand; quality option for slow PCs.
 7. **Sound**, health/damage/oxygen/lava, chests and activatable blocks, Dead City and Shed.
 8. Packaging: installer, and evaluate SDL/DirectX.

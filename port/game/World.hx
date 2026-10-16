@@ -196,6 +196,14 @@ class World {
 		return t != BTFull && t != BTAlpha;
 	}
 
+	/** Builder.isTransparentNot(p, BTWater) del original: ni bloque lleno ni agua (el aire cuenta como abierto) */
+	inline function waterOpen( x : Int, y : Int, z : Int ) : Bool {
+		var id = voxel(x, y, z);
+		if( id == 0 ) return z > 0;
+		var t = tagOf(id);
+		return t != BTFull && t != BTWater;
+	}
+
 	/** tipo de bloque a efectos de mallado (las hojas sin BFNoOptimize cuentan como bloque lleno, igual que el original) */
 	function tagOf( id : Int ) : BlockType {
 		var b = gen.blocks[id];
@@ -858,14 +866,15 @@ class World {
 			mat.textureShader.killAlphaThreshold = 0.5;
 		} else if( kind == 3 ) {
 			// hielo, cristal, liquidos con alfa: mezcla con el alfa de la propia textura (el original usa AlphaShader)
+			// orden del original (Render.hx: BTWater antes que BTAlpha): se dibujan despues del agua, asi el hielo sumergido queda detras de ella
 			mat.blendMode = Alpha;
 			mat.mainPass.depthWrite = false;
-			mat.mainPass.setPassName("alpha");
+			mat.mainPass.setPassName("additive");
 		} else if( kind == 2 ) {
-			// agua: translucida y sin escribir profundidad
+			// agua: translucida; escribe profundidad como la primera pasada del original (water0)
 			mat.blendMode = Alpha;
 			mat.color.a = 0.6;
-			mat.mainPass.depthWrite = false;
+			mat.mainPass.depthWrite = true;
 			mat.mainPass.setPassName("alpha");
 		}
 		if( kind == 3 ) {
@@ -974,9 +983,16 @@ class World {
 					var neg = b.hasFlag(BFNoShade);
 					switch( b.type ) {
 					case BTWater:
-						// solo la superficie
-						if( voxel(x, y, z + 1) == 0 )
-							addQuadL(waterBuf, [fx, fy, fz + 0.9, fx + 1, fy, fz + 0.9, fx + 1, fy + 1, fz + 0.9, fx, fy + 1, fz + 0.9], b.tu, su, neg, 0, 0, 1, x, y, z);
+						// Builder.hx del original: cada cara contra un vecino que no es lleno ni agua (isTransparentNot(p, BTWater))
+						var top = voxel(x, y, z + 1) == 0;
+						var h = top ? fz + 0.9 : fz + 1;
+						if( top || waterOpen(x, y, z + 1) )
+							addQuadL(waterBuf, [fx, fy, h, fx + 1, fy, h, fx + 1, fy + 1, h, fx, fy + 1, h], b.tu, su, neg, 0, 0, 1, x, y, z);
+						if( waterOpen(x, y, z - 1) ) addQuadL(waterBuf, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
+						if( waterOpen(x - 1, y, z) ) addQuadL(waterBuf, [fx, fy + 1, fz, fx, fy, fz, fx, fy, h, fx, fy + 1, h], b.tlr, sx, neg, -1, 0, 0, x, y, z);
+						if( waterOpen(x + 1, y, z) ) addQuadL(waterBuf, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, h, fx + 1, fy, h], b.tlr, sx, neg, 1, 0, 0, x, y, z);
+						if( waterOpen(x, y - 1, z) ) addQuadL(waterBuf, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, h, fx, fy, h], b.tlr, sy, neg, 0, -1, 0, x, y, z);
+						if( waterOpen(x, y + 1, z) ) addQuadL(waterBuf, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, h, fx + 1, fy + 1, h], b.tlr, sy, neg, 0, 1, 0, x, y, z);
 					case BTFull, BTAlpha, BTTransp:
 						var m = b.type == BTFull ? solidBuf : (b.type == BTAlpha ? blendBuf : alphaBuf);
 						var al = b.type == BTAlpha;

@@ -73,6 +73,7 @@ The original code, graphics and data belong to **Motion Twin** and were publishe
 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). This modified version is shared under the **same license**:
 non-commercial, with credit to Motion Twin, share-alike. It is not affiliated with or endorsed by Motion Twin.
 Thanks to the Eternaltwin community for preserving documentation and screenshots.
+Thanks to **Sekhmet** for detailed bug reports, testing on Linux, and memories of how the original game worked (water, lava, cascades).
 
 ---
 
@@ -137,3 +138,4 @@ El código, los gráficos y los datos originales son de **Motion Twin**, publica
 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). Esta versión modificada se comparte bajo la
 **misma licencia**: sin uso comercial, con atribución a Motion Twin y compartiendo igual. No está afiliada ni respaldada
 por Motion Twin. Gracias a la comunidad de Eternaltwin por conservar documentación y capturas.
+Gracias a **Sekhmet** por sus reportes de errores detallados, las pruebas en Linux y sus recuerdos de cómo funcionaba el juego original (agua, lava, cascadas).

@@ -57,12 +57,12 @@ typedef ExpInfos = {
 
 /** Datos de sector y sistemas generados en local (exp.OfflineData del original sin servidor): todos los sistemas abiertos y planetas sin explorar. */
 class ExpOffline {
-	static var SYS = "Sistema";
-	static var SEC = "Sector";
+	static var SYS(get, never) : String; static inline function get_SYS() return Lang.t("exp.system");
+	static var SEC(get, never) : String; static inline function get_SEC() return Lang.t("exp.sector");
 	static var NAMES = ["Aldebar", "Brume", "Cyrene", "Dorian", "Eskel", "Fenris", "Galata", "Hespera", "Ikaros", "Jovan", "Kestrel", "Lumen"];
 	static var BIOMES = ["BIAutumn", "BIWinterPeaks", "BIMars", "BIMoon", "BIAcidForest"];
 	static var BWEIGHTS = [100, 100, 80, 80, 50];
-	public static var BNAMES = ["Otono", "Picos nevados", "Marte", "Luna", "Bosque acido"];
+	public static function biomeName( biome : String ) : String return Lang.t("biome." + BIOMES[biomeIndex(biome)]);
 
 	public static function biomeIndex( biome : String ) : Int {
 		var i = BIOMES.indexOf(biome);
