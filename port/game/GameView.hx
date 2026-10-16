@@ -110,7 +110,20 @@ class GameView {
 		fx = new Fx(world, atlas);
 		parts = new Parts(world, atlas);
 		hand = new Hand(world, atlas);
-		ship = new Ship(world, atlas, s3d, info.shipEdits);
+		if( info.hangar == true ) {
+			// hangar (EditShip): el cobertizo con la nave; sin la nave colgada encima
+			hangar = new Hangar(world);
+			hangarCheck();
+			var sp = Hangar.spawn();
+			px = sp.x;
+			py = sp.y;
+			pz = sp.z;
+			yaw = 0;
+			pitch = -0.1;
+			enteringShip = -1;
+			return;
+		}
+		ship = new Ship(world, atlas, s3d, info.shipEdits, Hangar.currentShip(info));
 		ship.initCrafts(this);
 		if( info.px < 0 ) {
 			// partida nueva: se empieza dentro de la nave, encima del teletransportador
@@ -137,6 +150,50 @@ class GameView {
 		return market;
 	}
 
+	/** hangar (null fuera de el) y lo que se avisa al salir */
+	public var hangar(default, null) : Hangar;
+	public var hangarValid(default, null) = false;
+	public var hangarChanged(default, null) = false;
+	public var onHangarExit : Void -> Void;
+	var hangarTime = 0.;
+	var hangarNext = 0.;
+
+	/** EditShip.checkShip: valida la nave y lo dice en el mensaje de abajo */
+	function hangarCheck() {
+		hangarValid = hangar.check();
+		hangarMsg = hangarValid ? Lang.t("hangar.ship_valid").split("%speed%").join("" + hangar.speed) : Lang.t("hangar." + hangar.error);
+	}
+	var hangarMsg = "";
+
+	function hangarUpdate( tmod : Float ) {
+		hangarTime += tmod;
+		if( hangarTime >= hangarNext ) {
+			hangarNext = hangarTime + 15;
+			hangarCheck();
+		}
+		if( hangarValid && hangar.spawnCell != null && world.lightAt(hangar.spawnCell.x, hangar.spawnCell.y, hangar.spawnCell.z + 1) == 0 ) {
+			hangarValid = false;
+			hangarMsg = Lang.t("hangar.no_spawn_light");
+		}
+		message = hangarTime < 400 ? Lang.t("hangar.help") : hangarMsg;
+		// salir por las casillas de teletransporte (EditShip.update)
+		if( standingBlock != null && standingBlock.k == BShipEntry ) {
+			if( enteringShip >= 0 ) {
+				enteringShip += tmod * 0.03;
+				if( enteringShip > 1 ) {
+					enteringShip = -1;
+					if( onHangarExit != null ) onHangarExit();
+				}
+			}
+		} else {
+			if( enteringShip > 0 ) enteringShip -= tmod * .1;
+			if( enteringShip < 0 ) enteringShip = 0;
+		}
+	}
+
+	/** la nave editada (comprimida) */
+	public function hangarShip() return Hangar.shipBytes(world);
+
 	/** Estado actual para guardar. */
 	public function toInfo() : SaveInfo {
 		info.px = px;
@@ -148,7 +205,7 @@ class GameView {
 		info.playSeconds = playSeconds;
 		info.inv = Inv.copy(inv.inv);
 		info.edits = world.editsFlat();
-		info.shipEdits = ship.world.editsFlat();
+		if( ship != null ) info.shipEdits = ship.world.editsFlat();
 		return info;
 	}
 
@@ -269,8 +326,11 @@ class GameView {
 		}
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateBobbing(realDt * 60);
-		ship.update(this, tmod);
-		message = ship.message(this);
+		if( hangar != null ) hangarUpdate(tmod);
+		else {
+			ship.update(this, tmod);
+			message = ship.message(this);
+		}
 		if( debugDoorFrames > 0 && ++debugDoorFrames == 12 ) {
 			// solo pruebas: abre la puerta de la nave que hay cerca del teletransportador
 			if( Sys.args().indexOf("--computer") >= 0 ) onComputer();
@@ -341,7 +401,7 @@ class GameView {
 	}
 
 	public function dispose() {
-		ship.dispose();
+		if( ship != null ) ship.dispose();
 		fx.dispose();
 		parts.dispose();
 		hand.dispose();
@@ -620,7 +680,7 @@ class GameView {
 			if( !ok ) return;
 			switch( b.k ) {
 			case BShipComputer: onComputer();
-			case BCrafterComputer: ship.activateCraft(x, y, z, this);
+			case BCrafterComputer: if( ship != null ) ship.activateCraft(x, y, z, this);
 			default:
 				if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
 			}
@@ -654,7 +714,7 @@ class GameView {
 		var cp = Math.cos(pitch);
 		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
 		var ex = px, ey = py, ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
-		var curve = World.curve(world.size);
+		var curve = hangar != null ? 0. : World.curve(world.size);
 		var lx = 0, ly = 0, lz = 0, have = false;
 		var t = 0.;
 		while( t < 7.0 ) {
@@ -666,7 +726,9 @@ class GameView {
 			var b = world.block(ix, iy, iz);
 			if( b != null && blocking(b) && (b.size == null || (x - ix >= b.size.x1 && x - ix <= b.size.x2 && y - iy >= b.size.y1 && y - iy <= b.size.y2 && z - iz >= b.size.z1 && z - iz <= b.size.z2)) ) {
 				if( Dev.trace && iz >= World.SHIP_Z ) Sys.println("pick: toca " + b.k + "@" + ix + "," + iy + "," + iz + " antes=" + lx + "," + ly + "," + lz + " mano=" + (hand != null) + " enZona=" + ship.inCraft(lx, ly, lz));
-				if( !have || iz < 1 ) return null;
+				if( !have || (iz < 1 && hangar == null) ) return null;
+				// hangar: solo dentro de la zona construible (EditShip.checkSelect); para poner basta con que el sitio lo este
+				if( hangar != null && !Hangar.inZone(ix, iy, iz) && (hand == null || !Hangar.inZone(lx, ly, lz)) ) return null;
 				if( iz >= World.SHIP_Z ) {
 					// en la nave solo se puede apuntar a lo que se activa (puertas, ordenador); el casco no se toca (ShipLogic.checkSelect)
 					if( hand == null ) {
@@ -764,7 +826,7 @@ class GameView {
 			return;
 		}
 		// en una zona de sintetizador se excava x4 y sin necesitar cargas (ShipLogic.checkSelect)
-		var inCraft = s.z >= World.SHIP_Z && ship.inCraft(s.x, s.y, s.z);
+		var inCraft = hangar != null || (s.z >= World.SHIP_Z && ship.inCraft(s.x, s.y, s.z));
 		var matter = b.matter;
 		var req = b.requiredPower != null ? b.requiredPower : matter.requiredPower;
 		if( req == null ) req = 1;

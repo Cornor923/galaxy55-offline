@@ -12,7 +12,7 @@ technical details of each item are in [`port/RESUMEN.md`](port/RESUMEN.md) (Span
    Still to do: the robot travelling slowly on the map (and our ship's real speed from engines and weight), and the
    mothership: an empty "planet" with a space sky, our ship parked in one of its bays (the others for multiplayer) and the
    shop inside. Later, an offer board between players.
-3. **Hangar:** edit and validate the ship (the edited ship will be shown on the map; its speed depends on engines and weight).
+3. **Hangar** (done, needs more testing): shed and validation copied from the original; entered from the computer. The edited ship is used on the planet and on the map. Still to do: the robot travelling on the map with each ship's real speed.
 3b. **Player equipment** (port addition, after the hangar): a separate equipment inventory (helmet, suit, backpack,
    boots...) with upgrades crafted or bought from the robot. Examples: bigger jetpack tank, jetpack turbo, fast refuel,
    jump boots, anti-slip boots (ice), shock absorbers (fall damage), better digger, bigger bag, helmet lamp,

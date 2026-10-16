@@ -12,7 +12,7 @@ los detalles técnicos de cada punto, en [`port/RESUMEN.md`](port/RESUMEN.md).
    ordenador de la nave. Falta: el robot viajando despacio por el mapa (y la velocidad real de nuestra nave según motores y
    peso), y la nave nodriza: un "planeta" vacío con cielo de espacio, con nuestra nave aparcada en una de sus bahías (las
    otras, para el multijugador) y la tienda dentro. Más adelante, un tablón de ofertas entre jugadores.
-3. **Hangar:** editar y validar la nave (la editada se verá en el mapa; su velocidad depende de motores y peso).
+3. **Hangar** (hecho, falta probarlo a fondo): cobertizo y validación copiados del original; se entra desde el ordenador. La nave editada se usa en el planeta y en el mapa. Falta: el robot que viaja por el mapa con la velocidad real de cada nave.
 3b. **Equipo del personaje** (añadido del port, después del hangar): un inventario de equipo aparte (casco, traje,
    mochila, botas...) con mejoras que se fabrican o se compran al robot. Ejemplos:
    - Mochila de gran capacidad: jetpack con más combustible.

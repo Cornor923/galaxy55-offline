@@ -555,7 +555,7 @@ class GalaxyApp extends hxd.App {
 			showToast(Lang.t("computer.soon"));
 		};
 		takeoff.onActivate = startExplorer;
-		edit.onActivate = soon;
+		edit.onActivate = startHangar;
 		trade.onActivate = openShop;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
@@ -585,12 +585,95 @@ class GalaxyApp extends hxd.App {
 		return info.uni;
 	}
 
+	// ---------------------------------------------------------------- hangar (EditShip)
+
+	var hangarReturn : SaveInfo;
+	var hangarOrig : String;
+
+	function leaveGame() {
+		closePalette();
+		closeShop();
+		closeChest();
+		game.dispose();
+		if( invBar != null ) {
+			invBar.remove();
+			invBar = null;
+		}
+		game.world.dispose();
+		game = null;
+		ui.removeChildren();
+		screens = new Map();
+	}
+
+	public function startHangar() {
+		if( game == null || game.hangar != null ) return;
+		var cur = game.toInfo();
+		hangarReturn = cur;
+		var h : SaveInfo = Reflect.copy(cur);
+		h.inv = Inv.copy(cur.inv);
+		h.hangar = true;
+		leaveGame();
+		startGame(h);
+	}
+
+	/** EditShip.returnToShip: con cambios validos se guarda la nave (y el inventario); si no son validos, se pregunta */
+	function exitHangar() {
+		var b64 = haxe.crypto.Base64.encode(game.hangarShip());
+		if( b64 == hangarOrig ) {
+			backFromHangar();
+			return;
+		}
+		if( game.hangarValid ) {
+			hangarReturn.shipData = b64;
+			hangarReturn.inv = Inv.copy(game.inv.inv);
+			hangarReturn.shipEdits = [];
+			hangarReturn.px = hangarReturn.py = hangarReturn.pz = -1;
+			backFromHangar();
+			return;
+		}
+		state = Paused;
+		captureMouse(false);
+		hud.visible = false;
+		msgText.visible = false;
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.rect(bg, 0, 0, W, H, 0x000000, 0.55);
+		Theme.rect(bg, 290, 250, 700, 220, Theme.PANEL, 1);
+		Theme.rect(bg, 290, 250, 700, 4, Theme.DANGER);
+		var t = Theme.text(m, Lang.t("hangar.exit_ship_no_save"), 1.9, Theme.TEXT, 0, 290);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var no = new Button(m, Lang.t("no"), 210, 52);
+		var yes = new Button(m, Lang.t("yes"), 210, 52);
+		m.add(no, 410, 390);
+		m.add(yes, 650, 390);
+		m.setFocus(0);
+		var stay = function() {
+			m.remove();
+			resume();
+		};
+		no.onActivate = stay;
+		m.onBack = stay;
+		yes.onActivate = function() {
+			m.remove();
+			backFromHangar();
+		};
+	}
+
+	function backFromHangar() {
+		var info = hangarReturn;
+		hangarReturn = null;
+		leaveGame();
+		info.hangar = null;
+		startGame(info);
+	}
+
 	function buildExplorer() {
 		ui.removeChildren();
 		bar = null;
 		var uni = universe();
 		var visited = [uni.planetId];
 		for( p in uni.planets ) visited.push(p.id);
+		Explorer.shipBytes = Hangar.currentShip(game.info);
 		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, visited, uni.pos);
 		explorer = new Explorer(s2d, infos, game.ship.captureFrames(engine, s3d));
 		s2d.under(explorer);
@@ -709,7 +792,13 @@ class GalaxyApp extends hxd.App {
 		clearUi();
 		hud.visible = false; msgText.visible = false;
 		loadInfo = info;
-		loadWorld = new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits);
+		loadWorld = info.hangar == true
+			? new World(info.seed, "BIShed", 1, s3d, atlas, false, null, Hangar.shedData(Hangar.currentShip(info)))
+			: new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits);
+		if( info.hangar == true ) {
+			loadWorld.sky.fog.curve = 0.00001; // EditShip: planet.curve = 0.00001
+			loadWorld.lightTop = Hangar.SZ; // y planet.lightHeight: el sol entra bajo el techo
+		}
 		loadWorld.root.visible = false;
 		showLoading(Lang.t("loading"));
 	}
@@ -725,6 +814,10 @@ class GalaxyApp extends hxd.App {
 		invBar = new InvBar(s2d, game.inv, atlas, W);
 		game.onComputer = openComputer;
 		game.onChest = openChest;
+		if( game.hangar != null ) {
+			game.onHangarExit = exitHangar;
+			hangarOrig = haxe.crypto.Base64.encode(game.hangarShip());
+		}
 		loadWorld = null;
 		ui.removeChildren();
 		bar = null;
@@ -732,7 +825,7 @@ class GalaxyApp extends hxd.App {
 		hud.visible = true;
 		autosaveTimer = 0;
 		captureMouse(true);
-		if( loadInfo.px < 0 ) {
+		if( loadInfo.px < 0 && loadInfo.hangar != true ) {
 			// partida nueva: se crea el archivo enseguida para que aparezca en la lista
 			saveGame(false);
 		}
@@ -893,7 +986,8 @@ class GalaxyApp extends hxd.App {
 
 	function saveGame( notify : Bool ) {
 		if( game == null ) return;
-		var ok = SaveData.write(game.toInfo(), captureThumb());
+		// en el hangar se guarda la partida tal como estaba al entrar
+		var ok = SaveData.write(game.hangar != null ? hangarReturn : game.toInfo(), captureThumb());
 		if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
 	}
 

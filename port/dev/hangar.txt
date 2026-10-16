@@ -1,0 +1,17 @@
+# hangar: entrar, ver la nave de serie (debe ser valida), mirar hacia la nave, salir sin cambios
+wait 3
+ship
+wait 10
+hangar
+wait 60
+print hangar
+print pos
+shot hangar1
+look 0 0.25
+wait 5
+shot hangar2
+hangarexit
+wait 60
+print hangar
+print pos
+quit

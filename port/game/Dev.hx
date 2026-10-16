@@ -110,6 +110,14 @@ class Dev {
 				case "jet": g.debugJet = a[1] == "1";
 				case "trace": trace = true;
 				case "shop": app.openShop();
+				case "hangar": app.startHangar();
+				case "settop":
+					// pone un bloque encima del primero que haya en la columna (para probar el hangar)
+					var x = Std.parseInt(a[1]), y = Std.parseInt(a[2]), z = 14;
+					while( z > 0 && w.block(x, y, z) == null ) z--;
+					w.setBlock(x, y, z + 1, bk(a[3]));
+					Sys.println("settop " + x + "," + y + "," + (z + 1));
+				case "hangarexit": if( g.onHangarExit != null ) g.onHangarExit();
 				case "chestclick": if( app.chest != null ) app.chest.click(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "shopclose": if( app.shop != null ) @:privateAccess app.closeShop();
 				case "buy", "sell":
@@ -142,6 +150,8 @@ class Dev {
 		switch( a[1] ) {
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "hangar":
+			Sys.println("hangar: " + (g.hangar == null ? "no" : "valida=" + g.hangarValid + " error=" + g.hangar.error + " velocidad=" + g.hangar.speed) + " mensaje=" + g.message);
 		case "wares":
 			for( m in Market.wares ) Sys.println("ware " + m.block.k + " " + m.base);
 		case "inv":

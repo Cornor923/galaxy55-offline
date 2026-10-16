@@ -80,6 +80,8 @@ class World {
 	public var shipDY = 0;
 	/** true en el mundo de la nave: no da la vuelta y usa el cielo del planeta */
 	public var isShip(default, null) = false;
+	/** altura desde la que entra el sol (-1 = desde arriba del todo); el hangar la pone bajo el techo (EditShip: planet.lightHeight) */
+	public var lightTop = -1;
 	var wraps = true;
 	var ownSky = true;
 
@@ -320,7 +322,7 @@ class World {
 		var lsun = Std.int(sunP - sunF);
 		if( lsun < 0 ) lsun = 0;
 		var seeds = new Array<Int>();
-		var top = HEIGHT - 1;
+		var top = lightTop >= 0 ? lightTop : HEIGHT - 1;
 		for( y in 0...size )
 			for( x in 0...size ) {
 				var col = x + y * size;
@@ -683,7 +685,7 @@ class World {
 		var cym = y == 0 ? col + size * (size - 1) : col - size;
 		var okx = !useMask || mask.get(cxm) != 0;
 		var oky = !useMask || mask.get(cym) != 0;
-		var z = HEIGHT - 1;
+		var z = lightTop >= 0 ? lightTop : HEIGHT - 1;
 		while( z >= 0 ) {
 			var p = base | z;
 			var t = idTag[bytes.get(p)];

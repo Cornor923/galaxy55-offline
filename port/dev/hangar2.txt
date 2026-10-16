@@ -1,0 +1,26 @@
+# hangar: un bloque suelto (invalida), quitarlo (valida), anadir casco encima de la nave (valida y cambiada), salir y comprobar
+wait 3
+ship
+wait 10
+hangar
+wait 60
+set 6 4 5 BShipHull
+wait 20
+print hangar
+set 6 4 5 none
+wait 20
+print hangar
+settop 14 10 BShipHull
+wait 20
+print hangar
+hangarexit
+wait 80
+print hangar
+print pos
+hangar
+wait 60
+print hangar
+look 0 0.25
+wait 5
+shot hangar3
+quit

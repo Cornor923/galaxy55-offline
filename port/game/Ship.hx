@@ -37,9 +37,9 @@ class Ship {
 	var time = 0.;
 	var needRecal = true;
 
-	public function new( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, ?edits : Array<Int> ) {
+	public function new( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, ?edits : Array<Int>, ?shipBytes : haxe.io.Bytes ) {
 		this.planet = planet;
-		var data = ShipData.load(Const.DEFAULT_SHIP);
+		var data = ShipData.load(shipBytes != null ? shipBytes : Const.DEFAULT_SHIP);
 		crafts = data.crafts;
 		// el sitio de aterrizaje es fijo para cada planeta (misma semilla = mismo sitio), como en Game.placeShip
 		var p = planet.startPlace(new mt.Rand(planet.seed ^ 0x5A17));

@@ -317,9 +317,12 @@ class Explorer extends h2d.Object {
 		loading(false);
 	}
 
-	/** Const.shipSpeed(motores, peso): motores y bloques de la nave por defecto */
+	/** nave de la partida (la editada en el hangar); null = la de serie */
+	public static var shipBytes : haxe.io.Bytes;
+
+	/** Const.shipSpeed(motores, peso): motores y bloques de la nave de la partida */
 	function shipSpeed() : Float {
-		var data = ShipData.load(Common.Const.DEFAULT_SHIP);
+		var data = ShipData.load(shipBytes != null ? shipBytes : Common.Const.DEFAULT_SHIP);
 		var engines = 0;
 		for( c in data.cells ) if( c.id == Type.enumIndex(Common.BlockKind.BShipEngine) ) engines++;
 		return Common.Const.shipSpeed(engines, data.cells.length);
