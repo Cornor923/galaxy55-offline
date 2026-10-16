@@ -249,18 +249,25 @@ def arrival_hangar(grid, W, L, H, K, home, bays):
     sh = max(b[1] for b in bays) + 9
     while not walk(cx - 4, sh): sh += 1                 # pasar la pared del final de los hangares
     while walk(cx - 4, sh + 1): sh += 1                 # hasta la pared del fondo del pasillo
-    cy = sh - 5                                         # mostrador, mirando a -y
-    for x in range(cx - 3, cx + 4):
-        put(x, cy, fz, 'BShipPlate')
-        for y in range(cy, sh + 1): put(x, y, fz + 4, 'BShipTubes')   # toldo
+    # ocupa todo el ancho del tunel (lo pidio el usuario): de pared a pared
+    tx0 = cx
+    while walk(tx0 - 1, sh): tx0 -= 1
+    tx1 = cx
+    while walk(tx1 + 1, sh): tx1 += 1
+    cy = sh - 7                                         # mostrador, mirando a -y
+    def shelf(x, y, z): return 'BShipWire' if z in (fz, fz + 2) else ('BChest' if (x + y + z) % 3 == 0 else 'BWoodPlank')
+    for x in range(tx0, tx1 + 1):
+        put(x, cy, fz, 'BShipPlate')                    # mostrador de pared a pared
+        for y in range(cy, sh + 1): put(x, y, fz + 5, 'BShipTubes')   # toldo
+        for z in range(fz, fz + 4): put(x, sh, z, shelf(x, sh, z))    # estanteria del fondo
+        if (x - tx0) % 4 == 2: put(x, cy + 3, fz + 5, 'BShipLight')   # luces del toldo
+    for y in range(cy + 1, sh):                         # estanterias de las paredes
+        for z in range(fz, fz + 3):
+            put(tx0, y, z, shelf(tx0, y, z)); put(tx1, y, z, shelf(tx1, y, z))
+    for x in (tx0, tx1, cx - 4, cx + 4):                # postes del toldo
+        for z in range(fz + 1, fz + 5): put(x, cy, z, 'BIron')
     put(cx, cy, fz, 'BShipComputer')
-    for x in (cx - 3, cx + 3):                          # postes del toldo
-        for z in range(fz + 1, fz + 4): put(x, cy, z, 'BIron')
-    put(cx, cy + 1, fz + 4, 'BShipLight')
-    for x in range(cx - 4, cx + 5):
-        for z in range(fz, fz + 4):
-            put(x, sh, z, 'BShipWire' if z in (fz, fz + 2) else ('BChest' if (x + z) % 3 == 0 else 'BWoodPlank'))
-    put(cx, sh, fz + 4, 'BShedWallLight')
+    for x in (cx - 5, cx + 5): put(x, sh, fz + 4, 'BShedWallLight')
     # el robot comerciante es un personaje del juego (port/game/Robot.hx): aqui solo se guarda donde va y hacia donde mira
     robots = [(cx, cy + 3, fz, 3)]                      # 3 = mira a -y (hacia el mostrador)
     # 3) zona de carga en la esquina del fondo, con un robot de carga
