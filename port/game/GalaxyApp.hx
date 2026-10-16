@@ -1176,8 +1176,17 @@ class GalaxyApp extends hxd.App {
 
 	// ---------------------------------------------------------------- bucle principal
 
+	static var frameTime = Sys.args().indexOf("--frametime") >= 0;
+	var lastStamp = 0.;
+
 	override function update( dt : Float ) {
 		frames++;
+		// diagnostico (--frametime): fotogramas de mas de 250 ms y en que estado estaba el juego
+		if( frameTime ) {
+			var now = haxe.Timer.stamp();
+			if( lastStamp > 0 && now - lastStamp > 0.25 ) Sys.println("parada " + Std.int((now - lastStamp) * 1000) + " ms en el fotograma " + frames + ", estado " + state + (bgBuilding != null ? ", construyendo fondo" : ""));
+			lastStamp = now;
+		}
 		if( dt > 0.1 ) dt = 0.1;
 		if( state != Playing ) {
 			jetBar.visible = false;
@@ -1688,6 +1697,15 @@ class GalaxyApp extends hxd.App {
 	}
 
 	static function main() {
+		#if hldx
+		// DirectX compila los shaders la primera vez que se usan (segundos con la pantalla congelada): se guardan
+		// compilados junto a las partidas y las siguientes veces se leen del disco
+		try {
+			var cache = new h3d.impl.ShaderCache(Settings.dir() + "/shaders_dx.cache");
+			cache.load();
+			h3d.impl.Driver.setShaderCache(cache);
+		} catch( e : Dynamic ) {}
+		#end
 		// en pruebas (--shot/--script) el error va a stderr y se cierra, sin ventana encima del escritorio
 		if( Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--shot=") || StringTools.startsWith(a, "--script=")) )
 			hxd.System.reportError = function(e:Dynamic) {

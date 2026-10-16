@@ -130,7 +130,11 @@ class World {
 			return progress = 0.75;
 		}
 		if( phase == 0 ) {
-			if( !gen.process(Std.int(budgetMs)) ) {
+			var p0 = gen.progress;
+			var busy = gen.process(Std.int(budgetMs));
+			if( Sys.args().indexOf("--frametime") >= 0 && haxe.Timer.stamp() - t0 > 0.2 )
+				Sys.println("generador: " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
+			if( !busy ) {
 				bytes = gen.getBytes().b;
 				initLightTables();
 				applySaved();
