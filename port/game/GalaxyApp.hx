@@ -786,9 +786,9 @@ class GalaxyApp extends hxd.App {
 
 	function openComputer() {
 		if( state != Playing ) return;
-		// en la nave nodriza el ordenador es el mostrador del robot comerciante (provisional): abre la tienda
+		// en la nave nodriza: el ordenador del puesto del robot abre la tienda; el de tu nave aparcada te devuelve a ella
 		if( game != null && game.info.mothership == true ) {
-			openShop();
+			if( game.isRobotComputer() ) openShop() else backFromMothership();
 			return;
 		}
 		state = Paused;

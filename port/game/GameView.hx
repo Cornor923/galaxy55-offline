@@ -692,6 +692,17 @@ class GameView {
 
 	/** se llama al activar el ordenador de a bordo */
 	public dynamic function onComputer() {}
+	/** celda del ultimo ordenador activado (en la nave nodriza decide si es el del robot o el de tu nave) */
+	public var lastComputer : { x : Int, y : Int, z : Int };
+
+	/** en la nave nodriza: el ordenador del puesto del robot comerciante (cerca del robot), no el de tu nave */
+	public function isRobotComputer() : Bool {
+		var c = lastComputer;
+		if( c == null ) return false;
+		for( r in Mothership.robots )
+			if( r.k < 4 && Math.abs(r.x - c.x) <= 4 && Math.abs(r.y - c.y) <= 4 && Math.abs(r.z - c.z) <= 2 ) return true;
+		return false;
+	}
 
 	/** texto de recetas del sintetizador cercano (se muestra en pantalla) */
 	public var message : String;
@@ -707,7 +718,7 @@ class GameView {
 			};
 			if( !ok ) return;
 			switch( b.k ) {
-			case BShipComputer: onComputer();
+			case BShipComputer: lastComputer = { x : x, y : y, z : z }; onComputer();
 			case BCrafterComputer: if( ship != null ) ship.activateCraft(x, y, z, this);
 			default:
 				if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
