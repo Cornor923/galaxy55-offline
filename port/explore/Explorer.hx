@@ -254,6 +254,8 @@ class Explorer extends h2d.Object {
 		overlay = new h2d.Object(content);
 
 		fade = new h2d.Bitmap(h2d.Tile.fromColor(0x000000, VW, VH), content);
+		// los textos grandes (popString) van por encima de la mascara negra, como en el original (DP_INTERF, creados despues)
+		content.addChild(overlay);
 		// barra de progreso (showBar) e icono de carga que gira arriba a la derecha (loadingAnim)
 		bar = new h2d.Graphics(content);
 		bar.visible = false;

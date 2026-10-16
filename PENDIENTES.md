@@ -5,8 +5,8 @@
 Orden aproximado. Lo ya hecho está en [`CHANGELOG.md`](CHANGELOG.md); los fallos, en [`ERRORES.md`](ERRORES.md);
 los detalles técnicos de cada punto, en [`port/RESUMEN.md`](port/RESUMEN.md).
 
-1. **Mapa de estrellas idéntico al original:** animación de entrada al sistema solar, de salida (dejando pasar la última
-   órbita) y de aterrizaje; reactores y partículas; flechas hacia planetas activos; «sala común».
+1. **Mapa de estrellas:** las transiciones ya son las del original (v0.2). Faltan las partículas de los reactores de la nave
+   y las flechas (GPS) hacia los planetas activos.
 2. **Tienda especial:** naves de comerciantes (robots) que viajan por el mapa; se las sigue y la puerta de nuestra nave
    conecta con la suya (idea del autor del port, a diseñar).
 3. **Hangar:** editar y validar la nave (la editada se verá en el mapa; su velocidad depende de motores y peso).

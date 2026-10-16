@@ -1,0 +1,28 @@
+# escanear un planeta: fundido, nombre, barra y aterrizaje
+wait 3
+ship
+wait 10
+explore
+wait 12
+wait 200
+expplanet 1
+wait 400
+expinfo
+expbutton
+wait 6
+shot la1
+wait 6
+shot la2
+wait 6
+shot la3
+wait 6
+shot la4
+wait 6
+shot la5
+wait 6
+shot la6
+wait 6
+shot la7
+wait 6
+shot la8
+quit
