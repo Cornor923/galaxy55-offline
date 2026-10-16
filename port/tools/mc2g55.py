@@ -26,7 +26,7 @@ RULES = [
     ('torch', None), ('rail', None), ('carpet', None), ('piston_head', None), ('piston', 'BMotherPanel'), ('command_block', None), ('dispenser', None),
     ('hopper', None), ('tripwire', None), ('note_block', None), ('player_head', None), ('barrier', None),
     ('daylight', None), ('sea_pickle', None), ('seagrass', None), ('grass', None) if False else ('tall_grass', None),
-    ('vine', None), ('anvil', None), ('grindstone', None), ('_door', None), ('fence_gate', None), ('lectern', None),
+    ('vine', None), ('anvil', 'RAIL'), ('grindstone', 'RAIL'),   # los yunques son los railes del suelo (ver main) ('_door', None), ('fence_gate', None), ('lectern', None),
     ('campfire', None), ('chain', None), ('snow', None), ('slime', None), ('flower', None),
     # luces
     ('sea_lantern', 'BShedWallLight'), ('glowstone', 'BLamp'), ('redstone_lamp', 'BLamp'), ('lantern', 'BLamp'),
@@ -341,6 +341,7 @@ def main(world, out):
     grid = bytearray(W * L * H)
     miss = collections.Counter()
     cache = {}
+    rails = []
     for (x, y, z, n, pr) in blocks:
         sp = special(n, pr)
         if sp is not None:
@@ -360,7 +361,11 @@ def main(world, out):
             continue
         if g is None: continue
         gx, gy, gz = x - x0, (z1 - z), y - y0
+        if g == 'RAIL':
+            rails.append(gx + gy * W + gz * W * L)
+            continue
         grid[gx + gy * W + gz * W * L] = K[g]
+    # los railes del suelo separan los hangares: se buscan los hangares sin ellos y despues se ponen
     bays = find_hangars(grid, W, L, H)
     # aparicion: donde estaba el jugador
     sx, sy, sz = W // 2, L // 2, H
@@ -379,6 +384,8 @@ def main(world, out):
         sx, sy, sz = home
         robots = arrival_hangar(grid, W, L, H, K, home, bays)
         print('llegada', home, 'robots', robots)
+    for i in rails:
+        if not grid[i]: grid[i] = K['BShipTubes']
     # 'G55O': como 'G55M' mas las bahias (numero y centro del suelo x, y, z) y los robots (numero y x, y, z, tipo:
     # 0..3 = comerciante mirando a +x, +y, -x, -y; 4 = dron), antes de los datos comprimidos
     head = b'G55O' + struct.pack('<6H', W, L, H, sx, sy, sz) + struct.pack('<H', len(bays))
