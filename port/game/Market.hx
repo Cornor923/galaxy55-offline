@@ -1,4 +1,4 @@
-import Common;
+﻿import Common;
 
 /** Estado de una mercancia del comerciante: cuantas tiene y cuanto se le ha vendido o comprado ultimamente. */
 typedef MarketItem = {
@@ -45,6 +45,38 @@ class Market {
 	static inline var HALF_LIFE = 600.;
 	static inline var RESTOCK = 60.;
 
+	/**
+	 * Precios propios del port (cambio respecto al original): en los datos casi todo vale 100. Se agrupan por lo comun
+	 * que es cada bloque; lo que no aparece aqui conserva su precio de los datos.
+	 */
+	static var PRICES : Map<String, Int> = {
+		var m = new Map();
+		inline function set( p : Int, l : String ) for( k in l.split(" ") ) m.set(k, p);
+		// suelo y roca: lo que sale al cavar
+		set(4, "BSoil BSoilCover BRock BMoonSoil BMoonSoilCover BMoonRock BMoonSand BAcidSoil BAcidRock BWinterSoil BWinterRock BMarsSoil BMarsSoil2 BMarsRock BMarsCraterRock BPlantSoil BPlantRock BAlienRock BMoonBrokenRock BMarsQuickSand");
+		set(8, "BHardRock BMarsHardRock BFrozenRock BLavaRock BIce BAcidWater BCoal");
+		// plantas
+		set(6, "BWood BGreenLeaves BPurpleLeaves BBrownLeaves BPinkLeaves BAcidLeaves BAcidLeaves2 BWinterLeaves BAutumnStraw BVines BCactus BCactusBase BAcidWood BWinterWood BMarsCactus BHighHerb1 BHighHerb2 BHighHerb3 BHighHerb4 BHighHerb5 BHighHerb6 BAcidHerb1 BAcidHerb2 BAcidHerbCeil BCavePlantCeil BMush BBigMushTrunk BBigMushHead BCoral1 BCoral2");
+		set(15, "BPinkFlower BCactusFlower BAcidWoodHole BAcidWoodBubble BAcidLeavesBubble BAcidLeaves2Bubble BAcidMush BAcidFruit BAcidTreeSap BLeavesCurtain BChampiLight BFreezerPlant BHealPlant BMoonLight BMoonLightDead BBlackIce");
+		// tintes en bruto y minerales
+		set(20, "BRaw BRawRed BRawPurple BRawWhite BRawOrange BRawGreen BMarsRockFossil BMarsCactusFossil BCoalHot");
+		set(35, "BMinIron BMinAluminium BYellowCrystalDense BBlueCrystalDense BBlackIceLight BBlackLight");
+		set(60, "BYellowCrystalLight BBlueCrystalLight BLava");
+		// construccion (fabricado)
+		set(12, "BWoodPlank BWoodPlate BWoodColumn BWoodWindow BRockWall BRockWallSquare BHardRockColumn BHardRockWall BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BAcidWall");
+		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BShiningWoodPlank BWoodScrew BGlass");
+		set(50, "BIron BAluminium BIronFence BLight BLamp BIronLight BJumper BCascadeSource BFreezer");
+		// nave y aparatos
+		set(80, "BShipPlate BShipWire BShipTubes BShipGlass2 BShipGlassBlack BShipLight");
+		set(150, "BShipHull BShipGlass BShipDoor BCircuit BCamera BHealBox");
+		set(400, "BShipEngine BCrafter BMiningGenerator BArtiBomb");
+		set(900, "BShipComputer BCrafterComputer BShipEntry BAlienTreasure");
+		// cargas
+		set(40, "BBlueCharge");
+		set(120, "BYellowCharge");
+		m;
+	};
+
 	public static var wares(get, null) : Array<Ware>;
 	static var byKey : Map<String, Ware>;
 
@@ -54,9 +86,10 @@ class Market {
 			byKey = new Map();
 			for( b in Block.all ) {
 				if( b.index <= 0 || b.basePrice == null || b.basePrice <= 0 || b.type == BTInvisible ) continue;
+				var base = PRICES.exists(Std.string(b.k)) ? PRICES.get(Std.string(b.k)) : b.basePrice;
 				var w : Ware = b.charge != null
-					? { key : "c" + Type.enumIndex(b.charge), block : b, charge : b.charge, base : b.basePrice }
-					: { key : "b" + b.index, block : b, charge : null, base : b.basePrice };
+					? { key : "c" + Type.enumIndex(b.charge), block : b, charge : b.charge, base : base }
+					: { key : "b" + b.index, block : b, charge : null, base : base };
 				if( byKey.exists(w.key) ) continue;
 				wares.push(w);
 				byKey.set(w.key, w);

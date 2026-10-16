@@ -141,6 +141,8 @@ class Dev {
 		switch( a[1] ) {
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "wares":
+			for( m in Market.wares ) Sys.println("ware " + m.block.k + " " + m.base);
 		case "inv":
 			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
 		case "pos":

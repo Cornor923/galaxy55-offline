@@ -1,0 +1,4 @@
+# lista las mercancias del robot con su precio
+wait 3
+print wares
+quit
