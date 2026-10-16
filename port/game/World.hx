@@ -304,6 +304,11 @@ class World {
 		return s;
 	}
 
+	/** añadido del port para la nave nodriza (hecha en Minecraft): caida de la luz de las lamparas por bloque (null = la de cada bloque) */
+	public var lampFalloff : Null<Float> = null;
+	/** añadido del port para la nave nodriza: luz minima en todo el mundo (0 = ninguna) */
+	public var minLight = 0;
+
 	/** luz de una celda (el mundo da la vuelta; por encima del techo es luz de sol plena) */
 	public function lightAt( x : Int, y : Int, z : Int ) : Int {
 		if( z >= SHIP_Z && ship != null ) {
@@ -385,7 +390,7 @@ class World {
 				var ip = Std.int(p);
 				if( ip > 15 ) ip = 15;
 				lightIdx[i] = infos.length;
-				infos.push({ p : ip, f : f == null ? 1.0 : f });
+				infos.push({ p : ip, f : lampFalloff != null ? lampFalloff : (f == null ? 1.0 : f) });
 			default:
 			}
 		}
@@ -409,6 +414,9 @@ class World {
 				flood([p], powers[id] - info.f, info.f);
 			}
 		}
+		if( minLight > 0 )
+			for( p in 0...n )
+				if( light.get(p) < minLight ) light.set(p, minLight);
 	}
 
 	inline function isSunAir( p : Int, lmax : Int ) : Bool {
@@ -543,7 +551,7 @@ class World {
 				var ip = Std.int(p);
 				if( ip > 15 ) ip = 15;
 				lightIdx[id] = lightInfos.length;
-				lightInfos.push({ p : ip, f : f == null ? 1.0 : f, pw : p });
+				lightInfos.push({ p : ip, f : lampFalloff != null ? lampFalloff : (f == null ? 1.0 : f), pw : p });
 			default:
 			}
 	}

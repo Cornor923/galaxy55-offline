@@ -57,7 +57,7 @@ class Atlas {
 		var jobs = [
 			{ dst : tileOf(BMotherHull), src : tileOf(BShedWall), k : 1.25, add : 8 },
 			{ dst : tileOf(BMotherPanel), src : tileOf(BShipHull), k : 0.95, add : 0 },
-			{ dst : tileOf(BMotherDark), src : tileOf(BShedWall), k : 0.55, add : 0 },
+			{ dst : tileOf(BMotherDark), src : tileOf(BShedWall), k : 0.6, add : 18 }, // gris oscuro como la pizarra profunda de Minecraft (antes se veia negro)
 		];
 		for( j in jobs ) {
 			var sx = (j.src & 63) << 5, sy = (j.src >> 6) << 5;

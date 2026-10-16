@@ -845,6 +845,9 @@ class GalaxyApp extends hxd.App {
 		if( info.mothership == true ) {
 			loadWorld.sky.fog.curve = 0.00001;
 			loadWorld.lightTop = Mothership.Z0 + Mothership.LZ + 4;
+			// la Hades se diseño con la luz de Minecraft (las lamparas pierden 1 por bloque) y alli nunca se ve negro del todo
+			loadWorld.lampFalloff = 1.0;
+			loadWorld.minLight = 7;
 			loadWorld.sky.makeSpace();
 		}
 		if( info.hangar == true ) {

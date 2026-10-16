@@ -23,7 +23,7 @@ RULES = [
     # detalles que no tienen equivalente (se quitan)
     ('trapdoor', None), ('button', None), ('pressure_plate', None), ('redstone_wire', None), ('lever', None),
     ('repeater', None), ('comparator', None), ('banner', None), ('_bed', None), ('ladder', None), ('sign', None),
-    ('torch', None), ('rail', None), ('carpet', None), ('piston', None), ('command_block', None), ('dispenser', None),
+    ('torch', None), ('rail', None), ('carpet', None), ('piston_head', None), ('piston', 'BMotherPanel'), ('command_block', None), ('dispenser', None),
     ('hopper', None), ('tripwire', None), ('note_block', None), ('player_head', None), ('barrier', None),
     ('daylight', None), ('sea_pickle', None), ('seagrass', None), ('grass', None) if False else ('tall_grass', None),
     ('vine', None), ('anvil', None), ('grindstone', None), ('_door', None), ('fence_gate', None), ('lectern', None),
@@ -50,16 +50,57 @@ RULES = [
     ('chest', 'BChest'),
 ]
 
+FACING = {'north': (0, 0, -1), 'south': (0, 0, 1), 'east': (1, 0, 0), 'west': (-1, 0, 0), 'up': (0, 1, 0), 'down': (0, -1, 0)}
+
+def open_piston_doors(blocks):
+    """El mundo se guardo con las puertas de piston cerradas (piston pegajoso extendido empujando un cristal). Se abren como al
+    retraerse en Minecraft: el bloque empujado vuelve al sitio de la cabeza y su casilla queda libre."""
+    at = {(b[0], b[1], b[2]): i for i, b in enumerate(blocks)}
+    gone = set(); moved = {}
+    for b in blocks:
+        if b[3] != 'piston_head': continue
+        d = FACING.get(b[4].get('facing'))
+        if d is None: continue
+        head = (b[0], b[1], b[2])
+        front = (b[0] + d[0], b[1] + d[1], b[2] + d[2])
+        gone.add(at[head])
+        if b[4].get('type') == 'sticky' and front in at:
+            j = at[front]
+            gone.add(j)
+            moved[head] = blocks[j]
+    out = [b for i, b in enumerate(blocks) if i not in gone]
+    for (x, y, z), b in moved.items():
+        out.append((x, y, z, b[3], b[4]))
+    print('puertas de piston abiertas:', len(moved))
+    return out
+
+def special(n, pr):
+    """Bloques que dependen de sus propiedades. Devuelve el bloque de Galaxy 55, '' para quitarlo o None para usar RULES."""
+    if n.endswith('trapdoor'):
+        # rejillas de suelo y techo: cerradas arriba ocupan la parte alta (el suelo queda a la misma altura), abajo como placa
+        if pr.get('open') == 'true': return ''
+        return 'BMotherPanel' if pr.get('half') == 'top' else 'BShipPlate'
+    if n.endswith('_door'):
+        # puertas de la nave del original (bloque de 1 de alto que se abre al usarlo, BFToggle): una por cada mitad de la de Minecraft
+        f = pr.get('facing')
+        return 'BShipDoorY' if f in ('north', 'south') else 'BShipDoor'
+    return None
+
 def main(world, out):
     K = kinds()
-    blocks = mcread.blocks(world)
+    blocks = open_piston_doors(mcread.blocks(world, True))
     xs = [b[0] for b in blocks]; zs = [b[2] for b in blocks]; ys = [b[1] for b in blocks]
     x0, x1, z0, z1, y0, y1 = min(xs), max(xs), min(zs), max(zs), min(ys), max(ys)
     W, L, H = x1 - x0 + 1, z1 - z0 + 1, y1 - y0 + 1
     grid = bytearray(W * L * H)
     miss = collections.Counter()
     cache = {}
-    for (x, y, z, n) in blocks:
+    for (x, y, z, n, pr) in blocks:
+        sp = special(n, pr)
+        if sp is not None:
+            if sp:
+                grid[(x - x0) + (z1 - z) * W + (y - y0) * W * L] = K[sp]
+            continue
         if n not in cache:
             g = 'skip'
             for frag, tgt in RULES:

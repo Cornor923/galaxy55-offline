@@ -46,7 +46,8 @@ def chunks(path):
         raw = zlib.decompress(raw) if comp == 2 else gzip.decompress(raw)
         yield nbt(raw)
 
-def blocks(world):
+def blocks(world, props=False):
+    """props=True: cada bloque lleva un quinto campo con sus propiedades (facing, type, half...)."""
     out = []
     reg = os.path.join(world, 'region')
     for fn in os.listdir(reg):
@@ -63,6 +64,7 @@ def blocks(world):
                     pal = s.get('Palette', []); dat = s.get('BlockStates')
                 if not pal: continue
                 names = [p['Name'] for p in pal]
+                pprops = [p.get('Properties', {}) for p in pal]
                 if dat is None:
                     if names[0].endswith(':air'): continue
                     idx = [0] * 4096
@@ -80,7 +82,10 @@ def blocks(world):
                     n = names[pi] if pi < len(names) else 'minecraft:air'
                     if n.endswith(':air') or n.endswith('cave_air') or n.endswith('void_air'): continue
                     y = i >> 8; z = (i >> 4) & 15; x = i & 15
-                    out.append((cx * 16 + x, sy * 16 + y, cz * 16 + z, n.split(':')[1]))
+                    if props:
+                        out.append((cx * 16 + x, sy * 16 + y, cz * 16 + z, n.split(':')[1], pprops[pi]))
+                    else:
+                        out.append((cx * 16 + x, sy * 16 + y, cz * 16 + z, n.split(':')[1]))
     return out
 
 if __name__ == '__main__':
