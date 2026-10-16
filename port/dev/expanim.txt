@@ -1,0 +1,27 @@
+# salida del sistema por el borde y entrada a otro: capturas seguidas
+wait 3
+ship
+wait 10
+explore
+wait 12
+wait 200
+expgo 2150 963
+wait 60
+expinfo
+wait 20
+expinfo
+shot ex1
+wait 8
+shot ex2
+wait 8
+shot ex3
+wait 8
+shot ex4
+wait 8
+shot ex5
+wait 8
+shot ex6
+wait 30
+expinfo
+shot ex7
+quit

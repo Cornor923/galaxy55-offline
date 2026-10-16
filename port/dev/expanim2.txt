@@ -1,0 +1,40 @@
+# entrada a un sistema solar: primero se sale al sector por el borde y luego se vuelve a entrar
+wait 3
+ship
+wait 10
+explore
+wait 12
+wait 200
+expgo 2150 963
+wait 200
+expsys 3
+wait 150
+expinfo
+shot en1
+wait 7
+shot en2
+wait 7
+shot en3
+wait 7
+shot en4
+wait 7
+shot en5
+wait 7
+shot en6
+wait 7
+shot en7
+wait 7
+shot en8
+wait 7
+shot en9
+wait 7
+shot en10
+wait 7
+shot en11
+wait 7
+shot en12
+wait 7
+wait 60
+expinfo
+shot en13
+quit

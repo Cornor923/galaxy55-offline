@@ -1,6 +1,7 @@
 import Ui;
 import ExpData;
 import ExpRoom;
+import ExpFx;
 
 /** Entidad del mapa (Entity.hx del original): posicion, velocidad y viaje hacia un objetivo. */
 class ExpEntity {
@@ -16,6 +17,8 @@ class ExpEntity {
 	public var onArrive : Void -> Void;
 	public var onArriveDist = 0;
 	public var dataId = -1;
+	/** alfa del dibujo (spr.alpha del original) */
+	public var alpha = 1.;
 
 	public function new() {}
 
@@ -125,13 +128,9 @@ class Explorer extends h2d.Object {
 	var downOnBg = false;
 	var fade : h2d.Bitmap;
 	var fadeAlpha = 1.;
-	var fadeDir = 0;
-	var fadeCb : Void -> Void;
 	var locked = false;
 	var burn : h2d.Bitmap;
 	var overlay : h2d.Object;
-	var popText : h2d.Text;
-	var popTime = 0.;
 	// ventana de planeta
 	var win : h2d.Object;
 	var winSpot : Spot;
@@ -140,13 +139,35 @@ class Explorer extends h2d.Object {
 	var zoomGoal = 0.;
 	var scanProgress = -1.;
 	var scanPlanet : ExpPlanet;
-	var scanBar : h2d.Graphics;
+	// transiciones del original (Manager.gotoSolar, gotoSector, hyperjump*)
+	var tw = new ExpTweens();
+	var common : View;
+	var fxLayer : h2d.Object;
+	var zoomCache : h2d.Bitmap;
+	var overdrive : h2d.Bitmap;
+	var oldBg : h2d.Bitmap;
+	var bar : h2d.Graphics;
+	var spinner : h2d.Graphics;
+	var serverLock = false;
+	var lockCamera = false;
+	var shipVisible = true;
+	var shipAlpha = 1.;
+	var sectorEntrance = { x : 0., y : 0. };
+	var spawnAcc = 0.;
+	static inline var COMMON_LOW_ALPHA = 0.5;
+	static inline var COMMON_HIGH_ALPHA = 0.85;
+	static inline var ANIM_SECTOR_ZOOM = 60;
+	static inline var ANIM_COMMON_ZOOM = 100;
+	static inline var ANIM_SOLARSTAR_ZOOM = 10;
+	static inline var REACTOR_COLOR = 0xA482FF;
 
 	public function new( parent : h2d.Object, infos : ExpInfos, ?frames : Array<flash.display.BitmapData> ) {
 		super(parent);
 		this.infos = infos;
 		content = new h2d.Object(this);
 		bgBmp = new h2d.Bitmap(h2d.Tile.fromColor(0), content);
+		oldBg = new h2d.Bitmap(h2d.Tile.fromColor(0), content);
+		oldBg.visible = false;
 
 		// graficos del explorador
 		var png = hxd.res.Any.fromBytes("tiles.png", Res.exploreBytes("tiles.png")).toImage();
@@ -157,6 +178,12 @@ class Explorer extends h2d.Object {
 		var img = hxd.res.Any.fromBytes("tiles.png", Res.exploreBytes("tiles.png")).toTile();
 		img.getTexture().filter = Nearest;
 		tiles = img;
+
+		// fondo comun (Room.generateCommon), con alfa COMMON_LOW_ALPHA
+		common = makeView(new ExpRoom(infos.sector.seed, VW, VH));
+		common.room.generateCommon();
+		buildLayers(common);
+		for( o in common.layers ) o.b.alpha = COMMON_LOW_ALPHA;
 
 		// sector
 		sector = makeView(new ExpRoom(infos.sector.seed, VW, VH));
@@ -190,10 +217,19 @@ class Explorer extends h2d.Object {
 		cursor.moveTo(w, 0);
 		for( i in 1...9 ) cursor.lineTo(Math.cos(i / 8 * Math.PI / 2) * w, Math.sin(i / 8 * Math.PI / 2) * w);
 
-		// calor del sol (burn)
+		// efectos en pantalla (externalSprites del original) y la imagen del sistema que crece o se encoge (zoomCache)
+		zoomCache = new h2d.Bitmap(null, content);
+		zoomCache.visible = false;
+		fxLayer = new h2d.Object(content);
+
+		// calor del sol (burn) y destello de la llegada (overdriveBurn)
 		burn = new h2d.Bitmap(h2d.Tile.fromColor(0xFFFFFF, VW, VH), content);
 		burn.blendMode = Add;
 		burn.visible = false;
+		overdrive = new h2d.Bitmap(h2d.Tile.fromColor(0xFFFFFF, VW, VH), content);
+		overdrive.blendMode = Add;
+		overdrive.color.set(0xFF / 255, 0xBE / 255, 0x28 / 255, 1);
+		overdrive.visible = false;
 
 		// bordes oscuros (initBorders)
 		var bpx = hxd.Pixels.alloc(VW, VH, BGRA);
@@ -216,11 +252,25 @@ class Explorer extends h2d.Object {
 		scan.scaleX = VW;
 
 		overlay = new h2d.Object(content);
-		popText = Theme.text(overlay, "", 4., 0xFFFFFF, 0, 0);
-		popText.dropShadow = { dx : 1, dy : 2, color : 0, alpha : 0.8 };
-		popText.visible = false;
 
 		fade = new h2d.Bitmap(h2d.Tile.fromColor(0x000000, VW, VH), content);
+		// barra de progreso (showBar) e icono de carga que gira arriba a la derecha (loadingAnim)
+		bar = new h2d.Graphics(content);
+		bar.visible = false;
+		spinner = new h2d.Graphics(content);
+		spinner.x = VW - 20;
+		spinner.y = 20;
+		spinner.lineStyle(5, 0x282E44, 0.7);
+		spinner.drawCircle(0, 0, 10);
+		spinner.lineStyle();
+		for( i in 0...5 ) {
+			var a = i * 0.45;
+			spinner.beginFill(0xCCD8EC, 0.8 * i / 5 + 0.2);
+			spinner.drawCircle(Math.cos(a) * 10, Math.sin(a) * 10, 2);
+			spinner.endFill();
+		}
+		spinner.visible = false;
+		loading(true);
 
 		// posicion inicial de la nave
 		current = sector;
@@ -236,6 +286,8 @@ class Explorer extends h2d.Object {
 		}
 		sector.viewX = ship.x;
 		sector.viewY = ship.y;
+		sectorEntrance.x = ship.x;
+		sectorEntrance.y = ship.y;
 		ship.speed = shipSpeed();
 		// la nave estaba en un sistema o junto a un planeta (Manager.start)
 		switch( infos.shipPos ) {
@@ -253,10 +305,14 @@ class Explorer extends h2d.Object {
 					popString(si.name);
 				}
 		default:
+			popString(infos.sector.name);
 		}
 		layout();
 		update(0);
-		fadeIn(); // entrada suave desde negro (initMask)
+		// Manager.start: la mascara negra se desvanece en 1 s y el icono de carga se va
+		fadeAlpha = 1;
+		tw.create(this, "fadeAlpha", 0, TEaseIn, 1000);
+		loading(false);
 	}
 
 	/** Const.shipSpeed(motores, peso): motores y bloques de la nave por defecto */
@@ -309,7 +365,7 @@ class Explorer extends h2d.Object {
 		v.root.remove();
 	}
 
-	function setBg( col : Int ) {
+	function bgTile( col : Int ) : h2d.Tile {
 		// Manager.setBg: se limita el brillo y el degradado va hacia un tono mas oscuro
 		col = mt.deepnight.Color.capBrightnessInt(col, 0.3);
 		var dark = mt.deepnight.Color.brightnessInt(col, -0.2);
@@ -317,8 +373,30 @@ class Explorer extends h2d.Object {
 		for( y in 0...VH ) px.bytes.setInt32(y * 4, 0xFF000000 | mt.deepnight.Color.interpolateInt(col, dark, y / (VH - 1)));
 		var tex = new h3d.mat.Texture(1, VH);
 		tex.uploadPixels(px);
-		bgBmp.tile = h2d.Tile.fromTexture(tex);
+		return h2d.Tile.fromTexture(tex);
+	}
+
+	var bgColor = -1;
+
+	/** Manager.setBg: con fadeDuration el fondo anterior se desvanece por encima */
+	function setBg( col : Int, fadeDuration = 0 ) {
+		var old = bgColor;
+		bgColor = col;
+		tw.terminate(oldBg);
+		var prev = bgBmp.tile;
+		bgBmp.tile = bgTile(col);
 		bgBmp.scaleX = VW;
+		if( oldBg.tile != null && oldBg.tile.getTexture() != null ) oldBg.tile.getTexture().dispose();
+		oldBg.tile = null;
+		oldBg.visible = false;
+		if( fadeDuration > 0 && old >= 0 ) {
+			oldBg.tile = prev;
+			oldBg.scaleX = VW;
+			oldBg.visible = true;
+			oldBg.alpha = 1;
+			tw.create(oldBg, "alpha", 0, TEaseIn, fadeDuration).onEnd = function() oldBg.visible = false;
+		} else if( prev != null && prev.getTexture() != null )
+			prev.getTexture().dispose();
 	}
 
 	function frame( i : Int, size = 32 ) : h2d.Tile return tiles.sub(i * size, 32, size, size, -size * 0.5, -size * 0.5);
@@ -370,25 +448,134 @@ class Explorer extends h2d.Object {
 
 	// ---------------------------------------------------------------- sistema solar
 
-	function gotoSolar( si : ExpSystem ) {
+	/** Manager.onReachSystem: centrar la camara (200 ms), esperar al "servidor" y saltar al sistema */
+	function onReachSystem( sp : Spot ) {
 		locked = true;
-		stopShip(true);
-		closeWindow();
-		var arrival = (180 + ship.rotation) * Math.PI / 180;
-		fadeOut(function() {
-			buildSolar(si, arrival, -1);
-			onPos([1, si.id]);
-			popString(si.name);
-			locked = false;
-			fadeIn();
+		centerView(200, function() {
+			sendAction(function() gotoSolar(sp.system, true));
 		});
 	}
 
-	/** crea la vista del sistema; con planetId la nave aparece junto a ese planeta (al volver de aterrizar) */
-	function buildSolar( si : ExpSystem, arrival : Float, planetId : Int ) {
+	/** Manager.gotoSolar */
+	function gotoSolar( si : ExpSystem, anim : Bool ) {
+		closeWindow();
+		if( !anim ) {
+			prepareSolar(si);
+			finishSolar(si);
+			centerView();
+			return;
+		}
+		prepareSolar(si);
+		solar.root.visible = false;
+		worldSolar.visible = false;
+		solarStars.root.visible = false;
+		hyperjumpFx3D(function() solarZoomAnim(si));
+	}
+
+	function solarZoomAnim( si : ExpSystem ) {
+		var total = 1300;
+		stopShip(true);
+		locked = true;
+		lockCamera = true;
+		shipVisible = false;
+		shipAlpha = 1;
+		var arrivalAng = (180 + ship.rotation) * Math.PI / 180;
+		tw.create(this, "cursorAlpha", 0, TEaseIn, 300);
+
+		// se guarda el punto de entrada en el sector
+		sectorEntrance.x = ship.x;
+		sectorEntrance.y = ship.y;
+
+		// progresion general: lineas de hiperespacio entre el 10 % y el 60 % (el original crea n por fotograma a 30 por segundo)
+		var zoomProgress = { t : 0.0 };
+		var a = tw.create(zoomProgress, "t", 1, TLinear, total);
+		a.onUpdateT = function(t) {
+			if( t >= 0.10 && t <= 0.60 ) {
+				var ratio = 1 - (t - 0.10) / 0.50;
+				spawnAcc += (ratio * 10 + Std.random(10)) * lastTmod;
+				while( spawnAcc >= 1 ) {
+					spawnAcc -= 1;
+					makeHyperspacePart(ratio);
+				}
+			}
+		};
+		a.onEnd = function() {
+			popString(si.name);
+			finishSolar(si);
+			ship.rotation = 180 + arrivalAng * 180 / Math.PI;
+			centerView(Std.int(total * 0.8));
+			hyperjumpArrivalFx(10);
+		};
+
+		var room = solar.room;
+		setBg(room.bgColor, total);
+		room.entrance.x = room.center.x + Math.cos(arrivalAng) * Math.min(250, room.exitDist - 10);
+		room.entrance.y = room.center.y + Math.sin(arrivalAng) * Math.min(250, room.exitDist - 10);
+		solar.viewX = solarStars.viewX = room.entrance.x;
+		solar.viewY = solarStars.viewY = room.entrance.y;
+
+		// imagen del sistema para el zoom
+		setCache(snapshot());
+
+		// color del calor del sol
+		var c = mt.deepnight.Color.interpolateInt(room.sunColor, 0xF46800, 0.3);
+		burn.color.set(((c >> 16) & 0xFF) / 255, ((c >> 8) & 0xFF) / 255, (c & 0xFF) / 255, 1);
+
+		// destello a la llegada (overdriveBurn)
+		var oc = mt.deepnight.Color.brightnessInt(room.bgColor, 0.6);
+		oc = mt.deepnight.Color.rgbToInt(mt.deepnight.Color.saturation(mt.deepnight.Color.intToRgb(oc), -0.3));
+		overdrive.color.set(((oc >> 16) & 0xFF) / 255, ((oc >> 8) & 0xFF) / 255, (oc & 0xFF) / 255, 1);
+		overdrive.visible = false;
+		tw.delay(total * 0.4, function() {
+			overdrive.visible = true;
+			overdrive.alpha = 0;
+			tw.create(overdrive, "alpha", 0.7, TEaseIn, total * 0.6).onEnd = function() {
+				tw.create(overdrive, "alpha", 0, TEaseOut, total * 0.4).onEnd = function() overdrive.visible = false;
+			};
+		});
+
+		// fondo de estrellas del sistema de llegada
+		solarStars.root.visible = true;
+		for( o in solarStars.layers ) {
+			o.l.zoom = 0;
+			o.b.alpha = 0;
+			tw.create(o.l, "zoom", ANIM_SOLARSTAR_ZOOM, TEaseOut, total);
+			tw.create(o.b, "alpha", 1, TEaseOut, total);
+		}
+
+		// fondo comun
+		for( o in common.layers ) {
+			tw.create(o.l, "zoom", ANIM_COMMON_ZOOM, TEase, total);
+			tw.create(o.b, "alpha", COMMON_HIGH_ALPHA, TEase, total);
+		}
+
+		// el sistema crece desde un punto
+		var d = total * 0.9;
+		zoomCache.visible = true;
+		zoomCache.alpha = 0.5;
+		cacheScale = 0.01;
+		tw.delay(total * 0.1, function() {
+			tw.create(this, "cacheScale", 1, TEase, d);
+			tw.create(zoomCache, "alpha", 1, TEaseOut, 500);
+		});
+
+		// el sector se aleja
+		var d = total * 0.8;
+		for( o in sector.layers ) {
+			var o = o;
+			o.l.zoom = 0;
+			tw.create(o.l, "zoom", ANIM_SECTOR_ZOOM, TEaseIn, d).onUpdateT = function(t) o.b.alpha = 1 - t;
+		}
+		for( sp in sectorSpots ) {
+			var e = sp.e;
+			e.zoom = 0;
+			tw.create(e, "zoom", ANIM_SECTOR_ZOOM * 0.2, TEaseIn, d * 0.4).onUpdateT = function(t) e.alpha = 1 - t;
+		}
+	}
+
+	/** Manager.generateSolar: crea la vista del sistema (oculta hasta finishSolar) */
+	function prepareSolar( si : ExpSystem ) {
 		curSystem = si;
-		sector.root.visible = false;
-		worldSector.visible = false;
 		disposeView(solar);
 		disposeView(solarStars);
 		for( s in solarSpots ) s.obj.remove();
@@ -409,26 +596,50 @@ class Explorer extends h2d.Object {
 		worldSolar = new h2d.Object(content);
 		content.addChildAt(worldSolar, content.getChildIndex(shipWorld));
 		for( pv in room.planetViews ) addPlanet(pv);
-		setBg(room.bgColor);
+		solar.viewX = solarStars.viewX = room.entrance.x;
+		solar.viewY = solarStars.viewY = room.entrance.y;
+	}
 
+	/** processEnd de Manager.gotoSolar */
+	function finishSolar( si : ExpSystem ) {
+		sector.root.visible = false;
+		worldSector.visible = false;
+		solarStars.root.visible = true;
+		solar.root.visible = true;
+		worldSolar.visible = true;
+		setBg(solar.room.bgColor);
+		current = solar;
+		inSolar = true;
+		ship.x = solar.room.entrance.x;
+		ship.y = solar.room.entrance.y;
+		locked = false;
+		setCache(null);
+		for( o in solarStars.layers ) {
+			o.l.zoom = ANIM_SOLARSTAR_ZOOM;
+			o.b.alpha = 1;
+		}
+		for( o in common.layers ) {
+			o.l.zoom = ANIM_COMMON_ZOOM;
+			o.b.alpha = COMMON_HIGH_ALPHA;
+		}
+		onPos([1, si.id]);
+	}
+
+	/** inicio junto a un planeta o dentro de un sistema (Manager.start: gotoSolar sin animacion) */
+	function buildSolar( si : ExpSystem, arrival : Float, planetId : Int ) {
+		prepareSolar(si);
+		var room = solar.room;
 		room.entrance.x = room.center.x + Math.cos(arrival) * Math.min(250, room.exitDist - 10);
 		room.entrance.y = room.center.y + Math.sin(arrival) * Math.min(250, room.exitDist - 10);
-		var ex = room.entrance.x, ey = room.entrance.y;
 		if( planetId >= 0 )
 			for( pv in room.planetViews )
 				if( pv.infos.id == planetId ) {
-					ex = pv.x + 32;
-					ey = pv.y;
+					room.entrance.x = pv.x + 32;
+					room.entrance.y = pv.y;
 				}
-		solar.viewX = ex;
-		solar.viewY = ey;
-		solarStars.viewX = ex;
-		solarStars.viewY = ey;
-		for( o in solarStars.layers ) o.l.zoom = 10; // ANIM_SOLARSTAR_ZOOM
-		current = solar;
-		inSolar = true;
-		ship.x = ex;
-		ship.y = ey;
+		finishSolar(si);
+		solar.viewX = solarStars.viewX = ship.x;
+		solar.viewY = solarStars.viewY = ship.y;
 		ship.rotation = planetId >= 0 ? 180 : 180 + arrival * 180 / Math.PI;
 		ship.dx = ship.dy = 0;
 		cursorAlpha = 0;
@@ -458,63 +669,348 @@ class Explorer extends h2d.Object {
 		solarSpots.push(sp);
 	}
 
-	function gotoSector() {
-		locked = true;
-		stopShip(true);
+	/** Manager.gotoSector (con animacion) */
+	function gotoSector( from : ExpSystem ) {
 		closeWindow();
-		var heading = ship.rotation;
-		var from = curSystem;
-		fadeOut(function() {
-			for( s in solarSpots ) s.obj.remove();
-			solarSpots = [];
-			disposeView(solar);
-			disposeView(solarStars);
-			solar = null;
-			solarStars = null;
-			if( worldSolar != null ) worldSolar.remove();
-			worldSolar = null;
-			sector.root.visible = true;
-			worldSector.visible = true;
-			current = sector;
-			inSolar = false;
-			setBg(sector.room.bgColor);
-			var pt = sector.room.gridToMap(from.x, from.y);
-			ship.x = pt.x;
-			ship.y = pt.y;
-			ship.rotation = heading;
-			ship.dx = ship.dy = 0;
-			sector.viewX = ship.x;
-			sector.viewY = ship.y;
-			curSystem = null;
-			burn.visible = false;
-			onPos([0, from.x, from.y]);
+		var pt = sector.room.gridToMap(from.x, from.y);
+		sectorEntrance.x = pt.x;
+		sectorEntrance.y = pt.y;
+		locked = true;
+		hyperjumpFxHorizontal(function() sectorZoomAnim(from));
+	}
+
+	function sectorZoomAnim( from : ExpSystem ) {
+		stopShip();
+		locked = true;
+		curSystem = null;
+		var total = 800;
+		shipVisible = false;
+		shipAlpha = 1;
+		var arrivalAng = ship.rotation;
+
+		var zoomProgress = { t : 0.0 };
+		tw.create(zoomProgress, "t", 1, TLinear, total).onEnd = function() {
+			// processEnd
 			locked = false;
-			fadeIn();
+			setCache(null);
+			ship.rotation = arrivalAng;
+			hyperjumpArrivalFx(6);
+		};
+
+		setCache(snapshot());
+		zoomCache.visible = true;
+		zoomCache.alpha = 1;
+		cacheScale = 1;
+
+		ship.x = sectorEntrance.x + Math.cos(arrivalAng * Math.PI / 180) * 20;
+		ship.y = sectorEntrance.y + Math.sin(arrivalAng * Math.PI / 180) * 20;
+		ship.dx = ship.dy = 0;
+
+		// el sistema se encoge hasta un punto
+		var d = total * 1.;
+		var e = TBurnIn;
+		for( s in solarSpots ) s.obj.remove();
+		solarSpots = [];
+		disposeView(solar);
+		solar = null;
+		if( worldSolar != null ) worldSolar.remove();
+		worldSolar = null;
+		inSolar = false;
+		tw.create(this, "cacheScale", 0.01, e, d);
+		tw.delay(d * 0.5, function() tw.create(zoomCache, "alpha", 0, TEaseIn, d * 0.5));
+		tw.create(burn, "alpha", 0, TEaseIn, d).onEnd = function() burn.visible = false;
+
+		// destello de la salida
+		overdrive.visible = true;
+		overdrive.alpha = 0.6;
+		tw.create(overdrive, "alpha", 0, TEaseOut, 800).onEnd = function() overdrive.visible = false;
+
+		// fondo de estrellas del sistema
+		var stars = solarStars;
+		for( o in solarStars.layers ) {
+			tw.create(o.l, "zoom", 0, e, d);
+			tw.create(o.b, "alpha", 0, e, d);
+		}
+		tw.delay(d, function() {
+			if( solarStars == stars ) {
+				disposeView(solarStars);
+				solarStars = null;
+			}
 		});
+
+		// fondo comun
+		for( o in common.layers ) {
+			tw.create(o.l, "zoom", 0, TEaseOut, total);
+			tw.create(o.b, "alpha", COMMON_LOW_ALPHA, e, d);
+		}
+
+		// el sector vuelve
+		var d = total;
+		current = sector;
+		sector.root.visible = true;
+		worldSector.visible = true;
+		centerView();
+		for( o in sector.layers ) {
+			o.b.alpha = 0;
+			o.l.zoom = ANIM_SECTOR_ZOOM;
+			tw.create(o.l, "zoom", 0, TEaseOut, d);
+			tw.create(o.b, "alpha", 1, TEaseIn, d);
+		}
+		for( sp in sectorSpots ) {
+			var e = sp.e;
+			e.alpha = 0;
+			e.zoom = ANIM_SECTOR_ZOOM * 0.2;
+			tw.delay(d * 0.5, function() {
+				tw.create(e, "zoom", 0, TEaseOut, d * 0.5).onUpdateT = function(t) e.alpha = t;
+			});
+		}
+		setBg(sector.room.bgColor, d);
+		onPos([0, from.x, from.y]);
+	}
+
+	// ---------------------------------------------------------------- efectos (Manager.hyperjump*, novaFx, makeHyperspacePart)
+
+	var lastTmod = 1.;
+	var cacheScale(default, set) = 1.;
+	function set_cacheScale( s : Float ) {
+		cacheScale = s;
+		if( zoomCache != null && zoomCache.tile != null ) {
+			zoomCache.setScale(s);
+			zoomCache.x = VW * 0.5 - zoomCache.tile.width * 0.5 * s;
+			zoomCache.y = VH * 0.5 - zoomCache.tile.height * 0.5 * s;
+		}
+		return s;
+	}
+
+	function setCache( t : h2d.Tile ) {
+		if( zoomCache.tile != null && zoomCache.tile.getTexture() != null ) zoomCache.tile.getTexture().dispose();
+		zoomCache.tile = t;
+		zoomCache.visible = false;
+		cacheScale = cacheScale;
+	}
+
+	/**
+	 * Room.snapshot: el sistema entero (capas sin hideZoom y planetas) visto con una ventana del tamano de la habitacion,
+	 * centrada donde esta la camara, en una sola imagen.
+	 */
+	function snapshot() : h2d.Tile {
+		var w = solar.room.width, h = solar.room.height;
+		var holder = new h2d.Object();
+		var i1 = content.getChildIndex(solar.root);
+		var oldVis = solar.root.visible, oldVis2 = worldSolar.visible;
+		holder.addChild(solar.root);
+		var i2 = content.getChildIndex(worldSolar);
+		holder.addChild(worldSolar);
+		solar.root.visible = worldSolar.visible = true;
+		updateLayers(solar, solar.viewX, solar.viewY, 0, w, h);
+		for( o in solar.layers ) if( o.l.hideZoom ) o.b.visible = false;
+		for( sp in solarSpots ) {
+			sp.obj.setPosition(Std.int(w * 0.5 + sp.e.x - solar.viewX), Std.int(h * 0.5 + sp.e.y - solar.viewY));
+			sp.obj.setScale(1);
+			sp.obj.alpha = 1;
+		}
+		var tex = new h3d.mat.Texture(w, h, [Target]);
+		tex.clear(0, 0);
+		holder.drawTo(tex);
+		for( o in solar.layers ) o.b.visible = true;
+		solar.root.visible = oldVis;
+		worldSolar.visible = oldVis2;
+		content.addChildAt(solar.root, i1);
+		content.addChildAt(worldSolar, i2);
+		return h2d.Tile.fromTexture(tex);
+	}
+
+	inline function shipScreenX() return screenX(ship.x, current.viewX, zoomT);
+	inline function shipScreenY() return screenY(ship.y, current.viewY, zoomT);
+
+	/** Manager.hyperjumpFx3D: lineas que convergen en la nave y destello que absorbe */
+	function hyperjumpFx3D( cb : Void -> Void ) {
+		tw.delay(50, cb);
+		shipVisible = false;
+		var px = shipScreenX(), py = shipScreenY();
+		for( i in 0...10 ) {
+			var a = (i / 15) * Math.PI * 8 + Math.random() * 0.05;
+			var d = Math.random() * 5 + 15;
+			var x = px + Math.cos(a) * d;
+			var y = py + Math.sin(a) * d;
+			var a = Math.atan2(py - y, px - x);
+			var s = 2 + Math.random() * 0.5;
+			var p = new ExpPart(fxLayer, x, y);
+			p.drawBox(15, 2, 0xFFFFFF, 1, REACTOR_COLOR);
+			p.setLife(15 + Std.random(5));
+			p.rotation = a;
+			p.frictX = p.frictY = 0.95;
+			p.alpha = Math.random() * 0.9 + 0.1;
+			p.onUpdate = function() p.setScale(1 - p.time());
+			p.dx = Math.cos(a) * s;
+			p.dy = Math.sin(a) * s;
+		}
+		novaFx(px, py, 40, true);
+	}
+
+	/** Manager.hyperjumpFxHorizontal: rayas hacia delante (y unas pocas hacia atras) y destello que crece */
+	function hyperjumpFxHorizontal( cb : Void -> Void ) {
+		tw.delay(300, cb);
+		shipVisible = false;
+		var px = shipScreenX(), py = shipScreenY();
+		for( i in 0...15 ) {
+			var back = i <= 5;
+			var a = (ship.rotation + (back ? 180 : 0)) * Math.PI / 180;
+			var s = back ? Math.random() * 4 + 1 : Math.random() * 5 + 5;
+			var p = new ExpPart(fxLayer, px + Math.random() * 7 * (Std.random(2) * 2 - 1), py + Math.random() * 7 * (Std.random(2) * 2 - 1));
+			p.drawBox(Std.random(5) + 2, Std.random(2) + 1, 0xFFFFFF, 1, REACTOR_COLOR);
+			p.setLife(10 + Std.random(10));
+			p.rotation = a;
+			p.frictX = p.frictY = 0.80 + Math.random() * 0.10;
+			p.alpha = Math.random() * 0.9 + 0.1;
+			var scale = (back ? 3 : 7) * (0.7 + Math.random() * 0.3);
+			p.onUpdate = function() p.scaleX = (p.getSpeed() / s) * scale;
+			p.dx = Math.cos(a) * s;
+			p.dy = Math.sin(a) * s;
+		}
+		novaFx(px, py, 25, false);
+	}
+
+	/** Manager.hyperjumpArrivalFx: la nave sale disparada, rayas rectas y destello detras */
+	function hyperjumpArrivalFx( speed : Float ) {
+		var a = ship.getAngleRad();
+		ship.dx = Math.cos(a) * speed;
+		ship.dy = Math.sin(a) * speed;
+		var px = shipScreenX(), py = shipScreenY();
+		shipVisible = true;
+		shipAlpha = 0;
+		tw.create(this, "shipAlpha", 1, TEaseIn, 500);
+		for( i in 0...15 ) {
+			var a = ship.rotation * Math.PI / 180;
+			var s = Math.random() * 5 + 4;
+			var p = new ExpPart(fxLayer, px + Math.random() * 7 * (Std.random(2) * 2 - 1) - Math.cos(a) * 40, py + Math.random() * 7 * (Std.random(2) * 2 - 1) - Math.sin(a) * 40);
+			p.drawBox(Std.random(5) + 2, Std.random(2) + 1, 0xFFFFFF, 1, REACTOR_COLOR);
+			p.setLife(10 + Std.random(10));
+			p.rotation = a;
+			p.frictX = p.frictY = 0.80 + Math.random() * 0.10;
+			p.alpha = Math.random() * 0.9 + 0.1;
+			var scale = 7 * (0.7 + Math.random() * 0.3);
+			p.onUpdate = function() p.scaleX = (p.getSpeed() / s) * scale;
+			p.dx = Math.cos(a) * s;
+			p.dy = Math.sin(a) * s;
+		}
+		novaFx(px - Math.cos(a) * 40, py - Math.sin(a) * 40, 30, true);
+	}
+
+	/** Manager.novaFx */
+	function novaFx( x : Float, y : Float, radius : Float, absorb : Bool ) {
+		var nova = new h2d.Bitmap(ExpNova.tile(Std.int(radius), REACTOR_COLOR), fxLayer);
+		nova.blendMode = Add;
+		nova.x = x;
+		nova.y = y;
+		var holder = { s : absorb ? 1. : 0.3 };
+		nova.setScale(holder.s);
+		nova.alpha = 0.5;
+		var a = tw.create(holder, "s", absorb ? 0.3 : 1, TBurnIn, 500);
+		a.onUpdateT = function(t) {
+			nova.setScale(holder.s);
+			nova.alpha = 0.5 * (1 - t);
+		};
+		a.onEnd = function() nova.remove();
+	}
+
+	/** Manager.makeHyperspacePart: lineas que salen del centro de la pantalla y se aceleran */
+	function makeHyperspacePart( size : Float ) {
+		var col = mt.deepnight.Color.brightnessInt(current.room.starColor, 0.4);
+		var a = Math.random() * Math.PI * 2;
+		var s = Math.random() * 3 + 3;
+		var p = new ExpPart(fxLayer, VW * 0.5, VH * 0.5);
+		p.dx = Math.cos(a) * s;
+		p.dy = Math.sin(a) * s;
+		var n = 2 + Math.random() * 40;
+		p.rx += p.dx * n;
+		p.ry += p.dy * n;
+		p.drawLine(1.5, col, current.room.starColor);
+		p.setLife(20);
+		p.rotation = a;
+		p.onUpdate = function() p.scaleX = size * p.getSpeed() * 0.8;
+		p.alpha = Math.random() * 0.8 + 0.2;
+		p.frictX = p.frictY = 1.15;
+	}
+
+	// ---------------------------------------------------------------- servidor, camara, fondo y textos
+
+	/** ServerCall.sendAction en modo local: responde a los 500 ms, con el icono de carga */
+	function sendAction( cb : Void -> Void ) {
+		loading(true);
+		serverLock = true;
+		tw.delay(500, function() {
+			loading(false);
+			serverLock = false;
+			cb();
+		});
+	}
+
+	/** Manager.loading */
+	function loading( b : Bool ) {
+		tw.terminate(spinner);
+		if( b ) {
+			spinner.visible = true;
+			spinner.alpha = 1;
+		} else
+			tw.create(spinner, "alpha", 0, TLinear, 500).onEnd = function() spinner.visible = false;
+	}
+
+	/** Manager.showBar */
+	function showBar( f : Float ) {
+		if( f < 0 ) f = 0;
+		if( f > 1 ) f = 1;
+		bar.visible = true;
+		if( f < 1 ) tw.create(bar, "alpha", 1, TEaseOut, 500);
+		else tw.create(bar, "alpha", 0, TEaseIn, 500).onEnd = function() bar.visible = false;
+		var col = 0xB6AEC6;
+		bar.clear();
+		bar.beginFill(0, 1);
+		bar.drawRect(-2, -2, 304, 7);
+		bar.beginFill(mt.deepnight.Color.brightnessInt(col, -0.7), 1);
+		bar.drawRect(0, 0, 300, 3);
+		bar.beginFill(col, 1);
+		bar.drawRect(0, 0, 300 * f, 3);
+		bar.endFill();
+		bar.x = Std.int(VW * 0.5 - 150);
+		bar.y = Std.int(VH * 0.5 - 1.5) + 50;
+	}
+
+	/** Manager.centerView: la camara va a la nave (con duracion, en curva TEase) */
+	function centerView( duration = 0, ?cb : Void -> Void ) {
+		if( duration > 0 && (current.viewX != ship.x || current.viewY != ship.y) ) {
+			var n = 2;
+			var end = function() {
+				if( --n == 0 ) {
+					lockCamera = false;
+					if( cb != null ) cb();
+				}
+			};
+			lockCamera = true;
+			tw.create(current, "viewX", ship.x, TEase, duration).onEnd = end;
+			tw.create(current, "viewY", ship.y, TEase, duration).onEnd = end;
+		} else {
+			current.viewX = ship.x;
+			current.viewY = ship.y;
+			lockCamera = false;
+			if( cb != null ) cb();
+		}
 	}
 
 	// ---------------------------------------------------------------- transiciones, texto y ventana
 
-	function fadeOut( cb : Void -> Void ) {
-		fadeDir = 1;
-		fadeCb = cb;
-		fade.visible = true;
-	}
-
-	function fadeIn() {
-		fadeDir = -1;
-		fadeCb = null;
-		fade.visible = true;
-	}
-
-	/** Manager.popString: nombre grande que aparece y se desvanece */
-	function popString( s : String ) {
-		popText.text = s;
-		popText.x = Std.int(VW * 0.5 - popText.textWidth * popText.scaleX * 0.5);
-		popText.y = Std.int(VH * 0.25);
-		popText.visible = true;
-		popText.alpha = 0;
-		popTime = 0.0001;
+	/** Manager.popString: nombre grande que aparece (500 ms) y se desvanece (2,5 s) pasado un rato */
+	function popString( s : String, col = 0xFFFFFF, fadeOut = true ) {
+		var tf = label(overlay, s, 4., col);
+		tf.x = Std.int(VW * 0.5 - tf.textWidth * tf.scaleX * 0.5);
+		tf.y = Std.int(VH * 0.25);
+		tf.alpha = 0;
+		tw.create(tf, "alpha", 1, TEase, 500);
+		if( fadeOut )
+			tw.delay(1000 + s.length * 20, function() {
+				tw.create(tf, "alpha", 0, TEaseIn, 2500).onEnd = function() tf.remove();
+			});
+		return tf;
 	}
 
 	function closeWindow() {
@@ -612,7 +1108,7 @@ class Explorer extends h2d.Object {
 					case PUnexplored:
 						openWindow(sp, p.name, bname, "Escanear", function() startScan(p));
 					case PActive, PInvited:
-						openWindow(sp, p.name, bname, "Aterrizar", function() onLand(p, curSystem));
+						openWindow(sp, p.name, bname, "Aterrizar", function() landPlanet(p));
 					case PAbandonned, PForbidden:
 						openWindow(sp, p.name, bname, null, function() {});
 					}
@@ -633,18 +1129,31 @@ class Explorer extends h2d.Object {
 		}
 	}
 
-	function onReachSystem( sp : Spot ) {
+	/** Manager.sendAction(ALandPlanet) del modo local: icono de carga y a los 100 ms se entra en el planeta */
+	function landPlanet( p : ExpPlanet ) {
 		locked = true;
-		gotoSolar(sp.system);
+		serverLock = true;
+		loading(true);
+		tw.delay(100, function() onLand(p, curSystem));
 	}
 
-	/** ServerCall.startGeneratePlanet en modo local: una barra breve y se aterriza */
+	/**
+	 * Boton "Escanear" (Manager.moveShip): la pantalla se funde a negro (350 ms), aparece el nombre del planeta y la barra
+	 * de progreso; el planeta se genera (aqui la barra avanza y la generacion de verdad la hace el juego al entrar) y se aterriza.
+	 */
 	function startScan( p : ExpPlanet ) {
-		closeWindow();
+		loading(true);
+		serverLock = true;
 		locked = true;
-		scanPlanet = p;
-		scanProgress = 0;
-		scanBar = new h2d.Graphics(content);
+		fade.visible = true;
+		tw.create(this, "fadeAlpha", 1, TEaseIn, 350).onEnd = function() {
+			showBar(0);
+			popString(p.name);
+			tw.delay(150, function() {
+				scanPlanet = p;
+				scanProgress = 0;
+			});
+		};
 	}
 
 	// ---------------------------------------------------------------- bucle
@@ -672,7 +1181,7 @@ class Explorer extends h2d.Object {
 	}
 
 	/** ZLayer.update: posicion y escala de cada capa segun la camara y el zoom */
-	function updateLayers( v : View, vx : Float, vy : Float, zoomAdd : Float ) {
+	function updateLayers( v : View, vx : Float, vy : Float, zoomAdd : Float, VW = 900, VH = 450 ) {
 		for( o in v.layers ) {
 			var l = o.l;
 			var z = l.z;
@@ -712,10 +1221,14 @@ class Explorer extends h2d.Object {
 
 	public function update( dt : Float ) {
 		var tmod = dt * 30;
+		lastTmod = tmod;
 		if( getScene() != null ) layout();
+		tw.update(tmod);
+		ExpPart.updateAll(tmod);
+		if( spinner.visible && spinner.alpha > 0 ) spinner.rotation += 25 * Math.PI / 180 * tmod;
 
 		// entrada: clic en un objeto o en un punto libre (Manager.onMouseDown / onMouseUp)
-		if( !locked && getScene() != null ) {
+		if( !locked && !serverLock && getScene() != null ) {
 			var K = hxd.Key;
 			var m = mouseInMap();
 			var overButton = false;
@@ -738,34 +1251,33 @@ class Explorer extends h2d.Object {
 			}
 		}
 
-		// barra de escaneo del planeta
+		// barra de escaneo del planeta (onProgress de startGeneratePlanet)
 		if( scanProgress >= 0 ) {
 			scanProgress += dt / 0.8;
-			scanBar.clear();
-			scanBar.beginFill(0xFFFFFF, 0.15);
-			scanBar.drawRect(VW * 0.5 - 150, VH * 0.5, 300, 6);
-			scanBar.beginFill(0x18E7DC, 1);
-			scanBar.drawRect(VW * 0.5 - 150, VH * 0.5, 300 * Math.min(1, scanProgress), 6);
-			scanBar.endFill();
 			if( scanProgress >= 1 ) {
 				scanProgress = -1;
-				scanBar.remove();
-				onLand(scanPlanet, curSystem);
-			}
+				showBar(1);
+				landPlanet(scanPlanet);
+			} else
+				showBar(scanProgress);
 		}
 
 		ship.update(tmod);
 		if( ship.getScreenSpeed() > 0.3 ) ship.rotation = ship.getAngleRad() * 180 / Math.PI;
 
-		// salida del sistema solar por los bordes (Manager.main)
-		if( inSolar && !locked && win == null ) {
+		// salida del sistema solar por los bordes (Manager.main). La respuesta del "servidor" tarda 500 ms y el salto otros 300:
+		// mientras, la nave sigue, cruza el anillo (exitDist) y se para en el.
+		if( inSolar && !locked ) {
 			var room = solar.room;
 			var d = Math.sqrt((ship.x - room.center.x) * (ship.x - room.center.x) + (ship.y - room.center.y) * (ship.y - room.center.y));
-			if( ship.target != null ) {
+			if( ship.target != null && !serverLock ) {
 				var td = Math.sqrt((ship.target.x - room.center.x) * (ship.target.x - room.center.x) + (ship.target.y - room.center.y) * (ship.target.y - room.center.y));
-				if( d >= room.exitDist - 30 && td >= room.exitDist ) gotoSector();
+				if( d >= room.exitDist - 30 && td >= room.exitDist ) {
+					var from = curSystem;
+					sendAction(function() gotoSector(from));
+				}
 			}
-			if( !locked && d >= room.exitDist ) stopShip();
+			if( d >= room.exitDist ) stopShip();
 		}
 
 		// cursor
@@ -786,29 +1298,33 @@ class Explorer extends h2d.Object {
 
 		// camara (Manager.main: scrolling)
 		var spd = 1 - Math.pow(0.9, tmod);
-		current.viewX += (ship.x - current.viewX) * spd;
-		current.viewY += (ship.y - current.viewY) * spd;
+		if( !lockCamera ) {
+			current.viewX += (ship.x - current.viewX) * spd;
+			current.viewY += (ship.y - current.viewY) * spd;
+		}
 		if( inSolar ) {
 			solarStars.viewX = current.viewX;
 			solarStars.viewY = current.viewY;
 		}
 
 		// capas con paralaje
+		updateLayers(common, sector.viewX, sector.viewY, 0);
 		updateLayers(sector, sector.viewX, sector.viewY, inSolar ? 0 : zoomT);
-		if( inSolar ) {
-			updateLayers(solarStars, solarStars.viewX, solarStars.viewY, 0);
-			updateLayers(solar, solar.viewX, solar.viewY, zoomT);
-		}
+		if( solarStars != null ) updateLayers(solarStars, solarStars.viewX, solarStars.viewY, 0);
+		if( inSolar && solar != null ) updateLayers(solar, solar.viewX, solar.viewY, zoomT);
 
 		// objetos: pantalla = centro + (posicion - camara), con zoom
 		var vx = current.viewX, vy = current.viewY;
 		var list = inSolar ? solarSpots : sectorSpots;
 		for( sp in list ) {
-			sp.obj.setPosition(Std.int(screenX(sp.e.x, vx, zoomT)), Std.int(screenY(sp.e.y, vy, zoomT)));
-			sp.obj.setScale(1 + zoomT);
+			var z = zoomT + sp.e.zoom;
+			sp.obj.setPosition(Std.int(screenX(sp.e.x, vx, z)), Std.int(screenY(sp.e.y, vy, z)));
+			sp.obj.setScale(1 + z);
+			sp.obj.alpha = sp.e.alpha;
 		}
 		var sx = Std.int(screenX(ship.x, vx, zoomT)), sy = Std.int(screenY(ship.y, vy, zoomT));
 		shipObj.setPosition(sx, sy);
+		shipObj.alpha = shipAlpha;
 		shipObj.rotation = ship.rotation * Math.PI / 180;
 		if( shipBmp != null ) {
 			// Manager.main: fotograma segun el rumbo y el resto como giro suave
@@ -821,6 +1337,8 @@ class Explorer extends h2d.Object {
 			shipBmp.tile = shipTiles[f];
 			shipBmp.rotation = -delta * (360 / n) * Math.PI / 180;
 			shipBmp.setPosition(sx, sy);
+			shipBmp.visible = shipVisible;
+			shipBmp.alpha = shipAlpha;
 		}
 		cursor.setPosition(Std.int(screenX(cursorE.x, vx, zoomT)), Std.int(screenY(cursorE.y, vy, zoomT)));
 		cursor.rotation = cursorRot * Math.PI / 180;
@@ -828,7 +1346,7 @@ class Explorer extends h2d.Object {
 		cursor.alpha = Math.max(0, Math.min(1, cursorAlpha));
 
 		// calor del sol (burn)
-		if( inSolar ) {
+		if( inSolar && !locked ) {
 			var room = solar.room;
 			var r = 1 - Math.sqrt((ship.x - room.center.x) * (ship.x - room.center.x) + (ship.y - room.center.y) * (ship.y - room.center.y)) / 140;
 			if( r > 0 ) {
@@ -839,30 +1357,6 @@ class Explorer extends h2d.Object {
 			burn.visible = r > 0;
 		}
 
-		// texto grande
-		if( popTime > 0 ) {
-			popTime += dt;
-			popText.alpha = popTime < 0.5 ? popTime / 0.5 : (popTime < 1.6 ? 1 : Math.max(0, 1 - (popTime - 1.6) / 1.6));
-			if( popTime > 3.2 ) {
-				popTime = 0;
-				popText.visible = false;
-			}
-		}
-
-		// transicion de pantalla (fundido a negro)
-		if( fadeDir != 0 ) {
-			fadeAlpha += fadeDir * dt / 0.4;
-			if( fadeAlpha >= 1 ) {
-				fadeAlpha = 1;
-				fadeDir = 0;
-				var cb = fadeCb;
-				fadeCb = null;
-				if( cb != null ) cb();
-			} else if( fadeAlpha <= 0 ) {
-				fadeAlpha = 0;
-				fadeDir = 0;
-			}
-		}
 		fade.alpha = fadeAlpha;
 		fade.visible = fadeAlpha > 0;
 	}
@@ -904,6 +1398,9 @@ class Explorer extends h2d.Object {
 	}
 
 	public function dispose() {
+		tw.clear();
+		ExpPart.clearAll();
+		disposeView(common);
 		disposeView(sector);
 		disposeView(solar);
 		disposeView(solarStars);

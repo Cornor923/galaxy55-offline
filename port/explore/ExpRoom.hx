@@ -339,6 +339,79 @@ class ExpRoom {
 	}
 
 	/** estrellas y nubes del fondo del sistema solar (Room.generateSolarStars) */
+	/** Room.generateCommon: fondo comun del sector y de los sistemas; un remolino (60 %) */
+	public function generateCommon() {
+		exitDist = -1;
+		initRandom();
+		if( rseed.random(100) < 60 ) {
+			var l = makeMaelstrom(rseed.rand() * 0.3 + 0.9, starColor, 6, 0.5, 0.2);
+			l.xOffset = rseed.random(width);
+			l.yOffset = rseed.random(height);
+		}
+	}
+
+	/** Room.makeMaelstromBitmap: un brazo en espiral pintado con el pincel "brush" (tiles.png 0,368 208x64) */
+	function makeMaelstromBitmap( size : Float, color : Int, rotate : Float, turns : Float, thickness : Float, dir : Int ) {
+		var bd = new BitmapData(Std.int(size * 500), Std.int(size * 500), true, 0x0);
+		var alphaPerlin = bd.clone();
+		alphaPerlin.perlinNoise(128, 128, 1, safePerlinSeed(rseed), false, false, 7, true);
+		var brush = frameBmp(0, 368, 208, 64);
+		if( size < 1 ) thickness *= size;
+		var cx = bd.width * 0.5;
+		var cy = bd.height * 0.5;
+		var steps = 200;
+		var baseAng = rotate * Math.PI * 2;
+		var radiusX = bd.width * (rseed.rand() * 0.10 + 0.40);
+		var radiusY = bd.height * (rseed.rand() * 0.10 + 0.40);
+		for( i in 0...steps ) {
+			var step = i / steps;
+			var ang = baseAng + dir * step * (turns * Math.PI * 2);
+			var x = cx + Math.cos(ang) * (step * radiusX);
+			var y = cy + Math.sin(ang) * (step * radiusY);
+			var s = thickness * (1 + (Math.sin(step * Math.PI)) * rseed.rand() * 1);
+			// el pincel esta centrado (setCenter(0.5, 0.5))
+			var m = new flash.geom.Matrix();
+			m.translate(-brush.width * 0.5, -brush.height * 0.5);
+			if( rseed.random(100) < 50 ) m.scale(-1, 1);
+			if( rseed.random(100) < 50 ) m.scale(1, -1);
+			m.scale(s * 0.6, s);
+			m.rotate(ang + Math.PI * (0.50 + 0.10 * thickness));
+			m.translate(x, y);
+			m.translate((rseed.random(2) * 2 - 1) * rseed.random(3), (rseed.random(2) * 2 - 1) * rseed.random(6));
+			var ct = new ColorTransform();
+			ct.color = color;
+			var p : Int = alphaPerlin.getPixel(Std.int(x), Std.int(y));
+			ct.alphaMultiplier = Math.max(0., p / 0xffffff) * (1 - step);
+			bd.draw(brush, m, ct, flash.display.BlendMode.NORMAL);
+		}
+		alphaPerlin.dispose();
+		brush.dispose();
+		return bd;
+	}
+
+	/** Room.makeMaelstrom */
+	function makeMaelstrom( size : Float, color : Int, count : Int, thickness : Float, z : Float ) {
+		var size = quality * size;
+		initRandom();
+		var r = rseed.rand();
+		var dir = rseed.sign();
+		var bd = new BitmapData(Std.int(size * 500), Std.int(size * 500), true, 0x0);
+		for( i in 0...count ) {
+			var r = (i + 1) / count;
+			var bd2 = makeMaelstromBitmap(size, color, r, 1.5 + rseed.rand() * 0.5, thickness * (0.55 + rseed.rand() * 0.65), dir);
+			var ct = new ColorTransform();
+			ct.alphaMultiplier = rseed.rand() * 0.5 + 0.4;
+			bd.draw(bd2, null, ct, flash.display.BlendMode.ADD);
+			bd2.dispose();
+		}
+		var scale = 1 / size;
+		var l = new ExpLayer(this, bd, z, false, scale);
+		l.xOffset = center.x;
+		l.yOffset = center.y;
+		l.additive = true;
+		return l;
+	}
+
 	public function generateSolarStars() {
 		exitDist = -1;
 		initRandom();
