@@ -13,6 +13,19 @@ los detalles técnicos de cada punto, en [`port/RESUMEN.md`](port/RESUMEN.md).
    peso), y la nave nodriza: un "planeta" vacío con cielo de espacio, con nuestra nave aparcada en una de sus bahías (las
    otras, para el multijugador) y la tienda dentro. Más adelante, un tablón de ofertas entre jugadores.
 3. **Hangar:** editar y validar la nave (la editada se verá en el mapa; su velocidad depende de motores y peso).
+3b. **Equipo del personaje** (añadido del port, después del hangar): un inventario de equipo aparte (casco, traje,
+   mochila, botas...) con mejoras que se fabrican o se compran al robot. Ejemplos:
+   - Mochila de gran capacidad: jetpack con más combustible.
+   - Turbo de jetpack: sube más rápido.
+   - Recarga rápida: el combustible vuelve antes al tocar el suelo.
+   - Botas de salto: salto más alto (como el bloque saltador, pero llevado puesto).
+   - Botas antideslizantes: no resbalar en el hielo.
+   - Amortiguadores: menos daño por caída (cuando haya vida/daño).
+   - Excavador mejorado: rompe más rápido (como el turbo minero, pero personal).
+   - Bolsa ampliada: más peso por casilla o más casillas.
+   - Linterna de casco: luz alrededor del jugador en cuevas.
+   - Imán: los bloques sueltos llegan desde más lejos.
+   - Traje térmico / tanque de oxígeno: aguantar lava, frío o el vacío (cuando haya oxígeno/daño).
 4. **Arreglar los errores** de [`ERRORES.md`](ERRORES.md).
 5. **Agua que fluye** (lógica de `Process.hx` del original) y textura animada.
 6. Ver el bloque elegido en la mano; opción de calidad para PC lentas.

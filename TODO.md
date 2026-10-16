@@ -13,6 +13,10 @@ technical details of each item are in [`port/RESUMEN.md`](port/RESUMEN.md) (Span
    mothership: an empty "planet" with a space sky, our ship parked in one of its bays (the others for multiplayer) and the
    shop inside. Later, an offer board between players.
 3. **Hangar:** edit and validate the ship (the edited ship will be shown on the map; its speed depends on engines and weight).
+3b. **Player equipment** (port addition, after the hangar): a separate equipment inventory (helmet, suit, backpack,
+   boots...) with upgrades crafted or bought from the robot. Examples: bigger jetpack tank, jetpack turbo, fast refuel,
+   jump boots, anti-slip boots (ice), shock absorbers (fall damage), better digger, bigger bag, helmet lamp,
+   magnet (pick up drops from farther), thermal suit / oxygen tank (once health and oxygen exist).
 4. **Fix the bugs** in [`BUGS.md`](BUGS.md).
 5. **Flowing water** (the original `Process.hx` logic) and animated texture.
 6. Show the selected block in the hand; quality option for slow PCs.
