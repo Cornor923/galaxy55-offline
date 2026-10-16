@@ -81,25 +81,27 @@ class Shop extends h2d.Object {
 	function refresh() {
 		creditsText.text = Lang.t("shop.credits") + " " + credits;
 		pageText.text = (page + 1) + " / " + pages();
-		// lo que llevas: las casillas del inventario y las cargas
+		// lo que llevas: todas las casillas del inventario, una por una (las que el robot no compra salen apagadas), y las cargas
 		left.removeChildren();
-		var mine : Array<{ w : Ware, n : Int }> = [];
-		for( s in inv.inv.t ) {
-			if( s == null ) continue;
-			var w = Market.wareOfBlock(Block.all[s.k]);
-			if( w == null ) continue;
-			var found = false;
-			for( m in mine ) if( m.w == w ) { m.n += s.n; found = true; }
-			if( !found ) mine.push({ w : w, n : s.n });
+		var i = 0;
+		for( st in inv.inv.t ) {
+			var x = (i % 7) * CELL, y = Std.int(i / 7) * (CELL + 18);
+			i++;
+			if( st == null ) {
+				emptyCell(left, x, y);
+				continue;
+			}
+			var b = Block.all[st.k];
+			var w = Market.wareOfBlock(b);
+			if( w == null ) noSaleCell(left, x, y, b, st.n);
+			else cell(left, x, y, w, st.n, market.sellPrice(w), true);
 		}
 		for( c in inv.inv.charges ) {
 			if( c.n <= 0 ) continue;
 			var w = Market.wareOfCharge(Type.createEnumIndex(ChargeKind, c.c));
-			if( w != null ) mine.push({ w : w, n : c.n });
-		}
-		for( i in 0...mine.length ) {
-			var m = mine[i];
-			cell(left, (i % 7) * CELL, Std.int(i / 7) * (CELL + 18), m.w, m.n, market.sellPrice(m.w), true);
+			if( w == null ) continue;
+			cell(left, (i % 7) * CELL, Std.int(i / 7) * (CELL + 18), w, c.n, market.sellPrice(w), true);
+			i++;
 		}
 		// lo que tiene el robot
 		right.removeChildren();
@@ -143,6 +145,34 @@ class Shop extends h2d.Object {
 		it.onClick = function(e) {
 			var k = hxd.Key.isDown(hxd.Key.SHIFT) ? 10 : 1;
 			if( sell ) doSell(w, k) else doBuy(w, k);
+		};
+	}
+
+	function emptyCell( parent : h2d.Object, x : Float, y : Float ) {
+		var g = new h2d.Graphics(parent);
+		g.x = x;
+		g.y = y;
+		Theme.rect(g, 1, 1, CELL - 2, CELL - 2, 0xFFFFFF, 0.03);
+	}
+
+	/** algo que llevas pero el robot no compra (sin precio en los datos) */
+	function noSaleCell( parent : h2d.Object, x : Float, y : Float, b : Block, n : Int ) {
+		var c = new h2d.Object(parent);
+		c.x = x;
+		c.y = y;
+		var g = new h2d.Graphics(c);
+		Theme.rect(g, 1, 1, CELL - 2, CELL - 2, 0xFFFFFF, 0.03);
+		var bm = new h2d.Bitmap(Icons.get(b, atlas), c);
+		bm.setScale(44 / Icons.SIZE);
+		bm.x = 6;
+		bm.y = 4;
+		bm.alpha = 0.3;
+		Theme.text(c, "" + n, 1.2, Theme.DIM, 3, CELL - 20);
+		Theme.text(c, "-", 1.2, Theme.DIM, 3, CELL + 1);
+		var it = new h2d.Interactive(CELL - 2, CELL - 2, c);
+		it.onOver = function(_) {
+			hover = null;
+			info.text = b.getName() + "   " + Lang.t("shop.nosale");
 		};
 	}
 
