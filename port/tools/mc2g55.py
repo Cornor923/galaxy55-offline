@@ -32,7 +32,7 @@ RULES = [
     ('sea_lantern', 'BShedWallLight'), ('glowstone', 'BLamp'), ('redstone_lamp', 'BLamp'), ('lantern', 'BLamp'),
     ('end_rod', 'BLamp'), ('shroomlight', 'BLamp'),
     # cristal
-    ('tinted_glass', 'BShipGlassBlack'), ('black_stained_glass', 'BShipGlassBlack'), ('glass', 'BShipGlass2'),
+    ('tinted_glass', 'BShipGlassBlack'), ('black_stained_glass', 'BShipGlassBlack'), ('glass', 'BMotherGlass'),
     ('iron_bars', 'BIronFence'),
     # metal y piedra de la nave
     ('quartz', 'BShipHull'), ('iron_block', 'BShipHull'), ('white_concrete', 'BShipHull'),
@@ -86,6 +86,60 @@ def special(n, pr):
         return 'BShipDoorY' if f in ('north', 'south') else 'BShipDoor'
     return None
 
+def add_hangar(grid, W, L, H, K):
+    """Añadido del port: modulo de hangar pegado al costado +x del ala derecha de la Hades. Tres bahias de 19x19x18
+    (caben las naves del hangar del original, 17x17x14), abiertas al espacio por fuera, con el suelo al nivel del ala (z 18)
+    y un pasillo de 3x3 de cada bahia al interior. Devuelve la rejilla ampliada, el nuevo ancho y los centros del suelo de cada bahia."""
+    WALL_X = 105                       # primera columna fuera de la pared del ala (que acaba en x 104)
+    BAY, N = 19, 3
+    Y0 = 184                           # pared inicial; tramo recto del ala: y 178..252
+    FZ = 17                            # suelo del hangar; se camina en z 18, como en el ala
+    TOP = FZ + 1 + 18                  # techo
+    NW = WALL_X + 1 + BAY + 1          # nueva anchura: pared interior + bahia + reborde exterior
+    g2 = bytearray(NW * L * H)
+    for z in range(H):
+        for y in range(L):
+            r = (y * W + z * W * L)
+            g2[y * NW + z * NW * L: y * NW + z * NW * L + W] = grid[r:r + W]
+    def put(x, y, z, k):
+        g2[x + y * NW + z * NW * L] = K[k] if k else 0
+    def get(x, y, z): return g2[x + y * NW + z * NW * L]
+    y1 = Y0 + N * (BAY + 1)
+    bays = []
+    for y in range(Y0, y1 + 1):
+        wall = (y - Y0) % (BAY + 1) == 0
+        for x in range(WALL_X, NW):
+            for z in range(FZ, TOP + 1):
+                inner = x == WALL_X
+                if z == FZ:
+                    # suelo con franjas oscuras en el borde exterior; el reborde de fuera sobresale como pista
+                    put(x, y, z, 'BMotherDark' if x >= NW - 2 else 'BMotherPanel')
+                elif z == TOP:
+                    put(x, y, z, 'BShipLight' if (not wall and (x - WALL_X) % 5 == 3 and (y - Y0) % 5 == 3) else 'BMotherHull')
+                elif inner or wall:
+                    if x == NW - 1 and not inner: put(x, y, z, 'BMotherDark')   # canto exterior de los tabiques
+                    elif wall and not inner and z in (FZ + 6, FZ + 12) and x % 4 == 0: put(x, y, z, 'BShedWallLight')
+                    else: put(x, y, z, 'BMotherHull')
+                else:
+                    put(x, y, z, None)
+    for i in range(N):
+        cy = Y0 + 1 + i * (BAY + 1) + BAY // 2
+        cx = WALL_X + 1 + BAY // 2
+        bays.append((cx, cy, FZ + 1))
+        # pasillo 3x3 hacia el interior del ala, hasta encontrar aire
+        for x in range(WALL_X, WALL_X - 16, -1):
+            hit_air = x < WALL_X and all(get(x, cy + d, FZ + 1) == 0 for d in (-1, 0, 1))
+            for d in (-1, 0, 1):
+                for z in (FZ + 1, FZ + 2, FZ + 3):
+                    put(x, cy + d, z, None)
+                if get(x, cy + d, FZ) == 0: put(x, cy + d, FZ, 'BMotherPanel')
+            if hit_air: break
+        # luces a los lados de la entrada
+        for d in (-2, 2):
+            put(WALL_X, cy + d, FZ + 2, 'BShedWallLight')
+    print('hangar: bahias en', bays)
+    return g2, NW, bays
+
 def main(world, out):
     K = kinds()
     blocks = open_piston_doors(mcread.blocks(world, True))
@@ -115,6 +169,7 @@ def main(world, out):
         if g is None: continue
         gx, gy, gz = x - x0, (z1 - z), y - y0
         grid[gx + gy * W + gz * W * L] = K[g]
+    grid, W, bays = add_hangar(grid, W, L, H, K)
     # aparicion: donde estaba el jugador
     sx, sy, sz = W // 2, L // 2, H
     pd = os.path.join(world, 'playerdata')
@@ -125,7 +180,9 @@ def main(world, out):
             sx, sy, sz = int(p[0]) - x0, z1 - int(p[2]), int(p[1]) - y0
             break
     sx, sy, sz = [max(0, min(v, m - 1)) for v, m in ((sx, W), (sy, L), (sz, H))]
-    head = b'G55M' + struct.pack('<6H', W, L, H, sx, sy, sz)
+    # 'G55N': como 'G55M' mas el numero de bahias y sus centros de suelo (x, y, z) antes de los datos comprimidos
+    head = b'G55N' + struct.pack('<6H', W, L, H, sx, sy, sz) + struct.pack('<H', len(bays))
+    for b in bays: head += struct.pack('<3H', *b)
     open(out, 'wb').write(head + zlib.compress(bytes(grid), 9))
     print('medidas', W, L, H, 'aparicion', sx, sy, sz, 'bloques', sum(1 for v in grid if v))
     print('sin traducir:', miss.most_common(30))

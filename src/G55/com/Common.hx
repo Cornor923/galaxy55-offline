@@ -240,6 +240,7 @@ enum BlockKind {
 	BMotherHull;
 	BMotherPanel;
 	BMotherDark;
+	BMotherGlass;
 }
 
 enum BlockModel {

@@ -35,6 +35,7 @@ class Mothership {
 
 	/** centro de la bahia i (coordenadas del mundo); z = encima del suelo */
 	public static function bay( i : Int ) {
+		if( fileBays != null && fileBays.length > 0 ) return fileBays[i % fileBays.length];
 		var span = (HX1 - HX0) / BAYS;
 		return { x : X0 + Std.int(HX0 + span * (i + 0.5)), y : Y0 + CY - W + 3 + (BAY >> 1), z : Z0 + HZ0 };
 	}
@@ -106,6 +107,8 @@ class Mothership {
 	/** tamano del mundo (en trozos de 128) y aparicion; cambian si la nave se carga de un archivo */
 	public static var sizeChunks = 1;
 	public static var spawnAt : { x : Int, y : Int, z : Int };
+	/** bahias del hangar de la nave importada (mc2g55.py, formato G55N); null en la nave generada */
+	public static var fileBays : Array<{ x : Int, y : Int, z : Int }>;
 
 	/** nave importada (port/tools/mc2g55.py): mothership.bin en GALAXY55_MOTHERSHIP o en res/ */
 	static function fromFile() : ShipData.ShipDataInfo {
@@ -113,13 +116,26 @@ class Mothership {
 		if( p == null || p == "" ) p = Res.path("mothership.bin");
 		if( !sys.FileSystem.exists(p) ) return null;
 		var b = sys.io.File.getBytes(p);
-		if( b.getString(0, 4) != "G55M" ) return null;
+		var magic = b.getString(0, 4);
+		if( magic != "G55M" && magic != "G55N" ) return null;
 		var w = b.getUInt16(4), l = b.getUInt16(6), h = b.getUInt16(8);
 		var sx = b.getUInt16(10), sy = b.getUInt16(12), sz = b.getUInt16(14);
-		var g = haxe.zip.Uncompress.run(b.sub(16, b.length - 16));
+		// G55N: bahias del hangar (centro del suelo de cada una) antes de los datos
+		var pos = 16;
+		var raw = [];
+		if( magic == "G55N" ) {
+			var n = b.getUInt16(pos);
+			pos += 2;
+			for( i in 0...n ) {
+				raw.push({ x : b.getUInt16(pos), y : b.getUInt16(pos + 2), z : b.getUInt16(pos + 4) });
+				pos += 6;
+			}
+		}
+		var g = haxe.zip.Uncompress.run(b.sub(pos, b.length - pos));
 		sizeChunks = Std.int(Math.max(1, Math.ceil((Math.max(w, l) + 32) / Const.SIZE)));
 		var size = sizeChunks * Const.SIZE;
 		var ox = (size - w) >> 1, oy = (size - l) >> 1, oz = 24;
+		fileBays = [for( r in raw ) { x : ox + r.x, y : oy + r.y, z : oz + r.z }];
 		var out = [];
 		var i = 0;
 		for( z in 0...h )
