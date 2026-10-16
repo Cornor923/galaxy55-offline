@@ -56,6 +56,7 @@ class GameView {
 	var armed = false;
 	public var drops : Drops;
 	var fx : Fx;
+	var parts : Parts;
 	/** la nave: el jugador empieza dentro y baja al planeta por el teletransportador (Game.placeShip) */
 	public var ship(default, null) : Ship;
 	/** progreso del teletransporte (Hero.enteringShip): -1 = recien llegado, 0..1.5 = entrando; a 1.5 se transporta */
@@ -106,6 +107,7 @@ class GameView {
 			}
 		drops = new Drops(world, atlas);
 		fx = new Fx(world, atlas);
+		parts = new Parts(world, atlas);
 		ship = new Ship(world, atlas, s3d, info.shipEdits);
 		ship.initCrafts(this);
 		if( info.px < 0 ) {
@@ -290,6 +292,7 @@ class GameView {
 		world.flush();
 		drops.update(this, tmod);
 		fx.update(this, realDt, tmod);
+		parts.update(tmod, s3d.camera, px, py);
 	}
 
 	/** solo pruebas: recorre el rayo de la mira y cuenta la primera celda ocupada y por que se descarta */
@@ -325,6 +328,7 @@ class GameView {
 	public function dispose() {
 		ship.dispose();
 		fx.dispose();
+		parts.dispose();
 		drops.dispose();
 	}
 
@@ -818,12 +822,14 @@ class GameView {
 			}
 		}
 		world.setBlock(x, y, z, null);
+		parts.doBreak(x, y, z, b);
 		if( z >= World.SHIP_Z ) ship.craft(x, y, z, null, this);
 	}
 
 	/** bloque de una zona de sintetizador gastado en una receta: desaparece con su efecto de rotura */
 	public function removeShipBlock( x : Int, y : Int, z : Int, b : Block ) {
 		world.setBlock(x, y, z, null);
+		parts.doBreak(x, y, z, b);
 	}
 
 	/** Game.dropCurrent: tira la pila de la casilla elegida delante del jugador. */

@@ -1,0 +1,15 @@
+# error 5: particulas al romper un bloque (con --creative rompe al instante)
+wait 3
+planet
+wait 20
+tp 64 64 top 0.8 -0.9
+wait 30
+slot 0
+key dig
+wait 2
+unkey
+wait 6
+shot parts1
+wait 25
+shot parts2
+quit
