@@ -242,30 +242,33 @@ def arrival_hangar(grid, W, L, H, K, home, bays):
     # el pasillo entre las dos filas centrales de hangares: el mayor hueco entre plazas
     ys = sorted(set(b[1] for b in bays))
     gap = max(zip(ys, ys[1:]), key=lambda p: p[1] - p[0])
-    cy = (gap[0] + gap[1]) // 2
-    sh = mid + 1                                        # estanteria, contra el muro
-    while get(sh, cy, fz): sh += 1
-    cx = sh + 5                                         # mostrador
-    for y in range(cy - 3, cy + 4):
-        put(cx, y, fz, 'BShipPlate')
-        for x in range(sh, cx + 1): put(x, y, fz + 4, 'BShipTubes')   # toldo
+    mcy = (gap[0] + gap[1]) // 2
+    # arrimado a la pared lateral del pasillo (lo pidio el usuario), en el lado derecho de la nave, dejando libre el centro
+    cx = mid + 22
+    def walk(x, y): return not get(x, y, fz) and get(x, y, fz - 1)
+    sh = mcy                                            # estanteria, contra la pared del pasillo
+    while walk(cx, sh - 1): sh -= 1
+    cy = sh + 5                                         # mostrador, mirando al pasillo (+y)
+    for x in range(cx - 3, cx + 4):
+        put(x, cy, fz, 'BShipPlate')
+        for y in range(sh, cy + 1): put(x, y, fz + 4, 'BShipTubes')   # toldo
     put(cx, cy, fz, 'BShipComputer')
-    for y in (cy - 3, cy + 3):                          # postes del toldo
-        for z in range(fz + 1, fz + 4): put(cx, y, z, 'BIron')
-    put(cx - 1, cy, fz + 4, 'BShipLight')
-    for y in range(cy - 4, cy + 5):
+    for x in (cx - 3, cx + 3):                          # postes del toldo
+        for z in range(fz + 1, fz + 4): put(x, cy, z, 'BIron')
+    put(cx, cy - 1, fz + 4, 'BShipLight')
+    for x in range(cx - 4, cx + 5):
         for z in range(fz, fz + 4):
-            put(sh, y, z, 'BShipWire' if z in (fz, fz + 2) else ('BChest' if (y + z) % 3 == 0 else 'BWoodPlank'))
-    put(sh, cy, fz + 4, 'BShedWallLight')
+            put(x, sh, z, 'BShipWire' if z in (fz, fz + 2) else ('BChest' if (x + z) % 3 == 0 else 'BWoodPlank'))
+    put(cx, sh, fz + 4, 'BShedWallLight')
     # el robot comerciante es un personaje del juego (port/game/Robot.hx): aqui solo se guarda donde va y hacia donde mira
-    robots = [(cx - 3, cy, fz, 0)]                      # 0 = mira a +x (hacia el mostrador)
+    robots = [(cx, cy - 3, fz, 1)]                      # 1 = mira a +y (hacia el mostrador)
     # 3) zona de carga en la esquina del fondo, con un robot de carga
     ly = y1 - 2
     for (x, y, h) in ((sx0, ly, 3), (sx0 + 1, ly, 2), (sx0, ly - 1, 2), (sx0 + 3, ly + 1, 1), (sx0 + 4, ly + 1, 2), (sx0 + 2, ly - 3, 1)):
         for z in range(fz, fz + h): put(x, y, z, 'BWoodPlank' if (x + y + z) % 2 else 'BShipWire')
     # 4) drones (personajes del juego): vuelan en circulo sobre el hangar de llegada y sobre el puesto
     robots.append(((x0 + x1) // 2, (y0 + y1) // 2, fz + 8, 4))
-    robots.append((cx + 6, cy, fz + 6, 4))              # 4 = dron
+    robots.append((cx, cy + 6, fz + 6, 4))              # 4 = dron
     print('hangar de llegada x %d-%d y %d-%d, ordenador del robot en %s' % (x0, x1, y0, y1, (cx, cy, fz)))
     return robots
 
