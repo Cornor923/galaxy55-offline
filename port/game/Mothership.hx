@@ -109,6 +109,8 @@ class Mothership {
 	public static var spawnAt : { x : Int, y : Int, z : Int };
 	/** bahias del hangar de la nave importada (mc2g55.py, formato G55N); null en la nave generada */
 	public static var fileBays : Array<{ x : Int, y : Int, z : Int }>;
+	/** robots de la nave importada (G55O): celda y tipo (0..3 comerciante mirando a +x, +y, -x, -y; 4 dron) */
+	public static var robots : Array<{ x : Int, y : Int, z : Int, k : Int }> = [];
 
 	/** nave importada (port/tools/mc2g55.py): mothership.bin en GALAXY55_MOTHERSHIP o en res/ */
 	static function fromFile() : ShipData.ShipDataInfo {
@@ -117,13 +119,14 @@ class Mothership {
 		if( !sys.FileSystem.exists(p) ) return null;
 		var b = sys.io.File.getBytes(p);
 		var magic = b.getString(0, 4);
-		if( magic != "G55M" && magic != "G55N" ) return null;
+		if( magic != "G55M" && magic != "G55N" && magic != "G55O" ) return null;
 		var w = b.getUInt16(4), l = b.getUInt16(6), h = b.getUInt16(8);
 		var sx = b.getUInt16(10), sy = b.getUInt16(12), sz = b.getUInt16(14);
 		// G55N: bahias del hangar (centro del suelo de cada una) antes de los datos
 		var pos = 16;
 		var raw = [];
-		if( magic == "G55N" ) {
+		var rawRobots = [];
+		if( magic == "G55N" || magic == "G55O" ) {
 			var n = b.getUInt16(pos);
 			pos += 2;
 			for( i in 0...n ) {
@@ -131,11 +134,21 @@ class Mothership {
 				pos += 6;
 			}
 		}
+		// G55O: robots (x, y, z, tipo: 0..3 comerciante mirando a +x, +y, -x, -y; 4 dron)
+		if( magic == "G55O" ) {
+			var n = b.getUInt16(pos);
+			pos += 2;
+			for( i in 0...n ) {
+				rawRobots.push({ x : b.getUInt16(pos), y : b.getUInt16(pos + 2), z : b.getUInt16(pos + 4), k : b.getUInt16(pos + 6) });
+				pos += 8;
+			}
+		}
 		var g = haxe.zip.Uncompress.run(b.sub(pos, b.length - pos));
 		sizeChunks = Std.int(Math.max(1, Math.ceil((Math.max(w, l) + 32) / Const.SIZE)));
 		var size = sizeChunks * Const.SIZE;
 		var ox = (size - w) >> 1, oy = (size - l) >> 1, oz = 24;
 		fileBays = [for( r in raw ) { x : ox + r.x, y : oy + r.y, z : oz + r.z }];
+		robots = [for( r in rawRobots ) { x : ox + r.x, y : oy + r.y, z : oz + r.z, k : r.k }];
 		var out = [];
 		var i = 0;
 		for( z in 0...h )

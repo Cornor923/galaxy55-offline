@@ -119,6 +119,11 @@ class GameView {
 			pz = b.z;
 			yaw = Math.PI / 2;
 			pitch = 0;
+			// robots (añadido del port): el comerciante del puesto y los drones
+			for( r in Mothership.robots ) {
+				var drone = r.k >= 4;
+				robots.push(new Robot(world, atlas, drone ? Robot.DRONE : Robot.MERCHANT, r.x + 0.5, r.y + 0.5, r.z, drone ? 0 : r.k * Math.PI / 2));
+			}
 			return;
 		}
 		if( info.hangar == true ) {
@@ -745,6 +750,8 @@ class GameView {
 				if( !have || (iz < 1 && hangar == null) ) return null;
 				// hangar: solo dentro de la zona construible (EditShip.checkSelect); para poner basta con que el sitio lo este
 				if( hangar != null && !Hangar.inZone(ix, iy, iz) && (hand == null || !Hangar.inZone(lx, ly, lz)) ) return null;
+				// nave nodriza: no se rompe ni se construye; como en tu nave (ShipLogic.checkSelect), solo se apunta a lo que se activa
+				if( info.mothership == true && (hand != null || (b.activable == null && b.toggle == null && !b.hasProp(PContainer))) ) return null;
 				if( iz >= World.SHIP_Z ) {
 					// en la nave solo se puede apuntar a lo que se activa (puertas, ordenador); el casco no se toca (ShipLogic.checkSelect)
 					if( hand == null ) {
@@ -866,9 +873,9 @@ class GameView {
 			s.power += instant ? 1 : miningPower * power / (req * 40);
 		} else
 			canBreak = false;
-		if( debugDeny ) canBreak = false;
+		if( debugDeny || info.mothership == true ) canBreak = false; // la nave nodriza no se rompe
 		actionPause = 1;
-		if( s.power < 1 || debugDeny ) return;
+		if( s.power < 1 || !canBreak ) return;
 		if( laserCharge != null ) inv.useCharge(laserCharge);
 		breakBlock(s.x, s.y, s.z, b);
 		if( creative ) actionPause = 8;
@@ -999,6 +1006,9 @@ class GameView {
 
 	// ---------------------------------------------------------------- camara
 
+	/** robots de la nave nodriza (Robot.hx) */
+	var robots : Array<Robot> = [];
+
 	/** color y opacidad del velo de pantalla dentro de un liquido (Game.getEffects: fades), null fuera */
 	public var liquidFade(default, null) : { a : Float, col : Int } = null;
 	var liquidTime = 0.;
@@ -1039,6 +1049,7 @@ class GameView {
 		world.sky.follow(px, py, ez);
 		world.sky.update(1 / 60);
 		updateLiquidView(ez);
+		for( r in robots ) r.update(1 / 60, px, py, pz);
 		world.updateWrap(px, py);
 	}
 }

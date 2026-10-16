@@ -257,45 +257,17 @@ def arrival_hangar(grid, W, L, H, K, home, bays):
         for z in range(fz, fz + 4):
             put(sh, y, z, 'BShipWire' if z in (fz, fz + 2) else ('BChest' if (y + z) % 3 == 0 else 'BWoodPlank'))
     put(sh, cy, fz + 4, 'BShedWallLight')
-    robot_merchant(put, cx - 3, cy, fz, -1)
+    # el robot comerciante es un personaje del juego (port/game/Robot.hx): aqui solo se guarda donde va y hacia donde mira
+    robots = [(cx - 3, cy, fz, 0)]                      # 0 = mira a +x (hacia el mostrador)
     # 3) zona de carga en la esquina del fondo, con un robot de carga
     ly = y1 - 2
     for (x, y, h) in ((sx0, ly, 3), (sx0 + 1, ly, 2), (sx0, ly - 1, 2), (sx0 + 3, ly + 1, 1), (sx0 + 4, ly + 1, 2), (sx0 + 2, ly - 3, 1)):
         for z in range(fz, fz + h): put(x, y, z, 'BWoodPlank' if (x + y + z) % 2 else 'BShipWire')
-    robot_loader(put, sx0 + 3, ly - 2, fz)
-    # 4) drones flotando
-    for (x, y, z) in ((sx0 - 4, cy - 6, fz + 7), ((x0 + x1) // 2, y1 - 6, fz + 9)):
-        robot_drone(put, x, y, z)
+    # 4) drones (personajes del juego): vuelan en circulo sobre el hangar de llegada y sobre el puesto
+    robots.append(((x0 + x1) // 2, (y0 + y1) // 2, fz + 8, 4))
+    robots.append((cx + 6, cy, fz + 6, 4))              # 4 = dron
     print('hangar de llegada x %d-%d y %d-%d, ordenador del robot en %s' % (x0, x1, y0, y1, (cx, cy, fz)))
-    return (cx, cy, fz)
-
-def robot_merchant(put, x, y, z, face=1):
-    """Robot comerciante (añadido del port, hecho de bloques): ruedas, cuerpo, brazos hacia el mostrador y cabeza con luz.
-    face: hacia donde mira en x (+1 o -1); el mostrador esta delante."""
-    put(x, y, z, 'BShipTubes')
-    put(x, y, z + 1, 'BShipHull'); put(x, y, z + 2, 'BShipHull')
-    put(x, y - 1, z + 2, 'BIron'); put(x, y + 1, z + 2, 'BIron')       # brazos
-    put(x - face, y - 1, z + 2, 'BShipPlate'); put(x - face, y + 1, z + 2, 'BShipPlate')  # manos hacia el mostrador
-    put(x, y, z + 3, 'BShipGlassBlack')                                    # cabeza
-    put(x, y, z + 4, 'BLamp')                                              # luz de la antena
-
-def robot_loader(put, x, y, z):
-    """Robot de carga: base ancha, cuerpo de 2x2, cabeza y una caja en las pinzas."""
-    for dx in (0, 1):
-        for dy in (0, 1):
-            put(x + dx, y + dy, z, 'BShipTubes')
-            put(x + dx, y + dy, z + 1, 'BMotherPanel')
-            put(x + dx, y + dy, z + 2, 'BMotherPanel')
-    put(x, y, z + 3, 'BShipGlassBlack'); put(x + 1, y, z + 3, 'BShipLight')
-    put(x - 1, y, z + 2, 'BIron'); put(x - 1, y + 1, z + 2, 'BIron')       # pinzas
-    put(x - 2, y, z + 2, 'BWoodPlank'); put(x - 2, y + 1, z + 2, 'BWoodPlank')
-
-def robot_drone(put, x, y, z):
-    """Dron flotante: cuerpo oscuro, rotores a los lados y luz por debajo."""
-    put(x, y, z, 'BShipGlassBlack')
-    put(x - 1, y, z, 'BIronFence'); put(x + 1, y, z, 'BIronFence')
-    put(x, y - 1, z, 'BIronFence'); put(x, y + 1, z, 'BIronFence')
-    put(x, y, z - 1, 'BShipLight')
+    return robots
 
 def main(world, out):
     K = kinds()
@@ -337,16 +309,19 @@ def main(world, out):
             sx, sy, sz = int(p[0]) - x0, z1 - int(p[2]), int(p[1]) - y0
             break
     sx, sy, sz = [max(0, min(v, m - 1)) for v, m in ((sx, W), (sy, L), (sz, H))]
+    robots = []
     if bays:
-        # de momento solo se visita el hangar: se aparece en una plaza y el robot comerciante (provisional: mostrador con
-        # ordenador, que abre la tienda) queda al lado, en el suelo libre del mismo hangar
+        # se aparece en una plaza de un hangar; el puesto del robot comerciante esta en el centro de los 8 hangares
         home = max((b for b in bays if b[1] > L // 2), key=lambda b: b[0], default=bays[0])
         sx, sy, sz = home
-        robot = arrival_hangar(grid, W, L, H, K, home, bays)
-        print('llegada', home, 'robot', robot)
-    # 'G55N': como 'G55M' mas el numero de bahias y sus centros de suelo (x, y, z) antes de los datos comprimidos
-    head = b'G55N' + struct.pack('<6H', W, L, H, sx, sy, sz) + struct.pack('<H', len(bays))
+        robots = arrival_hangar(grid, W, L, H, K, home, bays)
+        print('llegada', home, 'robots', robots)
+    # 'G55O': como 'G55M' mas las bahias (numero y centro del suelo x, y, z) y los robots (numero y x, y, z, tipo:
+    # 0..3 = comerciante mirando a +x, +y, -x, -y; 4 = dron), antes de los datos comprimidos
+    head = b'G55O' + struct.pack('<6H', W, L, H, sx, sy, sz) + struct.pack('<H', len(bays))
     for b in bays: head += struct.pack('<3H', *b)
+    head += struct.pack('<H', len(robots))
+    for r in robots: head += struct.pack('<4H', *r)
     open(out, 'wb').write(head + zlib.compress(bytes(grid), 9))
     print('medidas', W, L, H, 'aparicion', sx, sy, sz, 'bloques', sum(1 for v in grid if v))
     print('sin traducir:', miss.most_common(30))
