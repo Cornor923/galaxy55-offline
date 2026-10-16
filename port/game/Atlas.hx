@@ -63,10 +63,12 @@ class Atlas {
 		var gt = tileOf(BMotherGlass), st = tileOf(BGlass);
 		var gx = (gt & 63) << 5, gy = (gt >> 6) << 5, sx0 = (st & 63) << 5, sy0 = (st >> 6) << 5;
 		var base = pix.getPixel(sx0 + 16, sy0 + 16);
-		// liso: en paredes de cristal grandes cualquier dibujo por bloque se repite y forma lineas
+		// liso (en paredes de cristal grandes cualquier dibujo por bloque se repite y forma lineas), con tinte azul visible:
+		// el centro de BGlass es casi transparente y parecia que no habia cristal
+		var tint = 0x70000000 | 0x8CC8E6;
 		for( y in 0...32 )
 			for( x in 0...32 )
-				pix.setPixel(gx + x, gy + y, base);
+				pix.setPixel(gx + x, gy + y, tint);
 		for( j in jobs ) {
 			var sx = (j.src & 63) << 5, sy = (j.src >> 6) << 5;
 			var dx = (j.dst & 63) << 5, dy = (j.dst >> 6) << 5;
