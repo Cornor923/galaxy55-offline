@@ -1,0 +1,7 @@
+wait 3
+planet
+wait 20
+tp 64 64 top 0.8 -0.15
+wait 60
+shot rd_b
+quit
