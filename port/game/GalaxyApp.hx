@@ -302,6 +302,7 @@ class GalaxyApp extends hxd.App {
 				case "new": buildNew();
 				case "load": buildLoad();
 				case "options": buildOptions();
+				case "firstlang": buildFirstLang();
 				case "pause": buildPause();
 				case "computer": buildComputer();
 				default: null;
@@ -485,10 +486,31 @@ class GalaxyApp extends hxd.App {
 	}
 	var modal : Screen;
 
+	/** primera vez: elegir el idioma (cada boton en su propio idioma) */
+	function buildFirstLang() : Screen {
+		var s = panelFor(640, 420, "Language / Idioma / Langue");
+		var x = (W - 540) * 0.5;
+		var y = 230.;
+		for( i in 0...Lang.CODES.length ) {
+			var b = new Button(s, Lang.LABELS[i]);
+			s.add(b, x, y + i * 62);
+			b.onActivate = function() {
+				Settings.lang = Lang.CODES[i];
+				Lang.setCode(Settings.lang);
+				Settings.firstRun = false;
+				Settings.save();
+				clearUi();
+				show("main");
+			};
+		}
+		s.setFocus(Lang.cur);
+		return s;
+	}
+
 	function buildOptions() : Screen {
-		var s = panelFor(860, 620, Lang.t("options.title"));
+		var s = panelFor(860, 680, Lang.t("options.title"));
 		var x = (W - 660) * 0.5;
-		var y = 140.;
+		var y = 110.;
 		var lang = new Selector(s, Lang.t("language"), Lang.LABELS, 660);
 		lang.index = Lang.cur;
 		var sens = new Slider(s, Lang.t("sens"), 0.2, 3.0, 0.1, 660);sens.decimals = 1;
@@ -503,6 +525,8 @@ class GalaxyApp extends hxd.App {
 		inv.index = Settings.invertY ? 1 : 0;
 		var tk = new Selector(s, Lang.t("turnkeys"), [Lang.t("turnkeys.strafe"), Lang.t("turnkeys.turn")], 660);
 		tk.index = Settings.turnKeys ? 1 : 0;
+		var help = new Selector(s, Lang.t("helptext"), [Lang.t("off"), Lang.t("on")], 660);
+		help.index = Settings.showHelp ? 1 : 0;
 		var back = new Button(s, Lang.t("back"), 660);
 		s.add(lang, x, y);
 		s.add(sens, x, y + 60);
@@ -511,7 +535,8 @@ class GalaxyApp extends hxd.App {
 		s.add(full, x, y + 240);
 		s.add(inv, x, y + 300);
 		s.add(tk, x, y + 360);
-		s.add(back, x, y + 440);
+		s.add(help, x, y + 420);
+		s.add(back, x, y + 500);
 		var origin = state == Paused ? "pause" : "main";
 		lang.onChange = function(i) {
 			Settings.lang = Lang.CODES[i];
@@ -528,6 +553,7 @@ class GalaxyApp extends hxd.App {
 		};
 		inv.onChange = function(i) Settings.invertY = i == 1;
 		tk.onChange = function(i) Settings.turnKeys = i == 1;
+		help.onChange = function(i) Settings.showHelp = i == 1;
 		var leave = function() {
 			Settings.save();
 			show(state == Paused ? "pause" : "main");
@@ -1127,6 +1153,7 @@ class GalaxyApp extends hxd.App {
 				state = Menu;
 				ui.removeChildren();
 				bar = null;
+				if( Settings.firstRun && shotPath == null ) show("firstlang") else
 				show(shotScreen == "load" || shotScreen == "options" || shotScreen == "new" ? shotScreen : "main");
 			}
 		}
@@ -1164,7 +1191,7 @@ class GalaxyApp extends hxd.App {
 					saveGame(true);
 				}
 				var p = game;
-				hud.text = Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps\n" + Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : "");
+				hud.text = Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps" + (Settings.showHelp ? "\n" + Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : "") : "");
 				msgText.visible = game.message != null;
 				if( game.message != null ) {
 					msgText.text = game.message;

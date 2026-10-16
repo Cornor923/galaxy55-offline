@@ -55,6 +55,7 @@ class Lang {
 		"hangar.separate_part" => ["Hay partes separadas: todos los bloques deben estar unidos.", "There are separate parts: all blocks must be connected.", "Il y a des parties séparées : tous les kubes doivent être reliés."],
 		"hangar.exit_ship_no_save" => ["La nave no es válida: los cambios no se guardarán. ¿Salir?", "The ship is not valid: changes will not be saved. Leave?", "Le vaisseau n'est pas valide : les modifications ne seront pas sauvegardées. Quitter ?"],
 		"hangar.help" => ["HANGAR - rompe y coloca bloques para rehacer tu nave. Sal por las casillas de teletransporte para guardar.", "HANGAR - break/place blocks to rebuild your ship. Leave through the teleporter tiles to save.", "HANGAR - retire et pose des kubes pour refaire ton vaisseau. Sors par les téléporteurs pour sauvegarder."],
+		"helptext" => ["Ayuda en pantalla", "On-screen help", "Aide à l'écran"],
 		"shop.nosale" => ["el robot no compra esto", "the robot does not buy this", "le robot n'achete pas ca"],
 		"shop.full" => ["el robot ya tiene demasiado de esto, vuelve mas tarde", "the robot has too much of this, come back later", "le robot en a trop, reviens plus tard"],
 		"computer.close" => ["Cerrar", "Close", "Fermer"],

@@ -9,6 +9,10 @@ class Settings {
 	public static var invertY = false;
 	/** true: A/D y flechas izquierda/derecha giran al personaje (como el original); false: se desplaza de lado */
 	public static var turnKeys = false;
+	/** ayuda de controles en pantalla (arriba a la izquierda) */
+	public static var showHelp = true;
+	/** primera vez que se abre el juego (no habia settings.json): se pregunta el idioma */
+	public static var firstRun = false;
 
 	public static function dir() : String {
 		var base = Sys.getEnv("GALAXY55_DATA");
@@ -22,7 +26,10 @@ class Settings {
 
 	public static function load() {
 		var path = dir() + "/settings.json";
-		if( !sys.FileSystem.exists(path) ) return;
+		if( !sys.FileSystem.exists(path) ) {
+			firstRun = true;
+			return;
+		}
 		try {
 			var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(path));
 			if( o.lang != null ) lang = o.lang;
@@ -32,12 +39,13 @@ class Settings {
 			if( o.fullscreen != null ) fullscreen = o.fullscreen;
 			if( o.invertY != null ) invertY = o.invertY;
 			if( o.turnKeys != null ) turnKeys = o.turnKeys;
+			if( o.showHelp != null ) showHelp = o.showHelp;
 		} catch( e : Dynamic ) {}
 		Lang.setCode(lang);
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }
