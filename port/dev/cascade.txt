@@ -1,0 +1,21 @@
+# error 2: la fuente de cascada puesta en la nave se tiene que poder quitar
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+setl 59 62 3 BCascadeSource
+wait 10
+lookl 59.5 62.5 3.5
+slot 0
+wait 5
+print select
+print zones
+key dig
+wait 90
+unkey
+wait 5
+print select
+print zones
+print inv
+quit

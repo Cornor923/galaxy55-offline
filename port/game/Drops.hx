@@ -87,16 +87,20 @@ class Drops {
 		return d;
 	}
 
+	/** reloj del juego en segundos (Game.time): todos los sueltos giran con el, a 1 rad/s (Render, dummies: mpos.rotate(fx.time)) */
+	var clock = 0.;
+
 	public function update( g : GameView, tmod : Float ) {
 		var dt = tmod;
+		clock += dt / 30;
 		var i = 0;
 		while( i < list.length ) {
 			var d = list[i];
 			d.time -= dt / 30;
 			if( d.fixed ) {
 				if( d.obj != null ) {
-					d.obj.setPosition(d.x, d.y, d.z + Math.sin(d.time * 7) * 0.04);
-					d.obj.setRotation(0, 0, d.time * 6);
+					d.obj.setPosition(d.x, d.y, d.z);
+					d.obj.setRotation(0, 0, clock);
 				}
 				i++;
 				continue;
@@ -174,8 +178,8 @@ class Drops {
 			}
 			if( d.obj != null ) {
 				var s = world.size;
-				d.obj.setPosition(d.x + s * Math.round((g.px - d.x) / s), d.y + s * Math.round((g.py - d.y) / s), d.z + 0.2 + Math.sin(d.time * 7) * 0.04);
-				d.obj.setRotation(0, 0, d.time * 6);
+				d.obj.setPosition(d.x + s * Math.round((g.px - d.x) / s), d.y + s * Math.round((g.py - d.y) / s), d.z + 0.2);
+				d.obj.setRotation(0, 0, clock);
 				var l = Math.min(1.3, d.light);
 				d.mat.color.set(l, l, l, 1);
 			}

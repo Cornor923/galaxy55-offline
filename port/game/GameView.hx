@@ -620,8 +620,9 @@ class GameView {
 		return v < 0 ? v + s : (v >= s ? v - s : v);
 	}
 
+	/** Render.doPick del original: se apunta a todo lo que tiene PCanPick (no lo quitan BFDetail ni BFNoPick: el agua no, la fuente de cascada si) */
 	inline function blocking( b : Block ) : Bool {
-		return !b.hasProp(PLiquid) && !b.hasFlag(BFDetail);
+		return b.hasProp(PCanPick);
 	}
 
 	/**

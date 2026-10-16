@@ -45,12 +45,15 @@ class SaveRow extends Widget {
 class LoadScreen extends Screen {
 	public var rows = new Array<SaveRow>();
 	public var top = 0;
+	/** ultima partida elegida (el foco pasa al boton Borrar al pulsarlo) */
+	public var selected = 0;
 	public static inline var VISIBLE = 4;
 	var baseY = 150.;
 
 	override function setFocus( i : Int ) {
 		super.setFocus(i);
 		if( i >= 0 && i < rows.length ) {
+			selected = i;
 			if( i < top ) top = i;
 			if( i >= top + VISIBLE ) top = i - VISIBLE + 1;
 			layout();
@@ -415,7 +418,7 @@ class GalaxyApp extends hxd.App {
 		s.add(del, 640 - 310, 598);
 		s.add(back, 640 + 10, 598);
 		var doDelete = function() {
-			if( s.focus < s.rows.length ) askDelete(s, s.rows[s.focus].info);
+			if( s.selected < s.rows.length ) askDelete(s, s.rows[s.selected].info);
 		};
 		del.onActivate = doDelete;
 		back.onActivate = function() { show("main"); }
