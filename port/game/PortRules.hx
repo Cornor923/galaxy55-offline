@@ -39,6 +39,14 @@ class PortRules {
 	public static function apply() {
 		if( done ) return;
 		done = true;
+		// el monticulo de nieve con una planta escondida (BWinterHidden) brillaba con luz propia y sombreado 1.5-2.0: con su
+		// textura casi blanca saturaba a blanco puro. Se dibuja como la nieve normal (BWinterSoilCover) y sin luz propia.
+		var hidden = Block.get(BWinterHidden), snow = Block.get(BWinterSoilCover);
+		hidden.shadeX = snow.shadeX;
+		hidden.shadeY = snow.shadeY;
+		hidden.shadeUp = snow.shadeUp;
+		hidden.shadeDown = snow.shadeDown;
+		hidden.special = null;
 		for( r in BREAKABLE ) {
 			var b = Block.get(r.k);
 			b.props.set(PCanPick);

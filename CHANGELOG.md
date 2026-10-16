@@ -2,6 +2,15 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## v0.2 — pre-release
+- Mapa de estrellas con las animaciones del original (entrar y salir de un sistema, hiperespacio, destellos, espera del
+  servidor), fondo común con remolino; el sistema se genera en segundo plano y ya no se congela.
+- Bloque elegido en la mano y partículas al romper, copiados del original.
+- Ciudad muerta elegible en Nueva partida.
+- Arreglos: borrar partida, quitar la fuente de cascada en la nave, giro de los sueltos, nieve dentro de la nave.
+- Cambios respecto al original: el sintetizador gasta los bloques de su zona; hierbas y estalactitas rompibles; curvatura
+  al 60 %; montículos de nieve con planta escondida como la nieve; acercamiento al planeta al entrar.
+
 ## v0.1 — pre-release
 Primera versión nativa publicada: menús y partidas guardadas, planetas idénticos a los de Flash, excavar/colocar/jetpack,
 modo creativo, nave (teletransportador, puertas, sintetizador con recetas originales, ordenador), mapa de estrellas

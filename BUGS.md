@@ -10,7 +10,6 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 | # | Where | What happens |
 |---|---|---|
 | 4 | Lighting | **Non-square blocks** (half blocks, models...) are lit differently from their neighbours. |
-| 7 | Winter | There are **plain white blocks**: snow mounds hiding a plant (`BWinterHidden`) that glow with their own light; with the original formula the colour saturates to white. Whether to tone it down is undecided. |
 | 8 | Winter | **Spruce leaves** drop material; in the original they may not. |
 | 10 | Rendering | Dropped **crystals** (charges) look too wide. |
 | 11 | Rendering | **Layer 0** (bedrock) seen from below looks like a flat plane. |
@@ -18,6 +17,7 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 
 ## Fixed
 
+- v0.2 (change from the original): snow mounds hiding a plant (`BWinterHidden`) look like regular snow, without their own glow.
 - v0.2: deleting a saved game from the menu (Delete button, then pick the save; the confirmation no longer opens twice).
 - v0.2: it no longer snows inside the ship.
 - v0.2: the map no longer freezes when entering a system (it is generated in the background while you travel).

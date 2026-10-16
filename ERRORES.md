@@ -10,7 +10,6 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 | # | Dónde | Qué pasa |
 |---|---|---|
 | 4 | Luz | Los bloques que **no son cuadrados** (medios bloques, modelos…) tienen la luz mal respecto a los vecinos. |
-| 7 | Invierno | Hay **bloques blancos lisos**: son montículos de nieve con una planta escondida (`BWinterHidden`) que brillan con luz propia; con la misma fórmula del original el color satura a blanco. Falta decidir si se rebaja. |
 | 8 | Invierno | Las **hojas del abeto** sueltan material; puede que en el original no. |
 | 10 | Render | Los **cristales** sueltos (cargas) se ven demasiado anchos. |
 | 11 | Render | La **capa 0** (roca madre) vista desde abajo se ve como un plano liso. |
@@ -18,6 +17,7 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 
 ## Arreglados
 
+- v0.2 (cambio respecto al original): los montículos de nieve con una planta escondida (`BWinterHidden`) se ven como la nieve, sin brillo propio.
 - v0.2: borrar una partida desde el menú (botón Borrar y después elegir la partida; la confirmación ya no se abre dos veces).
 - v0.2: ya no nieva dentro de la nave.
 - v0.2: el mapa ya no se queda trabado al entrar en un sistema (se genera en segundo plano mientras viajas).

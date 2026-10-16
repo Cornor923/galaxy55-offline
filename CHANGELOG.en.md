@@ -2,6 +2,15 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md)
 
+## v0.2 — pre-release
+- Star map with the original animations (entering and leaving a system, hyperspace, flashes, server wait), common
+  background with maelstrom; systems are generated in the background so it no longer freezes.
+- Held block in the hand and break particles, copied from the original.
+- Dead city selectable in New game.
+- Fixes: deleting saves, removing the cascade source on the ship, dropped block spin, snow inside the ship.
+- Changes from the original: the synthesizer uses the blocks in its area; breakable herbs and stalactites; curvature at
+  60 %; snow mounds hiding a plant look like snow; camera zooms into the planet when entering.
+
 ## v0.1 — pre-release
 First published native version: menus and saved games, planets identical to the Flash ones, digging/placing/jetpack,
 creative mode, ship (teleporter, doors, synthesizer with the original recipes, computer), star map
