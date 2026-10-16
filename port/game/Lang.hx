@@ -35,7 +35,7 @@ class Lang {
 		"shop.buy" => ["comprar", "buy", "acheter"],
 		"shop.sell" => ["vender", "sell", "vendre"],
 		"chest.yours" => ["Tu inventario", "Your inventory", "Ton inventaire"],
-		"chest.hint" => ["Clic: coger y dejar. Mayús: la mitad. Ctrl: una.", "Click: pick up and drop. Shift: half. Ctrl: one.", "Clic : prendre et poser. Maj : la moitié. Ctrl : un."],
+		"chest.hint" => ["Clic: coger y dejar. Mayús: la mitad. Ctrl: una. Mando: A, X mitad, Y una, B cerrar.", "Click: pick up and drop. Shift: half. Ctrl: one. Gamepad: A, X half, Y one, B close.", "Clic : prendre et poser. Maj : la moitié. Ctrl : un. Manette : A, X moitié, Y un, B fermer."],
 		"hangar.ship_valid" => ["Nave válida - velocidad: %speed% PC/s", "Valid ship - speed: %speed% PC/s", "Vaisseau valide - vitesse : %speed% PC/s"],
 		"hangar.hull_hole" => ["La nave no es estanca: hay un agujero en el casco.", "The ship is not airtight: there is a hole in the hull.", "Le vaisseau n'est pas étanche : il y a un trou dans la coque."],
 		"hangar.access_computer" => ["No se puede usar el ordenador de a bordo: una cara debe dar al interior.", "The board computer cannot be used: one face must open to the inside.", "L'ordinateur de bord est inutilisable : une face doit donner sur l'intérieur."],

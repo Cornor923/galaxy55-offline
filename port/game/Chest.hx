@@ -23,6 +23,9 @@ class Chest extends h2d.Object {
 	var info : h2d.Text;
 	/** casilla cogida: [0 = cofre / 1 = inventario, indice] */
 	var cur : Array<Int>;
+	/** añadido del port: casilla marcada con el mando o las flechas [lado, indice] (null = solo raton) */
+	var focus : Array<Int>;
+	var navCooldown = 0.;
 
 	public function new( parent : h2d.Object, atlas : h3d.mat.Texture, inv : Inv, box : Protocol.BlockInventory ) {
 		super(parent);
@@ -65,11 +68,19 @@ class Chest extends h2d.Object {
 		c.y = y;
 		var g = new h2d.Graphics(c);
 		var sel = cur != null && cur[0] == side && cur[1] == idx;
+		var foc = focus != null && focus[0] == side && focus[1] == idx;
 		var draw = function(on : Bool) {
 			g.clear();
 			Theme.rect(g, 2, 2, CELL - 4, CELL - 4, sel || on ? Theme.ACCENT : 0xFFFFFF, sel ? 0.45 : (on ? 0.25 : 0.07));
 		};
-		draw(false);
+		draw(foc);
+		if( foc ) {
+			Theme.rect(g, 0, 0, CELL, 2, Theme.ACCENT);
+			Theme.rect(g, 0, CELL - 2, CELL, 2, Theme.ACCENT);
+			Theme.rect(g, 0, 0, 2, CELL, Theme.ACCENT);
+			Theme.rect(g, CELL - 2, 0, 2, CELL, Theme.ACCENT);
+			info.text = s == null ? Lang.t("chest.hint") : Block.all[s.k].getName() + " x" + s.n;
+		}
 		if( s != null ) {
 			var b = Block.all[s.k];
 			var bm = new h2d.Bitmap(Icons.get(b, atlas), c);
@@ -89,8 +100,64 @@ class Chest extends h2d.Object {
 
 	inline function tab( side : Int ) return side == 0 ? box : inv.inv.t;
 
+	/** Mando y teclado (añadido del port; el original solo tenia raton): cruceta/stick/flechas mueven la marca,
+	 * A/Intro = clic, X = la mitad (como Mayus), Y = una (como Ctrl), B/Esc = cerrar. */
+	public function update( dt : Float, pad : hxd.Pad ) {
+		var K = hxd.Key;
+		if( navCooldown > 0 ) navCooldown -= dt;
+		var dx = 0, dy = 0;
+		if( K.isPressed(K.LEFT) ) dx = -1;
+		if( K.isPressed(K.RIGHT) ) dx = 1;
+		if( K.isPressed(K.UP) ) dy = -1;
+		if( K.isPressed(K.DOWN) ) dy = 1;
+		var ok = K.isPressed(K.ENTER) || K.isPressed(K.NUMPAD_ENTER);
+		var half = false, one = false, back = K.isPressed(K.ESCAPE);
+		if( pad != null ) {
+			if( pad.isPressed(pad.config.dpadLeft) ) dx = -1;
+			if( pad.isPressed(pad.config.dpadRight) ) dx = 1;
+			if( pad.isPressed(pad.config.dpadUp) ) dy = -1;
+			if( pad.isPressed(pad.config.dpadDown) ) dy = 1;
+			if( navCooldown <= 0 ) {
+				if( pad.xAxis < -0.6 ) { dx = -1; navCooldown = 0.18; }
+				else if( pad.xAxis > 0.6 ) { dx = 1; navCooldown = 0.18; }
+				else if( pad.yAxis < -0.6 ) { dy = -1; navCooldown = 0.18; }
+				else if( pad.yAxis > 0.6 ) { dy = 1; navCooldown = 0.18; }
+			}
+			if( pad.isPressed(pad.config.A) ) ok = true;
+			if( pad.isPressed(pad.config.X) ) { ok = true; half = true; }
+			if( pad.isPressed(pad.config.Y) ) { ok = true; one = true; }
+			if( pad.isPressed(pad.config.B) ) back = true;
+		}
+		if( back ) {
+			if( cur != null ) { cur = null; refresh(); }
+			else if( onClose != null ) onClose();
+			return;
+		}
+		if( dx != 0 || dy != 0 ) {
+			if( focus == null ) focus = [0, 0];
+			else {
+				var side = focus[0], i = focus[1];
+				if( dy != 0 ) {
+					var nside = side + dy;
+					if( nside >= 0 && nside <= 1 ) {
+						// misma posicion relativa en la otra fila
+						var from = tab(side).length, to = tab(nside).length;
+						i = Std.int(Math.min(to - 1, Math.round((i + 0.5) * to / from - 0.5)));
+						side = nside;
+					}
+				}
+				i += dx;
+				var n = tab(side).length;
+				if( i < 0 ) i = n - 1 else if( i >= n ) i = 0;
+				focus = [side, i];
+			}
+			refresh();
+		}
+		if( ok && focus != null ) click(focus[0], focus[1], half, one);
+	}
+
 	/** Chest.checkSwap del original */
-	public function click( side : Int, idx : Int ) {
+	public function click( side : Int, idx : Int, padHalf = false, padOne = false ) {
 		if( cur == null ) {
 			if( tab(side)[idx] != null ) cur = [side, idx];
 			refresh();
@@ -104,8 +171,8 @@ class Chest extends h2d.Object {
 			refresh();
 			return;
 		}
-		var split = hxd.Key.isDown(hxd.Key.SHIFT);
-		var one = hxd.Key.isDown(hxd.Key.CTRL);
+		var split = padHalf || hxd.Key.isDown(hxd.Key.SHIFT);
+		var one = padOne || hxd.Key.isDown(hxd.Key.CTRL);
 		var smax = one ? 1 : (split ? Math.ceil(bsrc.n * 0.5) : bsrc.n);
 		if( bdst != null && bdst.k == bsrc.k ) {
 			// juntar

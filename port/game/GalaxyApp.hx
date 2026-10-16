@@ -847,7 +847,7 @@ class GalaxyApp extends hxd.App {
 			loadWorld.lightTop = Mothership.Z0 + Mothership.LZ + 4;
 			// la Hades se diseño con la luz de Minecraft (las lamparas pierden 1 por bloque) y alli nunca se ve negro del todo
 			loadWorld.lampFalloff = 1.0;
-			loadWorld.minLight = 7;
+			loadWorld.minLight = 4;
 			loadWorld.sky.makeSpace();
 		}
 		if( info.hangar == true ) {
@@ -1203,7 +1203,7 @@ class GalaxyApp extends hxd.App {
 			var K = hxd.Key;
 			if( paletteOpen ) {
 				if( chest != null ) {
-					if( K.isPressed(K.ESCAPE) ) closeChest();
+					chest.update(dt, pad);
 				} else if( shop != null ) {
 					if( K.isPressed(K.ESCAPE) ) closeShop();
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
