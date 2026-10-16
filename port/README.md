@@ -34,7 +34,7 @@ They are the original game's (movement and physics are a copy of `ent/Hero.hx` a
 | Quick save | F5 |
 
 There is no run button, as in the original. Gamepad: left stick moves, right stick looks, A jumps and jetpack, B walks slowly,
-RT digs, LT places, Back helmet, Start pause. Menus: arrows/Enter/Esc, mouse or gamepad.
+RT digs, LT places, RB/LB or d-pad right/left change slot, Y drops, Back helmet, Start pause. Menus: arrows/Enter/Esc, mouse or gamepad.
 
 ## Build
 

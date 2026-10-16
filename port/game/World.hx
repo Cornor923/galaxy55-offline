@@ -887,7 +887,7 @@ class World {
 			// orden del original (Render.hx: BTWater antes que BTAlpha): se dibujan despues del agua, asi el hielo sumergido queda detras de ella
 			mat.blendMode = Alpha;
 			mat.mainPass.depthWrite = false;
-			mat.mainPass.setPassName("additive");
+			mat.mainPass.setPassName("alpha"); // ordenada por distancia: en "additive" no se ordena y el hielo parpadeaba
 		} else if( kind == 2 ) {
 			// agua: translucida; escribe profundidad como la primera pasada del original (water0)
 			mat.blendMode = Alpha;

@@ -787,6 +787,11 @@ class GameView {
 				var rt = pad.isDown(pad.config.RT), lt = pad.isDown(pad.config.LT);
 				if( rt || lt ) held = true;
 				forceEmpty = rt && !lt;
+				// como el mando de la version Flash (input/Pad.hx): RB / cruceta derecha = casilla siguiente,
+				// LB / cruceta izquierda = anterior, Y = tirar el bloque elegido
+				if( pad.isPressed(pad.config.RB) || pad.isPressed(pad.config.dpadRight) ) inv.scroll(-1);
+				if( pad.isPressed(pad.config.LB) || pad.isPressed(pad.config.dpadLeft) ) inv.scroll(1);
+				if( pad.isPressed(pad.config.Y) && inv.getCurrentBlock() != null ) dropCurrent();
 			}
 			// casillas: 1 = excavador, 2..9 y 0 = bloques; TAB = excavador (Game.checkKeys)
 			for( i in 0...10 )

@@ -33,7 +33,7 @@ Son los del juego original (el movimiento y la física son una copia de `ent/Her
 | Guardado rápido | F5 |
 
 No hay botón de correr, como en el original. Mando: palanca izquierda mueve, derecha mira, A salta y jetpack, B camina despacio,
-RT excava, LT coloca, Back casco, Start pausa. Menús: flechas/Intro/Esc, ratón o mando.
+RT excava, LT coloca, RB/LB o cruceta derecha/izquierda cambian de casilla, Y tira el bloque, Back casco, Start pausa. Menús: flechas/Intro/Esc, ratón o mando.
 
 ## Compilar
 
