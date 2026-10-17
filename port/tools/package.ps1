@@ -20,14 +20,21 @@ foreach ($d in $win, $lin) {
 	Copy-Item "port\out\galaxy55.hl", "LICENSE", "NOTICE" $d
 }
 # Windows: HashLink y sus librerias (sin las de compilar), y la version DirectX
+# hlw.exe: copia de hl.exe marcada como programa de ventana (subsistema 2 en la cabecera PE), para no abrir una consola vacia
 Copy-Item "port\out\galaxy55_dx.hl" $win
 foreach ($f in "hl.exe", "libhl.dll", "fmt.hdll", "heaps.hdll", "openal.hdll", "OpenAL32.dll", "sdl.hdll", "SDL3.dll", "ui.hdll", "uv.hdll", "directx.hdll", "vcruntime140.dll") {
 	Copy-Item (Join-Path $HashLink $f) $win
 }
 $utf8 = New-Object Text.UTF8Encoding $false
 function Save([string]$path, [string]$text, [string]$nl) { [IO.File]::WriteAllText($path, ($text -replace "`r?`n", $nl), $utf8) }
-Save "$win\jugar.bat" "@echo off`nrem Galaxy 55 (offline) v$Version - version OpenGL. Si no abre, usa jugar_dx.bat.`ncd /d `"%~dp0`"`nhl galaxy55.hl %*`nif errorlevel 1 pause`n" "`r`n"
-Save "$win\jugar_dx.bat" "@echo off`nrem Galaxy 55 (offline) v$Version - version DirectX (equipos sin OpenGL 3.2, maquinas virtuales).`ncd /d `"%~dp0`"`nhl galaxy55_dx.hl %*`nif errorlevel 1 pause`n" "`r`n"
+$hlw = [IO.File]::ReadAllBytes((Join-Path $HashLink "hl.exe"))
+$pe = [BitConverter]::ToInt32($hlw, 0x3C)
+$hlw[$pe + 0x5C] = 2
+[IO.File]::WriteAllBytes("$win\hlw.exe", $hlw)
+foreach ($v in @(@("jugar.bat", "galaxy55.hl", "version OpenGL. Si no abre, usa jugar_dx.bat."), @("jugar_dx.bat", "galaxy55_dx.hl", "version DirectX (equipos sin OpenGL 3.2, maquinas virtuales)."))) {
+	# hlw.exe sin consola; si falta, hl.exe con su consola (y pausa si hay error)
+	Save "$win\$($v[0])" "@echo off`nrem Galaxy 55 (offline) v$Version - $($v[2])`ncd /d `"%~dp0`"`nif exist hlw.exe goto hlw`nhl $($v[1]) %*`nif errorlevel 1 pause`nexit /b`n:hlw`nstart `"`" hlw.exe $($v[1]) %*`n" "`r`n"
+}
 Save "$win\LEEME.txt" @"
 GALAXY 55 (offline) v$Version - port nativo para Windows
 =======================================================

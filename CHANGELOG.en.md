@@ -2,7 +2,7 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md)
 
-## In development
+## v0.3.1 — pre-release
 - Options: vertical sync (VSync) and FPS limit (30, 60, 120, 144, 240 or unlimited).
 - Fixes by **Cornor923** (thank you!): the liquid veil and menu backgrounds cover windows wider than 16:9, no dark
   patches through ice, the head no longer clips into blocks when falling or hovering, `jugar.bat` uses `hlw.exe` (no

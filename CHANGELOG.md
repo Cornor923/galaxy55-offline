@@ -2,7 +2,7 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
-## En desarrollo
+## v0.3.1 — pre-release
 - Opciones: sincronización vertical (VSync) y límite de FPS (30, 60, 120, 144, 240 o sin límite).
 - Arreglos de **Cornor923** (¡gracias!): el velo del agua y los fondos de los menús cubren ventanas más anchas que 16:9,
   sin manchas oscuras a través del hielo, la cabeza ya no se mete en los bloques al caer o flotar, `jugar.bat` usa
