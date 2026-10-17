@@ -128,6 +128,8 @@ class Lang {
 	public static function setCode( code : String ) {
 		var i = CODES.indexOf(code);
 		cur = i < 0 ? 0 : i;
+		// nombres de los bloques: el original los elegia al compilar (lang_en/lang_fr); aqui siguen al idioma elegido
+		Names.NAMES = [NamesGen.ES, NamesGen.EN, NamesGen.FR][cur];
 	}
 
 	public static function code() : String return CODES[cur];
