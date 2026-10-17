@@ -17,4 +17,6 @@ echo Falta port\out\galaxy55_dx.hl: compila primero con  haxe port\game_dx.hxml
 pause
 exit /b 1
 :run
+rem hlw.exe = hl.exe en modo ventana (sin la consola negra vacia), si esta junto a hl; si no, hl con su consola
+where hlw >nul 2>nul && (start "" hlw port\out\galaxy55_dx.hl %* & exit /b 0)
 start "" hl port\out\galaxy55_dx.hl %*

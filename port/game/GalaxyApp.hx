@@ -222,6 +222,7 @@ class GalaxyApp extends hxd.App {
 		fadeRect = new h2d.Bitmap(h2d.Tile.fromColor(0xFFFFFF, W, H), s2d);
 		fadeRect.alpha = 0;
 		fadeRect.visible = false;
+		for( b in [liquidVeil, dim, fadeRect] ) coverWindow(b);
 		cross = new h2d.Graphics(s2d);
 		cross.lineStyle(1, 0x00FFFF, 1);
 		cross.moveTo(0, -7);
@@ -300,7 +301,7 @@ class GalaxyApp extends hxd.App {
 		var s = new Screen(ui);
 		var bg = new h2d.Graphics(s);
 		var x = (W - w) * 0.5, y = (H - h) * 0.5;
-		Theme.rect(bg, 0, 0, W, H, 0x000000, 0.35);
+		fullRect(bg, 0x000000, 0.35);
 		Theme.rect(bg, x, y, w, h, Theme.PANEL, 0.94);
 		Theme.rect(bg, x, y, w, 4, Theme.ACCENT);
 		Theme.rect(bg, x, y + h - 1, w, 1, 0xFFFFFF, 0.1);
@@ -418,7 +419,7 @@ class GalaxyApp extends hxd.App {
 	function buildLoad() : Screen {
 		var s = new LoadScreen(ui);
 		var bg = new h2d.Graphics(s);
-		Theme.rect(bg, 0, 0, W, H, 0x000000, 0.4);
+		fullRect(bg, 0x000000, 0.4);
 		Theme.rect(bg, 150, 60, 980, 600, Theme.PANEL, 0.94);
 		Theme.rect(bg, 150, 60, 980, 4, Theme.ACCENT);
 		var t = Theme.text(s, Lang.t("load.title"), 3.2, Theme.TEXT, 0, 82);
@@ -471,7 +472,7 @@ class GalaxyApp extends hxd.App {
 		parent.active = false;
 		var m = new Screen(ui);
 		var bg = new h2d.Graphics(m);
-		Theme.rect(bg, 0, 0, W, H, 0x000000, 0.55);
+		fullRect(bg, 0x000000, 0.55);
 		Theme.rect(bg, 390, 250, 500, 220, Theme.PANEL, 1);
 		Theme.rect(bg, 390, 250, 500, 4, Theme.DANGER);
 		var t = Theme.text(m, Lang.t("delete.ask"), 2.4, Theme.TEXT, 0, 280);
@@ -700,7 +701,7 @@ class GalaxyApp extends hxd.App {
 		msgText.visible = false;
 		var m = new Screen(ui);
 		var bg = new h2d.Graphics(m);
-		Theme.rect(bg, 0, 0, W, H, 0x000000, 0.55);
+		fullRect(bg, 0x000000, 0.55);
 		Theme.rect(bg, 290, 250, 700, 220, Theme.PANEL, 1);
 		Theme.rect(bg, 290, 250, 700, 4, Theme.DANGER);
 		var t = Theme.text(m, Lang.t("hangar.exit_ship_no_save"), 1.9, Theme.TEXT, 0, 290);
@@ -857,7 +858,7 @@ class GalaxyApp extends hxd.App {
 		current = null;
 		var s = new Screen(ui);
 		var bg = new h2d.Graphics(s);
-		Theme.rect(bg, 0, 0, W, H, Theme.BG, 0.82);
+		fullRect(bg, Theme.BG, 0.82);
 		titleBlock(s, 110, 80, 7.5);
 		barText = Theme.text(s, msg, 2.2, Theme.TEXT, 110, 520);
 		bar = new h2d.Graphics(s);
@@ -1146,6 +1147,19 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/** Coloca el casco y el brillo del jetpack cubriendo toda la ventana (escala del original: ancho/974, alto/624). */
+	/** Con LetterBox la zona W x H no llega a los bordes de una ventana mas ancha o mas alta que 16:9: los velos de pantalla
+	    completa (liquido, fundido, oscurecido) se agrandan 3 veces alrededor de ella, si no quedaban bandas sin tenir a los lados. */
+	static function coverWindow( b : h2d.Object ) {
+		b.x = -W;
+		b.y = -H;
+		b.setScale(3);
+	}
+
+	/** fondo de pantalla completa de un menu (mismo motivo que coverWindow) */
+	static function fullRect( g : h2d.Graphics, color : Int, alpha : Float ) {
+		Theme.rect(g, -W, -H, W * 3, H * 3, color, alpha);
+	}
+
 	function layoutHelmet() {
 		var ww = engine.width, wh = engine.height;
 		var scale = Math.min(ww / W, wh / H);
