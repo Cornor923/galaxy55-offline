@@ -50,6 +50,8 @@ class GameView {
 	public var miningPower = 1.0;
 	/** modo creativo (anadido nuestro): bloques sin limite, rotura instantanea y jetpack infinito */
 	public var creative(default, null) = false;
+	/** --editnodriza: la nave nodriza se puede editar (en creativo) y al salir se guarda en mothership.bin */
+	public static var editMother = Sys.args().indexOf("--editnodriza") >= 0;
 	var actionPause = 0.;
 	var activatePending : Select;
 	var actionWait = false;
@@ -96,7 +98,7 @@ class GameView {
 		this.world = world;
 		this.info = info;
 		playSeconds = info.playSeconds;
-		creative = info.creative == true || Sys.args().indexOf("--creative") >= 0;
+		creative = info.creative == true || Sys.args().indexOf("--creative") >= 0 || (editMother && info.mothership == true);
 		inv = new Inv(info.inv != null ? Inv.copy(info.inv) : Inv.defaults());
 		// solo pruebas: --inv=BIron,BGlass,... llena el inventario con esos bloques
 		for( a in Sys.args() )
@@ -818,7 +820,7 @@ class GameView {
 				// hangar: solo dentro de la zona construible (EditShip.checkSelect); para poner basta con que el sitio lo este
 				if( hangar != null && !Hangar.inZone(ix, iy, iz) && (hand == null || !Hangar.inZone(lx, ly, lz)) ) return null;
 				// nave nodriza: no se rompe ni se construye; como en tu nave (ShipLogic.checkSelect), solo se apunta a lo que se activa
-				if( info.mothership == true && (hand != null || (b.activable == null && b.toggle == null && !b.hasProp(PContainer))) ) return null;
+				if( info.mothership == true && !editMother && (hand != null || (b.activable == null && b.toggle == null && !b.hasProp(PContainer))) ) return null;
 				if( iz >= World.SHIP_Z ) {
 					// en la nave solo se puede apuntar a lo que se activa (puertas, ordenador); el casco no se toca (ShipLogic.checkSelect)
 					if( hand == null ) {
@@ -945,7 +947,7 @@ class GameView {
 			s.power += instant ? 1 : miningPower * power / (req * 40);
 		} else
 			canBreak = false;
-		if( debugDeny || info.mothership == true ) canBreak = false; // la nave nodriza no se rompe
+		if( debugDeny || (info.mothership == true && !editMother) ) canBreak = false; // la nave nodriza no se rompe
 		actionPause = 1;
 		if( s.power < 1 || !canBreak ) return;
 		if( laserCharge != null ) inv.useCharge(laserCharge);

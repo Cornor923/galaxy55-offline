@@ -144,9 +144,11 @@ class Mothership {
 			}
 		}
 		var g = haxe.zip.Uncompress.run(b.sub(pos, b.length - pos));
+		file = { path : p, header : b.sub(0, pos), w : w, l : l, h : h, base : g };
 		sizeChunks = Std.int(Math.max(1, Math.ceil((Math.max(w, l) + 32) / Const.SIZE)));
 		var size = sizeChunks * Const.SIZE;
 		var ox = (size - w) >> 1, oy = (size - l) >> 1, oz = 24;
+		file.ox = ox; file.oy = oy; file.oz = oz;
 		fileBays = [for( r in raw ) { x : ox + r.x, y : oy + r.y, z : oz + r.z }];
 		robots = [for( r in rawRobots ) { x : ox + r.x, y : oy + r.y, z : oz + r.z, k : r.k }];
 		var out = [];
@@ -159,6 +161,45 @@ class Mothership {
 				}
 		spawnAt = { x : ox + sx, y : oy + sy, z : oz + sz };
 		return { sx : size, sy : size, sz : oz + h, cells : out, entry : null, crafts : [] };
+	}
+
+	/** archivo cargado (para guardar lo editado con --editnodriza): ruta, cabecera tal cual, tamano, rejilla original y origen */
+	static var file : { path : String, header : haxe.io.Bytes, w : Int, l : Int, h : Int, base : haxe.io.Bytes, ?ox : Int, ?oy : Int, ?oz : Int };
+	/** celdas ocupadas por la nave del jugador aparcada: no se guardan en la nave nodriza */
+	static var shipCells : Map<Int, Bool>;
+	static inline function cellKey( x : Int, y : Int, z : Int ) return (x << 18) | (y << 8) | z;
+
+	/**
+	 * Modo de edicion (--editnodriza): escribe el mundo editado en mothership.bin (misma cabecera: aparicion, bahias y
+	 * robots). Donde esta tu nave aparcada se deja lo que habia. La primera vez guarda una copia en mothership.bin.orig.
+	 * Ojo: si se vuelve a generar con mc2g55.py, se pierden estas ediciones.
+	 */
+	public static function save( world : World ) : Bool {
+		if( file == null ) return false;
+		var f = file;
+		var g = haxe.io.Bytes.alloc(f.w * f.l * f.h);
+		var i = 0;
+		for( z in 0...f.h )
+			for( y in 0...f.l )
+				for( x in 0...f.w ) {
+					var wx = f.ox + x, wy = f.oy + y, wz = f.oz + z;
+					var k = 0;
+					if( shipCells != null && shipCells.exists(cellKey(wx, wy, wz)) ) k = f.base.get(i);
+					else {
+						var b = world.block(wx, wy, wz);
+						if( b != null ) k = b.index < 256 ? b.index : Type.enumIndex(b.k);
+					}
+					g.set(i++, k);
+				}
+		var z = haxe.zip.Compress.run(g, 9);
+		var out = new haxe.io.BytesBuffer();
+		out.add(f.header);
+		out.add(z);
+		if( !sys.FileSystem.exists(f.path + ".orig") ) sys.io.File.copy(f.path, f.path + ".orig");
+		sys.io.File.saveBytes(f.path, out.getBytes());
+		f.base = g;
+		cache = null;
+		return true;
 	}
 
 	/** donde aparece el jugador en la nave nodriza: encima del teletransportador de su nave aparcada (null = la plaza) */
@@ -177,6 +218,8 @@ class Mothership {
 		var dx = (Const.SIZE - s.sx) >> 1, dy = (Const.SIZE - s.sy) >> 1;
 		var ox = spawnAt.x - (s.sx >> 1), oy = spawnAt.y - (s.sy >> 1), oz = spawnAt.z;
 		var cells = base.cells.copy();
+		shipCells = new Map();
+		for( c in s.cells ) shipCells.set(cellKey(ox + c.x - dx, oy + c.y - dy, oz + c.z - 1), true);
 		for( c in s.cells ) cells.push({ x : ox + c.x - dx, y : oy + c.y - dy, z : oz + c.z - 1, id : c.id });
 		if( s.entry != null ) shipSpawn = { x : ox + s.entry.x - dx + 0.5, y : oy + s.entry.y - dy + 0.5, z : oz + s.entry.z - 1 + 1. };
 		return { sx : base.sx, sy : base.sy, sz : base.sz, cells : cells, entry : null, crafts : [] };

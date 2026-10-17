@@ -706,6 +706,13 @@ class GalaxyApp extends hxd.App {
 
 	/** vuelta de la nave nodriza: lo comprado y vendido al robot (inventario, creditos, mercado) se lleva a la partida */
 	function backFromMothership() {
+		// modo de edicion: lo cambiado se guarda en mothership.bin y el inventario de la partida no se toca
+		if( GameView.editMother && game != null ) {
+			var ok = try Mothership.save(game.world) catch( e : Dynamic ) { Sys.stderr().writeString("nodriza: " + e + "\n"); false; }
+			Sys.println(ok ? "Nave nodriza guardada" : "No se pudo guardar la nave nodriza");
+			backFromHangar();
+			return;
+		}
 		if( hangarReturn != null && game != null ) {
 			var m = game.toInfo();
 			hangarReturn.inv = Inv.copy(game.inv.inv);
