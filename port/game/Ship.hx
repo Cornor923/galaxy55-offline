@@ -34,6 +34,7 @@ class Ship {
 	var planet : World;
 	var beam : h3d.scene.Mesh;
 	var beamUv : h3d.shader.UVDelta;
+	var beamFog : Sky.FogShader;
 	var time = 0.;
 	var needRecal = true;
 
@@ -106,7 +107,10 @@ class Ship {
 		beamUv = new h3d.shader.UVDelta();
 		beamUv.uvScale.set(segs / 3, 1);
 		mat.mainPass.addShader(beamUv);
-		mat.mainPass.addShader(planet.sky.fog);
+		// el original no le pone niebla (PolyTexShader): solo la curva del planeta
+		beamFog = new Sky.FogShader();
+		beamFog.fogK = 0;
+		mat.mainPass.addShader(beamFog);
 		beam = new h3d.scene.Mesh(poly, mat, planet.root);
 		updateBeam();
 	}
@@ -133,6 +137,12 @@ class Ship {
 
 		var s = planet.size;
 		var ddx = g.wrapDist(x + 0.5 - g.px), ddy = g.wrapDist(y + 0.5 - g.py);
+		// Render.viewX/viewY: el rayo se dibuja en la copia del planeta mas cercana al jugador
+		if( beam != null ) {
+			beamFog.curve = planet.sky.fog.curve;
+			beam.x = g.px + ddx;
+			beam.y = g.py + ddy;
+		}
 		var d = Math.sqrt(ddx * ddx + ddy * ddy);
 		var onShipEntry = g.pz > Const.SIZE && g.standingBlock == Block.all[Type.enumIndex(BShipEntry)];
 		if( d < 0.6 && g.pz >= z && (g.pz <= Const.SIZE || onShipEntry) ) {

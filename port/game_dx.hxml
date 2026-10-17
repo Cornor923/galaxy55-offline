@@ -8,6 +8,7 @@
 -cp stubs
 -cp port/shim
 -lib heaps
+-lib hlopenal
 -lib hldx
 -D haxe3
 -main GalaxyApp
