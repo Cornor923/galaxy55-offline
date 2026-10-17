@@ -2,14 +2,19 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
-## En desarrollo
+## v0.3 — pre-release
+- Sonido: los 12 efectos del original (pasos, salto, aterrizaje, caída fuerte, jetpack, láser, romper y recoger bloques).
 - Arreglos reportados por Sekhmet (¡gracias!): dentro de un líquido la pantalla y la niebla toman su color, como en el
   original (la arena movediza ya no parece transparente); no nieva bajo el agua; el agua tiene caras laterales; el hielo
   sumergido queda detrás del agua; textos del mapa de estrellas traducidos.
 - Nombres originales de los biomas en francés (Terres Rouges, Rocaille sombre, Sables arides), encontrados por Sekhmet
   en la antigua Twinpedia.
 - Versión DirectX opcional (`haxe port\game_dx.hxml`, `jugar_dx.bat`), además de la de OpenGL.
-- Nave nodriza: puertas de pistón abiertas, rejillas de suelo y techo, puertas que se abren y salas iluminadas.
+- Nave nodriza: indestructible, mejor iluminada, puertas cerradas, campos de fuerza láser en los hangares, 10 plazas
+  marcadas, tu nave aparcada en la tuya (apareces dentro y su ordenador te devuelve), y una tienda con un robot
+  comerciante animado en el túnel de entrada.
+- Mando: cofres, tienda y cambio de casilla (LB/RB).
+- El juego ya no se congela unos segundos al arrancar.
 - `jugar.bat` funciona aunque el PATH tenga carpetas con paréntesis.
 
 ## v0.2 — pre-release

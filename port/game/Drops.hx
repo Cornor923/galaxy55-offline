@@ -168,6 +168,7 @@ class Drops {
 					}
 				}
 			}
+			if( picked ) Snd.play("pickupBlock", 0.3);
 			if( picked || d.time <= 0 ) {
 				if( d.obj != null ) {
 					for( c in d.obj.getMeshes() ) c.primitive.dispose();

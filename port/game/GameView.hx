@@ -424,6 +424,9 @@ class GameView {
 	}
 
 	public function dispose() {
+		if( jetSound != null ) jetSound.stop();
+		if( laserSound != null ) laserSound.stop();
+		jetSound = laserSound = null;
 		if( ship != null ) ship.dispose();
 		fx.dispose();
 		parts.dispose();
@@ -453,6 +456,33 @@ class GameView {
 		thrusting = false;
 		for( i in 0...k ) doMove(dt, speed, strafe, useJetpack);
 		if( creative ) jetpack = 1;
+		if( footCD > 0 ) footCD -= tmod;
+		updateSounds();
+	}
+
+	/** sonidos de bucle del original: jetpack (Hero.update) y laser (Game.update) */
+	var footCD = 0.;
+	var jetSound : hxd.snd.Channel;
+	var laserSound : hxd.snd.Channel;
+	function updateSounds() {
+		if( thrusting ) {
+			if( jetSound == null ) {
+				Snd.play("jetpackStart", 0.2);
+				jetSound = Snd.play("jetpack", 0.07, true);
+			}
+		} else if( jetSound != null ) {
+			jetSound.stop();
+			jetSound = null;
+		}
+		if( laserActive && select != null ) {
+			if( laserSound == null ) {
+				Snd.play("lazerStart", 0.3);
+				laserSound = Snd.play("lazer", 0.25, true);
+			}
+		} else if( laserSound != null ) {
+			laserSound.stop();
+			laserSound = null;
+		}
 	}
 
 	/** Game.updateInterface: el original lo ejecuta una vez por fotograma (60 por segundo). */
@@ -582,15 +612,29 @@ class GameView {
 						feet = world.block(Math.floor(fx[i]), Math.floor(fy[i]), Std.int(pz - 0.02));
 						break;
 					}
-			if( feet != standingBlock ) standingBlock = feet;
+			if( feet != standingBlock ) {
+				standingBlock = feet;
+				if( gravity / maxGravity > 0.4 && !creative ) {
+					Snd.play("landHard", 1.5);
+					Snd.play("hit", 0.7);
+				}
+			}
+			if( speed > 0 && footCD <= 0 && !swimming ) {
+				footCD = 9;
+				Snd.play(Std.random(100) < 70 ? "footstep1" : "footstep2", 0.3);
+			}
 			if( gravity > 0 ) {
+				Snd.play("land");
 				pushPower = 0;
 				if( jetpack < 1 ) jetpack += 0.3;
 				else if( gravity >= 0.25 ) bobY = 15; // aterrizaje fuerte
 				else bobY = 5;
 				gravity = 0;
 			}
-			if( useJetpack && stun <= 0 ) gravity = -0.23; // salto
+			if( useJetpack && stun <= 0 ) {
+				gravity = -0.23; // salto
+				Snd.play("jump", 0.5);
+			}
 		}
 
 		if( jetpack > 1 ) jetpack = 1;
@@ -985,6 +1029,7 @@ class GameView {
 		}
 		world.setBlock(x, y, z, null);
 		parts.doBreak(x, y, z, b);
+		Snd.play("destroyBlock", 0.25);
 		if( z >= World.SHIP_Z ) ship.craft(x, y, z, null, this);
 	}
 

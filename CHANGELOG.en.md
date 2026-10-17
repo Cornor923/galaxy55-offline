@@ -2,13 +2,18 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md)
 
-## In development
+## v0.3 — pre-release
+- Sound: the 12 original effects (footsteps, jump, landing, hard fall, jetpack, laser, breaking and picking up blocks).
 - Fixes reported by Sekhmet (thank you!): inside a liquid the screen and fog take its colour, like the original
   (quicksand no longer looks transparent); no snow under water; water has side faces; submerged ice stays behind the
   water; star map texts translated.
 - Original French biome names (Terres Rouges, Rocaille sombre, Sables arides), found by Sekhmet on the old Twinpedia.
 - Optional DirectX build (`haxe port\game_dx.hxml`, `jugar_dx.bat`), besides the OpenGL one.
-- Mothership: piston doors open, floor and ceiling grates, doors that open, and lit rooms.
+- Mothership: unbreakable, better lit, doors closed, laser force fields on the hangars, 10 marked bays, your ship
+  parked in yours (you spawn inside and its computer takes you back), and a shop with an animated merchant robot in
+  the entrance tunnel.
+- Gamepad: chests, shop and slot switching (LB/RB).
+- The game no longer freezes for a few seconds at startup.
 - `jugar.bat` works even when the PATH has folders with parentheses.
 
 ## v0.2 — pre-release
