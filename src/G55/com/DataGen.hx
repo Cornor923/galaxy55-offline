@@ -218,7 +218,9 @@ class DataGen {
 		{ id : BMotherHull, type : BTFull, texture : [60,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage du vaisseau-mère", basePrice : null },
 		{ id : BMotherPanel, type : BTFull, texture : [61,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Panneau du vaisseau-mère", basePrice : null },
 		{ id : BMotherDark, type : BTFull, texture : [62,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage sombre du vaisseau-mère", basePrice : null },
-		{ id : BMotherField, type : BTAlpha, texture : [63,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(6.0),BFNoShade], matter : null, name : "Champ de force du hangar", basePrice : null }
+		{ id : BMotherField, type : BTAlpha, texture : [63,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(6.0),BFNoShade], matter : null, name : "Champ de force du hangar", basePrice : null },
+		{ id : BMotherYellow, type : BTFull, texture : [58,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage jaune", basePrice : 300 },
+		{ id : BMotherBlack, type : BTFull, texture : [59,61], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : BShipHull, name : "Blindage noir", basePrice : 300 }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [

@@ -59,6 +59,23 @@ class Atlas {
 			{ dst : tileOf(BMotherPanel), src : tileOf(BShipHull), k : 0.95, add : 0 },
 			{ dst : tileOf(BMotherDark), src : tileOf(BShedWall), k : 0.6, add : 18 }, // gris oscuro como la pizarra profunda de Minecraft (antes se veia negro)
 		];
+		// blindaje amarillo y negro (para franjas de peligro): el mismo metal del casco, teñido
+		var tints = [
+			{ dst : tileOf(BMotherYellow), r : 1.0, g : 0.78, b : 0.08, k : 1.15, add : 40 },
+			{ dst : tileOf(BMotherBlack), r : 1.0, g : 1.0, b : 1.04, k : 0.28, add : 6 },
+		];
+		var src = tileOf(BShipHull);
+		for( t in tints ) {
+			var sx = (src & 63) << 5, sy = (src >> 6) << 5;
+			var dx = (t.dst & 63) << 5, dy = (t.dst >> 6) << 5;
+			for( y in 0...32 )
+				for( x in 0...32 ) {
+					var c = pix.getPixel(sx + x, sy + y);
+					var l = (((c >> 16) & 0xFF) * 0.3 + ((c >> 8) & 0xFF) * 0.59 + (c & 0xFF) * 0.11) * t.k + t.add;
+					inline function ch( v : Float ) return Std.int(Math.max(0, Math.min(255, v)));
+					pix.setPixel(dx + x, dy + y, 0xFF000000 | (ch(l * t.r) << 16) | (ch(l * t.g) << 8) | ch(l * t.b));
+				}
+		}
 		// campo de fuerza de los hangares (añadido del port): deja pasar las naves pero no el vacio. Azul translucido con
 		// rayos laser horizontales; las lineas son solo horizontales para que no se vean juntas de bloque
 		var ft = tileOf(BMotherField);

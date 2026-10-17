@@ -241,6 +241,8 @@ enum BlockKind {
 	BMotherPanel;
 	BMotherDark;
 	BMotherField;
+	BMotherYellow;
+	BMotherBlack;
 }
 
 enum BlockModel {
