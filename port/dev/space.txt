@@ -1,0 +1,23 @@
+# cielo de espacio de la nave nodriza: desde fuera, mirando a varios lados
+wait 3
+mothership
+wait 120
+tp 190 20 70 0 0.2
+wait 10
+shot space1
+look 1.57 0.3
+wait 5
+shot space2
+look 3.14 0.1
+wait 5
+shot space3
+look 4.7 0.5
+wait 5
+shot space4
+look 0.8 1.2
+wait 5
+shot space5
+look 2.4 -0.4
+wait 5
+shot space6
+quit
