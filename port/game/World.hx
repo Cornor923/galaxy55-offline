@@ -430,14 +430,20 @@ class World {
 	}
 
 	/** onda expansiva: cada anillo baja la luz en delta (Builder.processLight) */
+	// listas de la inundacion reutilizadas (antes se creaba una por paso: con miles de luces, mucha basura y pausas)
+	var floodA = new Array<Int>();
+	var floodB = new Array<Int>();
+
 	function flood( seeds : Array<Int>, lvalue : Float, delta : Float ) {
 		var cur = seeds;
 		var sz = size;
+		var spare = floodA;
 		while( true ) {
 			var l = Std.int(lvalue);
 			if( l > 15 ) l = 15;
 			if( l <= 0 || cur.length == 0 ) break;
-			var next = new Array<Int>();
+			var next = spare == cur ? (cur == floodA ? floodB : floodA) : spare;
+			next.resize(0);
 			for( p in cur ) {
 				var z = p & (HEIGHT - 1);
 				var col = p >> ZBITS;
@@ -454,6 +460,7 @@ class World {
 				if( z > 0 ) spread(p - 1, l, next);
 				if( z < HEIGHT - 1 ) spread(p + 1, l, next);
 			}
+			spare = cur == floodA || cur == floodB ? cur : (next == floodA ? floodB : floodA);
 			cur = next;
 			lvalue -= delta;
 		}
@@ -613,36 +620,73 @@ class World {
 				var id = c + d * n;
 				if( immediate.indexOf(id) < 0 ) immediate.push(id);
 			}
+		// mientras tanto, un hueco nuevo toma la luz de su vecino mas claro (si no, se veria negro hasta recalcular)
+		if( idTag[bytes.get(key)] < NOLIGHT ) {
+			var best = light.get(key);
+			inline function nb( q : Int ) { var v = light.get(q); if( v > best ) best = v; }
+			nb(((wrapC(x - 1) + y * size) << ZBITS) | z);
+			nb(((wrapC(x + 1) + y * size) << ZBITS) | z);
+			nb(((x + wrapC(y - 1) * size) << ZBITS) | z);
+			nb(((x + wrapC(y + 1) * size) << ZBITS) | z);
+			nb(key - 1);
+			nb(key + 1);
+			light.set(key, best);
+		}
 		pendingRelight.push(key);
+		// la luz de la zona se recalcula cuando se deja de editar un momento: al excavar seguido (creativo) no se
+		// recalcula en cada bloque, que en la nave nodriza (miles de luces) bajaba mucho los fotogramas
+		editQuiet = 8;
 	}
 
+	var editQuiet = 0;
+
 	/** Procesa lo pendiente tras editar: trozos inmediatos, una zona de luz y unos pocos trozos por fotograma. */
+	static var FLUSH_TIME = Sys.args().indexOf("--flushtime") >= 0;
 	public function flush() {
 		var n = size >> 4;
+		var tm = FLUSH_TIME && hasPending() ? haxe.Timer.stamp() : 0.;
+		var nImm = immediate.length;
 		while( immediate.length > 0 ) {
 			var id = immediate.pop();
 			buildChunk(id % n, Std.int(id / n));
 		}
-		if( pendingRelight.length > 0 ) {
+		if( tm > 0 ) { var t = haxe.Timer.stamp(); if( nImm > 0 ) Sys.println("flush: " + nImm + " trozos inmediatos " + Std.int((t - tm) * 1000) + " ms"); tm = t; }
+		if( editQuiet > 0 ) editQuiet--;
+		else if( pendingRelight.length > 0 ) {
 			var key = pendingRelight.shift();
 			var col = key >> ZBITS;
 			var x = col % size, y = Std.int(col / size);
-			relightRegion(x, y, 12);
-			// los trozos que cubre la zona (esquinas y centro incluidos)
-			for( cy in (y - 12) >> 4...((y + 12) >> 4) + 1 )
-				for( cx in (x - 12) >> 4...((x + 12) >> 4) + 1 ) {
-					var wx = cx < 0 ? cx + n : (cx >= n ? cx - n : cx);
-					var wy = cy < 0 ? cy + n : (cy >= n ? cy - n : cy);
-					var id = wx + wy * n;
-					if( lightChunks.indexOf(id) < 0 ) lightChunks.push(id);
-				}
+			// las ediciones cercanas entran en la misma zona: una sola pasada para todas
+			var i = pendingRelight.length;
+			while( i-- > 0 ) {
+				var c2 = pendingRelight[i] >> ZBITS;
+				var ddx = c2 % size - x, ddy = Std.int(c2 / size) - y;
+				if( ddx > size >> 1 ) ddx -= size; else if( ddx < -(size >> 1) ) ddx += size;
+				if( ddy > size >> 1 ) ddy -= size; else if( ddy < -(size >> 1) ) ddy += size;
+				if( ddx >= -6 && ddx <= 6 && ddy >= -6 && ddy <= 6 ) pendingRelight.splice(i, 1);
+			}
+			// solo se rehacen los trozos donde la luz ha cambiado de verdad (antes, todos los de la zona)
+			var changed = relightRegion(x, y, 12);
+			if( tm > 0 ) { var t = haxe.Timer.stamp(); Sys.println("flush: luz de la zona " + Std.int((t - tm) * 1000) + " ms, trozos con cambios " + (changed == null ? -1 : changed.length)); tm = t; }
+			if( changed == null )
+				for( cy in (y - 12) >> 4...((y + 12) >> 4) + 1 )
+					for( cx in (x - 12) >> 4...((x + 12) >> 4) + 1 ) {
+						var wx = cx < 0 ? cx + n : (cx >= n ? cx - n : cx);
+						var wy = cy < 0 ? cy + n : (cy >= n ? cy - n : cy);
+						var id = wx + wy * n;
+						if( lightChunks.indexOf(id) < 0 ) lightChunks.push(id);
+					}
+			else
+				for( id in changed ) if( lightChunks.indexOf(id) < 0 ) lightChunks.push(id);
 		}
 		var k = 0;
-		while( lightChunks.length > 0 && k < 2 ) {
+		// uno por fotograma (en la nave nodriza cada trozo cuesta ~10 ms)
+		while( lightChunks.length > 0 && k < 1 ) {
 			var id = lightChunks.shift();
 			buildChunk(id % n, Std.int(id / n));
 			k++;
 		}
+		if( tm > 0 && k > 0 ) Sys.println("flush: " + k + " trozos de luz " + Std.int((haxe.Timer.stamp() - tm) * 1000) + " ms (quedan " + lightChunks.length + ")");
 	}
 
 	public inline function hasPending() : Bool {
@@ -650,12 +694,15 @@ class World {
 	}
 
 	/** Recalcula la luz de una zona (radio rIn) usando las fuentes de una zona mayor, como el original pero local. */
-	function relightRegion( cx : Int, cy : Int, rIn : Int ) {
+	/** devuelve los trozos cuya luz cambio (null = no se sabe: hay que rehacerlos todos) */
+	function relightRegion( cx : Int, cy : Int, rIn : Int ) : Array<Int> {
 		var rOut = rIn + 16;
 		if( rOut * 2 + 1 >= size ) {
 			computeLight();
-			return;
+			return null;
 		}
+		var changed = new Array<Int>();
+		var nc = size >> 4;
 		var span = rOut * 2 + 1;
 		if( mask == null ) mask = haxe.io.Bytes.alloc(size * size);
 		var saved = haxe.io.Bytes.alloc(span * span * HEIGHT);
@@ -676,8 +723,10 @@ class World {
 		var lsun = Std.int(sunP - sunF);
 		if( lsun < 0 ) lsun = 0;
 		var seeds = new Array<Int>();
+		var ts = FLUSH_TIME ? haxe.Timer.stamp() : 0.;
 		for( col in cols ) sunColumn(col, lmax, lsun, seeds);
 		flood(seeds, sunP - sunF * 2, sunF);
+		if( FLUSH_TIME ) Sys.println("  sol " + Std.int((haxe.Timer.stamp() - ts) * 1000) + " ms");
 		for( col in cols ) {
 			var base = col << ZBITS;
 			for( z in 1...HEIGHT ) {
@@ -692,18 +741,37 @@ class World {
 				flood([p], info.pw - f, f);
 			}
 		}
+		if( FLUSH_TIME ) Sys.println("  lamparas " + Std.int((haxe.Timer.stamp() - ts) * 1000) + " ms");
 		useMask = false;
 		for( i in 0...cols.length ) {
 			var dx = i % span - rOut, dy = Std.int(i / span) - rOut;
 			if( dx > rIn || dx < -rIn || dy > rIn || dy < -rIn )
 				light.blit(cols[i] << ZBITS, saved, i * HEIGHT, HEIGHT);
-			else if( minLight > 0 ) {
-				// la luz minima de la nave nodriza tambien al recalcular una zona (si no, al abrir una puerta todo se oscurecia)
+			else {
 				var base = cols[i] << ZBITS;
-				for( z in 0...HEIGHT ) if( light.get(base | z) < minLight ) light.set(base | z, minLight);
+				// la luz minima de la nave nodriza tambien al recalcular una zona (si no, al abrir una puerta todo se oscurecia)
+				if( minLight > 0 )
+					for( z in 0...HEIGHT ) if( light.get(base | z) < minLight ) light.set(base | z, minLight);
+				var diff = false, sb = i * HEIGHT;
+				for( z in 0...HEIGHT )
+					if( light.get(base | z) != saved.get(sb + z) ) {
+						diff = true;
+						break;
+					}
+				if( diff ) {
+					// la luz de una columna se ve en su trozo y, en los bordes, en los vecinos (caras que dan a ella)
+					var col = cols[i];
+					var x = col % size, y = Std.int(col / size);
+					for( ddy in -1...2 )
+						for( ddx in -1...2 ) {
+							var id = (wrapC(x + ddx) >> 4) + (wrapC(y + ddy) >> 4) * nc;
+							if( changed.indexOf(id) < 0 ) changed.push(id);
+						}
+				}
 			}
 			mask.set(cols[i], 0);
 		}
+		return changed;
 	}
 
 	/** luz de sol de una columna (misma logica que computeLight, para una zona) */

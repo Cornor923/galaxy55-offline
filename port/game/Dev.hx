@@ -150,6 +150,16 @@ class Dev {
 	function print( a : Array<String>, g : GameView ) {
 		var w = g.world;
 		switch( a[1] ) {
+		case "lightsum":
+			// suma de la luz en un cubo (x y z radio): para comprobar que tras editar y deshacer queda igual
+			var x = Std.parseInt(a[2]), y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), r = Std.parseInt(a[5]);
+			var s = 0, dark = 0;
+			for( dz in -r...r + 1 ) for( dy in -r...r + 1 ) for( dx in -r...r + 1 ) {
+				var v = @:privateAccess w.lightAt(x + dx, y + dy, z + dz);
+				s += v;
+				if( v == 0 && w.block(x + dx, y + dy, z + dz) == null ) dark++;
+			}
+			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
 		case "hangar":

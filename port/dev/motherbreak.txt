@@ -1,0 +1,20 @@
+wait 3
+mothership
+wait 200
+print lightsum 200 250 42 12
+set 200 250 41 none
+wait 4
+set 201 250 41 none
+wait 4
+set 202 250 41 none
+wait 40
+print lightsum 200 250 42 12
+set 200 250 41 BMotherDark
+set 201 250 41 BMotherDark
+set 202 250 41 BMotherDark
+wait 40
+print lightsum 200 250 42 12
+print block 200 250 41
+print block 201 250 41
+print block 202 250 41
+quit
