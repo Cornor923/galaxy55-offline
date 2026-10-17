@@ -1,6 +1,6 @@
 # Galaxy 55 — offline version (native Windows port)
 
-**English** · [Español](#español)
+**English** · [Español](#español) · [Français](#français)
 
 ![Biomes: snowy peaks, Mars, moon, acid forest](docs/img/biomas.jpg)
 
@@ -139,3 +139,68 @@ El código, los gráficos y los datos originales son de **Motion Twin**, publica
 **misma licencia**: sin uso comercial, con atribución a Motion Twin y compartiendo igual. No está afiliada ni respaldada
 por Motion Twin. Gracias a la comunidad de Eternaltwin por conservar documentación y capturas.
 Gracias a **Sekhmet** por sus reportes de errores detallados, las pruebas en Linux y sus recuerdos de cómo funcionaba el juego original (agua, lava, cascadas).
+
+---
+
+## Français
+
+**Galaxy 55** était un jeu web en Flash (2012) de **Motion Twin** : exploration spatiale, planètes générées aléatoirement et
+système de construction en blocs avec artisanat en 3D. Il a fermé et son serveur n'existe plus. Ce projet le porte en
+**application de bureau native pour Windows** (Haxe 4 + Heaps + HashLink), sans Flash ni serveur, à partir du code que
+Motion Twin a publié dans [WebGamesArchives](https://github.com/motion-twin/WebGamesArchives).
+L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signalé comme tel.
+
+> Travail en cours, pas une version finale.
+
+### Où trouver quoi
+
+| Je veux… | Voir |
+|---|---|
+| **Jouer sans compiler** | [pré-version v0.3](../../releases/tag/v0.3) : télécharge le zip, décompresse-le et lance `jugar.bat` |
+| **Les commandes et la compilation** | [`port/README.md`](port/README.md) (en anglais) |
+| **Voir ou signaler des bugs** | [`BUGS.md`](BUGS.md) (bugs connus, en anglais) ; pour en signaler un nouveau, ouvre une *issue* ou écris-moi |
+| **Voir ce qui manque** | [`TODO.md`](TODO.md) (liste des tâches, en anglais) |
+| **Voir ce qui a changé** | [`CHANGELOG.en.md`](CHANGELOG.en.md) (en anglais) |
+| **Notes techniques du développement** | [`port/RESUMEN.md`](port/RESUMEN.md) (en espagnol) |
+| **La version Flash (archivée)** | [`docs/flash/README_flash.md`](docs/flash/README_flash.md) (en espagnol, résumé en anglais à la fin), branche [`flash`](../../tree/flash), tag [`flash-version`](../../tree/flash-version) |
+
+### Jouer en 3 étapes
+
+1. Télécharge le zip de la [pré-version v0.3](../../releases/tag/v0.3) et **décompresse-le entièrement** (avec tous ses dossiers).
+2. Vérifie qu'il y a un dossier **`res/`** à côté de `galaxy55.hl` (avec `texture.png`, `lazer.png`… dedans). Si tu vois à la place
+   des fichiers isolés nommés `res\texture.png`, l'extraction a échoué : décompresse à nouveau avec un autre programme. (Symptôme : `Can't read res/texture.png`.)
+3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.3-linux-mac.zip` depuis la release,
+   installe [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` sur macOS) et lance `sh jugar.sh`. (Un joueur l'a fait fonctionner sous Linux ; dis-nous comment ça se passe.)
+   La langue (espagnol, anglais, français) se change dans les Options.
+
+### Ce qui fonctionne aujourd'hui
+
+Menu de démarrage, parties sauvegardées, planètes identiques à celles de l'original (vérifié par empreinte face à la version Flash),
+creuser et poser des blocs, jetpack, mode créatif (notre ajout), le vaisseau avec son téléporteur, les portes, le synthétiseur avec
+les recettes d'origine et l'ordinateur de bord, et la **carte stellaire** (secteur, systèmes solaires, scan et atterrissage).
+Il manque encore la boutique, le hangar, le son, l'eau qui s'écoule et les animations de voyage exactes de la carte stellaire ; voir [`TODO.md`](TODO.md).
+
+### Bugs connus (résumé)
+
+Liste complète et numérotée dans [`BUGS.md`](BUGS.md). Les principaux :
+- Supprimer une partie depuis le menu ne fonctionne pas.
+- Erreurs d'éclairage sur les blocs non cubiques ; blocs blancs unis et feuilles d'épicéa bizarres dans le biome d'hiver ; courbure de la planète trop marquée.
+- Pas de particules quand on casse un bloc ; impossible de casser les éléments suspendus et les plantes au sol.
+- Dans le vaisseau : impossible de retirer le bloc source de la cascade, et le synthétiseur ne consomme pas les blocs posés dans sa zone.
+- Carte stellaire : entrer dans un système, en sortir et atterrir se font par un simple fondu, pas avec les animations d'origine.
+- L'eau ne s'écoule pas. Il manque la boutique, le hangar et le son.
+
+**Tu en as trouvé un autre ?** Signale-le dans une *issue* GitHub ou sur Discord, avec ce que tu faisais et une capture d'écran si possible.
+
+### Organisation du dépôt
+
+Voir le schéma en anglais plus haut : `port/` est le port natif (travail en cours) ; `docs/flash/` la documentation de la version Flash ;
+`docs/` les notes de recherche et `docs/img/` les captures ; le reste (`src/`, `libs/`, `release/`…) est le code original et la version Flash.
+
+### Licence et crédits
+
+Le code, les graphismes et les données d'origine appartiennent à **Motion Twin** et ont été publiés sous
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). Cette version modifiée est partagée sous la
+**même licence** : pas d'utilisation commerciale, attribution à Motion Twin et partage dans les mêmes conditions. Elle n'est ni
+affiliée à Motion Twin ni approuvée par Motion Twin. Merci à la communauté Eternaltwin d'avoir préservé la documentation et les captures.
+Merci à **Sekhmet** pour ses rapports de bugs détaillés, ses tests sous Linux et ses souvenirs du fonctionnement du jeu original (eau, lave, cascades).
