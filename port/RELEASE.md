@@ -38,5 +38,26 @@ Everything from v0.3 (mothership, hangar, shop, sound, gamepad, DirectX build...
 - Full list of known bugs: `BUGS.md` (English) / `ERRORES.md` (Spanish) in the repository.
 - **The save format may change between versions.**
 
-### Licencia / License
+---
+
+## Galaxy 55 (offline) v0.3.1 — portage natif pour Windows (et Linux/macOS avec HashLink)
+
+Portage **non officiel** de Galaxy 55 (Motion Twin, 2012) en application native (Haxe + Heaps + HashLink). Sans Flash, sans navigateur et sans serveur.
+
+**Comment jouer (Windows) :** décompresse tout le dossier et double-clique sur `jugar.bat`. S'il ne s'ouvre pas (PC sans OpenGL 3.2 ou machines virtuelles), utilise `jugar_dx.bat`, la version DirectX. Rien à installer. Les parties sont enregistrées dans `%APPDATA%\Galaxy55\`.
+**Linux et macOS :** zip séparé ; il faut HashLink 1.16 installé (voir son `LEEME.txt`).
+
+### Nouveautés de la v0.3.1
+- **Options :** synchronisation verticale (VSync) et limite d'images par seconde (30, 60, 120, 144, 240 ou illimité).
+- **Plus de console noire :** le jeu s'ouvre sans la fenêtre de console vide (`hlw.exe`).
+- Corrections de **Cornor923** (merci !) : le voile des liquides et les fonds des menus couvrent les fenêtres plus larges que 16:9, plus de taches sombres à travers la glace, la tête ne rentre plus dans les kubes en tombant ou en flottant avec le jetpack, et un README en français.
+
+Tout ce qui vient de la v0.3 (vaisseau-mère, hangar, boutique, son, manette, version DirectX...) est dans le [CHANGELOG](../CHANGELOG.fr.md).
+
+### Ce qui manque ou ne marche pas
+- L'eau qui coule, vie/oxygène/lave, le robot marchand qui voyage sur la carte stellaire.
+- Liste complète des bugs connus : `BUGS.md` (anglais) / `ERRORES.md` (espagnol) dans le dépôt.
+- **Le format des sauvegardes peut changer d'une version à l'autre.**
+
+### Licencia / License / Licence
 Código y datos de Galaxy 55 © Motion Twin, **CC BY-NC-SA 4.0**. Este port es una obra derivada bajo la misma licencia: uso no comercial y con crédito. Ver `LICENSE` y `NOTICE`.
