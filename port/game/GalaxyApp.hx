@@ -1267,6 +1267,8 @@ class GalaxyApp extends hxd.App {
 			} else if( K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start)) ) { pause(); pausedThisFrame = true; }
 			else {
 				game.update(dt, true, pad);
+				// salir de la nodriza o del hangar (ordenador, teletransporte) cambia de mundo dentro de update
+				if( game == null || state != Playing ) return;
 				game.updateCamera();
 				if( K.isPressed(K.F5) ) saveGame(true);
 				autosaveTimer += dt;
