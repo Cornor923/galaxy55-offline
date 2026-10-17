@@ -66,7 +66,7 @@ class Lang {
 		"mode.adventure" => ["Aventura (original)", "Adventure (original)", "Aventure (original)"],
 		"mode.creative" => ["Creativo", "Creative", "Créatif"],
 		"palette.title" => ["Bloques (modo creativo)", "Blocks (creative mode)", "Blocs (mode créatif)"],
-		"palette.hint" => ["Clic: poner en la casilla elegida   Rueda: cambiar de pagina   I / Esc: cerrar", "Click: put in the selected slot   Wheel: change page   I / Esc: close", "Clic : mettre dans la case choisie   Molette : changer de page   I / Échap : fermer"],
+		"palette.hint" => ["Clic / A: poner en la casilla elegida   Rueda / LB RB: cambiar de pagina   I / Esc / B: cerrar", "Click / A: put in the selected slot   Wheel / LB RB: change page   I / Esc / B: close", "Clic / A : mettre dans la case choisie   Molette / LB RB : changer de page   I / Échap / B : fermer"],
 		"hud.creative" => ["Creativo: I abre la paleta de bloques", "Creative: I opens the block palette", "Créatif : I ouvre la palette de blocs"],
 		"size.large" => ["Grande (384)", "Large (384)", "Grand (384)"],
 		"newgame.title" => ["NUEVA PARTIDA", "NEW GAME", "NOUVELLE PARTIE"],

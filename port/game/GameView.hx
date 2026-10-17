@@ -927,7 +927,8 @@ class GameView {
 		var matter = b.matter;
 		var req = b.requiredPower != null ? b.requiredPower : matter.requiredPower;
 		if( req == null ) req = 1;
-		var instant = creative && req > 0;
+		// en creativo los bloques que se activan (ordenador, puertas, cofres) no se rompen de golpe: hay que mantener el laser
+		var instant = creative && req > 0 && b.activable == null && b.toggle == null;
 		var power = inCraft ? 4.0 : 1.0;
 		laserCharge = null;
 		if( !inCraft && matter.quickBreaks != null )
@@ -947,7 +948,8 @@ class GameView {
 			s.power += instant ? 1 : miningPower * power / (req * 40);
 		} else
 			canBreak = false;
-		if( debugDeny || (info.mothership == true && !editMother) ) canBreak = false; // la nave nodriza no se rompe
+		if( debugDeny || (info.mothership == true && !editMother) ) canBreak = false;
+		if( b.k == BShipComputer && s.z >= World.SHIP_Z ) canBreak = false; // el ordenador de tu nave no se rompe // la nave nodriza no se rompe
 		actionPause = 1;
 		if( s.power < 1 || !canBreak ) return;
 		if( laserCharge != null ) inv.useCharge(laserCharge);

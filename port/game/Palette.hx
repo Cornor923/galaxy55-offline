@@ -9,6 +9,11 @@ import IconMesh.Icons;
 class Palette extends h2d.Object {
 
 	public var onPick : Block -> Void;
+	public var onClose : Void -> Void;
+	/** casilla elegida con el mando o el teclado (-1 = ninguna, se usa el raton) */
+	var focus = -1;
+	var navCooldown = 0.;
+	var cellBgs = new Array<h2d.Graphics>();
 
 	static inline var COLS = 14;
 	static inline var ROWS = 8;
@@ -60,6 +65,7 @@ class Palette extends h2d.Object {
 
 	function show() {
 		grid.removeChildren();
+		cellBgs = [];
 		pageText.text = (page + 1) + " / " + pages();
 		var per = COLS * ROWS;
 		for( i in 0...per ) {
@@ -90,5 +96,71 @@ class Palette extends h2d.Object {
 				if( onPick != null ) onPick(b);
 			};
 		}
+	}
+
+	function pageCount() {
+		var per = COLS * ROWS;
+		return Std.int(Math.min(per, blocks.length - page * per));
+	}
+
+	function drawFocus() {
+		for( i in 0...cellBgs.length ) {
+			var g = cellBgs[i];
+			g.clear();
+			Theme.rect(g, 1, 1, CELL - 2, CELL - 2, i == focus ? Theme.ACCENT : 0xFFFFFF, i == focus ? 0.45 : 0.06);
+		}
+		if( focus >= 0 && focus < pageCount() ) info.text = blocks[page * COLS * ROWS + focus].getName();
+	}
+
+	/** mando y teclado: cruceta/stick o flechas mueven, A/Intro pone el bloque, LB/RB cambian de pagina, B/R3/Esc/I cierran */
+	public function update( dt : Float, pad : hxd.Pad ) {
+		var K = hxd.Key;
+		var dx = 0, dy = 0, pg = 0, pick = false, back = false;
+		if( K.isPressed(K.LEFT) ) dx = -1;
+		if( K.isPressed(K.RIGHT) ) dx = 1;
+		if( K.isPressed(K.UP) ) dy = -1;
+		if( K.isPressed(K.DOWN) ) dy = 1;
+		if( K.isPressed(K.ENTER) ) pick = true;
+		if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) back = true;
+		if( pad != null ) {
+			if( navCooldown > 0 ) navCooldown -= dt;
+			if( pad.isPressed(pad.config.dpadLeft) ) dx = -1;
+			if( pad.isPressed(pad.config.dpadRight) ) dx = 1;
+			if( pad.isPressed(pad.config.dpadUp) ) dy = -1;
+			if( pad.isPressed(pad.config.dpadDown) ) dy = 1;
+			if( navCooldown <= 0 ) {
+				if( pad.xAxis < -0.6 ) { dx = -1; navCooldown = 0.18; }
+				else if( pad.xAxis > 0.6 ) { dx = 1; navCooldown = 0.18; }
+				else if( pad.yAxis < -0.6 ) { dy = -1; navCooldown = 0.18; }
+				else if( pad.yAxis > 0.6 ) { dy = 1; navCooldown = 0.18; }
+			}
+			if( pad.isPressed(pad.config.LB) ) pg = -1;
+			if( pad.isPressed(pad.config.RB) ) pg = 1;
+			if( pad.isPressed(pad.config.A) ) pick = true;
+			if( pad.isPressed(pad.config.B) || pad.isPressed(pad.config.ranalogClick) ) back = true;
+		}
+		if( back ) {
+			if( onClose != null ) onClose();
+			return;
+		}
+		if( pg != 0 ) {
+			scroll(pg);
+			if( focus >= pageCount() ) focus = pageCount() - 1;
+			drawFocus();
+		}
+		if( dx != 0 || dy != 0 ) {
+			if( focus < 0 ) focus = 0;
+			else {
+				var cx = focus % COLS + dx, cy = Std.int(focus / COLS) + dy;
+				if( cx < 0 ) cx = COLS - 1;
+				if( cx >= COLS ) cx = 0;
+				if( cy < 0 ) cy = ROWS - 1;
+				if( cy >= ROWS ) cy = 0;
+				var n = cx + cy * COLS;
+				if( n < pageCount() ) focus = n;
+			}
+			drawFocus();
+		}
+		if( pick && focus >= 0 && focus < pageCount() && onPick != null ) onPick(blocks[page * COLS * ROWS + focus]);
 	}
 }

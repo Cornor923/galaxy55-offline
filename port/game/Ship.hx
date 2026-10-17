@@ -51,6 +51,11 @@ class Ship {
 		world = new World(planet.seed, planet.biomeName, 1, parent, atlas, false, edits, data, planet.sky);
 		var guard = 0;
 		while( !world.isReady() && guard++ < 1000 ) world.step(1000);
+		// el ordenador de la nave no se puede perder (sin el no hay mapa ni hangar): si una partida lo tiene roto, vuelve
+		for( c in data.cells ) {
+			var b = Block.all[c.id];
+			if( b != null && b.k == BShipComputer && world.block(c.x, c.y, c.z) == null ) world.setBlock(c.x, c.y, c.z, b);
+		}
 		planet.ship = world;
 		planet.shipDX = dx;
 		planet.shipDY = dy;

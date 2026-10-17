@@ -974,6 +974,7 @@ class GalaxyApp extends hxd.App {
 		if( paletteOpen || game == null || !game.creative ) return;
 		palette = new Palette(s2d, atlas);
 		palette.onPick = function(b) game.setSlot(b);
+		palette.onClose = closePalette;
 		paletteOpen = true;
 		captureMouse(false);
 	}
@@ -1243,9 +1244,11 @@ class GalaxyApp extends hxd.App {
 					chest.update(dt, pad);
 				} else if( shop != null ) {
 					shop.update(dt, pad);
+				} else if( palette != null ) {
+					palette.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
 				game.updateCamera();
-			} else if( game.creative && K.isPressed(K.I) ) {
+			} else if( game.creative && (K.isPressed(K.I) || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
 				openPalette();
 			} else if( K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start)) ) { pause(); pausedThisFrame = true; }
 			else {
