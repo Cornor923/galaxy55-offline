@@ -949,7 +949,8 @@ class GameView {
 		} else
 			canBreak = false;
 		if( debugDeny || (info.mothership == true && !editMother) ) canBreak = false;
-		if( b.k == BShipComputer && s.z >= World.SHIP_Z ) canBreak = false; // el ordenador de tu nave no se rompe // la nave nodriza no se rompe
+		// en tu nave, ordenador y puertas solo se usan, no se rompen (ShipLogic.checkSelect: allowBreak = false)
+		if( s.z >= World.SHIP_Z && !inCraft && (b.activable != null || b.toggle != null) ) canBreak = false; // la nave nodriza no se rompe
 		actionPause = 1;
 		if( s.power < 1 || !canBreak ) return;
 		if( laserCharge != null ) inv.useCharge(laserCharge);
