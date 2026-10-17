@@ -11,7 +11,7 @@ class Palette extends h2d.Object {
 	public var onPick : Block -> Void;
 	public var onClose : Void -> Void;
 	/** casilla elegida con el mando o el teclado (-1 = ninguna, se usa el raton) */
-	var focus = -1;
+	var focus = 0;
 	var navCooldown = 0.;
 	var cellBgs = new Array<h2d.Graphics>();
 
@@ -88,14 +88,12 @@ class Palette extends h2d.Object {
 				Theme.rect(g, 1, 1, CELL - 2, CELL - 2, Theme.ACCENT, 0.3);
 				info.text = b.getName();
 			};
-			it.onOut = function(_) {
-				g.clear();
-				Theme.rect(g, 1, 1, CELL - 2, CELL - 2, 0xFFFFFF, 0.06);
-			};
+			it.onOut = function(_) drawFocus();
 			it.onClick = function(_) {
 				if( onPick != null ) onPick(b);
 			};
 		}
+		drawFocus();
 	}
 
 	function pageCount() {
@@ -107,7 +105,12 @@ class Palette extends h2d.Object {
 		for( i in 0...cellBgs.length ) {
 			var g = cellBgs[i];
 			g.clear();
-			Theme.rect(g, 1, 1, CELL - 2, CELL - 2, i == focus ? Theme.ACCENT : 0xFFFFFF, i == focus ? 0.45 : 0.06);
+			if( i == focus ) {
+				// marco claro bien visible alrededor de la casilla elegida
+				Theme.rect(g, 0, 0, CELL, CELL, 0xFFFFFF, 0.95);
+				Theme.rect(g, 3, 3, CELL - 6, CELL - 6, Theme.ACCENT, 0.6);
+			} else
+				Theme.rect(g, 1, 1, CELL - 2, CELL - 2, 0xFFFFFF, 0.06);
 		}
 		if( focus >= 0 && focus < pageCount() ) info.text = blocks[page * COLS * ROWS + focus].getName();
 	}
