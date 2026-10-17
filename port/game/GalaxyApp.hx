@@ -1083,6 +1083,9 @@ class GalaxyApp extends hxd.App {
 		if( game == null ) return;
 		// en el hangar se guarda la partida tal como estaba al entrar
 		var ok = SaveData.write(game.hangar != null || game.info.mothership == true ? hangarReturn : game.toInfo(), captureThumb());
+		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza
+		if( GameView.editMother && game.info.mothership == true )
+			ok = (try Mothership.save(game.world) catch( e : Dynamic ) false) && ok;
 		if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
 	}
 
