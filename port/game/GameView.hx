@@ -423,10 +423,15 @@ class GameView {
 		laserActive = false;
 	}
 
-	public function dispose() {
+	/** corta los sonidos en bucle (menus abiertos, pausa, salir) */
+	public function stopSounds() {
 		if( jetSound != null ) jetSound.stop();
 		if( laserSound != null ) laserSound.stop();
 		jetSound = laserSound = null;
+	}
+
+	public function dispose() {
+		stopSounds();
 		if( ship != null ) ship.dispose();
 		fx.dispose();
 		parts.dispose();
@@ -909,11 +914,11 @@ class GameView {
 	function mine( tmod : Float ) {
 		var s = select;
 		var b = s.b;
-		// bloques que se activan (ordenador, puertas): no se rompen; al soltar el boton se activan (Game.checkToggle)
+		// bloques que se activan (ordenador, puertas, cofres): al soltar el boton se activan (Game.checkToggle); si se
+		// mantiene el laser hasta el final se rompen, como en el original (checkAction no los distingue)
 		if( b.activable != null || b.toggle != null ) {
 			if( s.power == 0 ) s.power = 1e-8;
 			activatePending = s;
-			return;
 		}
 		// en una zona de sintetizador se excava x4 y sin necesitar cargas (ShipLogic.checkSelect)
 		var inCraft = hangar != null || (s.z >= World.SHIP_Z && ship.inCraft(s.x, s.y, s.z));
@@ -944,6 +949,7 @@ class GameView {
 		actionPause = 1;
 		if( s.power < 1 || !canBreak ) return;
 		if( laserCharge != null ) inv.useCharge(laserCharge);
+		activatePending = null;
 		breakBlock(s.x, s.y, s.z, b);
 		if( creative ) actionPause = 8;
 		select = null;

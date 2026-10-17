@@ -786,6 +786,7 @@ class GalaxyApp extends hxd.App {
 
 	function openComputer() {
 		if( state != Playing ) return;
+		game.stopSounds();
 		// en la nave nodriza: el ordenador del puesto del robot abre la tienda; el de tu nave aparcada te devuelve a ella
 		if( game != null && game.info.mothership == true ) {
 			if( game.isRobotComputer() ) openShop() else backFromMothership();
@@ -919,6 +920,7 @@ class GalaxyApp extends hxd.App {
 	var pausedThisFrame = false;
 
 	function pause() {
+		if( game != null ) game.stopSounds();
 		state = Paused;
 		captureMouse(false);
 		hud.visible = false; msgText.visible = false;
@@ -1229,6 +1231,7 @@ class GalaxyApp extends hxd.App {
 		if( state == Playing && game != null ) {
 			var K = hxd.Key;
 			if( paletteOpen ) {
+				game.stopSounds();
 				if( chest != null ) {
 					chest.update(dt, pad);
 				} else if( shop != null ) {
