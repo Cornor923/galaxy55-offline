@@ -115,6 +115,7 @@ class GalaxyApp extends hxd.App {
 	var jetBar : h2d.Graphics;
 	var invBar : InvBar;
 	var cross : h2d.Graphics;
+	var dot : h2d.Graphics;
 	var fadeRect : h2d.Bitmap;
 
 	// casco (Game.hudOn, render.hud[H_HELMET]): posicion en pixeles de la imagen de 1024x1024
@@ -230,6 +231,16 @@ class GalaxyApp extends hxd.App {
 		cross.y = Std.int(H * 0.5);
 		cross.alpha = 0.4;
 		cross.visible = false;
+		// punto de mira fijo (anadido del port; el original solo mostraba la mira al excavar): 2x2 blanco con borde oscuro
+		dot = new h2d.Graphics(s2d);
+		dot.beginFill(0x000000, 0.6);
+		dot.drawRect(-2, -2, 4, 4);
+		dot.beginFill(0xFFFFFF, 0.9);
+		dot.drawRect(-1, -1, 2, 2);
+		dot.endFill();
+		dot.x = Std.int(W * 0.5);
+		dot.y = Std.int(H * 0.5);
+		dot.visible = false;
 		hxd.Window.getInstance().addEventTarget(onWindowEvent);
 		hud = Theme.text(s2d, "", 1.8, 0xFFFFFF, 14, 74);
 		hud.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
@@ -1284,6 +1295,7 @@ class GalaxyApp extends hxd.App {
 		if( state == Exploring && explorer != null ) explorer.update(dt);
 		if( invBar != null ) invBar.visible = state == Playing || state == Paused;
 		cross.visible = state == Playing && game != null && game.laserActive;
+		dot.visible = state == Playing && game != null && !paletteOpen && !cross.visible;
 		var fade = (state == Playing || state == Paused) && game != null ? Math.min(0.999, game.enteringShip) : 0.;
 		fadeRect.visible = fade > 0;
 		fadeRect.alpha = fade;
