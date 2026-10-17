@@ -274,14 +274,17 @@ def arrival_hangar(grid, W, L, H, K, home, bays):
             seen.add(c); q.append(c)
     x0 = min(c[0] for c in seen); x1 = max(c[0] for c in seen)
     y0 = min(c[1] for c in seen); y1 = max(c[1] for c in seen)
-    # 1) plazas: contorno de 17x17 con lineas oscuras en el suelo y luces en las esquinas
+    # 1) plazas (diseno del usuario, hecho a mano en su plaza): suelo de blindaje claro de 17x17 con borde de franjas de
+    # peligro amarillas y negras alternadas, amarillo en las esquinas
     mine = [b for b in bays if x0 <= b[0] <= x1 and y0 <= b[1] <= y1]
     for (bx, by, _) in bays:                            # todas las plazas de los 8 hangares
-        for i in range(-8, 9):
-            for (x, y) in ((bx + i, by - 8), (bx + i, by + 8), (bx - 8, by + i), (bx + 8, by + i)):
-                if get(x, y, fz - 1): put(x, y, fz - 1, 'BMotherDark')
-        for (x, y) in ((bx - 8, by - 8), (bx + 8, by - 8), (bx - 8, by + 8), (bx + 8, by + 8)):
-            put(x, y, fz - 1, 'BShipLight')
+        for dy in range(-8, 9):
+            for dx in range(-8, 9):
+                if not get(bx + dx, by + dy, fz - 1): continue
+                if abs(dx) == 8 or abs(dy) == 8:
+                    put(bx + dx, by + dy, fz - 1, 'BMotherYellow' if (dx + dy) % 2 == 0 else 'BMotherBlack')
+                else:
+                    put(bx + dx, by + dy, fz - 1, 'BMotherHull')
     # franja libre junto al campo de fuerza, entre las plazas y la pared exterior
     sx0 = max(b[0] for b in mine) + 10 if mine else x0
     sx1 = x1 - 1

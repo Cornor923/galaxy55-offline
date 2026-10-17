@@ -1,0 +1,17 @@
+# plazas de la nodriza: la tuya y otras dos, desde un lado
+wait 3
+mothership
+wait 150
+tp 203 212 46 0.78 -0.35
+wait 10
+shot bay1
+tp 155 212 46 0.78 -0.35
+wait 10
+shot bay2
+tp 155 160 46 0.78 -0.35
+wait 10
+shot bay3
+tp 203 230 46 0.78 -0.35
+wait 10
+shot bay4
+quit
