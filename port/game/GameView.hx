@@ -29,6 +29,10 @@ class GameView {
 	static inline var FPS = 32.;
 	/** altura de los ojos (Hero.viewZ) */
 	public static inline var VIEW_Z = 1.5;
+	/** colision de cabeza (cambio del port): puntos alrededor del centro y su radio, que cubre el plano cercano de la camara
+	    (llega a unos 0.18 del ojo a 70 grados) */
+	static inline var HEAD_POINTS = 8;
+	static inline var HEAD_RADIUS = 0.2;
 
 	public var world(default, null) : World;
 	public var info(default, null) : SaveInfo;
@@ -552,15 +556,22 @@ class GameView {
 			}
 
 		// colision de cabeza
-		if( gravity < 0 && !col ) {
+		// cambio del port: tambien al caer o flotar con el jetpack (el original solo al subir) y con HEAD_POINTS puntos a HEAD_RADIUS
+		// del centro (el original usaba los 3 de los pies, a 0.1). Si no, bajando de un salto o flotando junto al borde de un saliente,
+		// la cabeza y la camara se metian de lado en el bloque: las sondas de las paredes no pasan de 1.3. Se empuja hacia abajo,
+		// como al chocar subiendo, en vez de frenar el avance (frenarlo impedia saltar a un escalon bajo un techo bajo).
+		if( !col ) {
 			var d = VIEW_Z + 0.13;
 			var recal = 0.;
-			for( i in 0...3 )
-				while( recal < 0.5 && collide(fx[i], fy[i], pz + d) ) {
+			for( i in 0...HEAD_POINTS ) {
+				var ha = a + i * Math.PI * 2 / HEAD_POINTS;
+				var hx = px + Math.cos(ha) * HEAD_RADIUS, hy = py + Math.sin(ha) * HEAD_RADIUS;
+				while( recal < 0.5 && collide(hx, hy, pz + d) ) {
 					pz -= 0.01;
 					recal += 0.01;
 				}
-			if( recal > 0 && recal < 0.5 ) gravity = 0;
+			}
+			if( gravity < 0 && recal > 0 && recal < 0.5 ) gravity = 0;
 		}
 
 		if( useJetpack && swimming ) {
