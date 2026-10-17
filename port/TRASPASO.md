@@ -84,6 +84,28 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
 - Servidores = **"Galaxias"** (20–50 jugadores cada una); empezar por Galaxias privadas para amigos.
 - Cuidar el rendimiento en el navegador.
 
+## VM Hyper-V con GPU compartida: OpenGL, streaming y tirones (2026-10-17)
+Investigado en la VM de Pvie (GPU-PV con RTX 2060 Super, streaming con Apollo y Parsec). Puede explicar errores que reporten
+otros jugadores en VMs o por streaming.
+- **OpenGL nativo no existe en la VM:** Windows solo da `GDI Generic 1.1` ("OpenGL 3.2+ is required"). El controlador NVIDIA
+  (`nvoglv64.dll`) se carga, pero no crea contexto en esa pantalla. Ni el Compatibility Pack de Microsoft, ni registrar el ICD a mano,
+  ni Mesa instalado para todo el sistema (`mesadrv.dll` + clave `MSOGL`) lo arreglan.
+- **Solución para la versión OpenGL: Mesa 26.2.4 por juego** (pal1000/mesa-dist-win, build mingw). Se copian `opengl32.dll`,
+  `libgallium_wgl.dll`, `dxil.dll` y `libspirv_to_dxil.dll` junto a `hl.exe` y se pone `GALLIUM_DRIVER=d3d12`: da OpenGL 4.2 sobre
+  DirectX 12 en la RTX. Lo más sencillo sigue siendo la versión DirectX (`game_dx.hxml`).
+- **Congelones de la pantalla al abrir o cerrar el juego: eran de Apollo, no del juego.** La captura DDX de Apollo 0.4.6 entra en
+  un bucle de reinicios (10–15 en pocos segundos, se ve como "Detecting monitors" en `sunshine.log`) cuando la ventana del juego
+  se crea o se destruye. Pasa con DirectX, OpenGL/Mesa e incluso Mesa por CPU, y también si se mata el proceso.
+  - Descartado con pruebas: GPU/OpenGL, CPU, sonido, mando, cursor, salvapantallas, memoria, HAGS, 120 Hz, codificador NVENC o software.
+  - **Arreglo:** Apollo con `capture = wgc`. WGC solo funciona si Apollo corre como programa en la sesión del usuario, no como
+    servicio. En esa VM el servicio está en Manual y una tarea programada lo abre al iniciar sesión con
+    `conhost.exe --headless Sunshine.exe`. Con WGC, 0 reinicios en 8 aperturas y cierres. Parsec nunca tuvo el problema.
+- **Tirones en el menú: son del juego** (ERRORES #13). El generador del planeta de fondo hace pasos de 200–600 ms en el hilo
+  principal. Se ve con `--frametime`.
+- El límite de FPS del panel NVIDIA del anfitrión **no** se aplica dentro de la VM (medidos 901 FPS con el límite a 60).
+- En Opciones hay **VSync** y **límite de FPS** (30/60/120/144/240 o sin límite), guardados en `settings.json`.
+  `--novsync` quita el VSync siempre (para diagnosticar); no resolvió los tirones.
+
 ## Avisos
 - El mensaje de validez del hangar puede ir un cambio por detrás (se comprueba cada 15 tmod).
 - Las piezas de nave están a la venta en la tienda (ya sirven para el hangar).

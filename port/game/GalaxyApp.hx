@@ -185,6 +185,7 @@ class GalaxyApp extends hxd.App {
 
 		var win = hxd.Window.getInstance();
 		win.title = "Galaxy 55 (offline)";
+		applyVsync();
 		win.onClose = function() {
 			if( state == Playing || state == Paused ) saveGame(false);
 			return true;
@@ -542,16 +543,17 @@ class GalaxyApp extends hxd.App {
 		tk.index = Settings.turnKeys ? 1 : 0;
 		var help = new Selector(s, Lang.t("helptext"), [Lang.t("off"), Lang.t("on")], 660);
 		help.index = Settings.showHelp ? 1 : 0;
+		var vs = new Selector(s, Lang.t("vsync"), [Lang.t("off"), Lang.t("on")], 660);
+		vs.index = Settings.vsync ? 1 : 0;
+		var fpsNames = [for( v in Settings.FPS_STEPS ) v == 0 ? Lang.t("maxfps.none") : "" + v];
+		var mf = new Selector(s, Lang.t("maxfps"), fpsNames, 660);
+		mf.index = Std.int(Math.max(0, Settings.FPS_STEPS.indexOf(Settings.maxFps)));
 		var back = new Button(s, Lang.t("back"), 660);
-		s.add(lang, x, y);
-		s.add(sens, x, y + 60);
-		s.add(fov, x, y + 120);
-		s.add(vol, x, y + 180);
-		s.add(full, x, y + 240);
-		s.add(inv, x, y + 300);
-		s.add(tk, x, y + 360);
-		s.add(help, x, y + 420);
-		s.add(back, x, y + 500);
+		// 10 filas: un poco mas juntas que antes para que quepan
+		var step = 50;
+		var rows : Array<Ui.Widget> = [lang, sens, fov, vol, full, vs, mf, inv, tk, help];
+		for( i in 0...rows.length ) s.add(rows[i], x, y - 10 + i * step);
+		s.add(back, x, y - 10 + rows.length * step + 20);
 		var origin = state == Paused ? "pause" : "main";
 		lang.onChange = function(i) {
 			Settings.lang = Lang.CODES[i];
@@ -569,6 +571,11 @@ class GalaxyApp extends hxd.App {
 		inv.onChange = function(i) Settings.invertY = i == 1;
 		tk.onChange = function(i) Settings.turnKeys = i == 1;
 		help.onChange = function(i) Settings.showHelp = i == 1;
+		vs.onChange = function(i) {
+			Settings.vsync = i == 1;
+			applyVsync();
+		};
+		mf.onChange = function(i) Settings.maxFps = Settings.FPS_STEPS[i];
 		var leave = function() {
 			Settings.save();
 			show(state == Paused ? "pause" : "main");
@@ -1203,7 +1210,29 @@ class GalaxyApp extends hxd.App {
 	static var frameTime = Sys.args().indexOf("--frametime") >= 0;
 	var lastStamp = 0.;
 
+	/** VSync de Opciones (--novsync lo quita siempre, para diagnosticar) */
+	function applyVsync() {
+		hxd.Window.getInstance().vsync = Settings.vsync && Sys.args().indexOf("--novsync") < 0;
+	}
+
+	/** Limite de FPS de Opciones: espera lo que falte hasta el siguiente fotograma */
+	var nextFrame = 0.;
+	function limitFps() {
+		if( Settings.maxFps <= 0 ) {
+			nextFrame = 0;
+			return;
+		}
+		var now = haxe.Timer.stamp(), step = 1 / Settings.maxFps;
+		if( nextFrame > now ) {
+			Sys.sleep(nextFrame - now);
+			now = nextFrame;
+		}
+		// si va retrasado (fotograma lento) no se intenta recuperar
+		nextFrame = (nextFrame <= 0 || now - nextFrame > step) ? now + step : nextFrame + step;
+	}
+
 	override function update( dt : Float ) {
+		limitFps();
 		frames++;
 		// diagnostico (--frametime): fotogramas de mas de 250 ms y en que estado estaba el juego
 		if( frameTime ) {

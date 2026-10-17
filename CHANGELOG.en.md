@@ -2,6 +2,9 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md)
 
+## In development
+- Options: vertical sync (VSync) and FPS limit (30, 60, 120, 144, 240 or unlimited).
+
 ## v0.3 — pre-release
 - Sound: the 12 original effects (footsteps, jump, landing, hard fall, jetpack, laser, breaking and picking up blocks).
 - Fixed crosshair in the centre of the screen.

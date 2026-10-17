@@ -14,6 +14,7 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 | 10 | Rendering | Dropped **crystals** (charges) look too wide. |
 | 11 | Rendering | **Layer 0** (bedrock) seen from below looks like a flat plane. |
 | 12 | Water | Water **does not flow**, and it freezes when touching ice. According to Sekhmet, in the original the cascade did not freeze next to ice: it is a port bug. It will be fixed with flowing water. |
+| 13 | Menu | **Stutter in the menu** while the background planet is generated: the generator runs 200–600 ms steps on the main thread and the game freezes for 0.4–1.1 s (measured with `--frametime`, on DirectX and OpenGL). Happens during the first seconds of the menu. Possible fix: shorter steps or generating on another thread. |
 
 ## Fixed
 

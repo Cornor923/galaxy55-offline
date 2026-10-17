@@ -2,6 +2,9 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## En desarrollo
+- Opciones: sincronización vertical (VSync) y límite de FPS (30, 60, 120, 144, 240 o sin límite).
+
 ## v0.3 — pre-release
 - Sonido: los 12 efectos del original (pasos, salto, aterrizaje, caída fuerte, jetpack, láser, romper y recoger bloques).
 - Punto de mira fijo en el centro de la pantalla.
