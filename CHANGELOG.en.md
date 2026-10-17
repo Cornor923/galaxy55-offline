@@ -4,6 +4,9 @@
 
 ## In development
 - Options: vertical sync (VSync) and FPS limit (30, 60, 120, 144, 240 or unlimited).
+- Fixes by **Cornor923** (thank you!): the liquid veil and menu backgrounds cover windows wider than 16:9, no dark
+  patches through ice, the head no longer clips into blocks when falling or hovering, `jugar.bat` uses `hlw.exe` (no
+  console) when present, and a French README.
 
 ## v0.3 — pre-release
 - Sound: the 12 original effects (footsteps, jump, landing, hard fall, jetpack, laser, breaking and picking up blocks).

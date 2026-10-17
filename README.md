@@ -30,7 +30,7 @@ It was shut down and its server no longer exists. This project ports it to a **n
    like `res\texture.png` instead, extraction failed: unzip again with a different program. (Symptom: `Can't read res/texture.png`.)
 3. Windows: double-click `jugar.bat` (if it doesn't open, `jugar_dx.bat`). **Linux / macOS (not tested by us):** download the `galaxy55-offline-v0.3-linux-mac.zip` from the release,
    install [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` on macOS) and run `sh jugar.sh`. (A player got it running on Linux; tell us how it goes.)
-   The language (Spanish, English, French) is changed in Options.
+   The language (Spanish, English, French), VSync and the FPS limit are changed in Options.
 
 ## What works today
 
@@ -74,6 +74,7 @@ The original code, graphics and data belong to **Motion Twin** and were publishe
 non-commercial, with credit to Motion Twin, share-alike. It is not affiliated with or endorsed by Motion Twin.
 Thanks to the Eternaltwin community for preserving documentation and screenshots.
 Thanks to **Sekhmet** for detailed bug reports, testing on Linux, and memories of how the original game worked (water, lava, cascades).
+Thanks to **Cornor923** for the French README and fixes (liquid veil on wide windows, ice faces, the head clipping into blocks, launcher without console).
 
 ---
 
@@ -106,7 +107,7 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
    archivos sueltos llamados `res\texture.png`, la extracción falló: vuelve a descomprimir con otro programa. (Síntoma: `Can't read res/texture.png`.)
 3. Windows: doble clic en `jugar.bat` (si no abre, `jugar_dx.bat`). **Linux / macOS (sin probar por nosotros):** descarga `galaxy55-offline-v0.3-linux-mac.zip` de la release,
    instala [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` en macOS) y ejecuta `sh jugar.sh`. (Un jugador lo ha hecho funcionar en Linux; cuéntanos qué tal.)
-   El idioma (español, inglés, francés) se cambia en Opciones.
+   El idioma (español, inglés, francés), la sincronización vertical (VSync) y el límite de FPS se cambian en Opciones.
 
 ### Qué funciona hoy
 
@@ -139,6 +140,7 @@ El código, los gráficos y los datos originales son de **Motion Twin**, publica
 **misma licencia**: sin uso comercial, con atribución a Motion Twin y compartiendo igual. No está afiliada ni respaldada
 por Motion Twin. Gracias a la comunidad de Eternaltwin por conservar documentación y capturas.
 Gracias a **Sekhmet** por sus reportes de errores detallados, las pruebas en Linux y sus recuerdos de cómo funcionaba el juego original (agua, lava, cascadas).
+Gracias a **Cornor923** por el README en francés y sus arreglos (velo del agua en ventanas anchas, caras del hielo, la cabeza que se metía en los bloques, lanzador sin consola).
 
 ---
 
@@ -171,7 +173,7 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
    des fichiers isolés nommés `res\texture.png`, l'extraction a échoué : décompresse à nouveau avec un autre programme. (Symptôme : `Can't read res/texture.png`.)
 3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.3-linux-mac.zip` depuis la release,
    installe [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` sur macOS) et lance `sh jugar.sh`. (Un joueur l'a fait fonctionner sous Linux ; dis-nous comment ça se passe.)
-   La langue (espagnol, anglais, français) se change dans les Options.
+   La langue (espagnol, anglais, français), la synchronisation verticale (VSync) et la limite d'images par seconde se changent dans les Options.
 
 ### Ce qui fonctionne aujourd'hui
 
@@ -204,3 +206,4 @@ Le code, les graphismes et les données d'origine appartiennent à **Motion Twin
 **même licence** : pas d'utilisation commerciale, attribution à Motion Twin et partage dans les mêmes conditions. Elle n'est ni
 affiliée à Motion Twin ni approuvée par Motion Twin. Merci à la communauté Eternaltwin d'avoir préservé la documentation et les captures.
 Merci à **Sekhmet** pour ses rapports de bugs détaillés, ses tests sous Linux et ses souvenirs du fonctionnement du jeu original (eau, lave, cascades).
+Merci à **Cornor923** pour le README en français et ses corrections (voile des liquides sur les fenêtres larges, faces de la glace, tête qui rentrait dans les kubes, lanceur sans console).
