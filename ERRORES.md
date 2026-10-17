@@ -17,7 +17,7 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 
 ## Arreglados
 
-- Próxima versión (reportados por Sekhmet): la arena movediza y el agua ya no se ven transparentes desde dentro (velo y niebla del color del líquido, como el original); ya no nieva bajo el agua; el agua tiene caras laterales y de fondo; el hielo sumergido queda detrás del agua; los textos del mapa de estrellas salen en el idioma elegido.
+- v0.3 (encontrados y reportados por **Sekhmet**, ¡gracias!): la arena movediza y el agua ya no se ven transparentes desde dentro (velo y niebla del color del líquido, como el original); ya no nieva bajo el agua; el agua tiene caras laterales y de fondo; el hielo sumergido queda detrás del agua; los textos del mapa de estrellas salen en el idioma elegido.
 - Próxima versión: el juego funciona también con DirectX (`port/game_dx.hxml`), útil donde no hay OpenGL 3.2 (p. ej. máquinas virtuales).
 
 - v0.2 (cambio respecto al original): los montículos de nieve con una planta escondida (`BWinterHidden`) se ven como la nieve, sin brillo propio.
