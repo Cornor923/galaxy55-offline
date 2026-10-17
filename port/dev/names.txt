@@ -1,0 +1,3 @@
+wait 3
+print names BRock BShipComputer BAcidLeaves2 BMarsCactus BChest BMinIron BHighHerb3 BMotherYellow BCircuit BAutumnHerbs1 BDeadTree
+quit

@@ -150,6 +150,16 @@ class Dev {
 	function print( a : Array<String>, g : GameView ) {
 		var w = g.world;
 		switch( a[1] ) {
+		case "names":
+			// nombres de unos bloques en los tres idiomas
+			var cur = Lang.cur;
+			for( k in a.slice(2) ) {
+				var b = bk(k);
+				var s = [];
+				for( i in 0...3 ) { Lang.setCode(Lang.CODES[i]); s.push(b.getName()); }
+				Sys.println(k + ": " + s.join(" | "));
+			}
+			Lang.setCode(Lang.CODES[cur]);
 		case "lightsum":
 			// suma de la luz en un cubo (x y z radio): para comprobar que tras editar y deshacer queda igual
 			var x = Std.parseInt(a[2]), y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), r = Std.parseInt(a[5]);
