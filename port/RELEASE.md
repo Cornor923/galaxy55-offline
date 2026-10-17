@@ -22,7 +22,27 @@ Port **no oficial** de Galaxy 55 (Motion Twin, 2012) a una aplicación nativa (H
 
 ---
 
-**English:** unofficial native port of Motion Twin's Galaxy 55 (2012). Windows: unzip the whole folder and run `jugar.bat` (OpenGL) or `jugar_dx.bat` (DirectX, for PCs without OpenGL 3.2 or virtual machines). Linux/macOS: separate zip, needs HashLink 1.16. New in v0.3: the mothership (your parked ship, laser force fields, a merchant robot shop, deep space sky), sound effects, gamepad support for chests/shop/palette, a DirectX build, complete block names in three languages, and fixes reported by Sekhmet (thank you!). Known bugs: `BUGS.md`.
+## Galaxy 55 (offline) v0.3 — native port for Windows (and Linux/macOS with HashLink)
+
+**Unofficial** port of Galaxy 55 (Motion Twin, 2012) to a native application (Haxe + Heaps + HashLink). No Flash, no browser and no server.
+
+**How to play (Windows):** unzip the whole folder and double-click `jugar.bat`. If it doesn't open (PCs without OpenGL 3.2 or virtual machines), use `jugar_dx.bat`, the DirectX build. Nothing to install. Saves go to `%APPDATA%\Galaxy55\`.
+**Linux and macOS:** separate zip; it needs HashLink 1.16 installed (see its `LEEME.txt`).
+
+### New in v0.3
+- **Mothership:** you enter it from your ship's computer. Your ship is parked in your bay of the hangar, there are laser force fields, a merchant robot with its shop in the entrance tunnel and a deep space sky (Milky Way, nebulae, thousands of stars). You go back with the computer of your parked ship. The mothership can't be broken.
+- **Sound:** the original effects (footsteps, jump, landing, jetpack, laser, breaking and picking up blocks).
+- **Gamepad:** chests, shop, creative palette and slot switching.
+- **DirectX build** (`jugar_dx.bat`) besides the OpenGL one.
+- **Block names** complete in Spanish, English and French.
+- Fixed crosshair; chests break when you hold the laser; in creative, copy the targeted block and two new blocks (yellow and black plating).
+- Fixes reported by **Sekhmet** (thank you!): inside a liquid the screen takes its colour, no snow under water, water has side faces, submerged ice, star map texts translated and the original French biome names.
+- The game no longer freezes at startup and there are fewer hitches when breaking or placing blocks.
+
+### Missing or broken
+- Flowing water, health/oxygen/lava, the merchant robot travelling on the star map.
+- Full list of known bugs: `BUGS.md` (English) / `ERRORES.md` (Spanish) in the repository.
+- **The save format may change between versions.**
 
 ### Licencia / License
 Código y datos de Galaxy 55 © Motion Twin, **CC BY-NC-SA 4.0**. Este port es una obra derivada bajo la misma licencia: uso no comercial y con crédito. Ver `LICENSE` y `NOTICE`.
