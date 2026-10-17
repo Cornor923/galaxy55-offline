@@ -960,6 +960,9 @@ class World {
 			mat.blendMode = Alpha;
 			mat.mainPass.depthWrite = false;
 			mat.mainPass.setPassName("alpha"); // ordenada por distancia: en "additive" no se ordena y el hielo parpadeaba
+			// el original dibuja BTAlpha con la cara trasera oculta (culling por defecto): sin esto se veian a traves del hielo
+			// sus caras de atras y de abajo, oscuras (sombra de abajo y poca luz bajo el hielo), como manchas sobre el aire
+			mat.mainPass.culling = Back;
 		} else if( kind == 2 ) {
 			// agua: translucida; escribe profundidad como la primera pasada del original (water0)
 			mat.blendMode = Alpha;
