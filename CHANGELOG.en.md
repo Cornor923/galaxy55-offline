@@ -4,6 +4,16 @@
 
 ## v0.3 — pre-release
 - Sound: the 12 original effects (footsteps, jump, landing, hard fall, jetpack, laser, breaking and picking up blocks).
+- Fixed crosshair in the centre of the screen.
+- Complete block names in Spanish, English and French (they used to show in Spanish or mixed).
+- Chests: a tap opens them and holding the laser breaks them (their contents drop). In your ship, the computer and the
+  doors can't be broken.
+- Creative: palette with the gamepad (R3), copy the targeted block (L3 or middle click) and two new blocks, yellow and
+  black plating, for hazard stripes.
+- Mothership: deep space sky (Milky Way, nebulae, thousands of stars and distant galaxies), bays with hazard-stripe
+  borders and an editor (`editar_nodriza.bat`).
+- Fewer hitches when breaking or placing blocks, especially in the mothership.
+- The ship teleport beam no longer disappears in the winter fog.
 - Fixes reported by Sekhmet (thank you!): inside a liquid the screen and fog take its colour, like the original
   (quicksand no longer looks transparent); no snow under water; water has side faces; submerged ice stays behind the
   water; star map texts translated.

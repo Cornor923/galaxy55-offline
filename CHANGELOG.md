@@ -4,6 +4,16 @@
 
 ## v0.3 — pre-release
 - Sonido: los 12 efectos del original (pasos, salto, aterrizaje, caída fuerte, jetpack, láser, romper y recoger bloques).
+- Punto de mira fijo en el centro de la pantalla.
+- Nombres de los bloques completos en español, inglés y francés (antes salían en español o mezclados).
+- Cofres: un toque los abre y mantener el láser los rompe (lo que tenían cae al suelo). En tu nave, el ordenador y las
+  puertas no se rompen.
+- Creativo: paleta con mando (R3), copiar el bloque apuntado (L3 o clic central) y dos bloques nuevos, blindaje
+  amarillo y negro, para franjas de peligro.
+- Nave nodriza: cielo de espacio profundo (Vía Láctea, nebulosas, miles de estrellas y galaxias lejanas), plazas con
+  borde de franjas de peligro y editor (`editar_nodriza.bat`).
+- Menos tirones al romper o poner bloques, sobre todo en la nave nodriza.
+- El rayo del teletransporte a la nave ya no desaparece con la niebla del invierno.
 - Arreglos reportados por Sekhmet (¡gracias!): dentro de un líquido la pantalla y la niebla toman su color, como en el
   original (la arena movediza ya no parece transparente); no nieva bajo el agua; el agua tiene caras laterales; el hielo
   sumergido queda detrás del agua; textos del mapa de estrellas traducidos.
