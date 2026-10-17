@@ -1,24 +1,28 @@
-## Galaxy 55 (offline) v0.2 — port nativo para Windows
+## Galaxy 55 (offline) v0.3 — port nativo para Windows (y Linux/macOS con HashLink)
 
-Port **no oficial** de Galaxy 55 (Motion Twin, 2012) a una aplicación nativa para Windows (Haxe + Heaps + HashLink). Sin Flash, sin navegador y sin servidor.
+Port **no oficial** de Galaxy 55 (Motion Twin, 2012) a una aplicación nativa (Haxe + Heaps + HashLink). Sin Flash, sin navegador y sin servidor.
 
-**Cómo jugar:** descomprime la carpeta entera y haz doble clic en `jugar.bat`. No hay que instalar nada. Comprueba que la carpeta `res/` queda junto a `galaxy55.hl`. Las partidas se guardan en `%APPDATA%\Galaxy55\`.
+**Cómo jugar (Windows):** descomprime la carpeta entera y haz doble clic en `jugar.bat`. Si no abre (equipos sin OpenGL 3.2 o máquinas virtuales), usa `jugar_dx.bat`, la versión DirectX. No hay que instalar nada. Las partidas se guardan en `%APPDATA%\Galaxy55\`.
+**Linux y macOS:** zip aparte; necesita HashLink 1.16 instalado (ver su `LEEME.txt`).
 
-### Novedades de la v0.2
-- **Mapa de estrellas con las animaciones del original:** entrar y salir de un sistema (zoom, hiperespacio, destellos), fondo común con remolino. Ya no se congela al entrar en un sistema.
-- **El bloque elegido se ve en la mano**, y al romper un bloque saltan **partículas** como en el original.
-- **Ciudad muerta** se puede elegir en Nueva partida.
-- Arreglado: borrar partidas desde el menú, quitar la fuente de cascada en la nave, el giro de los bloques sueltos, la nieve dentro de la nave.
-- Cambios respecto al original: el sintetizador gasta siempre los bloques de su zona; las hierbas y estalactitas se rompen (dan hierba alta o hielo); la curvatura del planeta es más suave; los montículos de nieve con planta escondida se ven como la nieve; al entrar en un planeta la cámara se acerca a él.
+### Novedades de la v0.3
+- **Nave nodriza:** se entra desde el ordenador de tu nave. Tu nave aparece aparcada en tu plaza del hangar, hay campos de fuerza láser, un robot comerciante con su tienda en el túnel de entrada y un cielo de espacio profundo (Vía Láctea, nebulosas, miles de estrellas). Se vuelve con el ordenador de tu nave aparcada. La nave nodriza no se puede romper.
+- **Sonido:** los efectos del original (pasos, salto, aterrizaje, jetpack, láser, romper y recoger bloques).
+- **Mando:** cofres, tienda, paleta creativa y cambio de casilla.
+- **Versión DirectX** (`jugar_dx.bat`) además de la de OpenGL.
+- **Nombres de los bloques** completos en español, inglés y francés.
+- Punto de mira fijo; los cofres se rompen manteniendo el láser; en creativo, copiar el bloque apuntado y dos bloques nuevos (blindaje amarillo y negro).
+- Arreglos reportados por **Sekhmet** (¡gracias!): dentro de un líquido la pantalla toma su color, no nieva bajo el agua, el agua tiene caras laterales, el hielo sumergido, textos del mapa traducidos y nombres franceses originales de los biomas.
+- El juego ya no se congela al arrancar y hay menos tirones al romper o poner bloques.
 
 ### Qué falta o falla
-- Tienda, hangar, agua que fluye, sonido, vida/oxígeno/lava; reactores y flechas del mapa.
+- Agua que fluye, vida/oxígeno/lava, el robot comerciante viajando por el mapa de estrellas.
 - Lista completa de errores conocidos: `ERRORES.md` (español) / `BUGS.md` (inglés) en el repositorio.
 - **El formato de las partidas puede cambiar entre versiones.**
 
 ---
 
-**English:** unofficial native Windows port of Motion Twin's Galaxy 55 (2012). Unzip the whole folder and run `jugar.bat` (the `res/` folder must sit next to `galaxy55.hl`). New in v0.2: the original star-map animations, the held block in the hand, break particles, Dead city selectable, and several fixes. Known bugs: `BUGS.md`.
+**English:** unofficial native port of Motion Twin's Galaxy 55 (2012). Windows: unzip the whole folder and run `jugar.bat` (OpenGL) or `jugar_dx.bat` (DirectX, for PCs without OpenGL 3.2 or virtual machines). Linux/macOS: separate zip, needs HashLink 1.16. New in v0.3: the mothership (your parked ship, laser force fields, a merchant robot shop, deep space sky), sound effects, gamepad support for chests/shop/palette, a DirectX build, complete block names in three languages, and fixes reported by Sekhmet (thank you!). Known bugs: `BUGS.md`.
 
 ### Licencia / License
 Código y datos de Galaxy 55 © Motion Twin, **CC BY-NC-SA 4.0**. Este port es una obra derivada bajo la misma licencia: uso no comercial y con crédito. Ver `LICENSE` y `NOTICE`.
