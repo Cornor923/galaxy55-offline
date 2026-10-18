@@ -904,7 +904,6 @@ class GalaxyApp extends hxd.App {
 		if( info.hangar == true ) {
 			loadWorld.sky.fog.curve = 0.00001; // EditShip: planet.curve = 0.00001
 			loadWorld.lightTop = Hangar.SZ; // y planet.lightHeight: el sol entra bajo el techo
-			loadWorld.drawBottom = true; // el suelo del cobertizo esta en la capa 0
 		}
 		loadWorld.root.visible = false;
 		showLoading(Lang.t("loading"));
