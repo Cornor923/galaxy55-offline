@@ -1,8 +1,16 @@
 # Changelog (native version)
 
-[Español: `CHANGELOG.md`](CHANGELOG.md)
+[Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
+
+## v0.3.1 — pre-release
+- Options: vertical sync (VSync) and FPS limit (30, 60, 120, 144, 240 or unlimited).
+- Fixes by **Cornor923** (thank you!): the liquid veil and menu backgrounds cover windows wider than 16:9, no dark
+  patches through ice, the head no longer clips into blocks when falling or hovering, `jugar.bat` uses `hlw.exe` (no
+  console) when present, and a French README.
 
 ## v0.3 — pre-release
+- Hangar: rebuild your ship block by block, like in the original; leave through the teleporter to save it.
+- Shop: buy and sell blocks for credits, with the merchant robot.
 - Sound: the 12 original effects (footsteps, jump, landing, hard fall, jetpack, laser, breaking and picking up blocks).
 - Fixed crosshair in the centre of the screen.
 - Complete block names in Spanish, English and French (they used to show in Spanish or mixed).

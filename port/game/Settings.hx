@@ -11,6 +11,11 @@ class Settings {
 	public static var turnKeys = false;
 	/** ayuda de controles en pantalla (arriba a la izquierda) */
 	public static var showHelp = true;
+	/** sincronizacion vertical (sin ella los FPS solo los limita maxFps) */
+	public static var vsync = true;
+	/** limite de fotogramas por segundo (0 = sin limite) */
+	public static var maxFps = 0;
+	public static var FPS_STEPS = [0, 30, 60, 120, 144, 240];
 	/** primera vez que se abre el juego (no habia settings.json): se pregunta el idioma */
 	public static var firstRun = false;
 
@@ -40,12 +45,14 @@ class Settings {
 			if( o.invertY != null ) invertY = o.invertY;
 			if( o.turnKeys != null ) turnKeys = o.turnKeys;
 			if( o.showHelp != null ) showHelp = o.showHelp;
+			if( o.vsync != null ) vsync = o.vsync;
+			if( o.maxFps != null ) maxFps = Std.int(o.maxFps);
 		} catch( e : Dynamic ) {}
 		Lang.setCode(lang);
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp, vsync : vsync, maxFps : maxFps };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }

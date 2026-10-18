@@ -1,8 +1,16 @@
 # Novedades (versión nativa)
 
-[English: `CHANGELOG.en.md`](CHANGELOG.en.md)
+[English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
+
+## v0.3.1 — pre-release
+- Opciones: sincronización vertical (VSync) y límite de FPS (30, 60, 120, 144, 240 o sin límite).
+- Arreglos de **Cornor923** (¡gracias!): el velo del agua y los fondos de los menús cubren ventanas más anchas que 16:9,
+  sin manchas oscuras a través del hielo, la cabeza ya no se mete en los bloques al caer o flotar, `jugar.bat` usa
+  `hlw.exe` (sin consola) si está, y README en francés.
 
 ## v0.3 — pre-release
+- Hangar: rehaz tu nave bloque a bloque, como en el original; se sale por el teletransportador para guardarla.
+- Tienda: compra y vende bloques con créditos, al robot comerciante.
 - Sonido: los 12 efectos del original (pasos, salto, aterrizaje, caída fuerte, jetpack, láser, romper y recoger bloques).
 - Punto de mira fijo en el centro de la pantalla.
 - Nombres de los bloques completos en español, inglés y francés (antes salían en español o mezclados).

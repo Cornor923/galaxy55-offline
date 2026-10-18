@@ -14,6 +14,7 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 | 10 | Render | Los **cristales** sueltos (cargas) se ven demasiado anchos. |
 | 11 | Render | La **capa 0** (roca madre) vista desde abajo se ve como un plano liso. |
 | 12 | Agua | El agua **no fluye**, y se congela al tocar hielo. Según Sekhmet, en el original la cascada no se congelaba junto al hielo: es un fallo del port. Se arreglará con el agua que fluye. |
+| 13 | Menú | **Tirones en el menú** mientras se genera el planeta de fondo: el generador hace pasos de 200–600 ms en el hilo principal y el juego se para de 0,4 a 1,1 s (medido con `--frametime`, en DirectX y en OpenGL). Pasa los primeros segundos del menú. Arreglo posible: pasos más cortos o generar en otro hilo. |
 
 ## Arreglados
 

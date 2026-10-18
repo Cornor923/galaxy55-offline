@@ -1,0 +1,16 @@
+# limite de FPS y pantalla de opciones
+wait 60
+fps
+maxfps 30
+wait 90
+fps
+maxfps 60
+wait 120
+fps
+maxfps 0
+wait 120
+fps
+screen options
+wait 5
+shot options
+quit
