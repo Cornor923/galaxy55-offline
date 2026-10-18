@@ -107,6 +107,9 @@ class GalaxyApp extends hxd.App {
 	var current : Screen;
 	var currentName = "";
 	var overlayDecor : h2d.Object;
+	/** menu principal y su texto de version: se pegan a los bordes de la ventana en cada fotograma (anchorToWindow) */
+	var mainScreen : Screen;
+	var versionText : h2d.Text;
 	var bar : h2d.Graphics;
 	var barText : h2d.Text;
 	var hud : h2d.Text;
@@ -277,12 +280,13 @@ class GalaxyApp extends hxd.App {
 		var g = new h2d.Graphics(parent);
 		// franjas sin solapar (una por cada 4 px) para que el degradado no muestre rayas
 		var n = Std.int(w / 4);
+		// de -H a 2H en vertical, como fullRect: cubre tambien una ventana mas alta que 16:9
 		for( i in 0...n ) {
 			var f = i / n;
 			var a = 0.9 * (1 - f * f);
-			Theme.rect(g, i * 4, 0, 4, H, Theme.BG, a);
+			Theme.rect(g, i * 4, -H, 4, H * 3, Theme.BG, a);
 		}
-		Theme.rect(g, 0, 0, 4, H, Theme.ACCENT, 0.9);
+		Theme.rect(g, 0, -H, 4, H * 3, Theme.ACCENT, 0.9);
 	}
 
 	function titleBlock( parent : h2d.Object, x : Float, y : Float, scale : Float ) {
@@ -344,6 +348,7 @@ class GalaxyApp extends hxd.App {
 
 	function buildMain() : Screen {
 		var s = new Screen(ui);
+		mainScreen = s;
 		gradientPanel(s, 900);
 		titleBlock(s, 110, 80, 7.5);
 		var saves = SaveData.list();
@@ -370,7 +375,8 @@ class GalaxyApp extends hxd.App {
 			Theme.text(s, Lang.t("continue") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 330);
 		}
 		hint(s, 110, 676);
-		Theme.text(s, "v0.3 · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
+		versionText = Theme.text(s, "v0.3 · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
+		anchorToWindow();
 		s.onBack = null;
 		return s;
 	}
@@ -863,6 +869,7 @@ class GalaxyApp extends hxd.App {
 		barText = Theme.text(s, msg, 2.2, Theme.TEXT, 110, 520);
 		bar = new h2d.Graphics(s);
 		overlayDecor = s;
+		anchorToWindow();
 		setProgress(0);
 	}
 
@@ -1160,6 +1167,16 @@ class GalaxyApp extends hxd.App {
 		Theme.rect(g, -W, -H, W * 3, H * 3, color, alpha);
 	}
 
+	/** El menu principal y la pantalla de carga se disenaron pegados al borde izquierdo de la zona W x H: en una ventana mas ancha
+	    que 16:9, LetterBox los dejaba separados del borde (con el fondo 3D a la vista a su izquierda). Se mueven al borde real de la
+	    ventana, y el texto de version al borde derecho. */
+	function anchorToWindow() {
+		var scale = Math.min(engine.width / W, engine.height / H);
+		var left = (W - engine.width / scale) * 0.5;
+		for( o in [mainScreen, overlayDecor] ) if( o != null ) o.x = left;
+		if( versionText != null ) versionText.x = W - 190 - 2 * left;
+	}
+
 	function layoutHelmet() {
 		var ww = engine.width, wh = engine.height;
 		var scale = Math.min(ww / W, wh / H);
@@ -1267,6 +1284,7 @@ class GalaxyApp extends hxd.App {
 			helmetX = -20;
 			helmetY = -190;
 		}
+		anchorToWindow();
 
 		// planeta de fondo del menu
 		if( state == Boot ) {
