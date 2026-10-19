@@ -64,6 +64,8 @@ class GameView {
 	var fx : Fx;
 	var parts : Parts;
 	var hand : Hand;
+	/** Process.hx del original: agua y lava que fluyen, hierba, anclas... */
+	public var process : WorldProcess;
 	/** la nave: el jugador empieza dentro y baja al planeta por el teletransportador (Game.placeShip) */
 	public var ship(default, null) : Ship;
 	/** progreso del teletransporte (Hero.enteringShip): -1 = recien llegado, 0..1.5 = entrando; a 1.5 se transporta */
@@ -113,6 +115,7 @@ class GameView {
 				while( inv.inv.t.length < 10 ) inv.inv.t.push(null);
 			}
 		drops = new Drops(world, atlas);
+		process = new WorldProcess(world, world.waterLevel(), (x, y, z, b) -> breakBlock(x, y, z, b, true));
 		fx = new Fx(world, atlas);
 		parts = new Parts(world, atlas);
 		hand = new Hand(world, atlas);
@@ -392,6 +395,7 @@ class GameView {
 			if( debugTele == 6 ) enteringShip = 0; // como si se hubiera apartado y vuelto a pisar la plataforma
 		}
 		updateAction(tmod, controls, pad);
+		if( hangar == null ) process.update(realDt);
 		world.flush();
 		drops.update(this, tmod);
 		fx.update(this, realDt, tmod);
@@ -1003,26 +1007,9 @@ class GameView {
 		if( inv.getCurrentBlock() == null ) actionWait = true;
 		if( Dev.trace ) Sys.println("place en " + x + "," + y + "," + z + " sobre " + s.b.k + "@" + s.x + "," + s.y + "," + s.z + " antes=" + world.block(x, y, z));
 		world.setBlock(x, y, z, put);
-		if( put.k == BFreezer ) freeze(x, y, z);
+		if( !inShip && hangar == null ) process.onSet(x, y, z, here, put);
 		if( inShip ) ship.craft(x, y, z, put, this);
 		select = null;
-	}
-
-	/** Process.set (case BFreezer): el congelador convierte el agua cercana en hielo y la lava en roca (esfera de radio 4) */
-	function freeze( cx : Int, cy : Int, cz : Int ) {
-		var ice = Block.get(BIce), lavaRock = Block.get(BLavaRock);
-		var d = 4;
-		for( dx in -d...d + 1 )
-			for( dy in -d...d + 1 )
-				for( dz in -d...d + 1 ) {
-					var e = (dx / d) * (dx / d) + (dy / d) * (dy / d) + (dz / d) * (dz / d);
-					if( e >= 1 ) continue;
-					var x = wrapI(cx + dx), y = wrapI(cy + dy), z = cz + dz;
-					var b = world.block(x, y, z);
-					if( b == null ) continue;
-					if( b.hasProp(PLava) ) world.setBlock(x, y, z, lavaRock);
-					else if( b.hasProp(PLiquid) ) world.setBlock(x, y, z, ice);
-				}
 	}
 
 	/** Game.blockBreak: suelta lo que corresponda (con su probabilidad) y quita el bloque. */
@@ -1062,7 +1049,7 @@ class GameView {
 
 	public var onChest : Protocol.BlockInventory -> Void;
 
-	public function breakBlock( x : Int, y : Int, z : Int, b : Block ) {
+	public function breakBlock( x : Int, y : Int, z : Int, b : Block, isProcess = false ) {
 		if( b.hasProp(PContainer) ) breakChest(x, y, z);
 		var get = b.getDrop();
 		if( get != null && !creative ) {
@@ -1074,8 +1061,9 @@ class GameView {
 		}
 		world.setBlock(x, y, z, null);
 		parts.doBreak(x, y, z, b);
-		Snd.play("destroyBlock", 0.25);
+		if( !isProcess ) Snd.play("destroyBlock", 0.25);
 		if( z >= World.SHIP_Z ) ship.craft(x, y, z, null, this);
+		else if( hangar == null ) process.onSet(x, y, z, b, null);
 	}
 
 	/** bloque de una zona de sintetizador gastado en una receta: desaparece con su efecto de rotura */

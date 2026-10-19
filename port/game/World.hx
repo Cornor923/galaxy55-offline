@@ -231,6 +231,11 @@ class World {
 	}
 
 	/** bloque en una celda (null si es aire) */
+	/** nivel del mar del generador (Planet.waterLevel del original) */
+	public function waterLevel() : Int {
+		return gen == null ? 0 : gen.getWaterInfos().level;
+	}
+
 	public function block( x : Int, y : Int, z : Int ) : Block {
 		if( z >= SHIP_Z ) return shipBlock(x, y, z);
 		var id = voxel(x, y, z);

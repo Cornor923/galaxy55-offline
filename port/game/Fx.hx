@@ -175,7 +175,7 @@ class Fx {
 			denied.setScale(s);
 			var mat = denied.material;
 			mat.color.a = 0.1 + 0.7 * Math.random();
-		} else if( hand != null && !laser && b != null ) {
+		} else if( Settings.placePreview && hand != null && !laser && b != null ) {
 			// sombra del bloque de la mano en la celda donde se pondra (pedido por los jugadores: sin ella construir es dificil)
 			denied.visible = false;
 			if( overlayBlock != b ) {
@@ -184,7 +184,7 @@ class Fx {
 				var poly = IconMesh.polygon(b, true);
 				if( poly != null ) {
 					var m = blendMaterial();
-					m.color.a = 0.4;
+					m.color.a = 0.22;
 					overlay = new h3d.scene.Mesh(poly, m, world.root);
 				}
 			}

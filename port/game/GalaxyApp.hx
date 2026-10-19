@@ -254,7 +254,7 @@ class GalaxyApp extends hxd.App {
 		msgText.textAlign = Center;
 		msgText.visible = false;
 		toast = Theme.text(s2d, "", 2.4, Theme.ACCENT, 0, 640);
-		targetName = Theme.text(s2d, "", 1.4, 0xE0E0E0, 0, 440);
+		targetName = Theme.text(s2d, "", 1.0, 0xD8D8D8, 0, 0);
 		targetName.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 1 };
 		targetName.visible = false;
 		toast.dropShadow = { dx : 2, dy : 2, color : 0, alpha : 0.9 };
@@ -530,9 +530,9 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function buildOptions() : Screen {
-		var s = panelFor(860, 680, Lang.t("options.title"));
+		var s = panelFor(860, 704, Lang.t("options.title"));
 		var x = (W - 660) * 0.5;
-		var y = 110.;
+		var y = 114.;
 		var lang = new Selector(s, Lang.t("language"), Lang.LABELS, 660);
 		lang.index = Lang.cur;
 		var sens = new Slider(s, Lang.t("sens"), 0.2, 3.0, 0.1, 660);sens.decimals = 1;
@@ -549,17 +549,21 @@ class GalaxyApp extends hxd.App {
 		tk.index = Settings.turnKeys ? 1 : 0;
 		var help = new Selector(s, Lang.t("helptext"), [Lang.t("off"), Lang.t("on")], 660);
 		help.index = Settings.showHelp ? 1 : 0;
+		var pp = new Selector(s, Lang.t("placepreview"), [Lang.t("off"), Lang.t("on")], 660);
+		pp.index = Settings.placePreview ? 1 : 0;
+		var tn = new Selector(s, Lang.t("targetname"), [Lang.t("off"), Lang.t("on")], 660);
+		tn.index = Settings.targetName ? 1 : 0;
 		var vs = new Selector(s, Lang.t("vsync"), [Lang.t("off"), Lang.t("on")], 660);
 		vs.index = Settings.vsync ? 1 : 0;
 		var fpsNames = [for( v in Settings.FPS_STEPS ) v == 0 ? Lang.t("maxfps.none") : "" + v];
 		var mf = new Selector(s, Lang.t("maxfps"), fpsNames, 660);
 		mf.index = Std.int(Math.max(0, Settings.FPS_STEPS.indexOf(Settings.maxFps)));
 		var back = new Button(s, Lang.t("back"), 660);
-		// 10 filas: un poco mas juntas que antes para que quepan
-		var step = 50;
-		var rows : Array<Ui.Widget> = [lang, sens, fov, vol, full, vs, mf, inv, tk, help];
+		// 12 filas: mas juntas para que quepan en 720 de alto
+		var step = 42;
+		var rows : Array<Ui.Widget> = [lang, sens, fov, vol, full, vs, mf, inv, tk, help, pp, tn];
 		for( i in 0...rows.length ) s.add(rows[i], x, y - 10 + i * step);
-		s.add(back, x, y - 10 + rows.length * step + 20);
+		s.add(back, x, y - 10 + rows.length * step + 8);
 		var origin = state == Paused ? "pause" : "main";
 		lang.onChange = function(i) {
 			Settings.lang = Lang.CODES[i];
@@ -577,6 +581,8 @@ class GalaxyApp extends hxd.App {
 		inv.onChange = function(i) Settings.invertY = i == 1;
 		tk.onChange = function(i) Settings.turnKeys = i == 1;
 		help.onChange = function(i) Settings.showHelp = i == 1;
+		pp.onChange = function(i) Settings.placePreview = i == 1;
+		tn.onChange = function(i) Settings.targetName = i == 1;
 		vs.onChange = function(i) {
 			Settings.vsync = i == 1;
 			applyVsync();
@@ -1368,14 +1374,16 @@ class GalaxyApp extends hxd.App {
 
 		// nombre del bloque apuntado
 		var tn = "";
-		if( state == Playing && game != null && game.select != null && game.inv.getCurrentBlock() == null ) {
+		if( Settings.targetName && state == Playing && game != null && game.select != null && game.inv.getCurrentBlock() == null ) {
 			var n = game.select.b.getName();
 			if( n != null && n != "-" && n.charAt(0) != "#" ) tn = n;
 		}
 		targetName.visible = tn != "";
 		if( tn != "" && targetName.text != tn ) {
 			targetName.text = tn;
-			targetName.x = Std.int((W - targetName.textWidth) * 0.5);
+			// pequeno, abajo a la derecha (que no tape el centro de la pantalla)
+			targetName.x = Std.int(W - 96 - targetName.textWidth);
+			targetName.y = H - 72;
 		}
 
 		// nieve (solo bioma de invierno): copos fijos en el mundo

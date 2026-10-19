@@ -26,6 +26,9 @@ import Common;
  */
 class Dev {
 
+	static var shoreX = 0;
+	static var shoreY = 0;
+
 	/** mensajes de seguimiento del juego (orden `trace`) */
 	public static var trace = false;
 	var lines : Array<String>;
@@ -88,6 +91,73 @@ class Dev {
 					var b = a[4] == "none" ? null : bk(a[4]);
 					w.setBlock(x, y, z, b);
 					if( z >= sz ) g.ship.craft(x, y, z, b, g);
+				case "setp", "breakp":
+					// setp X Y Z BLOQUE / breakp X Y Z: como al jugar (avisa a Process: agua, lava, hierba, anclas)
+					var x = Std.parseInt(a[1]), y = Std.parseInt(a[2]);
+					var z = StringTools.startsWith(a[3], "top") ? w.topCollide(x, y) + (a[3].length > 3 ? Std.parseInt(a[3].substr(3)) : 0) : Std.parseInt(a[3]);
+					var old = w.block(x, y, z);
+					if( a[0] == "breakp" ) {
+						if( old != null ) g.breakBlock(x, y, z, old);
+					} else {
+						var nb = a[4] == "none" ? null : bk(a[4]);
+						w.setBlock(x, y, z, nb);
+						g.process.onSet(x, y, z, old, nb);
+					}
+					Sys.println(a[0] + " " + x + "," + y + "," + z + " antes=" + (old == null ? "aire" : "" + old.k));
+				case "shore":
+					// shore: busca una orilla (agua al nivel del mar con roca o tierra al lado) y pone ahi al jugador mirando al agua
+					var wl = w.waterLevel(), found = false;
+					for( y in 0...w.size ) {
+						for( x in 0...w.size ) {
+							var b = w.block(x, y, wl - 1);
+							if( b == null || b.type != BTWater ) continue;
+							var s = w.block(x + 1, y, wl - 1);
+							if( s == null || !s.collide || w.block(x + 1, y, wl + 1) != null ) continue;
+							g.px = x + 1.5; g.py = y + 0.5; g.pz = w.topCollide(x + 1, y) + 0.01;
+							g.yaw = Math.PI; g.pitch = -0.6;
+							shoreX = x; shoreY = y;
+							Sys.println("shore agua=" + x + "," + y + "," + (wl - 1) + " suelo=" + (x + 1) + " top=" + Std.int(g.pz) + " mar=" + wl);
+							found = true;
+							break;
+						}
+						if( found ) break;
+					}
+					if( !found ) {
+						var hist = new Map<Int, Int>();
+						for( y in 0...w.size ) for( x in 0...w.size ) for( z in 1...World.HEIGHT ) {
+							var b = w.block(x, y, z);
+							if( b != null && b.type == BTWater ) { var c = hist.get(z); hist.set(z, c == null ? 1 : c + 1); }
+						}
+						Sys.println("shore: no hay orilla; mar=" + wl + " bioma=" + w.biomeName + " agua por altura=" + [for( k in hist.keys() ) k + ":" + hist.get(k)].join(" "));
+					}
+				case "shoredig":
+					// shoredig N: zanja de N bloques tierra adentro desde la orilla, de la superficie hasta 2 bajo el mar
+					var wl = w.waterLevel();
+					for( i in 1...Std.parseInt(a[1]) + 1 ) {
+						var x = shoreX + i, y = shoreY;
+						var z = w.topCollide(x, y);
+						while( z >= wl - 2 ) {
+							var old = w.block(x, y, z);
+							if( old != null ) g.breakBlock(x, y, z, old);
+							z--;
+						}
+					}
+				case "shorecount":
+					var n = 0;
+					for( i in 1...Std.parseInt(a[1]) + 1 )
+						for( z in 1...World.HEIGHT ) {
+							var b = w.block(shoreX + i, shoreY, z);
+							if( b != null && b.type == BTWater ) n++;
+						}
+					Sys.println("agua en la zanja: " + n);
+				case "count":
+					// count BLOQUE X1 Y1 X2 Y2: cuantos hay en esa zona (todas las alturas)
+					var kb = bk(a[1]), n = 0;
+					for( x in Std.parseInt(a[2])...Std.parseInt(a[4]) + 1 )
+						for( y in Std.parseInt(a[3])...Std.parseInt(a[5]) + 1 )
+							for( z in 1...World.HEIGHT )
+								if( w.block(x, y, z) == kb ) n++;
+					Sys.println("count " + a[1] + " = " + n);
 				case "fillt":
 					// fillt x1 y1 x2 y2 dz1 dz2 BLOQUE: rellena un prisma; dz es la altura sobre el suelo de (x1, y1)
 					var base = w.topCollide(Std.parseInt(a[1]), Std.parseInt(a[2]));

@@ -1,0 +1,17 @@
+# nombre del bloque apuntado (esquina) y sombra al poner
+wait 3
+planet
+wait 30
+tp 64.5 64.5 top 0 -0.9
+wait 5
+slot 0
+wait 10
+shot tn_name
+give BWood 5
+slot 10
+wait 10
+shot tn_ghost
+screen options
+wait 10
+shot tn_options
+quit
