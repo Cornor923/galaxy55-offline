@@ -181,6 +181,9 @@ class Explorer extends h2d.Object {
 	public function new( parent : h2d.Object, infos : ExpInfos, ?frames : Array<flash.display.BitmapData> ) {
 		super(parent);
 		this.infos = infos;
+		// fondo negro de toda la ventana: el mapa se ajusta a la zona W x H y, en una ventana que no es 16:9, en las bandas de
+		// los lados (o de arriba y abajo) se veia el mundo 3D detras
+		Theme.fullRect(new h2d.Graphics(this), 0x000000, 1);
 		content = new h2d.Object(this);
 		bgBmp = new h2d.Bitmap(h2d.Tile.fromColor(0), content);
 		oldBg = new h2d.Bitmap(h2d.Tile.fromColor(0), content);

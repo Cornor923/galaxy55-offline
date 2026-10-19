@@ -72,8 +72,8 @@ class LoadScreen extends Screen {
 
 class GalaxyApp extends hxd.App {
 
-	static inline var W = 1280;
-	static inline var H = 720;
+	static inline var W = Theme.W;
+	static inline var H = Theme.H;
 	static var BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
 	/** se pueden elegir pero no salen al azar: en el original la Ciudad Muerta tenia probabilidad 0 */
 	static var EXTRA_BIOMES = ["BIDeadCity"];
@@ -227,7 +227,7 @@ class GalaxyApp extends hxd.App {
 		fadeRect = new h2d.Bitmap(h2d.Tile.fromColor(0xFFFFFF, W, H), s2d);
 		fadeRect.alpha = 0;
 		fadeRect.visible = false;
-		for( b in [liquidVeil, dim, fadeRect] ) coverWindow(b);
+		for( b in [liquidVeil, dim, fadeRect] ) Theme.coverWindow(b);
 		cross = new h2d.Graphics(s2d);
 		cross.lineStyle(1, 0x00FFFF, 1);
 		cross.moveTo(0, -7);
@@ -310,7 +310,7 @@ class GalaxyApp extends hxd.App {
 		var s = new Screen(ui);
 		var bg = new h2d.Graphics(s);
 		var x = (W - w) * 0.5, y = (H - h) * 0.5;
-		fullRect(bg, 0x000000, 0.35);
+		Theme.fullRect(bg, 0x000000, 0.35);
 		Theme.rect(bg, x, y, w, h, Theme.PANEL, 0.94);
 		Theme.rect(bg, x, y, w, 4, Theme.ACCENT);
 		Theme.rect(bg, x, y + h - 1, w, 1, 0xFFFFFF, 0.1);
@@ -430,7 +430,7 @@ class GalaxyApp extends hxd.App {
 	function buildLoad() : Screen {
 		var s = new LoadScreen(ui);
 		var bg = new h2d.Graphics(s);
-		fullRect(bg, 0x000000, 0.4);
+		Theme.fullRect(bg, 0x000000, 0.4);
 		Theme.rect(bg, 150, 60, 980, 600, Theme.PANEL, 0.94);
 		Theme.rect(bg, 150, 60, 980, 4, Theme.ACCENT);
 		var t = Theme.text(s, Lang.t("load.title"), 3.2, Theme.TEXT, 0, 82);
@@ -483,7 +483,7 @@ class GalaxyApp extends hxd.App {
 		parent.active = false;
 		var m = new Screen(ui);
 		var bg = new h2d.Graphics(m);
-		fullRect(bg, 0x000000, 0.55);
+		Theme.fullRect(bg, 0x000000, 0.55);
 		Theme.rect(bg, 390, 250, 500, 220, Theme.PANEL, 1);
 		Theme.rect(bg, 390, 250, 500, 4, Theme.DANGER);
 		var t = Theme.text(m, Lang.t("delete.ask"), 2.4, Theme.TEXT, 0, 280);
@@ -718,7 +718,7 @@ class GalaxyApp extends hxd.App {
 		msgText.visible = false;
 		var m = new Screen(ui);
 		var bg = new h2d.Graphics(m);
-		fullRect(bg, 0x000000, 0.55);
+		Theme.fullRect(bg, 0x000000, 0.55);
 		Theme.rect(bg, 290, 250, 700, 220, Theme.PANEL, 1);
 		Theme.rect(bg, 290, 250, 700, 4, Theme.DANGER);
 		var t = Theme.text(m, Lang.t("hangar.exit_ship_no_save"), 1.9, Theme.TEXT, 0, 290);
@@ -894,7 +894,7 @@ class GalaxyApp extends hxd.App {
 		current = null;
 		var s = new Screen(ui);
 		var bg = new h2d.Graphics(s);
-		fullRect(bg, Theme.BG, 0.82);
+		Theme.fullRect(bg, Theme.BG, 0.82);
 		titleBlock(s, 110, 80, 7.5);
 		barText = Theme.text(s, msg, 2.2, Theme.TEXT, 110, 520);
 		bar = new h2d.Graphics(s);
@@ -1189,35 +1189,21 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
-	/** Coloca el casco y el brillo del jetpack cubriendo toda la ventana (escala del original: ancho/974, alto/624). */
-	/** Con LetterBox la zona W x H no llega a los bordes de una ventana mas ancha o mas alta que 16:9: los velos de pantalla
-	    completa (liquido, fundido, oscurecido) se agrandan 3 veces alrededor de ella, si no quedaban bandas sin tenir a los lados. */
-	static function coverWindow( b : h2d.Object ) {
-		b.x = -W;
-		b.y = -H;
-		b.setScale(3);
-	}
-
-	/** fondo de pantalla completa de un menu (mismo motivo que coverWindow) */
-	static function fullRect( g : h2d.Graphics, color : Int, alpha : Float ) {
-		Theme.rect(g, -W, -H, W * 3, H * 3, color, alpha);
-	}
-
 	/** El menu principal y la pantalla de carga se disenaron pegados al borde izquierdo de la zona W x H: en una ventana mas ancha
 	    que 16:9, LetterBox los dejaba separados del borde (con el fondo 3D a la vista a su izquierda). Se mueven al borde real de la
 	    ventana, y el texto de version al borde derecho. */
 	function anchorToWindow() {
-		var scale = Math.min(engine.width / W, engine.height / H);
-		var left = (W - engine.width / scale) * 0.5;
+		var left = Theme.visibleArea().x;
 		for( o in [mainScreen, overlayDecor] ) if( o != null ) o.x = left;
 		if( versionText != null ) versionText.x = W - 190 - 2 * left;
 	}
 
+	/** Coloca el casco y el brillo del jetpack cubriendo toda la ventana (escala del original: ancho/974, alto/624). */
 	function layoutHelmet() {
-		var ww = engine.width, wh = engine.height;
-		var scale = Math.min(ww / W, wh / H);
-		var visW = ww / scale, visH = wh / scale;
-		var offX = (W - visW) * 0.5, offY = (H - visH) * 0.5;
+		var a = Theme.visibleArea();
+		var scale = engine.width / a.w;
+		var visW = a.w, visH = a.h;
+		var offX = a.x, offY = a.y;
 		var sx = visW / 974, sy = visH / 624;
 		for( b in [helmet, jetGlow] ) {
 			b.scaleX = sx;
@@ -1835,6 +1821,43 @@ class GalaxyApp extends hxd.App {
 		tex.depthBuffer.dispose();
 		tex.dispose();
 		if( exit ) Sys.exit(0);
+	}
+
+	/** Pruebas (orden `cover`): dibuja sobre magenta solo lo que este abierto (tienda, cofre, paleta, mapa de estrellas o menu;
+	    el casco y el HUD se ocultan un momento) y mira si queda magenta en algun punto de los cuatro bordes de la ventana. Se
+	    usa un color y no el alfa porque el mapa de estrellas suma sus capas (blend Add): su alfa es 1 aunque deje ver el fondo. */
+	public function devCover( ?name : String ) : String {
+		var top : h2d.Object = shop != null ? shop : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
+		if( top == null ) return "nada abierto";
+		var hidden = [];
+		for( o in s2d )
+			if( o != top && o.visible ) {
+				o.visible = false;
+				hidden.push(o);
+			}
+		var w = engine.width, h = engine.height;
+		var tex = new h3d.mat.Texture(w, h, [Target]);
+		engine.pushTarget(tex);
+		engine.clear(0xFFFF00FF, 1, 0);
+		s2d.render(engine);
+		engine.popTarget();
+		for( o in hidden ) o.visible = true;
+		var px = tex.capturePixels();
+		tex.dispose();
+		if( name != null ) sys.io.File.saveBytes("port/out/cover_" + name + ".png", px.toPNG());
+		inline function magenta( x : Int, y : Int ) {
+			var c = px.getPixel(x, y);
+			return ((c >> 16) & 0xFF) >= 200 && ((c >> 8) & 0xFF) <= 80 && (c & 0xFF) >= 200;
+		}
+		var open = [];
+		for( i in 1...6 ) {
+			var fx = Std.int(w * i / 6), fy = Std.int(h * i / 6);
+			if( magenta(1, fy) && open.indexOf("izquierda") < 0 ) open.push("izquierda");
+			if( magenta(w - 2, fy) && open.indexOf("derecha") < 0 ) open.push("derecha");
+			if( magenta(fx, 1) && open.indexOf("arriba") < 0 ) open.push("arriba");
+			if( magenta(fx, h - 2) && open.indexOf("abajo") < 0 ) open.push("abajo");
+		}
+		return w + "x" + h + " " + (open.length == 0 ? "OK" : "SIN TAPAR: " + open.join(", "));
 	}
 
 	static function main() {
