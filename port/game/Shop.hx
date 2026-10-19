@@ -27,6 +27,8 @@ class Shop extends h2d.Object {
 	var left : h2d.Object;
 	var right : h2d.Object;
 	var info : h2d.Text;
+	/** borde de abajo de la linea de informacion (encima de la ayuda) */
+	var infoBottom = 0.;
 	var creditsText : h2d.Text;
 	var pageText : h2d.Text;
 	var hover : Ware;
@@ -57,7 +59,7 @@ class Shop extends h2d.Object {
 		Theme.text(this, Lang.t("shop.robot"), 1.8, Theme.DIM, px + 470, py + 70);
 		pageText = Theme.text(this, "", 1.6, Theme.DIM, px + w - 110, py + 70);
 		info = Theme.text(this, "", 1.9, Theme.CYAN, px + 24, py + h - 70);
-		Theme.text(this, Lang.t("shop.hint"), 1.4, Theme.DIM, px + 24, py + h - 36);
+		var hint = Theme.text(this, Lang.t("shop.hint"), 1.4, Theme.DIM, px + 24, py + h - 36);
 		var close = new h2d.Interactive(160, 36, this);
 		close.x = px + w - 184;
 		close.y = py + h - 52;
@@ -65,12 +67,18 @@ class Shop extends h2d.Object {
 		Theme.rect(cg, 0, 0, 160, 36, 0xFFFFFF, 0.08);
 		Theme.text(close, Lang.t("shop.close"), 1.8, Theme.TEXT, 30, 6);
 		close.onClick = function(_) if( onClose != null ) onClose();
+		// la ayuda no cabe en una linea (pisaba el boton): se parte antes del boton y se centra con el. La informacion
+		// se queda en la columna de la izquierda (a la derecha estan los precios del robot) y crece hacia arriba
+		hint.maxWidth = (close.x - 20 - hint.x) / hint.scaleX;
+		hint.y = Math.round(close.y + 18 - hint.textHeight * hint.scaleY * 0.5);
 		left = new h2d.Object(this);
 		left.x = px + 24;
 		left.y = py + 100;
 		right = new h2d.Object(this);
 		right.x = px + 470;
 		right.y = py + 100;
+		info.maxWidth = (right.x - 24 - info.x) / info.scaleX;
+		infoBottom = hint.y - 4;
 		focusG = new h2d.Graphics(this);
 		refresh();
 	}
@@ -173,8 +181,10 @@ class Shop extends h2d.Object {
 			hover = c.w;
 			hoverSell = c.sell;
 			showInfo();
-		} else
-			info.text = c.name != null ? c.name + "   " + Lang.t("shop.nosale") : "";
+		} else if( c.name != null )
+			setInfo(c.name, Lang.t("shop.nosale"));
+		else
+			setInfo("");
 	}
 
 	function pages() return Std.int((Market.wares.length + RCOLS * RROWS - 1) / (RCOLS * RROWS));
@@ -289,20 +299,28 @@ class Shop extends h2d.Object {
 		var it = new h2d.Interactive(CELL - 2, CELL - 2, c);
 		it.onOver = function(_) {
 			hover = null;
-			info.text = b.getName() + "   " + Lang.t("shop.nosale");
+			setInfo(b.getName(), Lang.t("shop.nosale"));
 		};
 	}
 
 	function showInfo() {
 		if( hover == null ) {
-			info.text = "";
+			setInfo("");
 			return;
 		}
 		var w = hover;
 		var name = w.block.getName();
 		var sp = market.sellPrice(w);
-		info.text = name + "   " + Lang.t("shop.buy") + " " + market.buyPrice(w) + "   "
-			+ (sp > 0 ? Lang.t("shop.sell") + " " + sp : Lang.t("shop.full"));
+		setInfo(name, Lang.t("shop.buy") + " " + market.buyPrice(w) + "   "
+			+ (sp > 0 ? Lang.t("shop.sell") + " " + sp : Lang.t("shop.full")));
+	}
+
+	/** linea de informacion: si el nombre y los precios no caben juntos, el nombre va encima; el borde de abajo no se mueve */
+	function setInfo( name : String, ?rest : String ) {
+		var s = rest == null ? name : name + "   " + rest;
+		if( rest != null && info.splitText(s).indexOf("\n") >= 0 ) s = name + "\n" + rest;
+		info.text = s;
+		info.y = Math.round(infoBottom - info.textHeight * info.scaleY);
 	}
 
 	/** compra hasta `n`, limitado por los creditos, las existencias y el sitio del inventario */
