@@ -5,8 +5,9 @@
 Roughly in order. What is already done is in [`CHANGELOG.en.md`](CHANGELOG.en.md); bugs are in [`BUGS.md`](BUGS.md);
 technical details of each item are in [`port/RESUMEN.md`](port/RESUMEN.md) (Spanish).
 
-1. **Star map:** the transitions are now the original ones (v0.2). Still missing: the ship's engine particles and the
-   arrows (GPS) to active planets.
+1. **Star map:** the transitions are now the original ones (v0.2). The jump particles and the reactor flash are done.
+   Still missing: the arrows (GPS) to active planets and the "common room" (whirlpool); check whether anything is missing
+   from the running-engine particles.
 2. **Merchant robot** (in progress): dynamic trading is done (credits in the save, prices drop when you sell a lot and rise
    when scarce, stock refills; see `port/game/Market.hx`) and the shop window, for now opened from the ship's computer.
    Still to do: the robot travelling slowly on the map (and our ship's real speed from engines and weight), and the
@@ -18,8 +19,8 @@ technical details of each item are in [`port/RESUMEN.md`](port/RESUMEN.md) (Span
    jump boots, anti-slip boots (ice), shock absorbers (fall damage), better digger, bigger bag, helmet lamp,
    magnet (pick up drops from farther), thermal suit / oxygen tank (once health and oxygen exist).
 4. **Fix the bugs** in [`BUGS.md`](BUGS.md).
-5. **Flowing water** (the original `Process.hx` logic) and animated texture. See Sekhmet's notes on cascades, lava and sea level in `PENDIENTES.md` point 5.
-6. Show the selected block in the hand; quality option for slow PCs.
-7. **Sound**, health/damage/oxygen/lava, chests and activatable blocks, Dead City and Shed.
+5. **Flowing water** (the original `Process.hx` logic) and animated texture; idea: a bucket to pick up water or lava (recipe to be decided). See Sekhmet's notes on cascades, lava and sea level in `PENDIENTES.md` point 5.
+6. Quality option for slow PCs (the selected block has been shown in the hand since v0.2).
+7. Health/damage/oxygen/lava, more activatable blocks, Dead City and Shed (sound and chests have been done since v0.3).
 8. Packaging: installer, and evaluate SDL/DirectX.
 9. To evaluate: **web version** (Heaps to JS/WebGL), **multiplayer** and Steam.

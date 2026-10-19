@@ -79,7 +79,7 @@ El explorador original arranca en modo depuracion dentro de un sistema solar (`P
      (`loading`), y al aterrizar un planeta activo bloquea los controles y llama a `onLand` a los 100 ms.
   Para portarlo hace falta: un gestor de animaciones como `Tweenie` (curvas Bezier: TEase 0,0,1,1; TEaseIn 0,0,.5,1; TEaseOut 0,.5,1,1; TBurnIn 0,1,1,1), un sistema de particulas como `Particle` (dx/dy, friccion, vida, alpha),
   el zoom de las capas (`ExpLayer.zoom` ya existe) y de las entidades, y `snapshot()` del sistema (render de las capas con una vista virtual de 2200x2200 a una textura).
-- Falta ademas: reactores y particulas de la nave, GPS (flechas) a planetas activos, la "common room" (remolino), naves de comerciantes (tienda), el hangar y que la nave del mapa sea la editada.
+- Hecho despues: particulas del salto y destello de reactores (`Explorer.hx`, `ExpFx.hx`), tienda y hangar. Falta: GPS (flechas) a planetas activos, la "common room" (remolino), el robot comerciante viajando por el mapa y revisar las particulas del motor en marcha.
 - El paquete portatil necesita ademas `res/explore_tiles.png` (de `src/G55/fla/explore/gfx/tiles.png`) y volver a generarse con el sintetizador y el explorador.
 
 ## Banco de pruebas (`port/game/Dev.hx`, guiones en `port/dev/`)
@@ -134,7 +134,7 @@ Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-rele
      11. Luz mal en los bloques que no son cuadrados (`BTReduced`, `BTExtended`, modelos...): el brillo de las caras o del vértice no coincide con el de los cubos vecinos; revisar `addQuadL`/`NOLIGHT` en `World.hx` para esos tipos.
      12. El bloque de fuente de cascada (`BCascadeSource`) puesto en la nave no se puede quitar (en la zona del sintetizador). Mirar `GameView.mine`/`pick` y las reglas de `inCraft` para bloques activables o con `toggle`.
      13. Al fabricar en el sintetizador no desaparecen los bloques con los que se fabrica: hoy, si el inventario aún tiene esos bloques, se gastan los del inventario y los puestos en la zona se quedan (así lo hace `ShipLogic.activateBlock` del original: `hasInv`). Decidir si se copia tal cual o se cambia a gastar siempre los puestos en la zona (parece lo esperado por quien juega).
-   - **Ver en la mano el bloque elegido** (el original dibuja el bloque en `Render.hx`, `drawBlock(block, curLight)` con `curLight` suavizado; hoy solo se ve en la barra).
+   - (HECHO en la v0.2, `Hand.hx`) **Ver en la mano el bloque elegido** (el original dibuja el bloque en `Render.hx`, `drawBlock(block, curLight)` con `curLight` suavizado; hoy solo se ve en la barra).
    - **Opción de calidad** (distancia de dibujado, caras de las hojas) para PC lentas; el valor por defecto sigue siendo la mejor calidad.
    - Vida, daño, curación, oxígeno y lava; bloques activables, cofres, `BFTransform`; sonido; partículas al romper; planeta Shed y Ciudad muerta completos.
 5. Decidir SDL (actual) o DirectX; empaquetar como instalable; multijugador y Steam.

@@ -5,8 +5,9 @@
 Orden aproximado. Lo ya hecho está en [`CHANGELOG.md`](CHANGELOG.md); los fallos, en [`ERRORES.md`](ERRORES.md);
 los detalles técnicos de cada punto, en [`port/RESUMEN.md`](port/RESUMEN.md).
 
-1. **Mapa de estrellas:** las transiciones ya son las del original (v0.2). Faltan las partículas de los reactores de la nave
-   y las flechas (GPS) hacia los planetas activos.
+1. **Mapa de estrellas:** las transiciones ya son las del original (v0.2). Hechas las partículas del salto y el destello
+   de los reactores. Faltan las flechas (GPS) hacia los planetas activos y la "common room" (remolino); comprobar si falta
+   algo de las partículas del motor en marcha.
 2. **Robot comerciante** (en curso): hecho el comercio dinámico (créditos en la partida, precios que bajan si vendes mucho
    y suben si escasea, existencias que se reponen; ver `port/game/Market.hx`) y la ventana de tienda, de momento desde el
    ordenador de la nave. Falta: el robot viajando despacio por el mapa (y la velocidad real de nuestra nave según motores y
@@ -33,11 +34,12 @@ los detalles técnicos de cada punto, en [`port/RESUMEN.md`](port/RESUMEN.md).
    - Tiendas de jugadores: puestos en la zona de comercio de la nave nodriza (ya diseñada) o un mostrador en la nave de un gremio.
    - Cuidar el rendimiento en el navegador (mundos pequeños y fijos, mallas que no se rehacen, límite de jugadores visibles).
 4. **Arreglar los errores** de [`ERRORES.md`](ERRORES.md).
-5. **Agua que fluye** (lógica de `Process.hx` del original) y textura animada. Recuerdos de Sekhmet (comprobar con el código original antes de copiar):
+5. **Agua que fluye** (lógica de `Process.hx` del original) y textura animada; idea: un cubo para coger agua o lava (falta
+   decidir su receta). Recuerdos de Sekhmet (comprobar con el código original antes de copiar):
    - la cascada no se congelaba junto al hielo; sustituía el agua si se ponía dentro y hacía de barrera (refugios bajo el agua con una cascada de puerta);
    - cascada + lava = basalto sólido (basalto infinito); la lava quizá empujaba el agua del mar;
    - el mar pasó por 3 versiones en las alfas: estático; se extiende sin bajar de nivel; se extiende y el nivel global del planeta baja según la proporción agua/espacio (nunca sube).
-6. Ver el bloque elegido en la mano; opción de calidad para PC lentas.
-7. Sonido, vida/daño/oxígeno/lava, cofres y bloques activables, Ciudad Muerta y Shed.
+6. Opción de calidad para PC lentas (el bloque elegido ya se ve en la mano desde la v0.2).
+7. Vida/daño/oxígeno/lava, más bloques activables, Ciudad Muerta y Shed (el sonido y los cofres ya están desde la v0.3).
 8. Empaquetado: instalador, y evaluar SDL/DirectX.
 9. A evaluar: **versión web** (Heaps → JS/WebGL), **multijugador** y Steam.
