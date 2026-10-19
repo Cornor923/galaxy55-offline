@@ -115,6 +115,12 @@ class Explorer extends h2d.Object {
 	var shipTiles : Array<h2d.Tile>;
 	var shipFrames : Array<flash.display.BitmapData>;
 	var shipWorld : h2d.Object;
+	/** Manager.gps: flechas verdes alrededor de la nave hacia los planetas activos (en el port, los visitados) o hacia los
+	    sistemas que los tienen; se rehacen al cambiar de vista */
+	var gps : Array<{ arrow : h2d.Graphics, target : ExpEntity }> = [];
+	var gpsLayer : h2d.Object;
+	var gpsView : View;
+	var gpsCount = -1;
 	var cursor : h2d.Graphics;
 	var cursorE = new ExpEntity();
 	var cursorAlpha = 1.;
@@ -221,6 +227,7 @@ class Explorer extends h2d.Object {
 		zoomCache = new h2d.Bitmap(null, content);
 		zoomCache.visible = false;
 		fxLayer = new h2d.Object(content);
+		gpsLayer = new h2d.Object(content);
 
 		// calor del sol (burn) y destello de la llegada (overdriveBurn)
 		burn = new h2d.Bitmap(h2d.Tile.fromColor(0xFFFFFF, VW, VH), content);
@@ -1270,6 +1277,39 @@ class Explorer extends h2d.Object {
 		return VH * 0.5 + (ym - VH * 0.5) * (1 + zoom);
 	}
 
+	/** Manager.gpsArrow: punta de flecha verde de 1 px con brillo */
+	function gpsArrow() : h2d.Graphics {
+		var c = 0x80FF00;
+		var g = new h2d.Graphics(gpsLayer);
+		g.lineStyle(1, c, 1);
+		g.moveTo(0, -8);
+		g.lineTo(5, 0);
+		g.lineTo(0, 8);
+		g.filter = new h2d.filter.Glow(c, 0.5, 3, 1, 1, false);
+		return g;
+	}
+
+	function clearGps() {
+		for( g in gps ) g.arrow.remove();
+		gps = [];
+	}
+
+	inline function isActive( p : ExpPlanet ) return p.status == PActive || p.status == PInvited;
+
+	/** gotoSolar: una flecha por planeta activo; gotoSector (processEnd): una por sistema abierto con alguno */
+	function rebuildGps() {
+		clearGps();
+		var list = inSolar ? solarSpots : sectorSpots;
+		for( sp in list ) {
+			var on = false;
+			if( inSolar ) on = sp.planet != null && isActive(sp.planet);
+			else on = sp.system != null && sp.system.status == SOpen && Lambda.exists(sp.system.planets, isActive);
+			if( on ) gps.push({ arrow : gpsArrow(), target : sp.e });
+		}
+		gpsView = current;
+		gpsCount = list.length;
+	}
+
 	public function update( dt : Float ) {
 		var tmod = dt * 30;
 		lastTmod = tmod;
@@ -1379,6 +1419,18 @@ class Explorer extends h2d.Object {
 			shipBmp.setPosition(sx, sy);
 			shipBmp.visible = shipVisible;
 			shipBmp.alpha = shipAlpha;
+		}
+		// GPS (Manager.main): la flecha gira alrededor de la nave a 64 px y se apaga al llegar (de 100 a 50 de distancia)
+		var list = inSolar ? solarSpots : sectorSpots;
+		if( gpsView != current || gpsCount != list.length ) rebuildGps();
+		gpsLayer.visible = !locked && shipVisible;
+		for( g in gps ) {
+			var a = Math.atan2(g.target.y - ship.y, g.target.x - ship.x);
+			var d = Math.sqrt((g.target.x - ship.x) * (g.target.x - ship.x) + (g.target.y - ship.y) * (g.target.y - ship.y));
+			var k = Math.min(1, Math.max(0, (d - 50) / 50));
+			g.arrow.alpha = k;
+			g.arrow.setPosition(sx + Math.cos(a) * 64 * k, sy + Math.sin(a) * 64 * k);
+			g.arrow.rotation = a;
 		}
 		cursor.setPosition(Std.int(screenX(cursorE.x, vx, zoomT)), Std.int(screenY(cursorE.y, vy, zoomT)));
 		cursor.rotation = cursorRot * Math.PI / 180;

@@ -1,0 +1,11 @@
+# flechas GPS del mapa de estrellas: en el sector apuntan al sistema con planetas visitados; dentro, a esos planetas
+wait 3
+ship
+wait 10
+explore
+wait 200
+expinfo
+expgo 1100 800
+wait 120
+shot gps1
+quit

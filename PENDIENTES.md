@@ -5,8 +5,8 @@
 Orden aproximado. Lo ya hecho está en [`CHANGELOG.md`](CHANGELOG.md); los fallos, en [`ERRORES.md`](ERRORES.md);
 los detalles técnicos de cada punto, en [`port/RESUMEN.md`](port/RESUMEN.md).
 
-1. **Mapa de estrellas:** las transiciones ya son las del original (v0.2). Hechas las partículas del salto y el destello
-   de los reactores. Faltan las flechas (GPS) hacia los planetas activos y la "common room" (remolino); comprobar si falta
+1. **Mapa de estrellas:** las transiciones ya son las del original (v0.2). Hechas las partículas del salto, el destello
+   de los reactores y las flechas (GPS) hacia los planetas visitados. Falta la "common room" (remolino); comprobar si falta
    algo de las partículas del motor en marcha.
 2. **Robot comerciante** (en curso): hecho el comercio dinámico (créditos en la partida, precios que bajan si vendes mucho
    y suben si escasea, existencias que se reponen; ver `port/game/Market.hx`) y la ventana de tienda, de momento desde el

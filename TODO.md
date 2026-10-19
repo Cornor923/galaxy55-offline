@@ -5,8 +5,8 @@
 Roughly in order. What is already done is in [`CHANGELOG.en.md`](CHANGELOG.en.md); bugs are in [`BUGS.md`](BUGS.md);
 technical details of each item are in [`port/RESUMEN.md`](port/RESUMEN.md) (Spanish).
 
-1. **Star map:** the transitions are now the original ones (v0.2). The jump particles and the reactor flash are done.
-   Still missing: the arrows (GPS) to active planets and the "common room" (whirlpool); check whether anything is missing
+1. **Star map:** the transitions are now the original ones (v0.2). The jump particles, the reactor flash and the
+   arrows (GPS) to visited planets are done. Still missing: the "common room" (whirlpool); check whether anything is missing
    from the running-engine particles.
 2. **Merchant robot** (in progress): dynamic trading is done (credits in the save, prices drop when you sell a lot and rise
    when scarce, stock refills; see `port/game/Market.hx`) and the shop window, for now opened from the ship's computer.
