@@ -14,8 +14,8 @@ class Shop extends h2d.Object {
 	public var onCredits : Int -> Void;
 
 	static inline var CELL = 56;
-	static inline var PX = 1280;
-	static inline var PY = 720;
+	static inline var PX = Theme.W;
+	static inline var PY = Theme.H;
 	static inline var RCOLS = 10;
 	static inline var RROWS = 6;
 
@@ -48,7 +48,7 @@ class Shop extends h2d.Object {
 		var w = 1180, h = 600;
 		var px = (PX - w) * 0.5, py = (PY - h) * 0.5;
 		var bg = new h2d.Graphics(this);
-		Theme.rect(bg, 0, 0, PX, PY, 0x000000, 0.55);
+		Theme.fullRect(bg, 0x000000, 0.55);
 		Theme.rect(bg, px, py, w, h, Theme.PANEL, 0.96);
 		Theme.rect(bg, px, py, w, 4, Theme.ACCENT);
 		Theme.text(this, Lang.t("shop.title"), 2.6, Theme.TEXT, px + 24, py + 20);

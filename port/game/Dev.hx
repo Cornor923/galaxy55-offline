@@ -247,6 +247,22 @@ class Dev {
 				case "trace": trace = true;
 				case "shop": app.openShop();
 				case "screen": @:privateAccess app.show(a[1]);
+				case "winsize":
+					// winsize ANCHO ALTO: tamano de la ventana, para probar ventanas mas anchas o mas altas que 16:9
+					hxd.Window.getInstance().resize(Std.parseInt(a[1]), Std.parseInt(a[2]));
+				case "cover":
+					// cover NOMBRE: lo abierto tapa toda la ventana? (y guarda port/out/cover_NOMBRE.png con solo eso dibujado)
+					Sys.println("cover " + (a.length > 1 ? a[1] + " " : "") + app.devCover(a[1]));
+				case "close":
+					// close: cierra la tienda, el cofre, la paleta, el mapa de estrellas o el menu abierto (como Esc)
+					@:privateAccess {
+						app.closeChest();
+						app.closeShop();
+						app.closePalette();
+						if( app.explorer != null ) app.closeExplorer();
+						if( app.current != null ) app.resume();
+					}
+				case "creative": @:privateAccess g.creative = true;
 				case "maxfps": Settings.maxFps = Std.parseInt(a[1]);
 				case "fps": Sys.println("fps " + Std.int(hxd.Timer.fps()));
 				case "hangar": app.startHangar();

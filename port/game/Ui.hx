@@ -9,6 +9,10 @@ class Theme {
 	public static inline var DISABLED = 0x4A5470;
 	public static inline var DANGER = 0xFF5C5C;
 
+	/** zona de diseno de la interfaz: la escena 2D usa LetterBox(W, H) (GalaxyApp) */
+	public static inline var W = 1280;
+	public static inline var H = 720;
+
 	public static var font : h2d.Font;
 
 	public static function init() {
@@ -30,6 +34,33 @@ class Theme {
 		g.beginFill(color, alpha);
 		g.drawRect(x, y, w, h);
 		g.endFill();
+	}
+
+	/*
+	 * Con LetterBox la zona W x H no llega a los bordes de una ventana mas ancha o mas alta que 16:9: quedan bandas a los lados o
+	 * arriba y abajo. Todo lo que deba tapar la ventana entera (velos, oscurecido detras de un menu, la tienda, un cofre, la
+	 * paleta, el fondo del mapa de estrellas) se dibuja con fullRect o se agranda con coverWindow, nunca como un rectangulo
+	 * 0, 0, W, H. Lo que deba pegarse a un borde real de la ventana se coloca con visibleArea. port/dev/fullwindow.txt lo comprueba.
+	 */
+
+	/** oscurecido o fondo de pantalla completa: 3 veces la zona W x H alrededor de ella */
+	public static function fullRect( g : h2d.Graphics, color : Int, alpha : Float ) {
+		rect(g, -W, -H, W * 3, H * 3, color, alpha);
+	}
+
+	/** un velo de W x H (Bitmap) agrandado 3 veces alrededor de la zona, como fullRect */
+	public static function coverWindow( o : h2d.Object ) {
+		o.x = -W;
+		o.y = -H;
+		o.setScale(3);
+	}
+
+	/** parte de la escena 2D que se ve en la ventana, en coordenadas de la zona W x H */
+	public static function visibleArea() : { x : Float, y : Float, w : Float, h : Float } {
+		var e = h3d.Engine.getCurrent();
+		var scale = Math.min(e.width / W, e.height / H);
+		var w = e.width / scale, h = e.height / scale;
+		return { x : (W - w) * 0.5, y : (H - h) * 0.5, w : w, h : h };
 	}
 }
 

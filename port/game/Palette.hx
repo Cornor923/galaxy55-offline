@@ -18,8 +18,8 @@ class Palette extends h2d.Object {
 	static inline var COLS = 14;
 	static inline var ROWS = 8;
 	static inline var CELL = 56;
-	static inline var PX = 1280;
-	static inline var PY = 720;
+	static inline var PX = Theme.W;
+	static inline var PY = Theme.H;
 
 	var atlas : h3d.mat.Texture;
 	var blocks = new Array<Block>();
@@ -45,7 +45,7 @@ class Palette extends h2d.Object {
 		x0 = px + 20;
 		y0 = py + 70;
 		var bg = new h2d.Graphics(this);
-		Theme.rect(bg, 0, 0, PX, PY, 0x000000, 0.5);
+		Theme.fullRect(bg, 0x000000, 0.5);
 		Theme.rect(bg, px, py, w, h, Theme.PANEL, 0.96);
 		Theme.rect(bg, px, py, w, 4, Theme.ACCENT);
 		var t = Theme.text(this, Lang.t("palette.title"), 2.6, Theme.TEXT, px + 24, py + 22);

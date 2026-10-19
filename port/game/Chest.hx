@@ -12,8 +12,8 @@ class Chest extends h2d.Object {
 	public var onClose : Void -> Void;
 
 	static inline var CELL = 60;
-	static inline var PX = 1280;
-	static inline var PY = 720;
+	static inline var PX = Theme.W;
+	static inline var PY = Theme.H;
 
 	var atlas : h3d.mat.Texture;
 	var inv : Inv;
@@ -36,7 +36,7 @@ class Chest extends h2d.Object {
 		var w = 700, h = 330;
 		var px = (PX - w) * 0.5, py = 120.;
 		var bg = new h2d.Graphics(this);
-		Theme.rect(bg, 0, 0, PX, PY, 0x000000, 0.45);
+		Theme.fullRect(bg, 0x000000, 0.45);
 		Theme.rect(bg, px, py, w, h, Theme.PANEL, 0.96);
 		Theme.rect(bg, px, py, w, 4, Theme.ACCENT);
 		Theme.text(this, Block.get(BChest).getName(), 2.4, Theme.TEXT, px + 24, py + 18);

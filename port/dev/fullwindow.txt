@@ -1,0 +1,73 @@
+# fondos de pantalla completa (menus, tienda, cofre, paleta, mapa de estrellas) en ventanas mas anchas y mas altas que 16:9:
+# cada "cover" debe decir OK (Theme.fullRect / Theme.coverWindow); SIN TAPAR = queda una banda sin tapar en ese borde.
+# port/out/cover_*.png muestra solo lo que estaba abierto; los shot, la ventana entera.
+wait 3
+planet
+wait 30
+creative
+set 64 64 120 BChest
+winsize 1600 600
+wait 10
+screen pause
+wait 5
+cover pausa_ancha
+screen options
+wait 5
+cover opciones_ancha
+close
+wait 5
+shop
+wait 5
+cover tienda_ancha
+shot fullwindow_tienda_ancha
+close
+wait 5
+activate 64 64 120
+wait 5
+cover cofre_ancha
+close
+wait 5
+palette
+wait 5
+cover paleta_ancha
+close
+wait 5
+explore
+wait 200
+cover mapa_ancha
+shot fullwindow_mapa_ancha
+close
+wait 30
+winsize 800 900
+wait 10
+screen pause
+wait 5
+cover pausa_alta
+screen options
+wait 5
+cover opciones_alta
+close
+wait 5
+shop
+wait 5
+cover tienda_alta
+shot fullwindow_tienda_alta
+close
+wait 5
+activate 64 64 120
+wait 5
+cover cofre_alta
+close
+wait 5
+palette
+wait 5
+cover paleta_alta
+close
+wait 5
+explore
+wait 200
+cover mapa_alta
+shot fullwindow_mapa_alta
+close
+wait 30
+quit
