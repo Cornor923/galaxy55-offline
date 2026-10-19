@@ -2,6 +2,12 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## Next version
+- Fixes reported by Sekhmet (thank you!): key shortcuts (Tab digs and 1-0 are the 10 slots), blocks can be placed underwater,
+  no snow under a roof or in caves, ice no longer drops a block when broken, a shadow of the block about to be placed, the name
+  of the targeted block, and the freezer freezes nearby water and lava again.
+- Linux: the zips use `/` in paths (they used to extract files with `\`); Linux steps from Sekhmet in the zip's `LEEME`.
+
 ## v0.3.1 — pre-release
 - Options: vertical sync (VSync) and FPS limit (30, 60, 120, 144, 240 or unlimited).
 - Fixes by **Cornor923** (thank you!): the liquid veil and menu backgrounds cover windows wider than 16:9, no dark
