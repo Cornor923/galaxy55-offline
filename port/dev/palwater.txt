@@ -1,0 +1,19 @@
+# agua en la paleta creativa y ponerla desde el inventario
+wait 3
+planet
+wait 30
+fillt 55 55 79 73 10 10 BRock
+fillt 55 55 79 73 11 20 none
+tp 62.5 64.5 top 0 -0.6
+wait 5
+give BWater 5
+slot 10
+key place
+wait 30
+unkey
+wait 120
+count BWater 55 55 80 80
+palette 1
+wait 10
+shot pal2
+quit

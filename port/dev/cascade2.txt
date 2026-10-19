@@ -1,0 +1,21 @@
+# cascada (Process.updatePropagate): una fuente en el aire cae y se extiende por el suelo
+wait 3
+planet
+wait 30
+tp 64.5 58.5 top 1.57 -0.1
+wait 5
+setp 64 64 top+5 BCascadeSource
+wait 20
+count BCascadeFall 54 54 74 74
+wait 120
+count BCascadeFall 54 54 74 74
+count BCascadeFall2 54 54 74 74
+count BCascadeFall3 54 54 74 74
+shot casc1
+breakp 64 64 top
+wait 150
+count BCascadeSource 54 54 74 74
+count BCascadeFall 54 54 74 74
+count BCascadeFall2 54 54 74 74
+shot casc2
+quit

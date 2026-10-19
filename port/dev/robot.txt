@@ -1,0 +1,21 @@
+# robot comerciante en el mapa: salir al sector, pulsarlo, seguirlo, acoplarse y entrar en su nave
+wait 3
+ship
+wait 10
+explore
+wait 200
+expgo 2400 1000
+wait 400
+exprinfo
+shot rob1
+exprobot
+wait 30
+exprinfo
+wait 600
+exprinfo
+shot rob2
+expbutton
+wait 400
+print pos
+shot rob3
+quit

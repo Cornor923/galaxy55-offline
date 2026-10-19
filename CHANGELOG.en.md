@@ -2,6 +2,22 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## Next version
+- **Flowing water** (the original `Process.hx`): the sea fills what you dig next to it up to its level; cascades and lava fall,
+  spread and disappear without a source; grass gets covered and uncovered; anchored blocks and details break when their
+  support is removed. Cascades and the water you place get lower at each step, with a sloped surface (port addition).
+- **Merchant robot on the star map:** it travels between the sector's systems; click it and it stops and waits for you, and
+  docking takes you into its ship (the mothership), with the shop. Leaving brings you back to the map.
+- The original **GPS arrows** on the map: they point to the planets you visited (and their systems) and to the robot (in orange).
+- Options: a shadow of the block you are about to place and the name of the targeted block (small, bottom right); both can be turned off.
+- Creative mode: the four waters (normal, dark, acid and winter) are in the palette.
+- Fixes by **Cornor923** (thank you!): the bedrock (layer 0) is drawn and the main menu sticks to the edges on wide windows.
+- The block in the hand no longer shakes when walking.
+- Fixes reported by Sekhmet (thank you!): key shortcuts (Tab digs and 1-0 are the 10 slots), blocks can be placed underwater,
+  no snow under a roof or in caves, ice no longer drops a block when broken, a shadow of the block about to be placed, the name
+  of the targeted block, and the freezer freezes nearby water and lava again.
+- Linux: the zips use `/` in paths (they used to extract files with `\`); Linux steps from Sekhmet in the zip's `LEEME`.
+
 ## v0.3.1 — pre-release
 - Options: vertical sync (VSync) and FPS limit (30, 60, 120, 144, 240 or unlimited).
 - Fixes by **Cornor923** (thank you!): the liquid veil and menu backgrounds cover windows wider than 16:9, no dark

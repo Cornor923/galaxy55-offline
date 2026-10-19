@@ -1,6 +1,6 @@
 # Errores conocidos (versión nativa)
 
-[English: `BUGS.md`](BUGS.md)
+[English: `BUGS.md`](BUGS.md) · [Français : `BUGS.fr.md`](BUGS.fr.md)
 
 Si encuentras uno que no está aquí, abre un *issue* con lo que hacías y, si puedes, una captura.
 Los que están **arreglados** se mueven al final. Los detalles técnicos están en [`port/RESUMEN.md`](port/RESUMEN.md).
@@ -12,12 +12,14 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 | 4 | Luz | Los bloques que **no son cuadrados** (medios bloques, modelos…) tienen la luz mal respecto a los vecinos. |
 | 8 | Invierno | Las **hojas del abeto** sueltan material; puede que en el original no. |
 | 10 | Render | Los **cristales** sueltos (cargas) se ven demasiado anchos. |
-| 12 | Agua | El agua **no fluye**, y se congela al tocar hielo. Según Sekhmet, en el original la cascada no se congelaba junto al hielo: es un fallo del port. Se arreglará con el agua que fluye. |
+| 12 | Agua | **Por comprobar:** según Sekhmet, en el original la cascada no se congelaba junto al hielo. Antes de que el agua fluyera, en el port sí; falta comprobarlo ahora. |
 | 13 | Menú | **Tirones en el menú** mientras se genera el planeta de fondo: el generador hace pasos de 200–600 ms en el hilo principal y el juego se para de 0,4 a 1,1 s (medido con `--frametime`, en DirectX y en OpenGL). Pasa los primeros segundos del menú. Arreglo posible: pasos más cortos o generar en otro hilo. |
 
 ## Arreglados
 
 - v0.3 (encontrados y reportados por **Sekhmet**, ¡gracias!): la arena movediza y el agua ya no se ven transparentes desde dentro (velo y niebla del color del líquido, como el original); ya no nieva bajo el agua; el agua tiene caras laterales y de fondo; el hielo sumergido queda detrás del agua; los textos del mapa de estrellas salen en el idioma elegido.
+- Próxima versión (reportados por **Sekhmet**, ¡gracias!): el agua fluye (`WorldProcess.hx`, el `Process.hx` del original); se pueden poner bloques bajo el agua; ya no nieva bajo techo ni en cuevas; el hielo no suelta un bloque al romperlo (como el original); atajos de teclado (Tab excava y 1–0 son las 10 casillas; antes la última no tenía tecla).
+- Próxima versión: el bloque en la mano ya no tiembla al andar; el resaltado de la paleta creativa ya no se queda pegado.
 - Próxima versión: el juego funciona también con DirectX (`port/game_dx.hxml`), útil donde no hay OpenGL 3.2 (p. ej. máquinas virtuales).
 - Próxima versión: la capa 0 (roca madre) se dibuja, como en el original: el fondo de un hoyo excavado hasta ella ya no deja ver el vacío y el cielo bajo el planeta.
 

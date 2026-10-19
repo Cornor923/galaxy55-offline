@@ -1,0 +1,13 @@
+# flechas GPS en el sector: salir del sistema y alejarse
+wait 3
+ship
+wait 10
+explore
+wait 200
+expgo 2400 1000
+wait 400
+expinfo
+expgo 1600 1600
+wait 150
+shot gps2
+quit

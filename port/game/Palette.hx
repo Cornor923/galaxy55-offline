@@ -36,6 +36,9 @@ class Palette extends h2d.Object {
 		for( b in Block.all )
 			if( b.index > 0 && b.basePrice != null && b.charge == null && b.type != BTInvisible )
 				blocks.push(b);
+		// el agua de cada planeta no se vendia; en creativo se puede poner (fluye como en Minecraft)
+		for( k in [BWater, BDarkWater, BAcidWater, BWinterWater] )
+			blocks.push(Block.get(k));
 
 		var w = COLS * CELL + 40, h = ROWS * CELL + 150;
 		var px = (PX - w) * 0.5, py = (PY - h) * 0.5;
@@ -77,6 +80,7 @@ class Palette extends h2d.Object {
 			cell.x = cx;
 			cell.y = cy;
 			var g = new h2d.Graphics(cell);
+			cellBgs.push(g);
 			Theme.rect(g, 1, 1, CELL - 2, CELL - 2, 0xFFFFFF, 0.06);
 			var bm = new h2d.Bitmap(Icons.get(b, atlas), cell);
 			bm.setScale(48 / Icons.SIZE);

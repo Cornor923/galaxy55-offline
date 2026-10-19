@@ -1,6 +1,6 @@
 # Native port (Haxe 4 + Heaps + HashLink)
 
-[Español: `LEEME.md`](LEEME.md)
+[Español: `LEEME.md`](LEEME.md) · [Français : `LISEZMOI.md`](LISEZMOI.md)
 
 This folder contains the port of the game to a native desktop application, with no Flash. It is work in progress (with known
 bugs, see `BUGS.md` in the repository root); the original Flash game remains untouched in `src/`, `libs/` and `release/`, and in the `flash` branch.
@@ -82,6 +82,7 @@ A player got it running on Linux this way; we have not tested it.
 - `game/` the game: menus (`GalaxyApp`, `Ui`), languages (`Lang`), settings (`Settings`), saves (`SaveData`), planet, light and meshing (`World`),
   block models (`Models`), sky and fog (`Sky`), snow (`Snow`), player, digging and placing (`GameView`), inventory (`Inv`, `InvBar`, `Palette`),
   effects and drops (`Fx`, `Drops`) and the ship (`Ship`, `ShipData`).
+- `explore/` the star map (`Explorer`, with the merchant robot and the GPS arrows). Flowing water is in `game/WorldProcess.hx`.
 - `shim/` `flash.*` compatibility layer so the original generators compile in HashLink.
 - `headless/` verification programs: worlds are identical to the Flash ones (Adler-32 hash, water and blocks); they also read the ship and the saves.
 
@@ -91,5 +92,9 @@ A player got it running on Linux this way; we have not tested it.
 - Snow in the winter biome is an addition of this port: the original does not have it.
 - Creative mode and its palette are an addition of this port.
 - The on-board computer menu has its own look, as in the Flash version (the original was a web page).
-- Still missing: shop, hangar, flowing water, sound and seeing the block in the hand.
-  See `TODO.md` in the repository root.
+- The merchant robot's shop (the original was a web panel), its ship on the star map and the orange GPS arrow pointing to it
+  are additions of this port.
+- Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
+  holes up to its level, like the original.
+- Added options: a shadow of the block you are about to place and the name of the targeted block.
+- What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

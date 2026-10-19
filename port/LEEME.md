@@ -1,6 +1,6 @@
 # Port nativo (Haxe 4 + Heaps + HashLink)
 
-[English: `README.md`](README.md)
+[English: `README.md`](README.md) · [Français : `LISEZMOI.md`](LISEZMOI.md)
 
 Esta carpeta contiene el port del juego a una aplicación de escritorio nativa, sin Flash. Es trabajo en curso (con errores
 conocidos, ver `ERRORES.md` en la raíz); el juego original en Flash sigue intacto en `src/`, `libs/` y `release/`, y también en la rama `flash`.
@@ -76,6 +76,7 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - `game/` el juego: menús (`GalaxyApp`, `Ui`), idiomas (`Lang`), ajustes (`Settings`), partidas (`SaveData`), planeta, luz y mallado (`World`),
   modelos de bloque (`Models`), cielo y niebla (`Sky`), nieve (`Snow`), jugador, excavar y colocar (`GameView`), inventario (`Inv`, `InvBar`, `Palette`),
   efectos y sueltos (`Fx`, `Drops`) y la nave (`Ship`, `ShipData`).
+- `explore/` el mapa de estrellas (`Explorer`, con el robot comerciante y las flechas GPS). El agua que fluye está en `game/WorldProcess.hx`.
 - `shim/` capa de compatibilidad `flash.*` para que los generadores originales compilen en HashLink.
 - `headless/` programas de verificación: los mundos son idénticos a los de Flash (hash Adler-32, agua y bloques); también leen la nave y el guardado.
 
@@ -85,5 +86,9 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - La nieve del bioma de invierno es un añadido de este port: el original no la tiene.
 - El modo creativo y su paleta son un añadido de este port.
 - El menú del ordenador de a bordo tiene un aspecto propio, como en la versión Flash (el original era una página web).
-- Todavía faltan: recetas del sintetizador, tienda, hangar, mapa de exploración, agua que fluye, sonido y ver el bloque en la mano.
-  Lista completa en `PENDIENTES.md` y `ERRORES.md` (raíz del repositorio).
+- La tienda del robot comerciante (en el original era un panel web), su nave por el mapa de estrellas y la flecha GPS naranja
+  que lo señala son un añadido de este port.
+- La cascada y el agua que pone el jugador bajan de altura en cada paso, con la superficie inclinada: añadido de este port.
+  El mar llena los huecos hasta su nivel, como el original.
+- Opciones añadidas: sombra del bloque que vas a poner y nombre del bloque apuntado.
+- Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).

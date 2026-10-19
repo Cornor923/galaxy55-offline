@@ -18,6 +18,8 @@ typedef UniInfo = {
 	var start : { seed : Int, biome : String, size : Int };
 	/** planetas visitados distintos del actual, con sus cambios */
 	var planets : Array<UniPlanet>;
+	/** donde esta el robot comerciante en el sector (anadido del port) */
+	@:optional var robot : { x : Float, y : Float };
 }
 
 /** Datos de una partida guardada. Los cambios de terreno, inventario y creditos se anadiran aqui. */
@@ -93,6 +95,7 @@ class SaveData {
 				seed : Std.int(o.seed), planetId : Std.int(o.planetId), pos : [for( v in (o.pos : Array<Dynamic>) ) Std.int(v)],
 				start : { seed : Std.int(o.start.seed), biome : o.start.biome, size : Std.int(o.start.size) },
 				planets : [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : [for( v in (p.edits : Array<Dynamic>) ) Std.int(v)] }],
+				robot : o.robot != null ? { x : (o.robot.x : Float), y : (o.robot.y : Float) } : null,
 			};
 		} catch( e : Dynamic ) {
 			return null;

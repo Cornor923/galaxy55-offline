@@ -1,0 +1,18 @@
+# sombra del bloque que se va a poner (en seco)
+wait 3
+planet
+wait 30
+tp 64.5 64.5 top 0 -0.9
+wait 5
+give BWood 5
+print inv
+slot 10
+look 0 -0.9
+wait 20
+shot gh_ghost
+key place
+wait 40
+unkey
+print inv
+shot gh_placed
+quit

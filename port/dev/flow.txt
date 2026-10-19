@@ -1,0 +1,16 @@
+# agua que fluye (Process.hx): cavar una zanja junto al mar y ver que el agua entra
+wait 3
+planet
+wait 30
+shore
+wait 5
+shot flow0
+shoredig 6
+shorecount 6
+wait 10
+shot flow1
+wait 240
+shorecount 6
+shorelvl 6
+shot flow2
+quit

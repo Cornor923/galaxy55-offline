@@ -29,6 +29,9 @@ class Snow {
 	var sz = new Array<Float>();
 	var t = 0.;
 	var pt = new h3d.Vector();
+	/** altura del bloque macizo mas alto de cada columna (no nieva bajo techo ni en cuevas); se recalcula cada medio segundo */
+	var roof = new Map<Int, Int>();
+	var roofAge = 0.;
 
 	public var visible(get, set) : Bool;
 
@@ -74,6 +77,11 @@ class Snow {
 	public function update( dt : Float, cam : h3d.Camera, world : World, offX : Float, offY : Float, visW : Float, visH : Float ) {
 		if( !batch.visible ) return;
 		t += dt;
+		roofAge += dt;
+		if( roofAge > 0.5 ) {
+			roofAge = 0;
+			roof = new Map();
+		}
 		cam.update();
 		var cx = cam.pos.x, cy = cam.pos.y, cz = cam.pos.z;
 		var fx = cam.target.x - cx, fy = cam.target.y - cy, fz = cam.target.z - cz;
@@ -106,6 +114,26 @@ class Snow {
 			}
 			cam.project(wx, wy, wz, visW, visH, false, pt);
 			if( pt.x < -10 || pt.x > visW + 10 || pt.y < -10 || pt.y > visH + 10 ) {
+				e.visible = false;
+				continue;
+			}
+			// no nieva bajo techo: si hay algo macizo encima del copo en su columna, se oculta
+			var fx0 = Math.floor(wx), fy0 = Math.floor(wy);
+			var key = fx0 * 8192 + fy0;
+			var top = roof.get(key);
+			if( top == null ) {
+				top = -1;
+				var zz = World.HEIGHT - 1;
+				while( zz >= 0 ) {
+					if( world.collidePoint(fx0 + 0.5, fy0 + 0.5, zz + 0.5) ) {
+						top = zz;
+						break;
+					}
+					zz--;
+				}
+				roof.set(key, top);
+			}
+			if( wz < top + 1 ) {
 				e.visible = false;
 				continue;
 			}

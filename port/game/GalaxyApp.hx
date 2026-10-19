@@ -103,6 +103,8 @@ class GalaxyApp extends hxd.App {
 	var dim : h2d.Bitmap;
 	/** velo del color del liquido con la camara dentro (fades del original) */
 	var liquidVeil : h2d.Bitmap;
+	/** nombre del bloque al que apuntas (con la mano vacia) */
+	var targetName : h2d.Text;
 	var screens = new Map<String, Screen>();
 	var current : Screen;
 	var currentName = "";
@@ -157,7 +159,7 @@ class GalaxyApp extends hxd.App {
 	var nBiome : Selector;
 	var nSize : Selector;
 	var nMode : Selector;
-	var palette : Palette;
+	public var palette : Palette;
 	var paletteOpen = false;
 
 	override function init() {
@@ -255,6 +257,9 @@ class GalaxyApp extends hxd.App {
 		msgText.textAlign = Center;
 		msgText.visible = false;
 		toast = Theme.text(s2d, "", 2.4, Theme.ACCENT, 0, 640);
+		targetName = Theme.text(s2d, "", 1.0, 0xD8D8D8, 0, 0);
+		targetName.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 1 };
+		targetName.visible = false;
 		toast.dropShadow = { dx : 2, dy : 2, color : 0, alpha : 0.9 };
 		toast.visible = false;
 
@@ -531,9 +536,9 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function buildOptions() : Screen {
-		var s = panelFor(860, 680, Lang.t("options.title"));
+		var s = panelFor(860, 704, Lang.t("options.title"));
 		var x = (W - 660) * 0.5;
-		var y = 110.;
+		var y = 114.;
 		var lang = new Selector(s, Lang.t("language"), Lang.LABELS, 660);
 		lang.index = Lang.cur;
 		var sens = new Slider(s, Lang.t("sens"), 0.2, 3.0, 0.1, 660);sens.decimals = 1;
@@ -550,17 +555,21 @@ class GalaxyApp extends hxd.App {
 		tk.index = Settings.turnKeys ? 1 : 0;
 		var help = new Selector(s, Lang.t("helptext"), [Lang.t("off"), Lang.t("on")], 660);
 		help.index = Settings.showHelp ? 1 : 0;
+		var pp = new Selector(s, Lang.t("placepreview"), [Lang.t("off"), Lang.t("on")], 660);
+		pp.index = Settings.placePreview ? 1 : 0;
+		var tn = new Selector(s, Lang.t("targetname"), [Lang.t("off"), Lang.t("on")], 660);
+		tn.index = Settings.targetName ? 1 : 0;
 		var vs = new Selector(s, Lang.t("vsync"), [Lang.t("off"), Lang.t("on")], 660);
 		vs.index = Settings.vsync ? 1 : 0;
 		var fpsNames = [for( v in Settings.FPS_STEPS ) v == 0 ? Lang.t("maxfps.none") : "" + v];
 		var mf = new Selector(s, Lang.t("maxfps"), fpsNames, 660);
 		mf.index = Std.int(Math.max(0, Settings.FPS_STEPS.indexOf(Settings.maxFps)));
 		var back = new Button(s, Lang.t("back"), 660);
-		// 10 filas: un poco mas juntas que antes para que quepan
-		var step = 50;
-		var rows : Array<Ui.Widget> = [lang, sens, fov, vol, full, vs, mf, inv, tk, help];
+		// 12 filas: mas juntas para que quepan en 720 de alto
+		var step = 42;
+		var rows : Array<Ui.Widget> = [lang, sens, fov, vol, full, vs, mf, inv, tk, help, pp, tn];
 		for( i in 0...rows.length ) s.add(rows[i], x, y - 10 + i * step);
-		s.add(back, x, y - 10 + rows.length * step + 20);
+		s.add(back, x, y - 10 + rows.length * step + 8);
 		var origin = state == Paused ? "pause" : "main";
 		lang.onChange = function(i) {
 			Settings.lang = Lang.CODES[i];
@@ -578,6 +587,8 @@ class GalaxyApp extends hxd.App {
 		inv.onChange = function(i) Settings.invertY = i == 1;
 		tk.onChange = function(i) Settings.turnKeys = i == 1;
 		help.onChange = function(i) Settings.showHelp = i == 1;
+		pp.onChange = function(i) Settings.placePreview = i == 1;
+		tn.onChange = function(i) Settings.targetName = i == 1;
 		vs.onChange = function(i) {
 			Settings.vsync = i == 1;
 			applyVsync();
@@ -663,7 +674,7 @@ class GalaxyApp extends hxd.App {
 		screens = new Map();
 	}
 
-	/** nave nodriza (de momento solo para verla: --script con "mothership") */
+	/** nave nodriza: la nave del robot comerciante (al acoplarse desde el mapa; o --script con "mothership") */
 	public function startMothership() {
 		if( game == null || game.hangar != null ) return;
 		var cur = game.toInfo();
@@ -744,8 +755,11 @@ class GalaxyApp extends hxd.App {
 			hangarReturn.credits = m.credits;
 			hangarReturn.market = m.market;
 		}
+		if( mapAfterMother ) mapAfterLoad = true;
+		mapAfterMother = false;
 		backFromHangar();
 	}
+	var mapAfterLoad = false;
 
 	function backFromHangar() {
 		var info = hangarReturn;
@@ -763,11 +777,13 @@ class GalaxyApp extends hxd.App {
 		for( p in uni.planets ) visited.push(p.id);
 		Explorer.shipBytes = Hangar.currentShip(game.info);
 		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, visited, uni.pos);
+		Explorer.robotStart = uni.robot;
 		explorer = new Explorer(s2d, infos, game.ship.captureFrames(engine, s3d));
 		s2d.under(explorer);
 		explorer.onExit = closeExplorer;
 		explorer.onLand = landOnPlanet;
 		explorer.onPos = function( pos ) universe().pos = pos;
+		explorer.onDock = dockRobot;
 		state = Exploring;
 		dim.visible = false;
 		captureMouse(false);
@@ -810,11 +826,25 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function closeExplorer() {
+		var rp = explorer.robotPos();
+		if( rp != null ) universe().robot = rp;
 		explorer.dispose();
 		explorer = null;
 		dim.visible = true;
 		resume();
 	}
+
+	/** acoplarse al robot comerciante desde el mapa: se entra en su nave (la nodriza, con la tienda y tu nave aparcada) */
+	function dockRobot() {
+		dockShip = explorer.shipPos();
+		closeExplorer();
+		// al salir de su nave se vuelve al mapa, junto al robot (no al planeta donde se abrio el mapa)
+		if( dockShip != null ) universe().pos = [0, 0, 0];
+		mapAfterMother = true;
+		startMothership();
+	}
+	var dockShip : { x : Float, y : Float };
+	var mapAfterMother = false;
 
 	function openComputer() {
 		if( state != Playing ) return;
@@ -935,6 +965,13 @@ class GalaxyApp extends hxd.App {
 		if( loadInfo.px < 0 && loadInfo.hangar != true && loadInfo.mothership != true ) {
 			// partida nueva: se crea el archivo enseguida para que aparezca en la lista
 			saveGame(false);
+		}
+		if( mapAfterLoad ) {
+			// vuelta de la nave del robot: el mapa se abre otra vez donde te acoplaste
+			mapAfterLoad = false;
+			Explorer.shipStart = dockShip;
+			dockShip = null;
+			startExplorer();
 		}
 	}
 
@@ -1376,6 +1413,20 @@ class GalaxyApp extends hxd.App {
 			toastTime -= dt;
 			if( toastTime < 0.6 ) toast.alpha = Math.max(0, toastTime / 0.6);
 			if( toastTime <= 0 ) toast.visible = false;
+		}
+
+		// nombre del bloque apuntado
+		var tn = "";
+		if( Settings.targetName && state == Playing && game != null && game.select != null && game.inv.getCurrentBlock() == null ) {
+			var n = game.select.b.getName();
+			if( n != null && n != "-" && n.charAt(0) != "#" ) tn = n;
+		}
+		targetName.visible = tn != "";
+		if( tn != "" && targetName.text != tn ) {
+			targetName.text = tn;
+			// pequeno, abajo a la derecha (que no tape el centro de la pantalla)
+			targetName.x = Std.int(W - 96 - targetName.textWidth);
+			targetName.y = H - 72;
 		}
 
 		// nieve (solo bioma de invierno): copos fijos en el mundo

@@ -1,0 +1,15 @@
+# cascada del original con la superficie inclinada en cada paso (Fall..Fall4)
+wait 3
+planet
+wait 30
+fillt 55 55 79 73 10 10 BRock
+fillt 55 55 79 73 11 20 none
+tp 60.5 64.5 top+2 0 -0.4
+wait 5
+setp 67 64 top+2 BCascadeSource
+wait 300
+count BCascadeFall 55 55 80 80
+count BCascadeFall2 55 55 80 80
+count BCascadeFall4 55 55 80 80
+shot spr1
+quit

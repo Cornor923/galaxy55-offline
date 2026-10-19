@@ -56,6 +56,8 @@ class Lang {
 		"hangar.exit_ship_no_save" => ["La nave no es válida: los cambios no se guardarán. ¿Salir?", "The ship is not valid: changes will not be saved. Leave?", "Le vaisseau n'est pas valide : les modifications ne seront pas sauvegardées. Quitter ?"],
 		"hangar.help" => ["HANGAR - rompe y coloca bloques para rehacer tu nave. Sal por las casillas de teletransporte para guardar.", "HANGAR - break/place blocks to rebuild your ship. Leave through the teleporter tiles to save.", "HANGAR - retire et pose des kubes pour refaire ton vaisseau. Sors par les téléporteurs pour sauvegarder."],
 		"helptext" => ["Ayuda en pantalla", "On-screen help", "Aide à l'écran"],
+		"placepreview" => ["Sombra del bloque al poner", "Shadow of the block to place", "Ombre du bloc à poser"],
+		"targetname" => ["Nombre del bloque apuntado", "Name of the targeted block", "Nom du bloc visé"],
 		"vsync" => ["Sincronización vertical (VSync)", "Vertical sync (VSync)", "Synchronisation verticale (VSync)"],
 		"maxfps" => ["Límite de FPS", "FPS limit", "Limite d'images par seconde"],
 		"maxfps.none" => ["Sin límite", "Unlimited", "Illimité"],
@@ -119,6 +121,8 @@ class Lang {
 		"exp.system" => ["Sistema", "System", "Système"],
 		"exp.sector" => ["Sector", "Sector", "Secteur"],
 		"exp.land" => ["Aterrizar", "Land", "Atterrir"],
+		"exp.robot" => ["Robot comerciante", "Merchant robot", "Robot marchand"],
+		"exp.dock" => ["Acoplarse", "Dock", "S'amarrer"],
 		"exp.scan" => ["Escanear", "Scan", "Scanner cette planète"],
 	];
 

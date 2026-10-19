@@ -11,6 +11,10 @@ class Settings {
 	public static var turnKeys = false;
 	/** ayuda de controles en pantalla (arriba a la izquierda) */
 	public static var showHelp = true;
+	/** sombra del bloque de la mano en la celda donde se pondra */
+	public static var placePreview = true;
+	/** nombre del bloque apuntado, pequeno en una esquina */
+	public static var targetName = true;
 	/** sincronizacion vertical (sin ella los FPS solo los limita maxFps) */
 	public static var vsync = true;
 	/** limite de fotogramas por segundo (0 = sin limite) */
@@ -45,6 +49,8 @@ class Settings {
 			if( o.invertY != null ) invertY = o.invertY;
 			if( o.turnKeys != null ) turnKeys = o.turnKeys;
 			if( o.showHelp != null ) showHelp = o.showHelp;
+			if( o.placePreview != null ) placePreview = o.placePreview;
+			if( o.targetName != null ) targetName = o.targetName;
 			if( o.vsync != null ) vsync = o.vsync;
 			if( o.maxFps != null ) maxFps = Std.int(o.maxFps);
 		} catch( e : Dynamic ) {}
@@ -52,7 +58,7 @@ class Settings {
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp, vsync : vsync, maxFps : maxFps };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp, placePreview : placePreview, targetName : targetName, vsync : vsync, maxFps : maxFps };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }

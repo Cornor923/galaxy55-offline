@@ -2,6 +2,23 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## Prochaine version
+- **L'eau s'écoule** (le `Process.hx` d'origine) : la mer remplit ce que tu creuses à côté d'elle jusqu'à son niveau ; les
+  cascades et la lave tombent, s'étendent et disparaissent sans source ; l'herbe se couvre et se découvre ; les blocs
+  accrochés et les détails cassent quand on retire leur support. Les cascades et l'eau que tu poses baissent à chaque pas,
+  avec une surface inclinée (ajout du port).
+- **Robot marchand sur la carte stellaire :** il voyage entre les systèmes du secteur ; clique dessus et il s'arrête pour
+  t'attendre, et en t'amarrant tu entres dans son vaisseau (le vaisseau mère), avec la boutique. En sortant, tu reviens sur la carte.
+- Les **flèches GPS** d'origine sur la carte : elles pointent vers les planètes visitées (et leurs systèmes) et vers le robot (en orange).
+- Options : ombre du bloc que tu vas poser et nom du bloc visé (petit, en bas à droite) ; les deux peuvent être désactivés.
+- Mode créatif : les quatre eaux (normale, sombre, acide et d'hiver) sont dans la palette.
+- Corrections de **Cornor923** (merci !) : la roche mère (couche 0) est dessinée et le menu principal se colle aux bords des fenêtres larges.
+- Le bloc tenu en main ne tremble plus en marchant.
+- Corrections signalées par Sekhmet (merci !) : raccourcis clavier (Tab creuse et 1-0 sont les 10 cases), on peut poser des blocs
+  sous l'eau, il ne neige plus sous un toit ni dans les grottes, la glace ne laisse plus de bloc en la cassant, ombre du bloc à
+  poser, nom du bloc visé, et le congélateur gèle de nouveau l'eau et la lave proches.
+- Linux : les zips utilisent `/` dans les chemins (ils extrayaient des fichiers avec `\`) ; étapes Linux de Sekhmet dans le `LEEME` du zip.
+
 ## v0.3.1 — pre-release
 - Options : synchronisation verticale (VSync) et limite d'images par seconde (30, 60, 120, 144, 240 ou illimité).
 - Corrections de **Cornor923** (merci !) : le voile des liquides et les fonds des menus couvrent les fenêtres plus larges
