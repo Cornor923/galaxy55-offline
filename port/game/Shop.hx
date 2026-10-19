@@ -63,7 +63,7 @@ class Shop extends h2d.Object {
 		close.y = py + h - 52;
 		var cg = new h2d.Graphics(close);
 		Theme.rect(cg, 0, 0, 160, 36, 0xFFFFFF, 0.08);
-		Theme.text(close, Lang.t("shop.close"), 1.8, Theme.TEXT, 30, 6);
+		Theme.center(Theme.text(close, Lang.t("shop.close"), 1.8, Theme.TEXT), 160, 36);
 		close.onClick = function(_) if( onClose != null ) onClose();
 		left = new h2d.Object(this);
 		left.x = px + 24;

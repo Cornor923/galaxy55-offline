@@ -26,6 +26,12 @@ class Theme {
 		return t;
 	}
 
+	/** centra un texto, medido con su escala, en una caja de w x h que empieza en el 0,0 de su padre */
+	public static function center( t : h2d.Text, w : Float, h : Float ) {
+		t.x = Std.int((w - t.textWidth * t.scaleX) * 0.5);
+		t.y = Std.int((h - t.textHeight * t.scaleY) * 0.5);
+	}
+
 	public static function rect( g : h2d.Graphics, x : Float, y : Float, w : Float, h : Float, color : Int, alpha : Float = 1.0 ) {
 		g.beginFill(color, alpha);
 		g.drawRect(x, y, w, h);
