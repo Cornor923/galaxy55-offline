@@ -4,7 +4,9 @@ import Block;
 /**
  * Process.hx del original: lo que pasa en el mundo despues de poner o quitar un bloque.
  * - el agua del mar (BTWater) inunda los huecos que se abren a su lado, hacia los lados y hacia abajo, y hacia arriba solo
- *   por debajo del nivel del mar (updateFlood, cada 0,4 s);
+ *   por debajo del nivel del mar (updateFlood, cada 0,4 s): llena todo, sin capas, como el original;
+ * - el agua puesta por el jugador (anadido del port) se extiende como la cascada: cae y da 4 pasos a los lados, cada uno
+ *   mas bajo (nivel en World.waterLvl: sin entrada = mar, 9 = puesta, 1..4 = pasos), y se seca sin fuente;
  * - los liquidos con BFPropagate (cascada, lava) caen y se extienden con su bloque de "flujo"; si pierden la fuente,
  *   desaparecen (updatePropagate, cada 0,1 s con un retraso de 2 a 4 pasos);
  * - la hierba se cubre al quedar al aire (covered) y se descubre al taparla (uncover);
@@ -68,8 +70,15 @@ class WorldProcess {
 		flooding.push(z);
 	}
 
+	/** nivel del agua puesta por el jugador (World.waterLvl) */
+	public static inline var PLACED = 9;
+	static inline var STEPS = 4;
+
+	inline function isWater( b : Block ) return b != null && b.type == BTWater;
+
 	function updateFlood() {
 		if( flooding.length == 0 ) return;
+		var wlevel = waterLevel;
 		var flood = flooding;
 		flooding = [];
 		var i = 0;
@@ -78,12 +87,92 @@ class WorldProcess {
 			i += 3;
 			var b = get(x, y, z);
 			if( b == null || b.type != BTWater ) continue;
+			// el agua puesta por el jugador no inunda: se extiende como la cascada
+			if( world.waterLevelAt(x, y, z) != 0 ) {
+				pushPlaced(x, y, z, b);
+				continue;
+			}
 			this.flood(real(x - 1), y, z, b);
 			this.flood(real(x + 1), y, z, b);
 			this.flood(x, real(y - 1), z, b);
 			this.flood(x, real(y + 1), z, b);
-			if( z < waterLevel ) this.flood(x, y, z + 1, b);
+			if( z < wlevel ) this.flood(x, y, z + 1, b);
 			while( z > 1 && this.flood(x, y, --z, b) ) {
+			}
+		}
+	}
+
+	function flood( x : Int, y : Int, z : Int, b : Block ) {
+		if( z < 1 || z >= World.HEIGHT - 1 ) return false;
+		var b2 = get(x, y, z);
+		if( b2 == b ) {
+			// agua puesta junto al mar: el mar la llena
+			if( world.waterLevelAt(x, y, z) == 0 ) return false;
+			world.setWater(real(x), real(y), z, b, 0);
+			pushFlood(x, y, z);
+			return true;
+		}
+		if( canPropagate(b, b2) ) {
+			if( b2 != null ) breakFn(real(x), real(y), z, b2);
+			set(x, y, z, null, b);
+			pushFlood(x, y, z);
+			return true;
+		}
+		return false;
+	}
+
+	inline function pushPlaced( x : Int, y : Int, z : Int, b : Block ) {
+		propagate.push({ x : real(x), y : real(y), z : z, b : b, t : 2 + Std.random(3) });
+	}
+
+	function setWater( x : Int, y : Int, z : Int, b : Block, level : Int ) {
+		x = real(x);
+		y = real(y);
+		var old = get(x, y, z);
+		if( old != null && old != b ) breakFn(x, y, z, old);
+		world.setWater(x, y, z, b, level);
+		onSet(x, y, z, null, b);
+	}
+
+	/** paso para las reglas de la cascada: el mar y el agua puesta son la fuente (0); -1 si no es esa agua */
+	function placedStep( x : Int, y : Int, z : Int, b : Block ) : Int {
+		if( get(x, y, z) != b ) return -1;
+		var l = world.waterLevelAt(x, y, z);
+		return l == PLACED ? 0 : l;
+	}
+
+	/** updatePropagate del original aplicado al agua puesta: Fall..Fall4 son los pasos 1..4 (con BFFallCopy al caer) */
+	function updatePlaced( x : Int, y : Int, z : Int, b : Block ) {
+		var st = placedStep(x, y, z, b);
+		if( st < 0 ) return;
+		if( st > 0 ) {
+			// sin fuente: desaparece (arriba el mismo paso o el anterior; al lado el anterior)
+			var keep = false, a = placedStep(x, y, z + 1, b);
+			if( a >= 0 && (a == st || a == st - 1) ) keep = true;
+			for( d in DIRS ) if( !keep && placedStep(x + d[0], y + d[1], z, b) == st - 1 ) keep = true;
+			if( !keep ) {
+				set(x, y, z, b, null);
+				return;
+			}
+		}
+		// cae: la fuente suelta el paso 1, los pasos caen iguales
+		var under = get(x, y, z - 1);
+		if( z > 1 && canPropagate(b, under) && !isWater(under) ) {
+			setWater(x, y, z - 1, b, st == 0 ? 1 : st);
+			return;
+		}
+		if( isWater(under) ) return; // sobre agua no se extiende (como la cascada: under == b.propagate)
+		// a los lados, un paso mas (y mas bajo); reemplaza pasos peores
+		var next = st + 1;
+		if( next > STEPS ) return;
+		for( d in DIRS ) {
+			var tx = x + d[0], ty = y + d[1];
+			var t = get(tx, ty, z);
+			if( !isWater(t) && canPropagate(b, t) )
+				setWater(tx, ty, z, b, next);
+			else if( t == b ) {
+				var ts = placedStep(tx, ty, z, b);
+				if( ts > next ) setWater(tx, ty, z, b, next);
 			}
 		}
 	}
@@ -100,19 +189,6 @@ class WorldProcess {
 
 	public function canPropagate( b : Block, bt : Block ) {
 		return bt == null || (!bt.collide && !b.hasProp(PLiquid)) || (switch( bt.type ) { case BTModel, BTModel2Side, BTReduced: true; default: false; }) || (b.hasProp(PLava) && (bt.hasProp(PLiquid) && !bt.hasProp(PLava)));
-	}
-
-	function flood( x : Int, y : Int, z : Int, b : Block ) {
-		if( z < 1 || z >= World.HEIGHT - 1 ) return false;
-		var b2 = get(x, y, z);
-		if( b2 == b ) return false;
-		if( canPropagate(b, b2) ) {
-			if( b2 != null ) breakFn(real(x), real(y), z, b2);
-			set(x, y, z, null, b);
-			pushFlood(x, y, z);
-			return true;
-		}
-		return false;
 	}
 
 	/** Process.onSet: se llama despues de cambiar un bloque del planeta (no de la nave) */
@@ -149,7 +225,10 @@ class WorldProcess {
 			// descubrir el bloque de abajo
 			if( under != null && under.uncover != null && !b.isTransparent() )
 				set(x, y, z - 1, under, under.uncover);
-			if( b.propagate != null )
+			if( b.type == BTWater ) {
+				if( world.waterLevelAt(x, y, z) != 0 ) pushPlaced(x, y, z, b) else pushFlood(x, y, z);
+			}
+			else if( b.propagate != null )
 				propagate.push({ x : real(x), y : real(y), z : z, b : b, t : 2 + Std.random(3) });
 			switch( b.k ) {
 			case BFreezer:
@@ -207,6 +286,10 @@ class WorldProcess {
 			var x = p.x, y = p.y, z = p.z, b = p.b;
 			// sigue ahi?
 			if( get(x, y, z) != b ) continue;
+			if( b.type == BTWater ) {
+				updatePlaced(x, y, z, b);
+				continue;
+			}
 			// sin fuente: desaparece
 			var remove = b.hasFlag(BFNoDrop) || b.hasFlag(BFNoPick);
 			var other;

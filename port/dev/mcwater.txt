@@ -1,0 +1,24 @@
+# agua puesta: se extiende como la cascada (4 pasos, cada uno mas bajo); al quitarla se seca
+wait 3
+planet
+wait 30
+fillt 55 55 79 73 10 10 BRock
+fillt 55 55 79 73 11 20 none
+tp 58.5 64.5 top+3 0 -0.55
+wait 5
+setp 67 64 top+1 BWater
+wait 10
+count BWater 55 55 80 80
+wait 240
+count BWater 55 55 80 80
+wlvl 50 50 85 85
+shot mcw1
+setp 67 64 top+1 none
+wait 60
+wlvl 50 50 85 85
+wait 120
+wlvl 50 50 85 85
+wait 120
+count BWater 55 55 80 80
+shot mcw2
+quit

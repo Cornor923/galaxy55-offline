@@ -65,6 +65,11 @@ class World {
 	/** cambios del jugador sobre el terreno: celda -> indice global de bloque (0 = aire); se guardan con la partida */
 	public var editMap = new Map<Int, Int>();
 	var savedEdits : Array<Int>;
+	/**
+	 * Nivel del agua que fluye (anadido del port, como Minecraft): celda -> 1..7 (cada vez mas baja) u 8 (cayendo).
+	 * Sin entrada = fuente (llena, como todo el agua del original). Se guarda en editMap junto al bloque: indice | nivel << 16.
+	 */
+	public var waterLvl = new Map<Int, Int>();
 	var chunkMeshes : Array<Array<Int>>;
 	var curList : Array<Int>;
 	var immediate = new Array<Int>();
@@ -588,9 +593,11 @@ class World {
 		while( i + 1 < savedEdits.length ) {
 			var key = savedEdits[i], gi = savedEdits[i + 1];
 			i += 2;
-			var b = gi == 0 ? null : Block.all[gi];
+			var lvl = gi >> 16;
+			var b = (gi & 0xFFFF) == 0 ? null : Block.all[gi & 0xFFFF];
 			bytes.set(key, localId(b));
 			editMap.set(key, gi);
+			if( lvl > 0 ) waterLvl.set(key, lvl);
 		}
 		savedEdits = null;
 	}
@@ -603,6 +610,108 @@ class World {
 			out.push(editMap.get(k));
 		}
 		return out;
+	}
+
+	inline function cellKey( x : Int, y : Int, z : Int ) : Int {
+		return ((wrapC(x) + wrapC(y) * size) << ZBITS) | z;
+	}
+
+	/** nivel del agua de la celda: 0 = fuente (llena), 1..7 = fluye (cada vez mas baja), 8 = cae */
+	public function waterLevelAt( x : Int, y : Int, z : Int ) : Int {
+		if( z < 1 || z >= HEIGHT ) return 0;
+		var v = waterLvl.get(cellKey(x, y, z));
+		return v == null ? 0 : v;
+	}
+
+	/** pone agua con su nivel (0 = fuente) */
+	public function setWater( x : Int, y : Int, z : Int, b : Block, level : Int ) {
+		if( z < 1 || z >= HEIGHT - 1 || z >= SHIP_Z ) return;
+		var key = cellKey(x, y, z);
+		if( block(x, y, z) != b ) setBlock(x, y, z, b);
+		else {
+			// mismo bloque, otro nivel: solo hay que rehacer la malla
+			var n = size >> 4;
+			for( dy in -1...2 )
+				for( dx in -1...2 ) {
+					var id = (wrapC(x + dx) >> 4) + (wrapC(y + dy) >> 4) * n;
+					if( immediate.indexOf(id) < 0 ) immediate.push(id);
+				}
+		}
+		if( level > 0 ) waterLvl.set(key, level) else waterLvl.remove(key);
+		editMap.set(key, b.index | (level << 16));
+	}
+
+	/**
+	 * Superficie inclinada de los liquidos que fluyen (anadido del port, como en Minecraft): familia 1 = agua (BTWater;
+	 * el mar es fuente, el agua puesta fluye con niveles en waterLvl), familia 2 = cascada (fuente y Fall..Fall4).
+	 */
+	function liquidFam( id : Int ) : Int {
+		if( id == 0 ) return 0;
+		if( tagOf(id) == BTWater ) return 1;
+		var b = gen.blocks[id];
+		if( b == null ) return 0;
+		return switch( b.k ) { case BCascadeSource, BCascadeFall, BCascadeFall2, BCascadeFall3, BCascadeFall4: 2; default: 0; };
+	}
+
+	inline function isWaterId( id : Int ) : Bool {
+		return id != 0 && tagOf(id) == BTWater;
+	}
+
+	/** altura de la superficie de una celda (sin liquido encima): fuente 0.9 y cada paso 0.15 menos */
+	function liquidCellH( x : Int, y : Int, z : Int, fam : Int ) : Float {
+		var step = 0;
+		if( fam == 1 ) {
+			var v = waterLvl.get(cellKey(x, y, z));
+			step = v == null || v >= 8 ? 0 : v;
+		} else {
+			var b = gen.blocks[voxel(x, y, z)];
+			step = switch( b.k ) { case BCascadeFall: 1; case BCascadeFall2: 2; case BCascadeFall3: 3; case BCascadeFall4: 4; default: 0; };
+		}
+		return 0.9 - step * 0.15;
+	}
+
+	/** la celda se dibuja llena: con liquido igual encima, o agua del mar con un bloque encima (como el original) */
+	function liquidFull( x : Int, y : Int, z : Int, fam : Int ) : Bool {
+		var up = voxel(x, y, z + 1);
+		if( liquidFam(up) == fam ) return true;
+		return fam == 1 && up != 0 && !waterLvl.exists(cellKey(x, y, z));
+	}
+
+	/** altura de una esquina: media de las celdas de la familia que la tocan (1 si alguna tiene liquido encima) */
+	function liquidCorner( cx : Int, cy : Int, z : Int, fam : Int ) : Float {
+		var sum = 0., n = 0;
+		for( d in 0...4 ) {
+			var ix = cx - 1 + (d & 1), iy = cy - 1 + (d >> 1);
+			if( liquidFam(voxel(ix, iy, z)) != fam ) continue;
+			if( liquidFull(ix, iy, z, fam) ) return 1.;
+			sum += liquidCellH(ix, iy, z, fam);
+			n++;
+		}
+		return n == 0 ? 0.9 : sum / n;
+	}
+
+	/** caras de un liquido con la superficie inclinada; open dice que lados se ven */
+	function addLiquid( m : MeshBuf, b : Block, fam : Int, x : Int, y : Int, z : Int, open : Int -> Int -> Int -> Bool, su : Float, sd : Float, sx : Float, sy : Float, neg : Bool ) {
+		var fx = x, fy = y, fz = z;
+		var full = liquidFull(x, y, z, fam);
+		var h00 = fz + (full ? 1. : liquidCorner(x, y, z, fam)), h10 = fz + (full ? 1. : liquidCorner(x + 1, y, z, fam));
+		var h11 = fz + (full ? 1. : liquidCorner(x + 1, y + 1, z, fam)), h01 = fz + (full ? 1. : liquidCorner(x, y + 1, z, fam));
+		if( !full || open(x, y, z + 1) )
+			addQuadL(m, [fx, fy, h00, fx + 1, fy, h10, fx + 1, fy + 1, h11, fx, fy + 1, h01], b.tu, su, neg, 0, 0, 1, x, y, z);
+		if( open(x, y, z - 1) ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
+		if( open(x - 1, y, z) ) addQuadL(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, h00, fx, fy + 1, h01], b.tlr, sx, neg, -1, 0, 0, x, y, z);
+		if( open(x + 1, y, z) ) addQuadL(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, h11, fx + 1, fy, h10], b.tlr, sx, neg, 1, 0, 0, x, y, z);
+		if( open(x, y - 1, z) ) addQuadL(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, h10, fx, fy, h00], b.tlr, sy, neg, 0, -1, 0, x, y, z);
+		if( open(x, y + 1, z) ) addQuadL(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, h01, fx + 1, fy + 1, h11], b.tlr, sy, neg, 0, 1, 0, x, y, z);
+		if( full ) {
+			// llena junto a liquido mas bajo: la pared entre las dos alturas, si no queda un hueco
+			inline function lower( nx, ny ) return liquidFam(voxel(nx, ny, z)) == fam && !liquidFull(nx, ny, z, fam);
+			var c00 = fz + liquidCorner(x, y, z, fam), c10 = fz + liquidCorner(x + 1, y, z, fam), c11 = fz + liquidCorner(x + 1, y + 1, z, fam), c01 = fz + liquidCorner(x, y + 1, z, fam);
+			if( lower(x - 1, y) ) addQuadL(m, [fx, fy + 1, c01, fx, fy, c00, fx, fy, h00, fx, fy + 1, h01], b.tlr, sx, neg, -1, 0, 0, x, y, z);
+			if( lower(x + 1, y) ) addQuadL(m, [fx + 1, fy, c10, fx + 1, fy + 1, c11, fx + 1, fy + 1, h11, fx + 1, fy, h10], b.tlr, sx, neg, 1, 0, 0, x, y, z);
+			if( lower(x, y - 1) ) addQuadL(m, [fx, fy, c00, fx + 1, fy, c10, fx + 1, fy, h10, fx, fy, h00], b.tlr, sy, neg, 0, -1, 0, x, y, z);
+			if( lower(x, y + 1) ) addQuadL(m, [fx + 1, fy + 1, c11, fx, fy + 1, c01, fx, fy + 1, h01, fx + 1, fy + 1, h11], b.tlr, sy, neg, 0, 1, 0, x, y, z);
+		}
 	}
 
 	/** Cambia un bloque (null = aire). El trozo se rehace al momento; la luz y los vecinos, en los siguientes fotogramas. */
@@ -618,6 +727,7 @@ class World {
 		var key = ((x + y * size) << ZBITS) | z;
 		bytes.set(key, localId(b));
 		editMap.set(key, b == null ? 0 : b.index);
+		waterLvl.remove(key);
 		var n = size >> 4;
 		for( dy in -1...2 )
 			for( dx in -1...2 ) {
@@ -1082,15 +1192,10 @@ class World {
 					switch( b.type ) {
 					case BTWater:
 						// Builder.hx del original: cada cara contra un vecino que no es lleno ni agua (isTransparentNot(p, BTWater))
-						var top = voxel(x, y, z + 1) == 0;
-						var h = top ? fz + 0.9 : fz + 1;
-						if( top || waterOpen(x, y, z + 1) )
-							addQuadL(waterBuf, [fx, fy, h, fx + 1, fy, h, fx + 1, fy + 1, h, fx, fy + 1, h], b.tu, su, neg, 0, 0, 1, x, y, z);
-						if( waterOpen(x, y, z - 1) ) addQuadL(waterBuf, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
-						if( waterOpen(x - 1, y, z) ) addQuadL(waterBuf, [fx, fy + 1, fz, fx, fy, fz, fx, fy, h, fx, fy + 1, h], b.tlr, sx, neg, -1, 0, 0, x, y, z);
-						if( waterOpen(x + 1, y, z) ) addQuadL(waterBuf, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, h, fx + 1, fy, h], b.tlr, sx, neg, 1, 0, 0, x, y, z);
-						if( waterOpen(x, y - 1, z) ) addQuadL(waterBuf, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, h, fx, fy, h], b.tlr, sy, neg, 0, -1, 0, x, y, z);
-						if( waterOpen(x, y + 1, z) ) addQuadL(waterBuf, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, h, fx + 1, fy + 1, h], b.tlr, sy, neg, 0, 1, 0, x, y, z);
+						addLiquid(waterBuf, b, 1, x, y, z, waterOpen, su, sd, sx, sy, neg);
+					case BTAlpha if( liquidFam(id) == 2 ):
+						// cascada: cada paso de Fall..Fall4 un poco mas bajo, superficie inclinada
+						addLiquid(blendBuf, b, 2, x, y, z, openAlpha, su, sd, sx, sy, neg);
 					case BTFull, BTAlpha, BTTransp:
 						var m = b.type == BTFull ? solidBuf : (b.type == BTAlpha ? blendBuf : alphaBuf);
 						var al = b.type == BTAlpha;

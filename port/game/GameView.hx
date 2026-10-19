@@ -400,7 +400,6 @@ class GameView {
 		drops.update(this, tmod);
 		fx.update(this, realDt, tmod);
 		parts.update(tmod, s3d.camera, px, py);
-		hand.update(inv.getCurrentBlock(), s3d.camera, bobX, bobY);
 	}
 
 	/** solo pruebas: recorre el rayo de la mira y cuenta la primera celda ocupada y por que se descarta */
@@ -1006,7 +1005,9 @@ class GameView {
 		// si era el ultimo bloque, hay que soltar el boton antes de seguir (evita excavar sin querer)
 		if( inv.getCurrentBlock() == null ) actionWait = true;
 		if( Dev.trace ) Sys.println("place en " + x + "," + y + "," + z + " sobre " + s.b.k + "@" + s.x + "," + s.y + "," + s.z + " antes=" + world.block(x, y, z));
-		world.setBlock(x, y, z, put);
+		// el agua puesta por el jugador se extiende como la cascada (si no, inundaria como el mar)
+		if( put.type == BTWater && !inShip && hangar == null ) world.setWater(x, y, z, put, WorldProcess.PLACED);
+		else world.setBlock(x, y, z, put);
 		if( !inShip && hangar == null ) process.onSet(x, y, z, here, put);
 		if( inShip ) ship.craft(x, y, z, put, this);
 		select = null;
@@ -1159,5 +1160,7 @@ class GameView {
 		updateLiquidView(ez);
 		for( r in robots ) r.update(1 / 60, px, py, pz);
 		world.updateWrap(px, py);
+		// la mano va pegada a la camara de este fotograma (antes usaba la del anterior y temblaba al andar)
+		hand.update(inv.getCurrentBlock(), c, bobX, bobY);
 	}
 }

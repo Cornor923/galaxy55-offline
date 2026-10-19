@@ -156,7 +156,7 @@ class GalaxyApp extends hxd.App {
 	var nBiome : Selector;
 	var nSize : Selector;
 	var nMode : Selector;
-	var palette : Palette;
+	public var palette : Palette;
 	var paletteOpen = false;
 
 	override function init() {

@@ -66,7 +66,7 @@ class Dev {
 					var l = a[0] == "tpl";
 					g.px = f(a[1]) + (l ? sdx : 0);
 					g.py = f(a[2]) + (l ? sdy : 0);
-					g.pz = a[3] == "top" ? w.topCollide(Std.int(g.px), Std.int(g.py)) + 0.01 : f(a[3]) + (l ? sz : 0);
+					g.pz = StringTools.startsWith(a[3], "top") ? w.topCollide(Std.int(g.px), Std.int(g.py)) + 0.01 + (a[3].length > 3 ? Std.parseInt(a[3].substr(3)) : 0) : f(a[3]) + (l ? sz : 0);
 					if( a.length > 5 ) {
 						g.yaw = f(a[4]);
 						g.pitch = f(a[5]);
@@ -100,7 +100,7 @@ class Dev {
 						if( old != null ) g.breakBlock(x, y, z, old);
 					} else {
 						var nb = a[4] == "none" ? null : bk(a[4]);
-						w.setBlock(x, y, z, nb);
+						if( nb != null && nb.type == BTWater ) w.setWater(x, y, z, nb, WorldProcess.PLACED) else w.setBlock(x, y, z, nb);
 						g.process.onSet(x, y, z, old, nb);
 					}
 					Sys.println(a[0] + " " + x + "," + y + "," + z + " antes=" + (old == null ? "aire" : "" + old.k));
@@ -142,6 +142,20 @@ class Dev {
 							z--;
 						}
 					}
+				case "shorelvl":
+					// shorelvl N: nivel del agua en la zanja, columna a columna (m = mar, p = puesta, 1..4 = pasos)
+					var out = [];
+					for( i in 1...Std.parseInt(a[1]) + 1 ) {
+						var col = [];
+						for( z in w.waterLevel() - 4...w.waterLevel() + 1 ) {
+							var b = w.block(shoreX + i, shoreY, z);
+							if( b == null || b.type != BTWater ) { col.push("."); continue; }
+							var l = w.waterLevelAt(shoreX + i, shoreY, z);
+							col.push(l == 0 ? "m" : (l == WorldProcess.PLACED ? "p" : "" + l));
+						}
+						out.push(col.join(""));
+					}
+					Sys.println("zanja (de abajo arriba): " + out.join(" | "));
 				case "shorecount":
 					var n = 0;
 					for( i in 1...Std.parseInt(a[1]) + 1 )
@@ -150,6 +164,43 @@ class Dev {
 							if( b != null && b.type == BTWater ) n++;
 						}
 					Sys.println("agua en la zanja: " + n);
+				case "wlvl":
+					// wlvl X1 Y1 X2 Y2: agua por altura y nivel (0 = fuente, 8 = cae)
+					var h = new Map<String, Int>();
+					for( x in Std.parseInt(a[1])...Std.parseInt(a[3]) + 1 )
+						for( y in Std.parseInt(a[2])...Std.parseInt(a[4]) + 1 )
+							for( z in 1...World.HEIGHT ) {
+								var b = w.block(x, y, z);
+								if( b == null || b.type != BTWater ) continue;
+								var k = "z" + z + "/n" + w.waterLevelAt(x, y, z);
+								var c = h.get(k);
+								h.set(k, c == null ? 1 : c + 1);
+							}
+					var ks = [for( k in h.keys() ) k];
+					ks.sort(Reflect.compare);
+					Sys.println("wlvl " + [for( k in ks ) k + "=" + h.get(k)].join(" "));
+				case "palette":
+					@:privateAccess app.openPalette();
+					if( a.length > 1 && app.palette != null ) for( i in 0...Std.parseInt(a[1]) ) app.palette.scroll(1);
+				case "row":
+					// row X1 X2 Y Z: nivel del agua en una fila (m = mar, p = puesta, 1..4 = pasos, . = sin agua)
+					var y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), out = [];
+					for( x in Std.parseInt(a[1])...Std.parseInt(a[2]) + 1 ) {
+						var b = w.block(x, y, z);
+						if( b == null || b.type != BTWater ) { out.push("."); continue; }
+						var l = w.waterLevelAt(x, y, z);
+						out.push(l == 0 ? "m" : (l == WorldProcess.PLACED ? "p" : "" + l));
+					}
+					Sys.println("fila z=" + z + ": " + out.join(""));
+				case "filla":
+					// filla x1 y1 x2 y2 z1 z2 BLOQUE: rellena un prisma con alturas absolutas
+					var bb = a[7] == "none" ? null : bk(a[7]);
+					for( x in Std.parseInt(a[1])...Std.parseInt(a[3]) + 1 )
+						for( y in Std.parseInt(a[2])...Std.parseInt(a[4]) + 1 )
+							for( z in Std.parseInt(a[5])...Std.parseInt(a[6]) + 1 )
+								w.setBlock(x, y, z, bb);
+				case "top":
+					Sys.println("top " + a[1] + "," + a[2] + " = " + w.topCollide(Std.parseInt(a[1]), Std.parseInt(a[2])));
 				case "count":
 					// count BLOQUE X1 Y1 X2 Y2: cuantos hay en esa zona (todas las alturas)
 					var kb = bk(a[1]), n = 0;
@@ -159,8 +210,13 @@ class Dev {
 								if( w.block(x, y, z) == kb ) n++;
 					Sys.println("count " + a[1] + " = " + n);
 				case "fillt":
-					// fillt x1 y1 x2 y2 dz1 dz2 BLOQUE: rellena un prisma; dz es la altura sobre el suelo de (x1, y1)
-					var base = w.topCollide(Std.parseInt(a[1]), Std.parseInt(a[2]));
+					// fillt x1 y1 x2 y2 dz1 dz2 BLOQUE: rellena un prisma; dz es la altura sobre el punto mas alto de la zona
+					var base = 0;
+					for( x in Std.parseInt(a[1])...Std.parseInt(a[3]) + 1 )
+						for( y in Std.parseInt(a[2])...Std.parseInt(a[4]) + 1 ) {
+							var t = w.topCollide(x, y);
+							if( t > base ) base = t;
+						}
 					var bb = a[7] == "none" ? null : bk(a[7]);
 					for( x in Std.parseInt(a[1])...Std.parseInt(a[3]) + 1 )
 						for( y in Std.parseInt(a[2])...Std.parseInt(a[4]) + 1 )

@@ -1,0 +1,9 @@
+# roca madre (capa 0) vista desde un pozo hasta el fondo
+wait 3
+planet
+wait 30
+filla 60 60 68 68 1 100 none
+tp 64.5 64.5 6 0 -1.4
+wait 20
+shot bed1
+quit

@@ -1,0 +1,20 @@
+# mar en capas: un estanque de mar y una zanja que sale de el; cada bloque de la zanja lleva menos agua
+wait 3
+planet
+wait 30
+filla 50 50 80 78 70 72 BRock
+filla 50 50 80 78 73 90 none
+filla 50 50 58 78 71 72 BWater
+tp 64.5 67.5 74 -2.3 -0.3
+wait 5
+breakp 59 64 72
+breakp 60 64 72
+breakp 61 64 72
+breakp 62 64 72
+breakp 63 64 72
+breakp 64 64 72
+breakp 65 64 72
+wait 300
+row 56 66 64 72
+shot sea1
+quit
