@@ -674,7 +674,7 @@ class GalaxyApp extends hxd.App {
 		screens = new Map();
 	}
 
-	/** nave nodriza (de momento solo para verla: --script con "mothership") */
+	/** nave nodriza: la nave del robot comerciante (al acoplarse desde el mapa; o --script con "mothership") */
 	public function startMothership() {
 		if( game == null || game.hangar != null ) return;
 		var cur = game.toInfo();
@@ -755,8 +755,11 @@ class GalaxyApp extends hxd.App {
 			hangarReturn.credits = m.credits;
 			hangarReturn.market = m.market;
 		}
+		if( mapAfterMother ) mapAfterLoad = true;
+		mapAfterMother = false;
 		backFromHangar();
 	}
+	var mapAfterLoad = false;
 
 	function backFromHangar() {
 		var info = hangarReturn;
@@ -774,11 +777,13 @@ class GalaxyApp extends hxd.App {
 		for( p in uni.planets ) visited.push(p.id);
 		Explorer.shipBytes = Hangar.currentShip(game.info);
 		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, visited, uni.pos);
+		Explorer.robotStart = uni.robot;
 		explorer = new Explorer(s2d, infos, game.ship.captureFrames(engine, s3d));
 		s2d.under(explorer);
 		explorer.onExit = closeExplorer;
 		explorer.onLand = landOnPlanet;
 		explorer.onPos = function( pos ) universe().pos = pos;
+		explorer.onDock = dockRobot;
 		state = Exploring;
 		dim.visible = false;
 		captureMouse(false);
@@ -821,11 +826,25 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function closeExplorer() {
+		var rp = explorer.robotPos();
+		if( rp != null ) universe().robot = rp;
 		explorer.dispose();
 		explorer = null;
 		dim.visible = true;
 		resume();
 	}
+
+	/** acoplarse al robot comerciante desde el mapa: se entra en su nave (la nodriza, con la tienda y tu nave aparcada) */
+	function dockRobot() {
+		dockShip = explorer.shipPos();
+		closeExplorer();
+		// al salir de su nave se vuelve al mapa, junto al robot (no al planeta donde se abrio el mapa)
+		if( dockShip != null ) universe().pos = [0, 0, 0];
+		mapAfterMother = true;
+		startMothership();
+	}
+	var dockShip : { x : Float, y : Float };
+	var mapAfterMother = false;
 
 	function openComputer() {
 		if( state != Playing ) return;
@@ -946,6 +965,13 @@ class GalaxyApp extends hxd.App {
 		if( loadInfo.px < 0 && loadInfo.hangar != true && loadInfo.mothership != true ) {
 			// partida nueva: se crea el archivo enseguida para que aparezca en la lista
 			saveGame(false);
+		}
+		if( mapAfterLoad ) {
+			// vuelta de la nave del robot: el mapa se abre otra vez donde te acoplaste
+			mapAfterLoad = false;
+			Explorer.shipStart = dockShip;
+			dockShip = null;
+			startExplorer();
 		}
 	}
 

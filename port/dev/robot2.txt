@@ -1,0 +1,22 @@
+# acoplarse al robot y volver: al salir de su nave se vuelve al mapa, junto al robot
+wait 3
+ship
+wait 10
+explore
+wait 200
+expgo 2400 1000
+wait 400
+exprinfo
+exprobot
+wait 700
+exprinfo
+expbutton
+wait 400
+print pos
+hangarexit
+wait 1200
+print pos
+wait 400
+exprinfo
+shot rob4
+quit

@@ -99,6 +99,12 @@ class Explorer extends h2d.Object {
 	public dynamic function onLand( p : ExpPlanet, s : ExpSystem ) {}
 	/** la nave ha cambiado de sitio en el mapa: [0, x, y] sector, [1, sistema], [2, planeta] (para guardarlo) */
 	public dynamic function onPos( pos : Array<Int> ) {}
+	/** acoplarse al robot comerciante (anadido del port): se entra en su nave, con la tienda */
+	public dynamic function onDock() {}
+	/** posicion guardada del robot comerciante (la pone el juego antes de abrir el mapa; null = en un sistema al azar) */
+	public static var robotStart : { x : Float, y : Float } = null;
+	/** al volver de la nave del robot: la nave aparece donde se acoplo (en el sector) */
+	public static var shipStart : { x : Float, y : Float } = null;
 
 	var content : h2d.Object;
 	var bgBmp : h2d.Bitmap;
@@ -121,6 +127,11 @@ class Explorer extends h2d.Object {
 	var gpsLayer : h2d.Object;
 	var gpsView : View;
 	var gpsCount = -1;
+	/** robot comerciante (anadido del port): una nave que viaja despacio entre los sistemas abiertos del sector; al pulsarla
+	    se para y te espera, y al llegar a su lado te puedes acoplar */
+	var robot : Spot;
+	var robotWait = 0.;
+	var robotStopped = false;
 	var cursor : h2d.Graphics;
 	var cursorE = new ExpEntity();
 	var cursorAlpha = 1.;
@@ -197,6 +208,7 @@ class Explorer extends h2d.Object {
 		buildLayers(sector);
 		worldSector = new h2d.Object(content);
 		for( si in infos.systems ) addSystem(si);
+		addRobot();
 
 		// nave y cursor
 		shipWorld = new h2d.Object(content);
@@ -292,6 +304,11 @@ class Explorer extends h2d.Object {
 		default:
 			ship.x = sector.room.center.x;
 			ship.y = sector.room.center.y;
+		}
+		if( shipStart != null ) {
+			ship.x = shipStart.x;
+			ship.y = shipStart.y;
+			shipStart = null;
 		}
 		sector.viewX = ship.x;
 		sector.viewY = ship.y;
@@ -417,6 +434,89 @@ class Explorer extends h2d.Object {
 		var t = Theme.text(parent, str, scale, col, 0, 0);
 		t.dropShadow = { dx : 1, dy : 1, color : 0x0D1118, alpha : 1 };
 		return t;
+	}
+
+	// ---------------------------------------------------------------- robot comerciante
+
+	function openSystems() return [for( sp in sectorSpots ) if( sp.system != null && sp.system.status == SOpen ) sp];
+
+	function addRobot() {
+		var open = openSystems();
+		if( open.length == 0 ) return;
+		robot = new Spot();
+		robot.half = 20;
+		robot.e.speed = 0.08;
+		var obj = new h2d.Object(worldSector);
+		robot.obj = obj;
+		var g = new h2d.Graphics(obj);
+		g.lineStyle(1, 0x7A3A10, 0.9);
+		g.beginFill(0xFFA040, 1);
+		g.moveTo(-10, -7);
+		g.lineTo(11, 0);
+		g.lineTo(-10, 7);
+		g.lineTo(-6, 0);
+		g.lineTo(-10, -7);
+		g.endFill();
+		g.filter = new h2d.filter.Glow(0xFFA040, 0.5, 3, 1, 1, false);
+		robot.e.alpha = 1;
+		var name = label(obj, Lang.t("exp.robot"), 1.0, 0xFFC890);
+		name.y = 12;
+		name.x = -Std.int(name.textWidth * name.scaleX * 0.5);
+		robotGfx = g;
+		if( robotStart != null ) {
+			robot.e.x = robotStart.x;
+			robot.e.y = robotStart.y;
+		} else {
+			var sp = open[Std.random(open.length)];
+			robot.e.x = sp.e.x + 36;
+			robot.e.y = sp.e.y - 40;
+		}
+		robotWait = 10;
+	}
+	var robotGfx : h2d.Graphics;
+
+	/** donde esta el robot (para guardarlo) */
+	public function robotPos() return robot == null ? null : { x : robot.e.x, y : robot.e.y };
+	/** donde esta la nave en el sector (null dentro de un sistema) */
+	public function shipPos() return inSolar ? null : { x : ship.x, y : ship.y };
+
+	/** viaja de un sistema abierto a otro y se para un rato en cada uno; parado si lo estas siguiendo */
+	function updateRobot( tmod : Float, dt : Float ) {
+		if( robot == null ) return;
+		var e = robot.e;
+		if( robotStopped ) {
+			e.target = null;
+			e.onArrive = null;
+		} else if( e.target == null ) {
+			robotWait -= dt;
+			if( robotWait <= 0 ) {
+				var open = openSystems();
+				var choices = [for( sp in open ) if( Math.abs(sp.e.x - e.x) + Math.abs(sp.e.y - e.y) > 80 ) sp];
+				if( choices.length == 0 ) choices = open;
+				var sp = choices[Std.random(choices.length)];
+				e.target = { x : sp.e.x + 36, y : sp.e.y - 40 };
+				e.onArriveDist = 0;
+				e.onArrive = function() robotWait = 6 + Math.random() * 8;
+			}
+		}
+		e.update(tmod);
+		if( e.getScreenSpeed() > 0.05 ) e.rotation = e.getAngleRad() * 180 / Math.PI;
+		if( robotGfx != null ) robotGfx.rotation = e.rotation * Math.PI / 180;
+	}
+
+	/** pruebas: pulsar el robot y saber donde esta */
+	public function devClickRobot() if( robot != null && !inSolar ) moveShip(robot);
+	public function devRobotInfo() return robot == null ? "sin robot" : "robot en " + Std.int(robot.e.x) + "," + Std.int(robot.e.y) + " parado=" + robotStopped + " nave=" + Std.int(ship.x) + "," + Std.int(ship.y) + " ventana=" + (win != null);
+
+	/** boton Acoplarse de la ventana del robot */
+	function dockRobot() {
+		if( locked ) return;
+		closeWindow();
+		locked = true;
+		serverLock = true;
+		stopShip();
+		loading(true);
+		tw.delay(800, function() onDock());
 	}
 
 	// ---------------------------------------------------------------- sector
@@ -1137,6 +1237,19 @@ class Explorer extends h2d.Object {
 	function moveShip( ?sp : Spot, ?pt : { x : Float, y : Float } ) {
 		stopShip();
 		if( win != null && (sp == null || sp != winSpot) ) closeWindow();
+		// el robot se para y te espera mientras lo sigues; si vas a otro sitio, sigue su camino
+		robotStopped = sp != null && sp == robot;
+		if( robotStopped ) {
+			targetSpot = sp;
+			ship.target = { x : sp.e.x, y : sp.e.y };
+			cursorAlpha = 1;
+			cursorE.scale = 4;
+			ship.onArriveDist = 30;
+			ship.onArrive = function() {
+				if( winSpot != sp ) openWindow(sp, Lang.t("exp.robot"), "ESCorp", Lang.t("exp.dock"), dockRobot);
+			};
+			return;
+		}
 		if( sp != null ) {
 			targetSpot = sp;
 			ship.target = { x : sp.e.x, y : sp.e.y };
@@ -1223,6 +1336,7 @@ class Explorer extends h2d.Object {
 	}
 
 	function hit( pt : { x : Float, y : Float } ) : Spot {
+		if( !inSolar && robot != null && Math.abs(pt.x - robot.e.x) <= robot.half && Math.abs(pt.y - robot.e.y) <= robot.half ) return robot;
 		var list = inSolar ? solarSpots : sectorSpots;
 		for( sp in list )
 			if( Math.abs(pt.x - sp.e.x) <= sp.half && Math.abs(pt.y - sp.e.y) <= sp.half ) return sp;
@@ -1278,8 +1392,7 @@ class Explorer extends h2d.Object {
 	}
 
 	/** Manager.gpsArrow: punta de flecha verde de 1 px con brillo */
-	function gpsArrow() : h2d.Graphics {
-		var c = 0x80FF00;
+	function gpsArrow( c = 0x80FF00 ) : h2d.Graphics {
 		var g = new h2d.Graphics(gpsLayer);
 		g.lineStyle(1, c, 1);
 		g.moveTo(0, -8);
@@ -1306,6 +1419,8 @@ class Explorer extends h2d.Object {
 			else on = sp.system != null && sp.system.status == SOpen && Lambda.exists(sp.system.planets, isActive);
 			if( on ) gps.push({ arrow : gpsArrow(), target : sp.e });
 		}
+		// el robot comerciante, con una flecha naranja (anadido del port)
+		if( !inSolar && robot != null ) gps.push({ arrow : gpsArrow(0xFFA040), target : robot.e });
 		gpsView = current;
 		gpsCount = list.length;
 	}
@@ -1401,6 +1516,16 @@ class Explorer extends h2d.Object {
 			sp.obj.setPosition(Std.int(screenX(sp.e.x, vx, z)), Std.int(screenY(sp.e.y, vy, z)));
 			sp.obj.setScale(1 + z);
 			sp.obj.alpha = sp.e.alpha;
+		}
+		updateRobot(tmod, dt);
+		if( robot != null && !inSolar ) {
+			robot.obj.setPosition(Std.int(screenX(robot.e.x, vx, zoomT)), Std.int(screenY(robot.e.y, vy, zoomT)));
+			robot.obj.setScale(1 + zoomT);
+			// si lo sigues y se para en un punto, el cursor va con el
+			if( robotStopped && targetSpot == robot && ship.target != null ) {
+				ship.target.x = robot.e.x;
+				ship.target.y = robot.e.y;
+			}
 		}
 		var sx = Std.int(screenX(ship.x, vx, zoomT)), sy = Std.int(screenY(ship.y, vy, zoomT));
 		shipObj.setPosition(sx, sy);

@@ -121,6 +121,8 @@ class Lang {
 		"exp.system" => ["Sistema", "System", "Système"],
 		"exp.sector" => ["Sector", "Sector", "Secteur"],
 		"exp.land" => ["Aterrizar", "Land", "Atterrir"],
+		"exp.robot" => ["Robot comerciante", "Merchant robot", "Robot marchand"],
+		"exp.dock" => ["Acoplarse", "Dock", "S'amarrer"],
 		"exp.scan" => ["Escanear", "Scan", "Scanner cette planète"],
 	];
 

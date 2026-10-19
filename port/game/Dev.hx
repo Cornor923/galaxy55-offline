@@ -238,6 +238,8 @@ class Dev {
 				case "expgo": app.explorer.devClickPoint(f(a[1]), f(a[2]));
 				case "expship": app.explorer.devDumpShip("port/out/" + a[1] + ".png");
 				case "expinfo": Sys.println(app.explorer.devInfo());
+				case "exprobot": app.explorer.devClickRobot();
+				case "exprinfo": Sys.println(app.explorer.devRobotInfo());
 				case "walk":
 					g.debugSpeed = f(a[1]) * 0.15;
 					g.debugStrafe = a.length > 2 ? f(a[2]) * 0.15 : 0;
