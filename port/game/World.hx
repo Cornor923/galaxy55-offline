@@ -320,8 +320,6 @@ class World {
 
 	/** añadido del port para la nave nodriza (hecha en Minecraft): caida de la luz de las lamparas por bloque (null = la de cada bloque) */
 	public var lampFalloff : Null<Float> = null;
-	/** dibujar tambien la capa 0 (en los planetas es la roca madre y no se ve; en el hangar es el suelo del cobertizo) */
-	public var drawBottom = false;
 	/** añadido del port para la nave nodriza: luz minima en todo el mundo (0 = ninguna) */
 	public var minLight = 0;
 
@@ -1180,7 +1178,9 @@ class World {
 
 		for( y in cy * CSIZE...(cy + 1) * CSIZE )
 			for( x in cx * CSIZE...(cx + 1) * CSIZE )
-				for( z in (drawBottom ? 0 : 1)...HEIGHT ) {
+				// la capa 0 (roca madre, BBedrock: power -1, no se rompe) tambien se dibuja, como en Builder.hx del original: si
+				// no, al excavar hasta el fondo se veia el vacio a traves. Su cara de abajo nunca sale: voxel() da roca madre bajo z = 0
+				for( z in 0...HEIGHT ) {
 					var id = voxel(x, y, z);
 					if( id == 0 ) continue;
 					var b = gen.blocks[id];
