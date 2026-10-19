@@ -832,7 +832,9 @@ class GameView {
 			var b = world.block(ix, iy, iz);
 			if( b != null && blocking(b) && (b.size == null || (x - ix >= b.size.x1 && x - ix <= b.size.x2 && y - iy >= b.size.y1 && y - iy <= b.size.y2 && z - iz >= b.size.z1 && z - iz <= b.size.z2)) ) {
 				if( Dev.trace && iz >= World.SHIP_Z ) Sys.println("pick: toca " + b.k + "@" + ix + "," + iy + "," + iz + " antes=" + lx + "," + ly + "," + lz + " mano=" + (hand != null) + " enZona=" + ship.inCraft(lx, ly, lz));
-				if( !have || (iz < 1 && hangar == null) ) return null;
+				// la capa 0 (roca madre) se apunta como en el original (Render.doPick: solo z < 0 queda fuera): se pone encima,
+				// pero no se rompe (power -1)
+				if( !have || iz < 0 ) return null;
 				// hangar: solo dentro de la zona construible (EditShip.checkSelect); para poner basta con que el sitio lo este
 				if( hangar != null && !Hangar.inZone(ix, iy, iz) && (hand == null || !Hangar.inZone(lx, ly, lz)) ) return null;
 				// nave nodriza: no se rompe ni se construye; como en tu nave (ShipLogic.checkSelect), solo se apunta a lo que se activa

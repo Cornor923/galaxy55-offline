@@ -1,0 +1,28 @@
+# roca madre (capa 0): se apunta y se pone encima, pero no se rompe. Pozo hasta el fondo; primero se excava con la mano
+# vacia (la roca madre debe seguir ahi) y luego se pone madera encima (debe quedar en z = 1)
+wait 3
+planet
+wait 30
+filla 60 60 68 68 1 100 none
+tp 62.5 64.5 1.01
+wait 20
+lookat 64.5 64.5 0.95
+wait 5
+print select
+slot 0
+key place
+wait 240
+unkey
+wait 10
+print block 64 64 0
+give BWood 5
+slot 10
+wait 5
+key place
+wait 8
+unkey
+wait 10
+print block 64 64 0
+print block 64 64 1
+shot bedrock_place
+quit
