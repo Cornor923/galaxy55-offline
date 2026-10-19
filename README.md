@@ -19,6 +19,7 @@ It was shut down and its server no longer exists. This project ports it to a **n
 | **Controls and how to build** | [`port/README.md`](port/README.md) |
 | **See or report bugs** | [`BUGS.md`](BUGS.md) (known bugs); to report a new one, open an *issue* or message me |
 | **See what is missing** | [`TODO.md`](TODO.md) (to-do list) |
+| **Ideas for later** | [`IDEAS.en.md`](IDEAS.en.md) (nothing decided yet) |
 | **See what changed** | [`CHANGELOG.en.md`](CHANGELOG.en.md) |
 | **Developer notes** | [`port/RESUMEN.md`](port/RESUMEN.md) (Spanish) |
 | **The Flash version (archived)** | [`docs/flash/README_flash.md`](docs/flash/README_flash.md) (Spanish, English summary at the end), branch [`flash`](../../tree/flash), tag [`flash-version`](../../tree/flash-version) |
@@ -38,21 +39,20 @@ It was shut down and its server no longer exists. This project ports it to a **n
 
 Start menu, saved games, planets identical to the original ones (verified by hash against Flash), digging and placing blocks, jetpack,
 creative mode (our addition), the ship with its teleporter, doors, synthesizer with the original recipes and the on-board computer,
-and the **star map** (sector, solar systems, scanning and landing).
+the **hangar** to rebuild your ship, **sound**, **flowing water** (the original's), and the **star map** (sector, solar systems,
+scanning, landing, GPS arrows) with the **merchant robot**: follow it, dock and trade in its ship.
 
 ![Star map: solar system](docs/img/mapa-estrellas.jpg)
 
-Still missing: the shop, the hangar, sound, flowing water, and the exact travel animations of the star map. See [`TODO.md`](TODO.md).
+Still to do: give space travel more depth (fuel and other ideas in [`IDEAS.en.md`](IDEAS.en.md)), animated water, health and
+oxygen, a quality option for slow PCs. See [`TODO.md`](TODO.md).
 
 ## Known bugs (summary)
 
 Full numbered list in [`BUGS.md`](BUGS.md). The main ones:
-- Deleting a saved game from the menu does not work.
-- Lighting errors on non-square blocks; plain white blocks and odd spruce leaves in the winter biome; planet curvature too strong.
-- No particles when breaking a block; hanging things and ground plants cannot be broken.
-- On the ship: the cascade source block cannot be removed and the synthesizer does not use up the blocks placed in its area.
-- Star map: entering/leaving a system and landing are a simple fade, not the original animations.
-- Water does not flow. The shop, the hangar and sound are missing.
+- Lighting errors on non-square blocks (half blocks, models).
+- Spruce leaves drop material; dropped crystals look too wide.
+- The menu stutters for a moment while the background planet is generated.
 
 **Found another one?** Tell me in a GitHub *issue* or on Discord, with what you were doing and a screenshot if you can.
 
@@ -74,7 +74,7 @@ The original code, graphics and data belong to **Motion Twin** and were publishe
 non-commercial, with credit to Motion Twin, share-alike. It is not affiliated with or endorsed by Motion Twin.
 Thanks to the Eternaltwin community for preserving documentation and screenshots.
 Thanks to **Sekhmet** for detailed bug reports, testing on Linux, and memories of how the original game worked (water, lava, cascades).
-Thanks to **Cornor923** for the French README and fixes (liquid veil on wide windows, ice faces, the head clipping into blocks, launcher without console).
+Thanks to **Cornor923** for the French README and fixes (liquid veil on wide windows, ice faces, the head clipping into blocks, launcher without console, bedrock layer, main menu on wide windows).
 
 ---
 
@@ -96,6 +96,7 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 | **Controles y cómo compilar** | [`port/LEEME.md`](port/LEEME.md) |
 | **Ver o avisar de errores** | [`ERRORES.md`](ERRORES.md); para avisar de uno nuevo, abre un *issue* o escríbeme |
 | **Saber qué falta por hacer** | [`PENDIENTES.md`](PENDIENTES.md) |
+| **Ideas para más adelante** | [`IDEAS.md`](IDEAS.md) (nada decidido todavía) |
 | **Ver qué cambió** | [`CHANGELOG.md`](CHANGELOG.md) |
 | **Notas técnicas del desarrollo** | [`port/RESUMEN.md`](port/RESUMEN.md) |
 | **La versión Flash (archivada)** | [`docs/flash/README_flash.md`](docs/flash/README_flash.md), rama [`flash`](../../tree/flash), etiqueta [`flash-version`](../../tree/flash-version) |
@@ -113,18 +114,17 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 Menú de inicio, partidas guardadas, planetas idénticos a los del original (verificado por hash contra Flash),
 excavar y colocar, jetpack, modo creativo (añadido nuestro), la nave con teletransportador, puertas, sintetizador con las
-recetas del original y ordenador de a bordo, y el **mapa de estrellas** (sector, sistemas solares, escaneo y aterrizaje).
-Faltan la tienda, el hangar, el sonido, el agua que fluye y las animaciones exactas de viaje del mapa; ver [`PENDIENTES.md`](PENDIENTES.md).
+recetas del original y ordenador de a bordo, el **hangar** para rehacer tu nave, el **sonido**, el **agua que fluye** (la del
+original) y el **mapa de estrellas** (sector, sistemas solares, escaneo, aterrizaje, flechas GPS) con el **robot comerciante**:
+lo sigues, te acoplas y comercias en su nave. Falta dar más profundidad al viaje espacial (combustible y otras ideas en
+[`IDEAS.md`](IDEAS.md)), el agua animada, la vida y el oxígeno, y una opción de calidad para PC lentas; ver [`PENDIENTES.md`](PENDIENTES.md).
 
 ### Errores conocidos (resumen)
 
 Lista completa y numerada en [`ERRORES.md`](ERRORES.md). Los principales:
-- Borrar una partida desde el menú no funciona.
-- Fallos de luz en bloques no cuadrados; bloques blancos y hojas de abeto raras en invierno; curvatura del planeta exagerada.
-- Al romper un bloque no hay partículas; no se pueden romper las cosas colgadas ni las plantas del suelo.
-- En la nave: no se puede quitar la fuente de cascada y el sintetizador no gasta los bloques puestos.
-- Mapa de estrellas: entrada, salida y aterrizaje son un fundido simple, no las animaciones del original.
-- El agua no fluye. Faltan la tienda, el hangar y el sonido.
+- Fallos de luz en bloques no cuadrados (medios bloques, modelos).
+- Las hojas del abeto sueltan material; los cristales sueltos se ven demasiado anchos.
+- El menú da un tirón un momento mientras se genera el planeta de fondo.
 
 **¿Has encontrado otro?** Cuéntalo en un *issue* de GitHub o por Discord, con lo que hacías y una captura si puedes.
 
@@ -140,7 +140,7 @@ El código, los gráficos y los datos originales son de **Motion Twin**, publica
 **misma licencia**: sin uso comercial, con atribución a Motion Twin y compartiendo igual. No está afiliada ni respaldada
 por Motion Twin. Gracias a la comunidad de Eternaltwin por conservar documentación y capturas.
 Gracias a **Sekhmet** por sus reportes de errores detallados, las pruebas en Linux y sus recuerdos de cómo funcionaba el juego original (agua, lava, cascadas).
-Gracias a **Cornor923** por el README en francés y sus arreglos (velo del agua en ventanas anchas, caras del hielo, la cabeza que se metía en los bloques, lanzador sin consola).
+Gracias a **Cornor923** por el README en francés y sus arreglos (velo del agua en ventanas anchas, caras del hielo, la cabeza que se metía en los bloques, lanzador sin consola, la capa de roca madre, el menú principal en ventanas anchas).
 
 ---
 
@@ -158,17 +158,18 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 | Je veux… | Voir |
 |---|---|
-| **Jouer sans compiler** | [pré-version v0.3](../../releases/tag/v0.3.1) : télécharge le zip, décompresse-le et lance `jugar.bat` |
+| **Jouer sans compiler** | [pré-version v0.3.1](../../releases/tag/v0.3.1) : télécharge le zip, décompresse-le et lance `jugar.bat` |
 | **Les commandes et la compilation** | [`port/README.md`](port/README.md) (en anglais) |
-| **Voir ou signaler des bugs** | [`BUGS.md`](BUGS.md) (bugs connus, en anglais) ; pour en signaler un nouveau, ouvre une *issue* ou écris-moi |
-| **Voir ce qui manque** | [`TODO.md`](TODO.md) (liste des tâches, en anglais) |
-| **Voir ce qui a changé** | [`CHANGELOG.en.md`](CHANGELOG.en.md) (en anglais) |
+| **Voir ou signaler des bugs** | [`BUGS.fr.md`](BUGS.fr.md) (bugs connus) ; pour en signaler un nouveau, ouvre une *issue* ou écris-moi |
+| **Voir ce qui manque** | [`TODO.fr.md`](TODO.fr.md) (liste des tâches) |
+| **Des idées pour plus tard** | [`IDEAS.fr.md`](IDEAS.fr.md) (rien n'est encore décidé) |
+| **Voir ce qui a changé** | [`CHANGELOG.fr.md`](CHANGELOG.fr.md) |
 | **Notes techniques du développement** | [`port/RESUMEN.md`](port/RESUMEN.md) (en espagnol) |
 | **La version Flash (archivée)** | [`docs/flash/README_flash.md`](docs/flash/README_flash.md) (en espagnol, résumé en anglais à la fin), branche [`flash`](../../tree/flash), tag [`flash-version`](../../tree/flash-version) |
 
 ### Jouer en 3 étapes
 
-1. Télécharge le zip de la [pré-version v0.3](../../releases/tag/v0.3.1) et **décompresse-le entièrement** (avec tous ses dossiers).
+1. Télécharge le zip de la [pré-version v0.3.1](../../releases/tag/v0.3.1) et **décompresse-le entièrement** (avec tous ses dossiers).
 2. Vérifie qu'il y a un dossier **`res/`** à côté de `galaxy55.hl` (avec `texture.png`, `lazer.png`… dedans). Si tu vois à la place
    des fichiers isolés nommés `res\texture.png`, l'extraction a échoué : décompresse à nouveau avec un autre programme. (Symptôme : `Can't read res/texture.png`.)
 3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.3.1-linux-mac.zip` depuis la release,
@@ -179,18 +180,18 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 Menu de démarrage, parties sauvegardées, planètes identiques à celles de l'original (vérifié par empreinte face à la version Flash),
 creuser et poser des blocs, jetpack, mode créatif (notre ajout), le vaisseau avec son téléporteur, les portes, le synthétiseur avec
-les recettes d'origine et l'ordinateur de bord, et la **carte stellaire** (secteur, systèmes solaires, scan et atterrissage).
-Il manque encore la boutique, le hangar, le son, l'eau qui s'écoule et les animations de voyage exactes de la carte stellaire ; voir [`TODO.md`](TODO.md).
+les recettes d'origine et l'ordinateur de bord, le **hangar** pour refaire ton vaisseau, le **son**, l'**eau qui s'écoule** (celle
+de l'original) et la **carte stellaire** (secteur, systèmes solaires, scan, atterrissage, flèches GPS) avec le **robot marchand** :
+tu le suis, tu t'amarres et tu fais du commerce dans son vaisseau. Il reste à donner plus de profondeur au voyage spatial
+(carburant et autres idées dans [`IDEAS.fr.md`](IDEAS.fr.md)), l'eau animée, la vie et l'oxygène, et une option de qualité
+pour les PC lents ; voir [`TODO.fr.md`](TODO.fr.md).
 
 ### Bugs connus (résumé)
 
-Liste complète et numérotée dans [`BUGS.md`](BUGS.md). Les principaux :
-- Supprimer une partie depuis le menu ne fonctionne pas.
-- Erreurs d'éclairage sur les blocs non cubiques ; blocs blancs unis et feuilles d'épicéa bizarres dans le biome d'hiver ; courbure de la planète trop marquée.
-- Pas de particules quand on casse un bloc ; impossible de casser les éléments suspendus et les plantes au sol.
-- Dans le vaisseau : impossible de retirer le bloc source de la cascade, et le synthétiseur ne consomme pas les blocs posés dans sa zone.
-- Carte stellaire : entrer dans un système, en sortir et atterrir se font par un simple fondu, pas avec les animations d'origine.
-- L'eau ne s'écoule pas. Il manque la boutique, le hangar et le son.
+Liste complète et numérotée dans [`BUGS.fr.md`](BUGS.fr.md). Les principaux :
+- Erreurs d'éclairage sur les blocs non cubiques (demi-blocs, modèles).
+- Les feuilles d'épicéa donnent du matériau ; les cristaux tombés paraissent trop larges.
+- Le menu saccade un instant pendant la génération de la planète de fond.
 
 **Tu en as trouvé un autre ?** Signale-le dans une *issue* GitHub ou sur Discord, avec ce que tu faisais et une capture d'écran si possible.
 
@@ -206,4 +207,4 @@ Le code, les graphismes et les données d'origine appartiennent à **Motion Twin
 **même licence** : pas d'utilisation commerciale, attribution à Motion Twin et partage dans les mêmes conditions. Elle n'est ni
 affiliée à Motion Twin ni approuvée par Motion Twin. Merci à la communauté Eternaltwin d'avoir préservé la documentation et les captures.
 Merci à **Sekhmet** pour ses rapports de bugs détaillés, ses tests sous Linux et ses souvenirs du fonctionnement du jeu original (eau, lave, cascades).
-Merci à **Cornor923** pour le README en français et ses corrections (voile des liquides sur les fenêtres larges, faces de la glace, tête qui rentrait dans les kubes, lanceur sans console).
+Merci à **Cornor923** pour le README en français et ses corrections (voile des liquides sur les fenêtres larges, faces de la glace, tête qui rentrait dans les kubes, lanceur sans console, couche de roche mère, menu principal sur les fenêtres larges).

@@ -3,6 +3,16 @@
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Próxima versión
+- **Agua que fluye** (el `Process.hx` del original): el mar llena lo que cavas a su lado hasta su nivel; la cascada y la lava
+  caen y se extienden y desaparecen sin fuente; la hierba se cubre y descubre; lo anclado y los detalles se rompen al quitar
+  su apoyo. La cascada y el agua que pones bajan de altura en cada paso, con la superficie inclinada (añadido del port).
+- **Robot comerciante en el mapa de estrellas:** viaja entre los sistemas del sector; al pulsarlo se para y te espera, y al
+  acoplarte entras en su nave (la nave nodriza), con la tienda. Al salir vuelves al mapa.
+- **Flechas GPS** del original en el mapa: apuntan a los planetas que visitaste (y a sus sistemas) y al robot (en naranja).
+- Opciones: sombra del bloque que vas a poner y nombre del bloque apuntado (pequeño, abajo a la derecha); los dos se pueden quitar.
+- Modo creativo: las cuatro aguas (normal, oscura, ácida y de invierno) están en la paleta.
+- Arreglos de **Cornor923** (¡gracias!): la roca madre (capa 0) se dibuja y el menú principal se pega a los bordes en ventanas anchas.
+- El bloque en la mano ya no tiembla al andar.
 - Arreglos reportados por Sekhmet (¡gracias!): atajos de teclado (Tab excava y 1-0 son las 10 casillas), se pueden poner
   bloques bajo el agua, no nieva bajo techo ni en cuevas, el hielo ya no suelta un bloque al romperlo, sombra del bloque que
   se va a poner, nombre del bloque apuntado y el congelador vuelve a congelar el agua y la lava cercanas.

@@ -85,5 +85,9 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - La nieve del bioma de invierno es un añadido de este port: el original no la tiene.
 - El modo creativo y su paleta son un añadido de este port.
 - El menú del ordenador de a bordo tiene un aspecto propio, como en la versión Flash (el original era una página web).
-- Todavía faltan: recetas del sintetizador, tienda, hangar, mapa de exploración, agua que fluye, sonido y ver el bloque en la mano.
-  Lista completa en `PENDIENTES.md` y `ERRORES.md` (raíz del repositorio).
+- La tienda del robot comerciante (en el original era un panel web), su nave por el mapa de estrellas y la flecha GPS naranja
+  que lo señala son un añadido de este port.
+- La cascada y el agua que pone el jugador bajan de altura en cada paso, con la superficie inclinada: añadido de este port.
+  El mar llena los huecos hasta su nivel, como el original.
+- Opciones añadidas: sombra del bloque que vas a poner y nombre del bloque apuntado.
+- Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).

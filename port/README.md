@@ -91,5 +91,9 @@ A player got it running on Linux this way; we have not tested it.
 - Snow in the winter biome is an addition of this port: the original does not have it.
 - Creative mode and its palette are an addition of this port.
 - The on-board computer menu has its own look, as in the Flash version (the original was a web page).
-- Still missing: shop, hangar, flowing water, sound and seeing the block in the hand.
-  See `TODO.md` in the repository root.
+- The merchant robot's shop (the original was a web panel), its ship on the star map and the orange GPS arrow pointing to it
+  are additions of this port.
+- Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
+  holes up to its level, like the original.
+- Added options: a shadow of the block you are about to place and the name of the targeted block.
+- What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).
