@@ -87,7 +87,7 @@ English: NOT tested by us on Linux/macOS (a player uses it on Linux). Install Ha
 If your HashLink is a pre-built folder and not installed: /your/path/to/hashlink/hl galaxy55.hl
 If the unzipped files have names with backslashes (res\...), the zip was made on Windows with old tools: this package no
 longer does that; with an old zip, rename them first (for example: for f in *\*; do mkdir -p "$(dirname "${f//\//}")"; mv "$f" "${f//\//}"; done).
-(Thanks to Cornor923 for these steps.)
+(Thanks to Sekhmet for these steps.)
 "@ "`n"
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
