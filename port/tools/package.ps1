@@ -84,11 +84,27 @@ Controles y mas informacion: https://github.com/Pv1E/galaxy55-offline
 English: NOT tested by us on Linux/macOS (a player uses it on Linux). Install HashLink 1.16+ so that "hl" works
 (macOS: brew install hashlink), unzip everything keeping the "res" folder next to galaxy55.hl, then run
 "sh jugar.sh" or "hl galaxy55.hl" from this folder. Tell us if it works or not.
+If your HashLink is a pre-built folder and not installed: /your/path/to/hashlink/hl galaxy55.hl
+If the unzipped files have names with backslashes (res\...), the zip was made on Windows with old tools: this package no
+longer does that; with an old zip, rename them first (for example: for f in *\*; do mkdir -p "$(dirname "${f//\//}")"; mv "$f" "${f//\//}"; done).
+(Thanks to Cornor923 for these steps.)
 "@ "`n"
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zw = Join-Path $out "galaxy55-offline-v$Version.zip"
 $zl = Join-Path $out "galaxy55-offline-v$Version-linux-mac.zip"
-[IO.Compression.ZipFile]::CreateFromDirectory($win, $zw, "Optimal", $true)
-[IO.Compression.ZipFile]::CreateFromDirectory($lin, $zl, "Optimal", $true)
+# CreateFromDirectory de Windows PowerShell 5.1 guarda las rutas con \ y en Linux/macOS salen archivos con ese nombre: aqui se escriben con /
+function New-Zip($dir, $zip) {
+    if (Test-Path $zip) { [IO.File]::Delete($zip) }
+    $root = (Resolve-Path $dir).Path.TrimEnd("\") + "\"
+    $za = [IO.Compression.ZipFile]::Open($zip, "Create")
+    try {
+        foreach ($f in Get-ChildItem $dir -Recurse -File) {
+            $name = $f.FullName.Substring($root.Length).Replace("\", "/")
+            [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($za, $f.FullName, $name, "Optimal")
+        }
+    } finally { $za.Dispose() }
+}
+New-Zip $win $zw
+New-Zip $lin $zl
 Get-Item $zw, $zl | ForEach-Object { "{0}  {1:N0} bytes" -f $_.Name, $_.Length }

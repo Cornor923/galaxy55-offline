@@ -825,6 +825,7 @@ class GameView {
 			var ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
 			// (no se salta la misma celda: los bloques parciales solo cuentan si el rayo pasa por su caja)
 			var b = world.block(ix, iy, iz);
+			if( b != null && hand != null && b.hasFlag(BFLiquid) ) b = null; // con un bloque en la mano el agua no cuenta: se puede poner bajo el agua
 			if( b != null && blocking(b) && (b.size == null || (x - ix >= b.size.x1 && x - ix <= b.size.x2 && y - iy >= b.size.y1 && y - iy <= b.size.y2 && z - iz >= b.size.z1 && z - iz <= b.size.z2)) ) {
 				if( Dev.trace && iz >= World.SHIP_Z ) Sys.println("pick: toca " + b.k + "@" + ix + "," + iy + "," + iz + " antes=" + lx + "," + ly + "," + lz + " mano=" + (hand != null) + " enZona=" + ship.inCraft(lx, ly, lz));
 				if( !have || (iz < 1 && hangar == null) ) return null;
@@ -868,9 +869,10 @@ class GameView {
 				if( pad.isPressed(pad.config.analogClick) ) copyTarget();
 			}
 			if( hxd.Key.isPressed(hxd.Key.MOUSE_MIDDLE) ) copyTarget();
-			// casillas: 1 = excavador, 2..9 y 0 = bloques; TAB = excavador (Game.checkKeys)
-			for( i in 0...10 )
-				if( K.isPressed(K.NUMBER_0 + ((i + 1) % 10)) && inv.inv.t.length >= i ) inv.select(i);
+			// casillas: TAB = excavador, 1..9 y 0 = los 10 bloques. El original (Game.checkKeys) ponia el excavador tambien en 1
+			// y dejaba la ultima casilla sin atajo; aqui se corrige a peticion de los jugadores
+			for( i in 1...11 )
+				if( K.isPressed(K.NUMBER_0 + (i % 10)) && inv.inv.t.length >= i ) inv.select(i);
 			if( K.isPressed(K.TAB) ) inv.select(0);
 			// Mayus + K: volver a la nave (Game.checkKeys)
 			if( K.isDown(K.SHIFT) && K.isPressed(K.K) ) gotoShip(true);
@@ -992,7 +994,8 @@ class GameView {
 			else if( (tmp = world.block(x, y + 1, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
 		}
 		if( inShip ) ok = true; // select.ignoreMagnets del original
-		if( world.block(x, y, z) != null ) return; // la celda ya esta ocupada (p. ej. por lo que se acaba de poner): no se gasta nada
+		var here = world.block(x, y, z);
+		if( here != null && !here.hasFlag(BFLiquid) ) return; // la celda ya esta ocupada (p. ej. por lo que se acaba de poner): no se gasta nada
 		if( !ok || actionPause > 0 ) return;
 		actionPause = creative ? 6 : 15;
 		if( !creative && !inv.useCurrentBlock() ) return;
@@ -1000,8 +1003,26 @@ class GameView {
 		if( inv.getCurrentBlock() == null ) actionWait = true;
 		if( Dev.trace ) Sys.println("place en " + x + "," + y + "," + z + " sobre " + s.b.k + "@" + s.x + "," + s.y + "," + s.z + " antes=" + world.block(x, y, z));
 		world.setBlock(x, y, z, put);
+		if( put.k == BFreezer ) freeze(x, y, z);
 		if( inShip ) ship.craft(x, y, z, put, this);
 		select = null;
+	}
+
+	/** Process.set (case BFreezer): el congelador convierte el agua cercana en hielo y la lava en roca (esfera de radio 4) */
+	function freeze( cx : Int, cy : Int, cz : Int ) {
+		var ice = Block.get(BIce), lavaRock = Block.get(BLavaRock);
+		var d = 4;
+		for( dx in -d...d + 1 )
+			for( dy in -d...d + 1 )
+				for( dz in -d...d + 1 ) {
+					var e = (dx / d) * (dx / d) + (dy / d) * (dy / d) + (dz / d) * (dz / d);
+					if( e >= 1 ) continue;
+					var x = wrapI(cx + dx), y = wrapI(cy + dy), z = cz + dz;
+					var b = world.block(x, y, z);
+					if( b == null ) continue;
+					if( b.hasProp(PLava) ) world.setBlock(x, y, z, lavaRock);
+					else if( b.hasProp(PLiquid) ) world.setBlock(x, y, z, ice);
+				}
 	}
 
 	/** Game.blockBreak: suelta lo que corresponda (con su probabilidad) y quita el bloque. */

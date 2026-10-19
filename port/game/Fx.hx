@@ -175,6 +175,24 @@ class Fx {
 			denied.setScale(s);
 			var mat = denied.material;
 			mat.color.a = 0.1 + 0.7 * Math.random();
+		} else if( hand != null && !laser && b != null ) {
+			// sombra del bloque de la mano en la celda donde se pondra (pedido por los jugadores: sin ella construir es dificil)
+			denied.visible = false;
+			if( overlayBlock != b ) {
+				overlay_hide(true);
+				overlayBlock = b;
+				var poly = IconMesh.polygon(b, true);
+				if( poly != null ) {
+					var m = blendMaterial();
+					m.color.a = 0.4;
+					overlay = new h3d.scene.Mesh(poly, m, world.root);
+				}
+			}
+			if( overlay != null ) {
+				overlay.visible = true;
+				overlay.setPosition(fx, fy, fz);
+				overlay.setScale(1);
+			}
 		} else {
 			overlay_hide();
 			denied.visible = false;

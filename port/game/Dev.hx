@@ -88,6 +88,14 @@ class Dev {
 					var b = a[4] == "none" ? null : bk(a[4]);
 					w.setBlock(x, y, z, b);
 					if( z >= sz ) g.ship.craft(x, y, z, b, g);
+				case "fillt":
+					// fillt x1 y1 x2 y2 dz1 dz2 BLOQUE: rellena un prisma; dz es la altura sobre el suelo de (x1, y1)
+					var base = w.topCollide(Std.parseInt(a[1]), Std.parseInt(a[2]));
+					var bb = a[7] == "none" ? null : bk(a[7]);
+					for( x in Std.parseInt(a[1])...Std.parseInt(a[3]) + 1 )
+						for( y in Std.parseInt(a[2])...Std.parseInt(a[4]) + 1 )
+							for( z in base + Std.parseInt(a[5])...base + Std.parseInt(a[6]) + 1 )
+								w.setBlock(x, y, z, bb);
 				case "activate", "activatel":
 					var l = a[0] == "activatel";
 					var x = Std.parseInt(a[1]) + (l ? sdx : 0), y = Std.parseInt(a[2]) + (l ? sdy : 0), z = Std.parseInt(a[3]) + (l ? sz : 0);

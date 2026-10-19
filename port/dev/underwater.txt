@@ -1,0 +1,19 @@
+# bloque bajo el agua y sombra de colocacion (reportes de jugadores)
+wait 3
+planet
+wait 30
+tp 64.5 64.5 top 0 -0.9
+wait 5
+give BWood 5
+fillt 64 64 68 66 0 3 BWater
+print inv
+slot 10
+look 0 -0.9
+wait 20
+shot uw_ghost
+key place
+wait 40
+unkey
+print inv
+shot uw_placed
+quit

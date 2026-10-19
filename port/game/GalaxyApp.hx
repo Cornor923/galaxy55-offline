@@ -103,6 +103,8 @@ class GalaxyApp extends hxd.App {
 	var dim : h2d.Bitmap;
 	/** velo del color del liquido con la camara dentro (fades del original) */
 	var liquidVeil : h2d.Bitmap;
+	/** nombre del bloque al que apuntas (con la mano vacia) */
+	var targetName : h2d.Text;
 	var screens = new Map<String, Screen>();
 	var current : Screen;
 	var currentName = "";
@@ -252,6 +254,9 @@ class GalaxyApp extends hxd.App {
 		msgText.textAlign = Center;
 		msgText.visible = false;
 		toast = Theme.text(s2d, "", 2.4, Theme.ACCENT, 0, 640);
+		targetName = Theme.text(s2d, "", 1.4, 0xE0E0E0, 0, 440);
+		targetName.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 1 };
+		targetName.visible = false;
 		toast.dropShadow = { dx : 2, dy : 2, color : 0, alpha : 0.9 };
 		toast.visible = false;
 
@@ -1359,6 +1364,18 @@ class GalaxyApp extends hxd.App {
 			toastTime -= dt;
 			if( toastTime < 0.6 ) toast.alpha = Math.max(0, toastTime / 0.6);
 			if( toastTime <= 0 ) toast.visible = false;
+		}
+
+		// nombre del bloque apuntado
+		var tn = "";
+		if( state == Playing && game != null && game.select != null && game.inv.getCurrentBlock() == null ) {
+			var n = game.select.b.getName();
+			if( n != null && n != "-" && n.charAt(0) != "#" ) tn = n;
+		}
+		targetName.visible = tn != "";
+		if( tn != "" && targetName.text != tn ) {
+			targetName.text = tn;
+			targetName.x = Std.int((W - targetName.textWidth) * 0.5);
 		}
 
 		// nieve (solo bioma de invierno): copos fijos en el mundo
