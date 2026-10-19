@@ -58,6 +58,7 @@ Saves go to %APPDATA%\Galaxy55\ . Known bugs: BUGS.md in the repository.
 "@ "`r`n"
 # Linux / macOS: con HashLink del sistema
 Save "$lin\jugar.sh" "#!/bin/sh`n# Abre Galaxy 55. Necesita HashLink (hl) instalado: ver LEEME.txt`ncd `"`$(dirname `"`$0`")`"`nexec hl galaxy55.hl `"`$@`"`n" "`n"
+# los $ del ejemplo de shell del final van con ` para que salgan tal cual y PowerShell no los evalue
 Save "$lin\LEEME.txt" @"
 Galaxy 55 (offline) v$Version - Linux y macOS
 =========================================
@@ -84,7 +85,7 @@ English: NOT tested by us on Linux/macOS (a player uses it on Linux). Install Ha
 "sh jugar.sh" or "hl galaxy55.hl" from this folder. Tell us if it works or not.
 If your HashLink is a pre-built folder and not installed: /your/path/to/hashlink/hl galaxy55.hl
 If the unzipped files have names with backslashes (res\...), the zip was made on Windows with old tools: this package no
-longer does that; with an old zip, rename them first (for example: for f in *\*; do mkdir -p "$(dirname "${f//\//}")"; mv "$f" "${f//\//}"; done).
+longer does that; with an old zip, rename them first (for example: for f in *\*; do mkdir -p "`$(dirname "`${f//\//}")"; mv "`$f" "`${f//\//}"; done).
 (Thanks to Sekhmet for these steps.)
 "@ "`n"
 
