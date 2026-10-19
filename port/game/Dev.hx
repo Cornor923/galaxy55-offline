@@ -259,6 +259,7 @@ class Dev {
 					Sys.println("settop " + x + "," + y + "," + (z + 1));
 				case "hangarexit": if( g.onHangarExit != null ) g.onHangarExit();
 				case "chestclick": if( app.chest != null ) app.chest.click(Std.parseInt(a[1]), Std.parseInt(a[2]));
+				case "chestfocus": if( app.chest != null ) app.chest.devFocus(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "shopclose": if( app.shop != null ) @:privateAccess app.closeShop();
 				case "shopnav": if( app.shop != null ) app.shop.devNav(Std.parseInt(a[1]), Std.parseInt(a[2]), a[3] == "a");
 				case "buy", "sell":
