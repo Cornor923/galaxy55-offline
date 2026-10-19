@@ -1,0 +1,22 @@
+# textos centrados del mapa de estrellas: ventana de un planeta (Escanear, Aterrizar), contadores de los sistemas del sector
+# y ventana del robot comerciante (Acoplarse; sale donde este el robot)
+wait 3
+ship
+wait 10
+explore
+wait 200
+expplanet 1
+wait 400
+shot lab_scan
+expplanet 0
+wait 400
+shot lab_land
+expgo 2400 1000
+wait 400
+expinfo
+shot lab_sector
+exprobot
+wait 600
+exprinfo
+shot lab_robot
+quit

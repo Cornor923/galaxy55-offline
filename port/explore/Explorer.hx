@@ -550,8 +550,11 @@ class Explorer extends h2d.Object {
 				var c = new h2d.Bitmap(tiles.sub(4 * 16, 0, 16, 16, -8, -8), icon);
 				c.x = 7;
 				c.y = 4;
-				var t = Theme.text(c, "" + unexp, 0.8, 0xFFFFFF, -3, -5);
+				var t = Theme.text(c, "" + unexp, 0.8, 0xFFFFFF);
 				t.dropShadow = { dx : 0, dy : 1, color : 0, alpha : 1 };
+				// centrado en el circulo (9 px, medio pixel a la izquierda y abajo del centro de la imagen), como en el original
+				t.x = -0.5 - t.textWidth * t.scaleX * 0.5;
+				t.y = 0.5 - t.textHeight * t.scaleY * 0.5;
 			}
 			var name = label(obj, si.name, 1.1, 0xCCD6EC);
 			name.y = 16;
@@ -1214,9 +1217,8 @@ class Explorer extends h2d.Object {
 		g.drawRect(0, 0, w, 24);
 		g.x = Std.int(VW * 0.5 - w * 0.5);
 		g.y = VH - 70;
-		var t = label(g, text, 1.4, 0xFFFFFF);
-		t.x = Std.int(w * 0.5 - t.textWidth * t.scaleX * 0.5);
-		t.y = 4;
+		// centrado tambien en alto: el y fijo del original (4) era para su fuente, la de Heaps deja hueco arriba y lo bajaba
+		Theme.center(label(g, text, 1.4, 0xFFFFFF), w, 24);
 		var it = new h2d.Interactive(w, 24, g);
 		it.onOver = function(_) g.alpha = 1.0;
 		it.onOut = function(_) g.alpha = 0.8;
