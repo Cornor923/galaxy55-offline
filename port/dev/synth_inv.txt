@@ -1,0 +1,44 @@
+# sintetizador con los bloques en el inventario (ShipLogic.activateBlock, hasInv): 8 de tierra = agregado.
+# Con 21 en el inventario: dos veces se gastan 8 del inventario y la zona queda; con 5 se gasta la zona y el inventario no.
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+setl 59 62 3 BSoil
+setl 60 62 3 BSoil
+setl 59 63 3 BSoil
+setl 60 63 3 BSoil
+setl 59 62 4 BSoil
+setl 60 62 4 BSoil
+setl 59 63 4 BSoil
+setl 60 63 4 BSoil
+give BSoil 21
+wait 10
+print zones
+print msg
+print inv
+shot synthinv1
+activatel 61 62 4
+wait 45
+print zones
+print inv
+print drops
+activatel 61 62 4
+wait 45
+print zones
+print inv
+print drops
+print msg
+activatel 61 62 4
+wait 45
+print zones
+print inv
+print drops
+print msg
+shot synthinv2
+activatel 61 62 4
+wait 45
+print inv
+print drops
+quit

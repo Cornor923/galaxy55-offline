@@ -257,6 +257,27 @@ class Ship {
 		if( c == null || c.curCraft == null ) return;
 		var cur = c.curCraft;
 		var blocks = c.engine.getBlocks(true);
+		// ShipLogic.activateBlock (hasInv): si el inventario tiene todos los bloques de la receta se gastan esos y la zona queda
+		// como plantilla para fabricar otra vez; si falta alguno se gastan los puestos en la zona. Nunca se mezclan las dos fuentes.
+		// Se gasta antes de soltar el resultado: si algo no cuadra no se fabrica nada (sin duplicar).
+		var fromInv = true;
+		for( b in blocks )
+			if( !g.inv.hasBlocks(b.b, b.n) ) fromInv = false;
+		if( fromInv ) {
+			for( b in blocks )
+				if( !g.inv.useBlocks(b.b, b.n) ) return;
+		} else {
+			c.engine.clear();
+			g.drops.remove(c.preview);
+			c.preview = null;
+			c.curCraft = null;
+			c.curText = null;
+			for( b in blocks )
+				for( q in b.pos ) {
+					var x = c.x + q.x + planet.shipDX, y = c.y + q.y + planet.shipDY, z = c.z + q.z + World.SHIP_Z;
+					g.removeShipBlock(x, y, z, b.b);
+				}
+		}
 		var out = Block.get(cur.out);
 		var n = cur.count != null ? cur.count : 1;
 		var p = outPos(c);
@@ -264,18 +285,6 @@ class Ship {
 			var d = g.drops.add(p.x, p.y, p.z, out);
 			d.delay = 30;
 		}
-		// cambio del port: siempre se gastan los bloques puestos en la zona. El original (ShipLogic.activateBlock, hasInv) gastaba
-		// los del inventario si los habia y dejaba la zona como plantilla; quien juega espera que desaparezca lo que ve.
-		c.engine.clear();
-		g.drops.remove(c.preview);
-		c.preview = null;
-		c.curCraft = null;
-		c.curText = null;
-		for( b in blocks )
-			for( q in b.pos ) {
-				var x = c.x + q.x + planet.shipDX, y = c.y + q.y + planet.shipDY, z = c.z + q.z + World.SHIP_Z;
-				g.removeShipBlock(x, y, z, b.b);
-			}
 	}
 
 	// ---------------------------------------------------------------- imagenes de la nave para el mapa (r3d.Capture)
