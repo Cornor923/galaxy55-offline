@@ -159,7 +159,7 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 | Je veux… | Voir |
 |---|---|
 | **Jouer sans compiler** | [pré-version v0.3.1](../../releases/tag/v0.3.1) : télécharge le zip, décompresse-le et lance `jugar.bat` |
-| **Les commandes et la compilation** | [`port/README.md`](port/README.md) (en anglais) |
+| **Les commandes et la compilation** | [`port/LISEZMOI.md`](port/LISEZMOI.md) |
 | **Voir ou signaler des bugs** | [`BUGS.fr.md`](BUGS.fr.md) (bugs connus) ; pour en signaler un nouveau, ouvre une *issue* ou écris-moi |
 | **Voir ce qui manque** | [`TODO.fr.md`](TODO.fr.md) (liste des tâches) |
 | **Des idées pour plus tard** | [`IDEAS.fr.md`](IDEAS.fr.md) (rien n'est encore décidé) |

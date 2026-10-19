@@ -1,6 +1,6 @@
 # Port nativo (Haxe 4 + Heaps + HashLink)
 
-[English: `README.md`](README.md)
+[English: `README.md`](README.md) · [Français : `LISEZMOI.md`](LISEZMOI.md)
 
 Esta carpeta contiene el port del juego a una aplicación de escritorio nativa, sin Flash. Es trabajo en curso (con errores
 conocidos, ver `ERRORES.md` en la raíz); el juego original en Flash sigue intacto en `src/`, `libs/` y `release/`, y también en la rama `flash`.
@@ -76,6 +76,7 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - `game/` el juego: menús (`GalaxyApp`, `Ui`), idiomas (`Lang`), ajustes (`Settings`), partidas (`SaveData`), planeta, luz y mallado (`World`),
   modelos de bloque (`Models`), cielo y niebla (`Sky`), nieve (`Snow`), jugador, excavar y colocar (`GameView`), inventario (`Inv`, `InvBar`, `Palette`),
   efectos y sueltos (`Fx`, `Drops`) y la nave (`Ship`, `ShipData`).
+- `explore/` el mapa de estrellas (`Explorer`, con el robot comerciante y las flechas GPS). El agua que fluye está en `game/WorldProcess.hx`.
 - `shim/` capa de compatibilidad `flash.*` para que los generadores originales compilen en HashLink.
 - `headless/` programas de verificación: los mundos son idénticos a los de Flash (hash Adler-32, agua y bloques); también leen la nave y el guardado.
 
