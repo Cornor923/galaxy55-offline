@@ -1,0 +1,31 @@
+# nombres de los cristales verdes (BBonus*): esquina del bloque apuntado e inventario. Probar con -Extra "--lang=fr" (en, es)
+wait 3
+planet
+wait 30
+print names BBonusSmall BBonusMedium BBonusLarge BBonusCharge
+fillt 55 55 79 73 10 10 BRock
+fillt 55 55 79 73 11 20 none
+setp 66 64 top BBonusSmall
+setp 66 60 top BBonusMedium
+setp 66 68 top BBonusLarge
+slot 0
+tp 64.5 64.5 top
+lookat 66.5 64.5 76.2
+wait 10
+print select
+shot bn_small
+tp 64.5 60.5 top
+lookat 66.5 60.5 76.3
+wait 10
+print select
+shot bn_medium
+tp 64.5 68.5 top
+lookat 65.9 68.5 76.5
+wait 10
+print select
+shot bn_large
+# inventario: el nombre sale bajo la casilla al recibir el bloque
+give BBonusLarge 1
+wait 5
+shot bn_inv
+quit
