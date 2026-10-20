@@ -1051,6 +1051,17 @@ class World {
 		}
 	}
 
+	/*
+	 * Orden de los translucidos en la pasada "alpha": Heaps ordena por Pass.layer y luego por la distancia del objeto, pero
+	 * todos los chunks estan en la misma posicion (sus vertices son absolutos; solo las copias de la vuelta al planeta se
+	 * mueven), asi que la distancia no los ordenaba y el agua y el hielo de chunks distintos salian en un orden que cambiaba
+	 * con la camara (cortes rectos en el borde de un chunk, hielo sumergido visible a ratos). Como en Render.hx del original:
+	 * primero el agua de todos los chunks, luego la profundidad y el color del hielo; el resto de la pasada (capa 0) despues.
+	 */
+	static inline var LAYER_WATER = -3;
+	static inline var LAYER_ALPHA_DEPTH = -2;
+	static inline var LAYER_ALPHA = -1;
+
 	function emitMesh( m : MeshBuf, kind : Int ) {
 		if( m.pts.length == 0 ) return;
 		var poly = new h3d.prim.Polygon(m.pts, m.idx);
@@ -1072,16 +1083,20 @@ class World {
 			// orden del original (Render.hx: BTWater antes que BTAlpha): se dibujan despues del agua, asi el hielo sumergido queda detras de ella
 			mat.blendMode = Alpha;
 			mat.mainPass.depthWrite = false;
-			mat.mainPass.setPassName("alpha"); // ordenada por distancia: en "additive" no se ordena y el hielo parpadeaba
+			mat.mainPass.setPassName("alpha");
 			// el original dibuja BTAlpha con la cara trasera oculta (culling por defecto): sin esto se veian a traves del hielo
 			// sus caras de atras y de abajo, oscuras (sombra de abajo y poca luz bajo el hielo), como manchas sobre el aire
 			mat.mainPass.culling = Back;
+			// solo la cara translucida mas cercana, como el original (pasada de profundidad y luego color con depth Equal)
+			mat.mainPass.depthTest = LessEqual;
+			mat.mainPass.layer = LAYER_ALPHA;
 		} else if( kind == 2 ) {
 			// agua: translucida; escribe profundidad como la primera pasada del original (water0)
 			mat.blendMode = Alpha;
 			mat.color.a = 0.6;
 			mat.mainPass.depthWrite = true;
 			mat.mainPass.setPassName("alpha");
+			mat.mainPass.layer = LAYER_WATER;
 		}
 		if( kind == 3 ) {
 			// pasada opaca de los pixeles solidos (marcos del cristal, bordes del hielo): escribe profundidad, asi las caras lejanas
@@ -1095,6 +1110,24 @@ class World {
 			cut.textureShader.killAlpha = true;
 			cut.textureShader.killAlphaThreshold = 0.9;
 			meshes.push(new h3d.scene.Mesh(poly, cut, root));
+			if( curList != null ) curList.push(meshes.length - 1);
+			meshCx.push(curCx);
+			meshCy.push(curCy);
+			// profundidad de la cara translucida mas cercana (AlphaShader0 del original), antes del color: mismos shaders de
+			// vertices que el color, para que la profundidad coincida. El hielo tiene alfa >= 0.28 en toda su textura; el cristal
+			// es casi todo < 0.25 y no la escribe, asi lo que hay detras de un cristal se sigue viendo
+			var depth = h3d.mat.Material.create(atlas);
+			depth.shadows = false;
+			depth.mainPass.enableLights = false;
+			depth.mainPass.culling = Back;
+			depth.mainPass.addShader(new h3d.shader.VertexColor());
+			depth.mainPass.addShader(sky.fog);
+			depth.textureShader.killAlpha = true;
+			depth.textureShader.killAlphaThreshold = 0.25;
+			depth.mainPass.setPassName("alpha");
+			depth.mainPass.setColorMask(false, false, false, false);
+			depth.mainPass.layer = LAYER_ALPHA_DEPTH;
+			meshes.push(new h3d.scene.Mesh(poly, depth, root));
 			if( curList != null ) curList.push(meshes.length - 1);
 			meshCx.push(curCx);
 			meshCy.push(curCy);
