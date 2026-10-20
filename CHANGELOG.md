@@ -8,6 +8,7 @@
   caja de curación curan. Barras de vida y oxígeno abajo (solo se ven si no están llenas) y destello rojo o azul. Al morir
   vuelves a la nave con la vida llena, sin perder nada. En creativo no hay daño.
 - Opciones separadas en secciones (General, Controles, Gráficos, Interfaz): todo junto ya no cabía.
+- Plantas y demás modelos: se apuntan por su dibujo y no por toda la celda; con varias plantas juntas ya es fácil romper la que miras (cambio del port).
 - **Olas del agua**, las del original; se pueden quitar en Opciones.
 - Bloques parciales (placas, hierro, cofres…): luz por esquina como el original.
 - Menú: un solo planeta de fondo pequeño; ya no da tirones mientras se genera.

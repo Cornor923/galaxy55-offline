@@ -8,6 +8,7 @@
   soin soignent. Barres de vie et d'oxygène en bas (visibles seulement si elles ne sont pas pleines) et éclair rouge ou bleu.
   Quand tu meurs, tu reviens au vaisseau avec toute ta vie, sans rien perdre. Pas de dégâts en mode créatif.
 - Options séparées en sections (Général, Commandes, Graphismes, Interface) : tout ne tenait plus sur un écran.
+- Plantes et autres modèles : on vise leur forme et non toute la case ; avec plusieurs plantes ensemble, on casse facilement celle qu'on regarde (changement du port).
 - **Vagues de l'eau**, celles de l'original ; on peut les désactiver dans les Options.
 - Blocs partiels (plaques, fer, coffres…) : lumière par coin comme l'original.
 - Menu : une seule petite planète de fond ; plus de saccades pendant sa génération.

@@ -932,6 +932,40 @@ class GameView {
 		return b.hasProp(PCanPick);
 	}
 
+	static var pickBoxes = new Map<Int, { x1 : Float, y1 : Float, z1 : Float, x2 : Float, y2 : Float, z2 : Float }>();
+
+	/**
+	 * Caja con la que se apunta a un bloque: la suya (BFSize) o, en las plantas y demas modelos, la de su dibujo.
+	 * Cambio del port: el original apuntaba a los modelos como a un bloque entero y, con varias plantas juntas, costaba
+	 * romper la que se miraba. Las plantas en cruz ocupan la celda en diagonal: se apuntan por su parte central.
+	 */
+	function pickBox( b : Block ) {
+		if( b.size != null ) return b.size;
+		if( b.type != BTModel && b.type != BTModel2Side && b.type != BTSprite ) return null;
+		var c = pickBoxes.get(b.index);
+		if( c != null ) return c;
+		var v = Models.get(b.model != null ? b.model : MCross).v;
+		var x1 = 1., y1 = 1., z1 = 1., x2 = 0., y2 = 0., z2 = 0.;
+		var i = 0;
+		while( i < v.length ) {
+			x1 = Math.min(x1, v[i]); x2 = Math.max(x2, v[i]);
+			y1 = Math.min(y1, v[i + 1]); y2 = Math.max(y2, v[i + 1]);
+			z1 = Math.min(z1, v[i + 2]); z2 = Math.max(z2, v[i + 2]);
+			i += 6;
+		}
+		if( x2 < x1 ) return null;
+		if( x2 - x1 > 0.9 && y2 - y1 > 0.9 ) {
+			x1 = y1 = 0.2;
+			x2 = y2 = 0.8;
+		}
+		// planos (enredaderas): un poco de grosor para poder apuntarlos
+		if( x2 - x1 < 0.16 ) { var cx = (x1 + x2) * 0.5; x1 = cx - 0.08; x2 = cx + 0.08; }
+		if( y2 - y1 < 0.16 ) { var cy = (y1 + y2) * 0.5; y1 = cy - 0.08; y2 = cy + 0.08; }
+		c = { x1 : x1, y1 : y1, z1 : Math.max(0, z1), x2 : x2, y2 : y2, z2 : Math.max(Math.min(1, z2), 0.25) };
+		pickBoxes.set(b.index, c);
+		return c;
+	}
+
 	/**
 	 * Primer bloque que toca el rayo del centro de la pantalla (alcance 7). Igual que Render.pick del original, la altura
 	 * se corrige con la curvatura del planeta (z + r2 * curve), porque lo que se ve esta curvado.
@@ -952,7 +986,8 @@ class GameView {
 			// el agua que no se apunta (mar, cascada que cae, agua puesta) no para el rayo: se pone bajo el agua; la fuente de
 			// cascada y la arena movediza si lo paran: se pone contra ellas (Render.pick del original)
 			var b = world.block(ix, iy, iz);
-			if( b != null && blocking(b) && (b.size == null || (x - ix >= b.size.x1 && x - ix <= b.size.x2 && y - iy >= b.size.y1 && y - iy <= b.size.y2 && z - iz >= b.size.z1 && z - iz <= b.size.z2)) ) {
+			var bx = b != null ? pickBox(b) : null;
+			if( b != null && blocking(b) && (bx == null || (x - ix >= bx.x1 && x - ix <= bx.x2 && y - iy >= bx.y1 && y - iy <= bx.y2 && z - iz >= bx.z1 && z - iz <= bx.z2)) ) {
 				if( Dev.trace && iz >= World.SHIP_Z ) Sys.println("pick: toca " + b.k + "@" + ix + "," + iy + "," + iz + " antes=" + lx + "," + ly + "," + lz + " mano=" + (hand != null) + " enZona=" + ship.inCraft(lx, ly, lz));
 				// la capa 0 (roca madre) se apunta como en el original (Render.doPick: solo z < 0 queda fuera): se pone encima,
 				// pero no se rompe (power -1)
