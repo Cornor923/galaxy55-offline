@@ -20,6 +20,12 @@ typedef UniInfo = {
 	var planets : Array<UniPlanet>;
 	/** donde esta el robot comerciante en el sector (anadido del port) */
 	@:optional var robot : { x : Float, y : Float };
+	/** la partida esta en el espacio (despegaste y no has aterrizado): al cargarla se abre el mapa */
+	@:optional var space : Bool;
+	/** en el espacio, fuera de un sistema: donde esta la nave en el sector */
+	@:optional var ship : { x : Float, y : Float };
+	/** distancia recorrida en el mapa (Space.travel; base para el combustible y otras ideas del viaje) */
+	@:optional var traveled : Float;
 }
 
 /** Datos de una partida guardada. Los cambios de terreno, inventario y creditos se anadiran aqui. */
@@ -98,6 +104,9 @@ class SaveData {
 				start : { seed : Std.int(o.start.seed), biome : o.start.biome, size : Std.int(o.start.size) },
 				planets : [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : [for( v in (p.edits : Array<Dynamic>) ) Std.int(v)] }],
 				robot : o.robot != null ? { x : (o.robot.x : Float), y : (o.robot.y : Float) } : null,
+				space : o.space == true ? true : null,
+				ship : o.ship != null ? { x : (o.ship.x : Float), y : (o.ship.y : Float) } : null,
+				traveled : o.traveled != null ? (o.traveled : Float) : 0,
 			};
 		} catch( e : Dynamic ) {
 			return null;

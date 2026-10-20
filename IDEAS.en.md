@@ -24,6 +24,10 @@ and weight, like in the original) matter more:
   (`detCapsule`) holds 2 engines, hull, wires and glass. It appears on ~0.1% of small planets, ~0.3% of medium ones and ~1%
   of large ones (found by Cornor923). Idea: make it a bit more common, or add other ship wrecks.
 
+Groundwork in the code (v0.4): `port/game/Space.hx` gets the take-off, the distance travelled on the map (saved in the
+game), system changes, landing (and can prevent it), the lock button and docking with the robot. It changes nothing in the
+game for now: any of these ideas plugs in there.
+
 ## Water and lava
 
 - **Lava + water (or cascade) = basalt** (Sekhmet's memory, "infinite basalt"). The original client code doesn't do it: lava

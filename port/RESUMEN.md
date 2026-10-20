@@ -68,6 +68,11 @@ El explorador original arranca en modo depuracion dentro de un sistema solar (`P
 - Datos: `ExpData.ExpOffline` copia `exp.OfflineData` del original sin servidor: TODOS los sistemas abiertos (los candados de `Main.hx` eran solo datos de prueba) y planetas sin explorar ("Escanear" y luego aterrizar).
 - Universo guardado: HECHO (`SaveInfo.uni`: semilla del sector, planeta actual, posicion de la nave en el mapa, planetas visitados con sus cambios). El mapa empieza junto al planeta inicial y,
   al volver de un planeta, la nave aparece junto a ese planeta en su sistema.
+- En el espacio (desde la v0.4): al despegar el planeta se descarga (`GalaxyApp.buildExplorer`) y la partida queda en `spaceInfo` con
+  `uni.space = true` y `uni.ship` (punto del sector). Guardar en el mapa escribe eso con miniatura del mapa; al cargarla se genera el
+  planeta solo para `Ship.captureFrames` y se abre el mapa (`finishLoading` -> `toSpace`). Del mapa se sale aterrizando.
+  `Space.hx` es la base de las reglas del viaje (combustible, candados, misiones...): recibe despegue, distancia recorrida
+  (`uni.traveled`), cambios de sistema, aterrizaje, candado y acoplamiento; hoy solo cuenta la distancia.
 - **PENDIENTE (lo siguiente, pedido por el usuario, el 15/10/2026): hacer las transiciones IGUALES al original.** Hoy solo hay un fundido a negro. Leer y portar de `Manager.hx`:
   1. **Entrar al sistema solar** (`gotoSolar` con `anim`, lineas ~1412-1595): `hyperjumpFx3D` (10 lineas de particulas que convergen en la nave + `novaFx` que se absorbe) y luego `zoomAnim` de 1300 ms:
      lineas de hiperespacio (`makeHyperspacePart`) entre el 10 % y el 60 %, destello de calor (`burn`/`overdriveBurn`), el sistema crece desde un punto (`zoomCache` = `solar.snapshot()`, escala 0.01 -> 1 con `TEase`),

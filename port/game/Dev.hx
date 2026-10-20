@@ -55,8 +55,9 @@ class Dev {
 		while( pc < lines.length ) {
 			var l = lines[pc++];
 			var a = l.split(" ").filter(function(s) return s != "");
-			var w = g.world;
-			var sdx = w.shipDX, sdy = w.shipDY, sz = World.SHIP_Z;
+			// en el mapa de estrellas no hay planeta cargado (g = null): solo valen las ordenes del mapa y las generales
+			var w = g != null ? g.world : null;
+			var sdx = w != null ? w.shipDX : 0, sdy = w != null ? w.shipDY : 0, sz = World.SHIP_Z;
 			try {
 				switch( a[0] ) {
 				case "wait":
@@ -249,7 +250,8 @@ class Dev {
 				case "exprobot": app.explorer.devClickRobot();
 				case "exprinfo": Sys.println(app.explorer.devRobotInfo());
 				case "exppause": @:privateAccess app.openMapPause(); // Esc en el mapa
-				case "mapback": @:privateAccess app.leaveMap(); // menu de pausa del mapa: volver a la nave
+				case "landhome": app.devLandHome(); // aterrizar en el planeta del que despegaste
+				case "reload": app.devReload(); // Menu principal y Continuar con esta partida
 				case "expesc": app.explorer.escape(); // Esc o Start del mando en el mapa
 				case "screen2": @:privateAccess app.show(a[1]); // abre una pantalla de menu sin cambiar de estado
 				case "setlang":
@@ -262,8 +264,9 @@ class Dev {
 				case "closewin":
 					// closewin: lo que hace la X de la ventana (guardar), sin cerrar el juego
 					hxd.Window.getInstance().onClose();
-					var i = SaveData.read(g.info.id);
-					Sys.println("guardado: pos " + (i != null && i.uni != null ? "" + i.uni.pos : "-"));
+					var i = SaveData.read(app.curInfo().id);
+					var u = i != null ? i.uni : null;
+					Sys.println("guardado: pos " + (u != null ? "" + u.pos : "-") + (u != null && u.space == true ? " en el espacio" : "") + (u != null && u.ship != null ? " nave " + Std.int(u.ship.x) + "," + Std.int(u.ship.y) : ""));
 				case "walk":
 					g.debugSpeed = f(a[1]) * 0.15;
 					g.debugStrafe = a.length > 2 ? f(a[2]) * 0.15 : 0;
@@ -283,7 +286,7 @@ class Dev {
 						app.closeChest();
 						app.closeShop();
 						app.closePalette();
-						if( app.explorer != null ) app.closeExplorer();
+						if( app.explorer != null ) app.devLandHome(); // del mapa se sale aterrizando
 						if( app.current != null ) app.resume();
 					}
 				case "creative": @:privateAccess g.creative = true;
@@ -310,7 +313,7 @@ class Dev {
 					Sys.println(a[0] + " " + w.block.k + " x" + a[2] + " -> creditos=" + g.info.credits + " compra=" + g.market.buyPrice(w) + " venta=" + g.market.sellPrice(w));
 				case "key": g.debugKey = a[1];
 				case "unkey": g.debugKey = null;
-				case "print": print(a, g);
+				case "print": print(a, g, app);
 				case "shot":
 					app.capture("port/out/" + a[1] + ".png", false);
 				case "quit":
@@ -327,7 +330,17 @@ class Dev {
 		return true;
 	}
 
-	function print( a : Array<String>, g : GameView ) {
+	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
+		if( a[1] == "screen" ) {
+			Sys.println("pantalla " + @:privateAccess app.currentName);
+			return;
+		}
+		if( g == null ) {
+			// en el mapa de estrellas
+			var u = app.curInfo().uni;
+			Sys.println("pos: espacio " + u.pos + (u.ship != null ? " nave " + Std.int(u.ship.x) + "," + Std.int(u.ship.y) : "") + " recorrido " + Std.int(u.traveled));
+			return;
+		}
 		var w = g.world;
 		switch( a[1] ) {
 		case "names":

@@ -93,8 +93,6 @@ class Explorer extends h2d.Object {
 	public static inline var VH = 450;
 
 	public var infos(default, null) : ExpInfos;
-	/** el jugador ha pedido volver a la nave */
-	public dynamic function onExit() {}
 	/** Esc sin ventana abierta: menu de pausa del mapa (anadido del port: en el original el mapa era una pagina aparte) */
 	public dynamic function onPause() {}
 	/** con el menu de pausa abierto el mapa se para */
@@ -105,6 +103,12 @@ class Explorer extends h2d.Object {
 	public dynamic function onPos( pos : Array<Int> ) {}
 	/** acoplarse al robot comerciante (anadido del port): se entra en su nave, con la tienda */
 	public dynamic function onDock() {}
+	/** la nave ha avanzado `dist` (en el sector o dentro de un sistema): para Space */
+	public dynamic function onTravel( dist : Float, inSystem : Bool ) {}
+	/** antes de aterrizar o escanear: false = no se puede (Space) */
+	public dynamic function canLand( p : ExpPlanet ) : Bool return true;
+	/** boton del candado de un sistema cerrado (el original lo abria pagando la licencia): para Space */
+	public dynamic function onUnlock( s : ExpSystem ) {}
 	/** posicion guardada del robot comerciante (la pone el juego antes de abrir el mapa; null = en un sistema al azar) */
 	public static var robotStart : { x : Float, y : Float } = null;
 	/** al volver de la nave del robot: la nave aparece donde se acoplo (en el sector) */
@@ -1357,7 +1361,7 @@ class Explorer extends h2d.Object {
 				case SLocked(cost):
 					ship.onArriveDist = 30;
 					ship.onArrive = function() {
-						if( winSpot != sp ) openWindow(sp, sp.system.name, sp.system.x + "," + sp.system.y, "" + cost, function() {});
+						if( winSpot != sp ) openWindow(sp, sp.system.name, sp.system.x + "," + sp.system.y, "" + cost, function() onUnlock(sp.system));
 					};
 				}
 			} else {
@@ -1397,7 +1401,7 @@ class Explorer extends h2d.Object {
 	 * se oscurece un poco, sale el nombre una vez y se pasa a la pantalla de carga del juego (que tiene la barra de verdad).
 	 */
 	function landPlanet( p : ExpPlanet ) {
-		if( locked ) return;
+		if( locked || !canLand(p) ) return;
 		var sp = winSpot;
 		closeWindow();
 		locked = true;
@@ -1556,7 +1560,12 @@ class Explorer extends h2d.Object {
 			if( K.isPressed(K.ESCAPE) ) escape();
 		}
 
-		if( !paused ) ship.update(tmod);
+		if( !paused ) {
+			var ox = ship.x, oy = ship.y;
+			ship.update(tmod);
+			var d = Math.sqrt((ship.x - ox) * (ship.x - ox) + (ship.y - oy) * (ship.y - oy));
+			if( d > 0 ) onTravel(d, inSolar);
+		}
 		if( ship.getScreenSpeed() > 0.3 ) ship.rotation = ship.getAngleRad() * 180 / Math.PI;
 
 		// salida del sistema solar por los bordes (Manager.main). La respuesta del "servidor" tarda 500 ms y el salto otros 300:

@@ -34,9 +34,9 @@ class SaveRow extends Widget {
 			Theme.rect(ph, 8, 7, 160, 90, 0xFFFFFF, 0.07);
 		}
 		Theme.text(this, info.name, 2.4, Theme.TEXT, 190, 10);
-		var biome = Lang.t("biome." + info.biome);
 		var size = 128 * info.sizeChunks;
-		Theme.text(this, biome + "  ·  " + size + "x" + size + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t("mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
+		var where = info.uni != null && info.uni.space == true ? Lang.t("save.space") : Lang.t("biome." + info.biome) + "  ·  " + size + "x" + size;
+		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t("mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
 		Theme.text(this, Lang.t("played") + " " + Lang.duration(info.playSeconds) + "   " + Lang.t("saved") + " " + Lang.date(info.saved), 1.5, Theme.DIM, 190, 74);
 	}
 }
@@ -197,14 +197,8 @@ class GalaxyApp extends hxd.App {
 		win.title = "Galaxy 55 (offline)";
 		applyVsync();
 		win.onClose = function() {
-			if( state == Exploring && explorer != null ) {
-				// en el mapa: se guarda como al volver a la nave (al cargar apareces en el planeta)
-				var rp = explorer.robotPos();
-				if( rp != null ) universe().robot = rp;
-				universe().pos = [2, universe().planetId];
-				saveGame(false);
-			}
-			if( state == Playing || state == Paused ) saveGame(false);
+			// en el mapa se guarda la partida en el espacio; durante el despegue el planeta aun esta cargado
+			if( state == Playing || state == Paused || state == Exploring || (state == Loading && pendingExplorer > 0) ) saveGame(false);
 			return true;
 		};
 		if( Settings.fullscreen && shotPath == null ) win.displayMode = Borderless;
@@ -707,8 +701,15 @@ class GalaxyApp extends hxd.App {
 
 	public var explorer : Explorer;
 	var pendingExplorer = 0;
+	/** la partida mientras estas en el espacio: el planeta no esta cargado (en el original el mapa era otra pagina) */
+	var spaceInfo : SaveInfo;
+	/** reglas del viaje espacial (base para lo que se anada al espacio) */
+	var space : Space;
+	/** imagenes de la nave para el mapa: se hacen con la nave cargada (al despegar) y sirven hasta el siguiente despegue */
+	var shipFrames : Array<flash.display.BitmapData>;
 
 	public function startExplorer() {
+		if( game != null && (game.hangar != null || game.info.mothership == true) ) return;
 		current = null;
 		ui.removeChildren();
 		screens = new Map();
@@ -720,7 +721,7 @@ class GalaxyApp extends hxd.App {
 
 	/** el universo de la partida (se crea con la primera apertura del mapa si la partida es antigua) */
 	function universe() : SaveData.UniInfo {
-		var info = game.info;
+		var info = game != null ? game.info : spaceInfo;
 		if( info.uni == null )
 			info.uni = { seed : info.seed, planetId : 0, pos : [2, 0], start : { seed : info.seed, biome : info.biome, size : info.sizeChunks }, planets : [] };
 		return info.uni;
@@ -827,11 +828,15 @@ class GalaxyApp extends hxd.App {
 			hangarReturn.credits = m.credits;
 			hangarReturn.market = m.market;
 		}
-		if( mapAfterMother ) mapAfterLoad = true;
-		mapAfterMother = false;
+		if( hangarReturn != null && hangarReturn.uni != null && hangarReturn.uni.space == true && shipFrames != null ) {
+			var info = hangarReturn;
+			hangarReturn = null;
+			leaveGame();
+			toSpace(info);
+			return;
+		}
 		backFromHangar();
 	}
-	var mapAfterLoad = false;
 
 	function backFromHangar() {
 		var info = hangarReturn;
@@ -844,48 +849,107 @@ class GalaxyApp extends hxd.App {
 	function buildExplorer() {
 		ui.removeChildren();
 		bar = null;
+		// despegue: los cambios del planeta quedan en la partida, que pasa al espacio, y el planeta se descarga
+		var takeoff = game != null;
+		if( takeoff ) {
+			universe();
+			var info = game.toInfo();
+			shipFrames = game.ship.captureFrames(engine, s3d);
+			leaveGame();
+			info.uni.space = true;
+			info.uni.ship = null;
+			spaceInfo = info;
+		}
 		var uni = universe();
 		var visited = [uni.planetId];
 		for( p in uni.planets ) visited.push(p.id);
-		Explorer.shipBytes = Hangar.currentShip(game.info);
+		Explorer.shipBytes = Hangar.currentShip(spaceInfo);
 		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, visited, uni.pos);
 		Explorer.robotStart = uni.robot;
-		explorer = new Explorer(s2d, infos, game.ship.captureFrames(engine, s3d));
+		explorer = new Explorer(s2d, infos, shipFrames);
 		s2d.under(explorer);
-		explorer.onExit = closeExplorer;
+		space = new Space(uni);
+		explorer.onTravel = space.travel;
+		explorer.canLand = space.canLand;
+		explorer.onUnlock = space.unlock;
 		explorer.onPause = openMapPause;
 		explorer.onLand = landOnPlanet;
-		explorer.onPos = function( pos ) universe().pos = pos;
+		explorer.onPos = function( pos ) {
+			universe().pos = pos;
+			space.moved(pos);
+		};
 		explorer.onDock = dockRobot;
 		state = Exploring;
 		dim.visible = false;
 		captureMouse(false);
+		if( takeoff ) {
+			space.takeoff();
+			// se guarda en cuanto el mapa se ha dibujado (para la miniatura); si antes se cierra la ventana, se guarda igual
+			takeoffSave = 1.0;
+		}
+	}
+	var takeoffSave = 0.;
+
+	/** la partida en curso: la del planeta cargado o, en el espacio, la del mapa */
+	public function curInfo() : SaveInfo return game != null ? game.info : spaceInfo;
+
+	/** pruebas: aterrizar en el planeta del que despegaste */
+	public function devLandHome() {
+		if( explorer == null ) return;
+		var id = universe().planetId;
+		for( s in explorer.infos.systems )
+			for( p in s.planets )
+				if( p.id == id ) {
+					landOnPlanet(p, s);
+					return;
+				}
+	}
+
+	/** pruebas: como Menu principal y Continuar con esta partida */
+	public function devReload() {
+		var id = curInfo().id;
+		toMainMenu();
+		startGame(SaveData.read(id));
+	}
+
+	/** abre el mapa con la partida en el espacio (al cargarla o al salir de la nave nodriza), con la nave donde estaba */
+	function toSpace( info : SaveInfo ) {
+		spaceInfo = info;
+		Explorer.shipStart = info.uni.ship;
+		startExplorer();
+	}
+
+	/** la posicion de la nave y del robot en el mapa pasan a la partida (para guardarla) */
+	function storeMapPos() {
+		if( explorer == null ) return;
+		var uni = universe();
+		var rp = explorer.robotPos();
+		if( rp != null ) uni.robot = rp;
+		uni.ship = explorer.shipPos();
 	}
 
 	/** aterrizar en un planeta del mapa: se guardan los cambios del planeta actual y se carga el elegido (o se crea si es nuevo) */
 	function landOnPlanet( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
-		var old = game.info;
+		var old = spaceInfo;
+		storeMapPos();
+		space.land(p);
+		space = null;
+		takeoffSave = 0;
 		var uni = universe();
 		uni.pos = [2, p.id];
-		// los cambios del planeta actual se guardan con su id
-		var cur = game.toInfo();
+		uni.space = null;
+		uni.ship = null;
+		// los cambios del planeta del que despegaste se guardan con su id
 		uni.planets = uni.planets.filter(function(q) return q.id != uni.planetId);
-		uni.planets.push({ id : uni.planetId, edits : cur.edits });
+		uni.planets.push({ id : uni.planetId, edits : old.edits });
 		var target : SaveData.UniPlanet = null;
 		for( q in uni.planets ) if( q.id == p.id ) target = q;
 		uni.planets = uni.planets.filter(function(q) return q.id != p.id);
 		uni.planetId = p.id;
 		explorer.dispose();
 		explorer = null;
+		spaceInfo = null;
 		dim.visible = true;
-		closePalette();
-		game.dispose();
-		if( invBar != null ) {
-			invBar.remove();
-			invBar = null;
-		}
-		game.world.dispose();
-		game = null;
 		ui.removeChildren();
 		screens = new Map();
 		// misma partida: el inventario, la nave y el universo son de toda la partida; el terreno es el del planeta elegido
@@ -898,26 +962,24 @@ class GalaxyApp extends hxd.App {
 		startGame(old);
 	}
 
-	function closeExplorer() {
-		var rp = explorer.robotPos();
-		if( rp != null ) universe().robot = rp;
+	/** acoplarse al robot comerciante desde el mapa: se entra en su nave (la nodriza, con la tienda y tu nave aparcada).
+	    Al salir se vuelve al mapa, donde te acoplaste; si guardas dentro, la partida sigue en el espacio */
+	function dockRobot() {
+		storeMapPos();
+		space.dock();
+		space = null;
+		takeoffSave = 0;
+		var info = spaceInfo;
 		explorer.dispose();
 		explorer = null;
+		spaceInfo = null;
 		dim.visible = true;
-		resume();
+		hangarReturn = info;
+		var h : SaveInfo = Reflect.copy(info);
+		h.inv = Inv.copy(info.inv);
+		h.mothership = true;
+		startGame(h);
 	}
-
-	/** acoplarse al robot comerciante desde el mapa: se entra en su nave (la nodriza, con la tienda y tu nave aparcada) */
-	function dockRobot() {
-		dockShip = explorer.shipPos();
-		closeExplorer();
-		// al salir de su nave se vuelve al mapa, junto al robot (no al planeta donde se abrio el mapa)
-		if( dockShip != null ) universe().pos = [0, 0, 0];
-		mapAfterMother = true;
-		startMothership();
-	}
-	var dockShip : { x : Float, y : Float };
-	var mapAfterMother = false;
 
 	function openComputer() {
 		if( state != Playing ) return;
@@ -948,33 +1010,20 @@ class GalaxyApp extends hxd.App {
 		if( explorer != null ) explorer.paused = false;
 	}
 
-	/** dejar el mapa sin aterrizar: se vuelve a la nave en el planeta, y el proximo despegue sale de su sistema */
-	function leaveMap() {
-		closeMapPause();
-		var uni = universe();
-		uni.pos = [2, uni.planetId];
-		closeExplorer();
-	}
-
+	/** para volver al planeta se aterriza en el; Menu principal guarda la partida en el espacio */
 	function buildMapPause() : Screen {
-		var s = panelFor(560, 370, Lang.t("pause.title"));
+		var s = panelFor(560, 308, Lang.t("pause.title"));
 		var x = (W - 460) * 0.5;
-		var y = (H - 370) * 0.5 + 92;
+		var y = (H - 308) * 0.5 + 92;
 		var res = new Button(s, Lang.t("resume"));
-		var back = new Button(s, Lang.t("map.backship"));
 		var op = new Button(s, Lang.t("options"));
 		var mm = new Button(s, Lang.t("mainmenu"));
 		s.add(res, x, y);
-		s.add(back, x, y + 62);
-		s.add(op, x, y + 124);
-		s.add(mm, x, y + 186);
+		s.add(op, x, y + 62);
+		s.add(mm, x, y + 124);
 		res.onActivate = closeMapPause;
-		back.onActivate = leaveMap;
 		op.onActivate = function() show("options");
-		mm.onActivate = function() {
-			leaveMap();
-			toMainMenu();
-		};
+		mm.onActivate = toMainMenu;
 		s.onBack = closeMapPause;
 		return s;
 	}
@@ -1066,6 +1115,14 @@ class GalaxyApp extends hxd.App {
 			Sys.println(loadWorld.debugStats());
 		}
 		game = new GameView(s3d, loadWorld, loadInfo, atlas);
+		loadWorld = null;
+		if( loadInfo.uni != null && loadInfo.uni.space == true && loadInfo.hangar != true && loadInfo.mothership != true ) {
+			// partida en el espacio: el planeta solo se carga para hacer las imagenes de la nave; luego se abre el mapa
+			shipFrames = game.ship.captureFrames(engine, s3d);
+			leaveGame();
+			toSpace(loadInfo);
+			return;
+		}
 		invBar = new InvBar(s2d, game.inv, atlas, W);
 		game.onComputer = openComputer;
 		game.onChest = openChest;
@@ -1074,7 +1131,6 @@ class GalaxyApp extends hxd.App {
 			game.onHangarExit = exitHangar;
 			hangarOrig = haxe.crypto.Base64.encode(game.hangarShip());
 		}
-		loadWorld = null;
 		ui.removeChildren();
 		bar = null;
 		state = Playing;
@@ -1084,13 +1140,6 @@ class GalaxyApp extends hxd.App {
 		if( loadInfo.px < 0 && loadInfo.hangar != true && loadInfo.mothership != true ) {
 			// partida nueva: se crea el archivo enseguida para que aparezca en la lista
 			saveGame(false);
-		}
-		if( mapAfterLoad ) {
-			// vuelta de la nave del robot: el mapa se abre otra vez donde te acoplaste
-			mapAfterLoad = false;
-			Explorer.shipStart = dockShip;
-			dockShip = null;
-			startExplorer();
 		}
 	}
 
@@ -1117,14 +1166,15 @@ class GalaxyApp extends hxd.App {
 
 	function toMainMenu() {
 		saveGame(false);
-		closePalette();
-		game.dispose();
-		if( invBar != null ) {
-			invBar.remove();
-			invBar = null;
+		if( explorer != null ) {
+			explorer.dispose();
+			explorer = null;
+			dim.visible = true;
 		}
-		game.world.dispose();
-		game = null;
+		spaceInfo = null;
+		space = null;
+		takeoffSave = 0;
+		if( game != null ) leaveGame();
 		ui.removeChildren();
 		screens = new Map();
 		bgStart();
@@ -1226,13 +1276,22 @@ class GalaxyApp extends hxd.App {
 
 	function captureThumb() : haxe.io.Bytes {
 		try {
-			game.updateCamera();
 			var w = engine.width, h = engine.height;
 			var tex = new h3d.mat.Texture(w, h, [Target]);
 			tex.depthBuffer = new h3d.mat.Texture(w, h, [Target], Depth24Stencil8);
 			engine.pushTarget(tex);
-			engine.clear(0xFF6FA8DC, 1, 0);
-			s3d.render(engine);
+			if( game != null ) {
+				game.updateCamera();
+				engine.clear(0xFF6FA8DC, 1, 0);
+				s3d.render(engine);
+			} else {
+				// en el espacio: el mapa de estrellas, sin los menus
+				engine.clear(0xFF000000, 1, 0);
+				var hidden = [for( o in s2d ) if( o != explorer && o.visible ) o];
+				for( o in hidden ) o.visible = false;
+				s2d.render(engine);
+				for( o in hidden ) o.visible = true;
+			}
 			engine.popTarget();
 			var px = tex.capturePixels();
 			var tw = 320, th = 180;
@@ -1250,7 +1309,14 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function saveGame( notify : Bool ) {
-		if( game == null ) return;
+		if( game == null ) {
+			// en el espacio: la partida con la nave y el robot donde estan en el mapa
+			if( spaceInfo == null || explorer == null ) return;
+			storeMapPos();
+			var ok = SaveData.write(spaceInfo, captureThumb());
+			if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
+			return;
+		}
 		// en el hangar se guarda la partida tal como estaba al entrar
 		var ok = SaveData.write(game.hangar != null || game.info.mothership == true ? hangarReturn : game.toInfo(), captureThumb());
 		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza
@@ -1525,6 +1591,7 @@ class GalaxyApp extends hxd.App {
 		if( state == Exploring && explorer != null ) {
 			if( !explorer.paused && current == null && pad != null && pad.isPressed(pad.config.start) ) explorer.escape();
 			explorer.update(dt);
+			if( takeoffSave > 0 && (takeoffSave -= dt) <= 0 ) saveGame(false);
 		}
 		if( invBar != null ) invBar.visible = state == Playing || state == Paused;
 		cross.visible = state == Playing && game != null && game.laserActive;
@@ -1884,6 +1951,7 @@ class GalaxyApp extends hxd.App {
 			}
 			capture(shotPath);
 		}
+		if( state == Exploring && explorer != null && shotStage == 1 ) shotStage = 2;
 		if( state == Playing && shotStage == 1 ) {
 			shotStage = 2;
 			if( shotAt != null && shotAt.length >= 3 ) {
@@ -1921,7 +1989,7 @@ class GalaxyApp extends hxd.App {
 			} else
 				shotFrames = frames + 6;
 		}
-		if( dev != null && shotStage == 2 && game != null && (state == Playing || state == Exploring || state == Loading) ) {
+		if( dev != null && shotStage == 2 && ((game != null && (state == Playing || state == Loading)) || (state == Exploring && explorer != null)) ) {
 			if( dev.tick(this, game) ) Sys.exit(0);
 			return;
 		}

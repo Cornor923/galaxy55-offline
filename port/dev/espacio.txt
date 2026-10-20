@@ -1,0 +1,25 @@
+# despegar descarga el planeta y la partida pasa al espacio; guardar en el mapa y Continuar vuelve al mapa en el mismo sitio;
+# al aterrizar en tu planeta siguen sus cambios
+wait 3
+creative
+set 64 64 120 BChest
+ship
+wait 10
+explore
+wait 200
+print pos
+expinfo
+expgo 2400 1000
+wait 400
+expinfo
+closewin
+reload
+wait 600
+print pos
+expinfo
+shot espacio_cargado
+landhome
+wait 300
+print pos
+closewin
+quit

@@ -18,8 +18,10 @@
 - **Merchant robot on the star map:** it travels between the sector's systems; click it and it stops and waits for you, and
   docking takes you into its ship (the mothership), with the shop. Leaving brings you back to the map. On the map, its ship has the
   shape of the mothership seen from above.
-- Star map: Esc (or the gamepad's Start) opens a pause menu (Resume, Back to the ship, Options, Main menu). When you go back to the ship without
-  landing, the next take-off starts from your planet's system.
+- **Taking off is leaving the planet**, like the original: the planet is unloaded (its changes are saved) and nothing is
+  drawn behind the map. To go back, you land. If you save or close the game in space (or inside the robot's ship),
+  "Continue" brings you back to the map where you were; the save list says "In space".
+- Star map: Esc (or the gamepad's Start) opens a pause menu (Resume, Options, Main menu).
 - The original **GPS arrows** on the map: they point to the planets you visited (and their systems) and to the robot (in orange).
 - Options: a shadow of the block you are about to place and the name of the targeted block (small, bottom right); both can be turned off.
 - Creative mode: the four waters (normal, dark, acid and winter) are in the palette.

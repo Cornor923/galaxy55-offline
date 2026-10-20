@@ -19,8 +19,10 @@
 - **Robot marchand sur la carte stellaire :** il voyage entre les systèmes du secteur ; clique dessus et il s'arrête pour
   t'attendre, et en t'amarrant tu entres dans son vaisseau (le vaisseau mère), avec la boutique. En sortant, tu reviens sur la carte. Sur la
   carte, son vaisseau a la forme du vaisseau mère vu d'en haut.
-- Carte stellaire : Échap (ou Start sur la manette) ouvre un menu de pause (Reprendre, Retour au vaisseau, Options, Menu principal). Si tu reviens au
-  vaisseau sans atterrir, le prochain décollage part du système de ta planète.
+- **Décoller, c'est quitter la planète**, comme dans l'original : la planète est déchargée (ses changements sont enregistrés)
+  et rien n'est dessiné derrière la carte. Pour revenir, tu atterris. Si tu sauvegardes ou fermes le jeu dans l'espace (ou dans
+  le vaisseau du robot), « Continuer » te ramène sur la carte là où tu étais ; la liste des parties indique « Dans l'espace ».
+- Carte stellaire : Échap (ou Start sur la manette) ouvre un menu de pause (Reprendre, Options, Menu principal).
 - Les **flèches GPS** d'origine sur la carte : elles pointent vers les planètes visitées (et leurs systèmes) et vers le robot (en orange).
 - Options : ombre du bloc que tu vas poser et nom du bloc visé (petit, en bas à droite) ; les deux peuvent être désactivés.
 - Mode créatif : les quatre eaux (normale, sombre, acide et d'hiver) sont dans la palette.

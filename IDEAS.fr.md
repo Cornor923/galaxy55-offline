@@ -29,6 +29,10 @@ du vaisseau (moteurs et poids, comme dans l'original) comptent davantage :
   ~0,3 % des moyennes et ~1 % des grandes (trouvé par Cornor923). Idée : la rendre un peu plus fréquente, ou ajouter
   d'autres épaves.
 
+Base dans le code (v0.4) : `port/game/Space.hx` reçoit le décollage, la distance parcourue sur la carte (enregistrée dans
+la partie), les changements de système, l'atterrissage (et peut l'empêcher), le bouton du cadenas et l'amarrage au robot.
+Pour l'instant il ne change rien au jeu : chacune de ces idées s'y branche.
+
 ## Eau et lave
 
 - **Lave + eau (ou cascade) = basalte** (souvenir de Sekhmet, « basalte infini »). Le code du client d'origine ne le fait pas :

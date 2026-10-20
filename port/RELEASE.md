@@ -9,7 +9,7 @@ Port **no oficial** de Galaxy 55 (Motion Twin, 2012) a una aplicación nativa (H
 - **Agua que fluye**, la del original: el mar llena lo que cavas a su lado; la cascada y el agua que pones bajan en escalones. **Olas del agua** del original (se pueden quitar).
 - **Vida y oxígeno**, como el original: caídas, lava, agua ácida, ahogarse bajo el agua, plantas y cajas de curación. Al morir vuelves a la nave.
 - **Robot comerciante en el mapa de estrellas:** viaja entre los sistemas; lo sigues, te acoplas y comercias en su nave nodriza. **Flechas GPS** del original.
-- Menú de pausa en el mapa de estrellas (Esc), con "Volver a la nave".
+- **Despegar es salir del planeta**, como en el original: el planeta se descarga y para volver aterrizas. Puedes guardar en el espacio y "Continuar" te devuelve al mapa. Menú de pausa en el mapa (Esc).
 - **Opciones** por secciones, sombra del bloque que vas a poner y nombre del bloque apuntado.
 - Las plantas se apuntan por lo que se ve: con varias juntas, rompes la que miras.
 - Arreglos de **Cornor923** (¡gracias!): sintetizador como el original, `galaxy55.exe` con icono (Discord ya no dice "Half-Life"), roca madre, agua y hielo, nombres de bloques y más.
@@ -35,7 +35,7 @@ Todo en el [CHANGELOG](../CHANGELOG.md).
 - **Flowing water**, the original's: the sea fills what you dig next to it; cascades and placed water go down in steps. The original's **water waves** (can be turned off).
 - **Health and oxygen**, like the original: falls, lava, acid water, drowning, healing plants and boxes. When you die you go back to the ship.
 - **Merchant robot on the star map:** it travels between systems; follow it, dock and trade in its mothership. The original's **GPS arrows**.
-- A pause menu on the star map (Esc), with "Back to the ship".
+- **Taking off is leaving the planet**, like the original: the planet is unloaded and you land to go back. You can save in space and "Continue" brings you back to the map. A pause menu on the map (Esc).
 - **Options** split into sections, a shadow of the block you are about to place and the name of the targeted block.
 - Plants are aimed at by what you see: with several together, you break the one you look at.
 - Fixes by **Cornor923** (thank you!): synthesizer like the original, `galaxy55.exe` with an icon (Discord no longer says "Half-Life"), bedrock, water and ice, block names and more.
@@ -61,7 +61,7 @@ Portage **non officiel** de Galaxy 55 (Motion Twin, 2012) en application native 
 - **L'eau s'écoule**, comme dans l'original : la mer remplit ce que tu creuses à côté d'elle ; les cascades et l'eau posée descendent par paliers. Les **vagues** de l'original (désactivables).
 - **Vie et oxygène**, comme dans l'original : chutes, lave, eau acide, noyade, plantes et boîtes de soin. Quand tu meurs, tu reviens au vaisseau.
 - **Robot marchand sur la carte stellaire :** il voyage entre les systèmes ; suis-le, amarre-toi et fais du commerce dans son vaisseau mère. Les **flèches GPS** de l'original.
-- Un menu de pause sur la carte stellaire (Échap), avec « Retour au vaisseau ».
+- **Décoller, c'est quitter la planète**, comme dans l'original : la planète est déchargée et tu atterris pour revenir. Tu peux sauvegarder dans l'espace et « Continuer » te ramène sur la carte. Un menu de pause sur la carte (Échap).
 - **Options** par sections, ombre du bloc que tu vas poser et nom du bloc visé.
 - On vise les plantes par ce qu'on voit : avec plusieurs plantes ensemble, tu casses celle que tu regardes.
 - Corrections de **Cornor923** (merci !) : synthétiseur comme l'original, `galaxy55.exe` avec icône (Discord n'affiche plus « Half-Life »), roche mère, eau et glace, noms des blocs et plus encore.

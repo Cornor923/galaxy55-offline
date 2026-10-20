@@ -25,6 +25,10 @@ nave (motores y peso, como en el original) importen más:
   (`detCapsule`) lleva 2 motores, casco, cables y cristal. Sale en ~0,1 % de los planetas pequeños, ~0,3 % de los medianos y
   ~1 % de los grandes (lo encontró Cornor923). Idea: que sea algo más frecuente o que haya otros restos de naves.
 
+Base en el código (v0.4): `port/game/Space.hx` recibe el despegue, la distancia recorrida en el mapa (se guarda en la
+partida), los cambios de sistema, el aterrizaje (y puede impedirlo), el botón del candado y el acoplamiento al robot. Ahora no
+cambia nada del juego: cualquiera de estas ideas se engancha ahí.
+
 ## Agua y lava
 
 - **Lava + agua (o cascada) = basalto** (recuerdo de Sekhmet, "basalto infinito"). El código del cliente original no lo hace:

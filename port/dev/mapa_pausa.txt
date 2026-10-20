@@ -1,4 +1,4 @@
-# Esc en el mapa: menu de pausa; "Volver a la nave" te deja en el planeta y el siguiente despegue sale de su sistema
+# Esc en el mapa: menu de pausa (Reanudar, Opciones, Menu principal); del mapa se sale aterrizando
 wait 3
 ship
 wait 10
@@ -11,8 +11,9 @@ expinfo
 exppause
 wait 30
 shot mapa_pausa
-mapback
-wait 60
+print screen
+landhome
+wait 300
 print pos
 explore
 wait 200

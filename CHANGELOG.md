@@ -18,8 +18,10 @@
 - **Robot comerciante en el mapa de estrellas:** viaja entre los sistemas del sector; al pulsarlo se para y te espera, y al
   acoplarte entras en su nave (la nave nodriza), con la tienda. Al salir vuelves al mapa. En el mapa, su nave tiene la forma
   de la nave nodriza vista desde arriba.
-- Mapa de estrellas: Esc (o Start del mando) abre un menú de pausa (Reanudar, Volver a la nave, Opciones, Menú principal). Al volver a la nave
-  sin aterrizar, el siguiente despegue sale del sistema de tu planeta.
+- **Despegar es salir del planeta**, como en el original: el planeta se descarga (sus cambios se guardan) y no queda nada
+  dibujado detrás del mapa. Para volver, aterrizas. Si guardas o cierras el juego en el espacio (o dentro de la nave del robot),
+  "Continuar" te devuelve al mapa donde estabas; la lista de partidas dice "En el espacio".
+- Mapa de estrellas: Esc (o Start del mando) abre un menú de pausa (Reanudar, Opciones, Menú principal).
 - **Flechas GPS** del original en el mapa: apuntan a los planetas que visitaste (y a sus sistemas) y al robot (en naranja).
 - Opciones: sombra del bloque que vas a poner y nombre del bloque apuntado (pequeño, abajo a la derecha); los dos se pueden quitar.
 - Modo creativo: las cuatro aguas (normal, oscura, ácida y de invierno) están en la paleta.
