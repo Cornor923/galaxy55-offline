@@ -21,6 +21,8 @@ class Chest extends h2d.Object {
 	var maxWeight : Int;
 	var grid : h2d.Object;
 	var info : h2d.Text;
+	/** altura del centro del boton Cerrar: la ayuda (o el nombre) se centra con el */
+	var infoMid = 0.;
 	/** casilla cogida: [0 = cofre / 1 = inventario, indice] */
 	var cur : Array<Int>;
 	/** añadido del port: casilla marcada con el mando o las flechas [lado, indice] (null = solo raton) */
@@ -41,7 +43,7 @@ class Chest extends h2d.Object {
 		Theme.rect(bg, px, py, w, 4, Theme.ACCENT);
 		Theme.text(this, Block.get(BChest).getName(), 2.4, Theme.TEXT, px + 24, py + 18);
 		Theme.text(this, Lang.t("chest.yours"), 1.6, Theme.DIM, px + 24, py + 150);
-		info = Theme.text(this, Lang.t("chest.hint"), 1.4, Theme.DIM, px + 24, py + h - 34);
+		info = Theme.text(this, "", 1.4, Theme.DIM, px + 24, py + h - 34);
 		var close = new h2d.Interactive(140, 34, this);
 		close.x = px + w - 160;
 		close.y = py + h - 46;
@@ -49,6 +51,10 @@ class Chest extends h2d.Object {
 		Theme.rect(cg, 0, 0, 140, 34, 0xFFFFFF, 0.08);
 		Theme.text(close, Lang.t("shop.close"), 1.7, Theme.TEXT, 26, 5);
 		close.onClick = function(_) if( onClose != null ) onClose();
+		// la ayuda no cabe en una linea (en frances pisaba el boton y se salia del panel): se parte antes del boton
+		info.maxWidth = (close.x - 20 - info.x) / info.scaleX;
+		infoMid = close.y + 17;
+		setInfo(Lang.t("chest.hint"));
 		grid = new h2d.Object(this);
 		grid.x = px + 24;
 		grid.y = py + 70;
@@ -79,7 +85,7 @@ class Chest extends h2d.Object {
 			Theme.rect(g, 0, CELL - 2, CELL, 2, Theme.ACCENT);
 			Theme.rect(g, 0, 0, 2, CELL, Theme.ACCENT);
 			Theme.rect(g, CELL - 2, 0, 2, CELL, Theme.ACCENT);
-			info.text = s == null ? Lang.t("chest.hint") : Block.all[s.k].getName() + " x" + s.n;
+			setInfo(s == null ? Lang.t("chest.hint") : Block.all[s.k].getName() + " x" + s.n);
 		}
 		if( s != null ) {
 			var b = Block.all[s.k];
@@ -92,10 +98,22 @@ class Chest extends h2d.Object {
 		var it = new h2d.Interactive(CELL - 4, CELL - 4, c);
 		it.onOver = function(_) {
 			draw(true);
-			info.text = s == null ? Lang.t("chest.hint") : Block.all[s.k].getName() + " x" + s.n;
+			setInfo(s == null ? Lang.t("chest.hint") : Block.all[s.k].getName() + " x" + s.n);
 		};
 		it.onOut = function(_) draw(false);
 		it.onClick = function(_) click(side, idx);
+	}
+
+	/** texto de abajo (ayuda o "Nombre xN"), centrado en altura con el boton Cerrar */
+	function setInfo( s : String ) {
+		info.text = s;
+		info.y = Math.round(infoMid - info.textHeight * info.scaleY * 0.5);
+	}
+
+	/** banco de pruebas (orden chestfocus): marca una casilla como con el mando */
+	public function devFocus( side : Int, idx : Int ) {
+		focus = [side, idx];
+		refresh();
 	}
 
 	inline function tab( side : Int ) return side == 0 ? box : inv.inv.t;

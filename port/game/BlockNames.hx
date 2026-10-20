@@ -64,10 +64,12 @@ class BlockNames {
 		"BMotherField" => "Campo de fuerza del hangar", "BMotherYellow" => "Blindaje amarillo", "BMotherBlack" => "Blindaje negro",
 	];
 
+	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */
 	static var FR_EXTRA : Map<String, String> = [
 		"BWinterFlowerDeleted" => "-",
 		"BDeadRock" => "Roche morte", "BDeadSoil" => "Terre morte", "BDeadSwamp" => "Marais mort", "BDeadTree" => "Arbre mort",
 		"BDarkLeaves" => "Feuillage sombre",
+		"BChest" => "Conteneur EScorp",
 	];
 
 	static var cache : Array<Array<Names.NameData>> = [];
