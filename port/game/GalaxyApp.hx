@@ -364,22 +364,10 @@ class GalaxyApp extends hxd.App {
 	function rebuildScreens( stay : String ) {
 		var again = state == Menu || state == Paused || state == Exploring;
 		clearUi();
-		if( state == Exploring && explorer != null ) rebuildExplorer();
+		if( state == Exploring && explorer != null ) explorer.relabel();
 		if( again ) show(stay);
 	}
 
-	/** Rehace el mapa de estrellas donde esta la nave (al cambiar el idioma: sus textos se crean al abrirlo), en pausa */
-	function rebuildExplorer() {
-		var uni = universe();
-		// en el sector, la nave vuelve al punto exacto (la posicion guardada es la casilla por la que salio del sistema)
-		Explorer.shipStart = explorer.shipPos();
-		var rp = explorer.robotPos();
-		if( rp != null ) uni.robot = rp;
-		explorer.dispose();
-		explorer = null;
-		buildExplorer();
-		explorer.paused = true;
-	}
 
 	// ---------------------------------------------------------------- pantallas
 

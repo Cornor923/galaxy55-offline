@@ -447,6 +447,29 @@ class Explorer extends h2d.Object {
 		return t;
 	}
 
+	/** etiquetas centradas cuyo texto depende del idioma: se rehacen en relabel (las del sistema abierto van aparte: se borran con el) */
+	var relabels : Array<Void -> Void> = [];
+	var solarRelabels : Array<Void -> Void> = [];
+
+	function nameLabel( parent : h2d.Object, text : Void -> String, scale : Float, col : Int, solar = false ) {
+		var t = label(parent, text(), scale, col);
+		var set = function() {
+			t.text = text();
+			t.x = -Std.int(t.textWidth * t.scaleX * 0.5);
+		};
+		set();
+		(solar ? solarRelabels : relabels).push(set);
+		return t;
+	}
+
+	/** cambio de idioma con el mapa abierto: solo se cambian los textos (nombres y la ventana abierta), sin rehacer el mapa */
+	public function relabel() {
+		ExpOffline.relabel(infos);
+		for( f in relabels ) f();
+		for( f in solarRelabels ) f();
+		if( win != null && winSpot != null ) showWindow(winSpot);
+	}
+
 	// ---------------------------------------------------------------- robot comerciante
 
 	function openSystems() return [for( sp in sectorSpots ) if( sp.system != null && sp.system.status == SOpen ) sp];
@@ -481,9 +504,8 @@ class Explorer extends h2d.Object {
 			a.filter = new h2d.filter.Glow(0xFFA040, 0.5, 3, 1, 1, false);
 		}
 		robot.e.alpha = 1;
-		var name = label(obj, Lang.t("exp.robot"), 1.0, 0xFFC890);
+		var name = nameLabel(obj, function() return Lang.t("exp.robot"), 1.0, 0xFFC890);
 		name.y = top != null ? Std.int(HADES_ICON * 0.25) + 4 : 12;
-		name.x = -Std.int(name.textWidth * name.scaleX * 0.5);
 		robotGfx = g;
 		if( robotStart != null ) {
 			robot.e.x = robotStart.x;
@@ -648,9 +670,8 @@ class Explorer extends h2d.Object {
 				t.x = -0.5 - t.textWidth * t.scaleX * 0.5;
 				t.y = 0.5 - t.textHeight * t.scaleY * 0.5;
 			}
-			var name = label(obj, si.name, 1.1, 0xCCD6EC);
+			var name = nameLabel(obj, function() return si.name, 1.1, 0xCCD6EC);
 			name.y = 16;
-			name.x = -Std.int(name.textWidth * name.scaleX * 0.5);
 			sp.half = 32 + 15;
 		}
 		sectorSpots.push(sp);
@@ -800,6 +821,7 @@ class Explorer extends h2d.Object {
 		disposeView(solarStars);
 		for( s in solarSpots ) s.obj.remove();
 		solarSpots = [];
+		solarRelabels = [];
 		if( worldSolar != null ) worldSolar.remove();
 
 		var job = jobs.get(si.id);
@@ -914,8 +936,8 @@ class Explorer extends h2d.Object {
 			ic.y = pv.iconY;
 		}
 		if( pv.showName ) {
-			var t = label(obj, pv.infos.name, 1.1, 0xFFFFFF);
-			t.x = -Std.int(t.textWidth * t.scaleX * 0.5);
+			var p = pv.infos;
+			var t = nameLabel(obj, function() return p.name, 1.1, 0xFFFFFF, true);
 			t.y = Std.int(pv.bd.height * pv.scale * 0.3);
 		}
 		sp.half = pv.bd.width * pv.scale * 0.5 - 10;
@@ -964,6 +986,7 @@ class Explorer extends h2d.Object {
 		var e = TBurnIn;
 		for( s in solarSpots ) s.obj.remove();
 		solarSpots = [];
+		solarRelabels = [];
 		disposeView(solar);
 		solar = null;
 		if( worldSolar != null ) worldSolar.remove();
@@ -1276,6 +1299,31 @@ class Explorer extends h2d.Object {
 		zoomGoal = 0;
 	}
 
+	/** ventana del robot, de un sistema cerrado o de un planeta, con los textos en el idioma actual */
+	function showWindow( sp : Spot ) {
+		if( sp == robot ) {
+			openWindow(sp, Lang.t("exp.robot"), "ESCorp", Lang.t("exp.dock"), dockRobot);
+			return;
+		}
+		if( sp.planet == null ) {
+			switch( sp.system.status ) {
+			case SLocked(cost): openWindow(sp, sp.system.name, sp.system.x + "," + sp.system.y, "" + cost, function() onUnlock(sp.system));
+			case SOpen:
+			}
+			return;
+		}
+		var p = sp.planet;
+		var bname = ExpOffline.biomeName(p.biome);
+		switch( p.status ) {
+		case PUnexplored:
+			openWindow(sp, p.name, bname, Lang.t("exp.scan"), function() startScan(p));
+		case PActive, PInvited:
+			openWindow(sp, p.name, bname, Lang.t("exp.land"), function() landPlanet(p));
+		case PAbandonned, PForbidden:
+			openWindow(sp, p.name, bname, null, function() {});
+		}
+	}
+
 	/** Manager.setWindow + addButton: barra superior con el nombre, barra inferior con el boton */
 	function openWindow( sp : Spot, title : String, subtitle : String, buttonLabel : String, cb : Void -> Void ) {
 		closeWindow();
@@ -1343,7 +1391,7 @@ class Explorer extends h2d.Object {
 			cursorE.scale = 4;
 			ship.onArriveDist = 30;
 			ship.onArrive = function() {
-				if( winSpot != sp ) openWindow(sp, Lang.t("exp.robot"), "ESCorp", Lang.t("exp.dock"), dockRobot);
+				if( winSpot != sp ) showWindow(sp);
 			};
 			return;
 		}
@@ -1358,26 +1406,16 @@ class Explorer extends h2d.Object {
 					pregen(sp.system);
 					ship.onArriveDist = 0;
 					ship.onArrive = function() onReachSystem(sp);
-				case SLocked(cost):
+				case SLocked(_):
 					ship.onArriveDist = 30;
 					ship.onArrive = function() {
-						if( winSpot != sp ) openWindow(sp, sp.system.name, sp.system.x + "," + sp.system.y, "" + cost, function() onUnlock(sp.system));
+						if( winSpot != sp ) showWindow(sp);
 					};
 				}
 			} else {
-				var p = sp.planet;
 				ship.onArriveDist = 30;
 				ship.onArrive = function() {
-					if( winSpot == sp ) return;
-					var bname = ExpOffline.biomeName(p.biome);
-					switch( p.status ) {
-					case PUnexplored:
-						openWindow(sp, p.name, bname, Lang.t("exp.scan"), function() startScan(p));
-					case PActive, PInvited:
-						openWindow(sp, p.name, bname, Lang.t("exp.land"), function() landPlanet(p));
-					case PAbandonned, PForbidden:
-						openWindow(sp, p.name, bname, null, function() {});
-					}
+					if( winSpot != sp ) showWindow(sp);
 				};
 			}
 		}

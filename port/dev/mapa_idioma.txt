@@ -1,0 +1,28 @@
+# cambiar de idioma con el mapa abierto: solo cambian los textos (nombres, robot, ventana abierta), sin rehacer el mapa
+wait 3
+ship
+wait 10
+explore
+wait 200
+expplanet 1
+wait 400
+setlang en
+wait 2
+expinfo
+shot idioma_sistema_en
+setlang fr
+wait 2
+shot idioma_sistema_fr
+expgo 2400 1000
+wait 400
+exprobot
+wait 600
+setlang en
+wait 2
+expinfo
+exprinfo
+shot idioma_robot_en
+setlang es
+wait 2
+expinfo
+quit
