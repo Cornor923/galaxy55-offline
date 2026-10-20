@@ -1,0 +1,78 @@
+# paleta del modo creativo (I): al abrirla no hay ninguna casilla marcada ni nombre abajo; el raton resalta la casilla que tiene
+# encima y nada se queda resaltado al salir de ella ni al cambiar de pagina; con el mando (o las flechas) el primer movimiento hace
+# aparecer el marco en la primera casilla, A pone el bloque marcado y LB/RB cambian de pagina; al cerrar y abrir se empieza sin marco.
+# print palette: pagina, foco (-1 = ninguno) y nombre de abajo. Capturas port/out/palette_focus_*.png
+wait 3
+planet
+wait 30
+creative
+setlang fr
+slot 1
+palette
+wait 5
+print palette
+shot palette_focus_open
+# raton: entra en una casilla y sale
+palhover 20
+wait 2
+print palette
+shot palette_focus_hover
+palhover 20 out
+palhover 21
+palhover 21 out
+wait 2
+print palette
+shot palette_focus_out
+# A sin casilla marcada no pone nada
+print inv
+palnav a
+print inv
+# mando: el primer movimiento marca la primera casilla sin moverse
+palnav right
+wait 2
+print palette
+shot palette_focus_pad_first
+palnav right
+palnav down
+print palette
+# el raton pasa por otra casilla: al salir queda solo el marco del mando
+palhover 3
+palhover 3 out
+wait 2
+print palette
+shot palette_focus_pad_hover_out
+palnav a
+print inv
+# LB/RB: la marca sigue en la misma casilla; si la otra pagina tiene menos, va a la ultima
+palnav rb
+print palette
+palnav lb
+palnav up
+palnav up
+print palette
+palnav rb
+wait 2
+print palette
+shot palette_focus_pad_page2
+palnav a
+print inv
+close
+wait 5
+# cambiar de pagina con la rueda con el raton encima de una casilla: no queda nada resaltado
+palette
+wait 5
+palhover 5
+palette 1
+wait 2
+print palette
+shot palette_focus_wheel
+# cerrar y abrir: sin marco otra vez
+close
+wait 5
+palette
+wait 5
+print palette
+shot palette_focus_reopen
+close
+wait 5
+quit

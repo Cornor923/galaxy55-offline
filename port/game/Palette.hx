@@ -10,8 +10,8 @@ class Palette extends h2d.Object {
 
 	public var onPick : Block -> Void;
 	public var onClose : Void -> Void;
-	/** casilla elegida con el mando o el teclado (-1 = ninguna, se usa el raton) */
-	var focus = 0;
+	/** casilla elegida con el mando o el teclado (-1 = ninguna, se usa el raton): aparece al primer movimiento, como en el cofre y la tienda */
+	var focus = -1;
 	var navCooldown = 0.;
 	var cellBgs = new Array<h2d.Graphics>();
 
@@ -116,8 +116,18 @@ class Palette extends h2d.Object {
 			} else
 				Theme.rect(g, 1, 1, CELL - 2, CELL - 2, 0xFFFFFF, 0.06);
 		}
-		if( focus >= 0 && focus < pageCount() ) info.text = blocks[page * COLS * ROWS + focus].getName();
+		// sin casilla elegida no queda abajo el nombre del ultimo bloque que tuvo el raton encima
+		info.text = focus >= 0 && focus < pageCount() ? blocks[page * COLS * ROWS + focus].getName() : "";
 	}
+
+	/** banco de pruebas (orden palhover): el raton entra en la casilla i de la pagina (o sale de ella) */
+	public function devHover( i : Int, over : Bool ) {
+		var it = Std.downcast(grid.getChildAt(i).getChildAt(2), h2d.Interactive);
+		if( over ) it.onOver(null) else it.onOut(null);
+	}
+
+	/** banco de pruebas (print palette) */
+	public function devInfo() return "pagina " + (page + 1) + " foco " + focus + " nombre '" + info.text + "'";
 
 	/** mando y teclado: cruceta/stick o flechas mueven, A/Intro pone el bloque, LB/RB cambian de pagina, B/R3/Esc/I cierran */
 	public function update( dt : Float, pad : hxd.Pad ) {
@@ -150,6 +160,11 @@ class Palette extends h2d.Object {
 			if( onClose != null ) onClose();
 			return;
 		}
+		nav(dx, dy, pg, pick);
+	}
+
+	/** cruceta/flechas (dx, dy), LB/RB (pg) y A/Intro (pick); la orden palnav del banco de pruebas pasa por aqui */
+	public function nav( dx : Int, dy : Int, pg : Int, pick : Bool ) {
 		if( pg != 0 ) {
 			scroll(pg);
 			if( focus >= pageCount() ) focus = pageCount() - 1;
