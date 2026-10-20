@@ -1,0 +1,36 @@
+# oxigeno en creativo: no baja bajo el agua y la barra azul no aparece nunca; en aventura baja como siempre. Zona de pruebas: suelo de roca en z=56
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 90 none
+filla 54 54 76 76 56 56 BRock
+filla 68 56 72 60 57 61 BRock
+filla 69 57 71 59 57 61 BWater
+# 1) aventura bajo el agua, empezando por la mitad: el oxigeno baja y se ve la barra
+life 100 50
+tp 70.5 58.5 57.01 0 0
+wait 40
+vitals
+wait 60
+vitals
+shot oxigeno_aventura
+# 2) se pasa a creativo en pleno agua: el oxigeno vuelve a 100 y se queda ahi, sin barra
+creative
+wait 5
+vitals
+wait 100
+vitals
+shot oxigeno_creativo
+# 3) en creativo, forzar el oxigeno a 20 y a 0: vuelve a 100, sin ahogarse ni fundido rojo
+life 100 20
+wait 5
+vitals
+life 100 0
+wait 60
+vitals
+# 4) fuera del agua sigue en 100
+tp 60.5 60.5 57.01 0 0
+wait 40
+vitals
+print pos
+quit
