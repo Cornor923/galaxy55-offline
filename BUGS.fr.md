@@ -12,7 +12,7 @@ Les bugs corrigés sont déplacés à la fin. Les détails techniques sont dans 
 | 4 | Éclairage | **À vérifier en jouant :** les blocs partiels (plaques, fer, coffres…) prennent maintenant la lumière de chaque coin dans les cellules voisines, comme l'original (`Builder.addCustomQuad`) ; avant, toute la face avait une seule lumière. Les modèles utilisaient déjà la lumière de l'original. |
 | 8 | Hiver | Les **feuilles d'épicéa** donnent du matériau ; dans l'original, peut-être pas. |
 | 10 | Rendu | Les **cristaux** tombés (charges) paraissent trop larges. |
-| 14 | Eau | **(À corriger ?)** Quand on ouvre une grotte à côté de la mer, l'eau entre et la remplit d'un coup à la même hauteur que la mer, sans baisser en avançant. C'est ce que fait l'original (la mer remplit tout ce qui est sous son niveau) et ce qu'a demandé Cornor923, mais ça paraît peu naturel. Alternative : que la mer descende par paliers comme la cascade (voir [`IDEAS.fr.md`](IDEAS.fr.md)). En parler avec Cornor923 avant de le changer. |
+| 14 | Eau | **(À corriger ?)** Quand on ouvre une grotte à côté de la mer, l'eau entre et la remplit d'un coup à la même hauteur que la mer, sans baisser en avançant. |
 
 ## Corrigés
 
