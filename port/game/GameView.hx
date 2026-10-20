@@ -544,7 +544,8 @@ class GameView {
 
 	/** Hero.hit: quita vida y aturde; a 0, fundido rojo y vuelta a la nave con la vida y el oxigeno llenos (Game.returnToShip, modo local) */
 	public function hit( dmg : Float ) {
-		if( creative || (fadeFX != null && fadeFX.lock) ) return;
+		// en el hangar no se recibe dano (EditShip.init: hero.invincible = true)
+		if( creative || hangar != null || (fadeFX != null && fadeFX.lock) ) return;
 		life -= dmg;
 		stun = 10;
 		if( life <= 0 ) {
