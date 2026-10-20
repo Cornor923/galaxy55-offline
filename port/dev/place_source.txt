@@ -1,0 +1,131 @@
+# no se pone nada dentro de una fuente (cascada, arena movediza, lava): se pone contra ella. Bajo el agua del mar, en el
+# agua puesta y en la cascada que cae si se puede. Plataforma en el aire: suelo z=56, ojos en z=58, bloque probado en 67,64,58
+# (encajado en roca para que no fluya). Se da un solo bloque cada vez: al ponerlo la casilla 10 queda libre
+wait 3
+planet
+wait 30
+filla 58 58 72 70 57 66 none
+filla 58 58 72 70 56 56 BRock
+filla 67 63 68 65 57 59 BRock
+tp 64.5 64.5 57.01 0 0
+wait 5
+# 1) madera contra la fuente de cascada: la fuente sigue (67) y la madera queda delante (66)
+set 67 64 58 BCascadeSource
+give BWood 1
+slot 10
+look 0 0
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 67 64 58
+print block 66 64 58
+# 2) agua (paleta) contra la fuente: igual
+set 66 64 58 none
+give BWater 1
+slot 10
+look 0 0
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 67 64 58
+print block 66 64 58
+# 3) otra fuente de cascada (casilla 7) contra la fuente: igual
+wait 30
+filla 58 58 66 70 57 58 none
+slot 7
+look 0 0
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 67 64 58
+print block 66 64 58
+# 4) madera en el agua puesta (fluye) delante de la fuente: se pone dentro (66)
+wait 30
+filla 58 58 66 70 57 58 none
+setp 66 64 58 BWater
+wait 30
+give BWood 1
+slot 10
+look 0 0
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 67 64 58
+print block 66 64 58
+# 5) arena movediza, lava y lava que fluye: como la fuente de cascada
+filla 58 58 66 70 57 58 none
+set 67 64 58 BMarsQuickSand
+give BWood 1
+slot 10
+look 0 0
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 67 64 58
+print block 66 64 58
+set 66 64 58 none
+set 67 64 58 BLava
+give BWood 1
+slot 10
+look 0 0
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 67 64 58
+print block 66 64 58
+set 66 64 58 none
+set 67 64 58 BLava3
+give BWood 1
+slot 10
+look 0 0
+wait 5
+print select
+key place
+wait 3
+unkey
+print block 66 64 58
+# 6) bajo el agua del mar (mirando a -y, pared en y=60): la madera queda en el agua (64,61,58)
+filla 58 58 72 70 57 66 none
+filla 58 58 72 70 56 56 BRock
+filla 63 60 66 60 57 61 BRock
+filla 63 61 66 63 57 60 BWater
+give BWood 1
+slot 10
+look -1.5708 0
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 64 61 58
+# 7) cascada que cae (mirando a +y, pared en y=68): la madera queda en la columna de agua (64,67,58)
+filla 58 58 72 70 57 66 none
+filla 58 58 72 70 56 56 BRock
+filla 63 68 66 68 57 64 BRock
+setp 64 67 63 BCascadeSource
+wait 120
+print block 64 67 58
+give BWood 1
+slot 10
+look 1.5708 0
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 64 67 58
+print block 64 67 63
+print inv
+quit

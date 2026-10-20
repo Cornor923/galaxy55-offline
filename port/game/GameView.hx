@@ -827,8 +827,9 @@ class GameView {
 			var x = ex + hx, y = ey + hy, z = ez + dz * t + (hx * hx + hy * hy) * curve;
 			var ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
 			// (no se salta la misma celda: los bloques parciales solo cuentan si el rayo pasa por su caja)
+			// el agua que no se apunta (mar, cascada que cae, agua puesta) no para el rayo: se pone bajo el agua; la fuente de
+			// cascada y la arena movediza si lo paran: se pone contra ellas (Render.pick del original)
 			var b = world.block(ix, iy, iz);
-			if( b != null && hand != null && b.hasFlag(BFLiquid) ) b = null; // con un bloque en la mano el agua no cuenta: se puede poner bajo el agua
 			if( b != null && blocking(b) && (b.size == null || (x - ix >= b.size.x1 && x - ix <= b.size.x2 && y - iy >= b.size.y1 && y - iy <= b.size.y2 && z - iz >= b.size.z1 && z - iz <= b.size.z2)) ) {
 				if( Dev.trace && iz >= World.SHIP_Z ) Sys.println("pick: toca " + b.k + "@" + ix + "," + iy + "," + iz + " antes=" + lx + "," + ly + "," + lz + " mano=" + (hand != null) + " enZona=" + ship.inCraft(lx, ly, lz));
 				if( !have || (iz < 1 && hangar == null) ) return null;
@@ -998,7 +999,9 @@ class GameView {
 		}
 		if( inShip ) ok = true; // select.ignoreMagnets del original
 		var here = world.block(x, y, z);
-		if( here != null && !here.hasFlag(BFLiquid) ) return; // la celda ya esta ocupada (p. ej. por lo que se acaba de poner): no se gasta nada
+		// celda ocupada (p. ej. por lo que se acaba de poner): no se gasta nada. Solo se pisa el liquido que no se apunta
+		// (Block.canOverride del original): ni la fuente de cascada ni la arena movediza
+		if( here != null && !(here.hasProp(PLiquid) && !here.hasProp(PCanPick)) ) return;
 		if( !ok || actionPause > 0 ) return;
 		actionPause = creative ? 6 : 15;
 		if( !creative && !inv.useCurrentBlock() ) return;
