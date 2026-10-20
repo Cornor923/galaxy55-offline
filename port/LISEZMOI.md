@@ -8,7 +8,7 @@ connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine rest
 ## Jouer
 
 Compile-le (voir plus bas) et double-clique sur `jugar.bat`, ou télécharge le zip portable depuis la
-[release](../../../releases/tag/v0.3.1). Le menu de démarrage propose Continuer, Nouvelle partie, Charger une partie, Options et Quitter.
+[release](../../../releases/tag/v0.4). Le menu de démarrage propose Continuer, Nouvelle partie, Charger une partie, Options et Quitter.
 Dans Nouvelle partie, tu choisis le nom, la graine, le biome, la taille et le mode : **Aventure** (comme dans l'original) ou **Créatif** (notre ajout).
 Les parties et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`).
 Le format des sauvegardes peut changer d'une version à l'autre : ne compte pas sur le fait que les parties d'aujourd'hui fonctionnent toujours.
@@ -99,5 +99,6 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   GPS orange qui le désigne sont des ajouts du port.
 - Les cascades et l'eau posée par le joueur baissent à chaque pas, avec une surface inclinée : ajout du port. La mer remplit
   les trous jusqu'à son niveau, comme l'original.
-- Options ajoutées : ombre du bloc que tu vas poser et nom du bloc visé.
+- Les plantes et autres modèles se visent par ce qu'on voit (les pixels de leurs feuilles), pas par toute la case (l'original les traitait comme un bloc entier).
+- Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé et désactiver les vagues de l'eau.
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).

@@ -133,9 +133,11 @@ class Fx {
 		var b = hand == null ? sel.b : hand.getFlip(g.yaw);
 		var fx = near(x, g.px), fy = near(y, g.py), fz = z;
 		var bx = 0., by = 0., bz = 0., sx = 1., sy = 1., sz = 1.;
-		if( b != null && b.size != null ) {
-			bx = b.size.x1; by = b.size.y1; bz = b.size.z1;
-			sx = b.size.x2 - b.size.x1; sy = b.size.y2 - b.size.y1; sz = b.size.z2 - b.size.z1;
+		// la misma caja con la que se apunta (plantas y modelos: la de su dibujo)
+		var pb = b != null ? GameView.pickBox(b) : null;
+		if( pb != null ) {
+			bx = pb.x1; by = pb.y1; bz = pb.z1;
+			sx = pb.x2 - pb.x1; sy = pb.y2 - pb.y1; sz = pb.z2 - pb.z1;
 		}
 
 		box.visible = !laser;

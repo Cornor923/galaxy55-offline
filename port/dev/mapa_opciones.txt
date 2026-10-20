@@ -1,0 +1,31 @@
+# menu de pausa del mapa: idioma, tamano de ventana, cerrar la ventana y Esc/Start
+wait 3
+ship
+wait 10
+explore
+wait 200
+expgo 2400 1000
+wait 300
+expinfo
+# Esc (o Start): abre la pausa
+expesc
+wait 20
+print screen
+# idioma: se rehace el mapa en el mismo sitio, en pausa, y sigue en Opciones > General
+screen2 options.general
+wait 10
+setlang en
+wait 40
+expinfo
+shot mapa_idioma_en
+setlang es
+wait 40
+# tamano de ventana con el menu abierto: el mapa se recoloca
+winsize 1600 700
+wait 30
+cover mapa_ancho
+winsize 1280 720
+wait 20
+# cerrar la ventana en el mapa: guarda con la nave en el planeta
+closewin
+quit

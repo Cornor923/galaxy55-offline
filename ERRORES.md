@@ -9,20 +9,20 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 
 | # | Dónde | Qué pasa |
 |---|---|---|
-| 4 | Luz | Los bloques que **no son cuadrados** (medios bloques, modelos…) tienen la luz mal respecto a los vecinos. |
+| 4 | Luz | **Por comprobar jugando:** los bloques parciales (placas, hierro, cofres…) ahora toman la luz de cada esquina de las celdas vecinas, como el original (`Builder.addCustomQuad`); antes toda la cara tenía una sola luz. Los modelos ya usaban la luz del original. |
 | 8 | Invierno | Las **hojas del abeto** sueltan material; puede que en el original no. |
 | 10 | Render | Los **cristales** sueltos (cargas) se ven demasiado anchos. |
-| 12 | Agua | **Por comprobar:** según Sekhmet, en el original la cascada no se congelaba junto al hielo. Antes de que el agua fluyera, en el port sí; falta comprobarlo ahora. |
-| 13 | Menú | **Tirones en el menú** mientras se genera el planeta de fondo: el generador hace pasos de 200–600 ms en el hilo principal y el juego se para de 0,4 a 1,1 s (medido con `--frametime`, en DirectX y en OpenGL). Pasa los primeros segundos del menú. Arreglo posible: pasos más cortos o generar en otro hilo. |
+| 14 | Agua | **(¿Arreglar?)** Al abrir una cueva junto al mar, el agua entra y la llena de golpe a la misma altura que el mar, sin bajar mientras avanza. |
 
 ## Arreglados
 
+- v0.4: el menú usa un solo planeta de fondo, pequeño (antes tres grandes que cambiaban cada 22 s): ya no da tirones mientras se generan; queda uno de ~0,4 s al principio, cuando se dibuja el planeta por primera vez (#13). La cascada no se congela junto al hielo, solo con el congelador, como el original (#12, comprobado).
 - v0.3 (encontrados y reportados por **Sekhmet**, ¡gracias!): la arena movediza y el agua ya no se ven transparentes desde dentro (velo y niebla del color del líquido, como el original); ya no nieva bajo el agua; el agua tiene caras laterales y de fondo; el hielo sumergido queda detrás del agua; los textos del mapa de estrellas salen en el idioma elegido.
-- Próxima versión (reportados por **Sekhmet**, ¡gracias!): el agua fluye (`WorldProcess.hx`, el `Process.hx` del original); se pueden poner bloques bajo el agua; ya no nieva bajo techo ni en cuevas; el hielo no suelta un bloque al romperlo (como el original); atajos de teclado (Tab excava y 1–0 son las 10 casillas; antes la última no tenía tecla).
-- Próxima versión: el bloque en la mano ya no tiembla al andar; el resaltado de la paleta creativa ya no se queda pegado.
-- Próxima versión: el juego funciona también con DirectX (`port/game_dx.hxml`), útil donde no hay OpenGL 3.2 (p. ej. máquinas virtuales).
-- Próxima versión: la capa 0 (roca madre) se dibuja, como en el original: el fondo de un hoyo excavado hasta ella ya no deja ver el vacío y el cielo bajo el planeta.
-- Próxima versión: el sintetizador gasta primero los bloques del inventario, como el original: mientras el inventario los tenga todos, los puestos en su zona se quedan como plantilla y se puede fabricar la misma receta una y otra vez; si falta alguno, se gastan los puestos (se deshace el cambio de la v0.2).
+- v0.4 (reportados por **Sekhmet**, ¡gracias!): el agua fluye (`WorldProcess.hx`, el `Process.hx` del original); se pueden poner bloques bajo el agua; ya no nieva bajo techo ni en cuevas; el hielo no suelta un bloque al romperlo (como el original); atajos de teclado (Tab excava y 1–0 son las 10 casillas; antes la última no tenía tecla).
+- v0.4: el bloque en la mano ya no tiembla al andar; el resaltado de la paleta creativa ya no se queda pegado.
+- v0.4: el juego funciona también con DirectX (`port/game_dx.hxml`), útil donde no hay OpenGL 3.2 (p. ej. máquinas virtuales).
+- v0.4: la capa 0 (roca madre) se dibuja, como en el original: el fondo de un hoyo excavado hasta ella ya no deja ver el vacío y el cielo bajo el planeta.
+- v0.4: el sintetizador gasta primero los bloques del inventario, como el original: mientras el inventario los tenga todos, los puestos en su zona se quedan como plantilla y se puede fabricar la misma receta una y otra vez; si falta alguno, se gastan los puestos (se deshace el cambio de la v0.2).
 
 - v0.2 (cambio respecto al original): los montículos de nieve con una planta escondida (`BWinterHidden`) se ven como la nieve, sin brillo propio.
 - v0.2: borrar una partida desde el menú (botón Borrar y después elegir la partida; la confirmación ya no se abre dos veces).

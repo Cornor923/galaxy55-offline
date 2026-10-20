@@ -1,0 +1,22 @@
+# ERRORES #4: luz de los bloques parciales (placa de madera, hierro, aluminio, cofre) junto a bloques enteros, al sol y a la sombra
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 80 none
+filla 54 54 76 76 56 56 BRock
+filla 66 58 66 70 57 61 BRock
+filla 60 58 66 70 62 62 BRock
+set 62 60 57 BWoodPlate
+set 63 60 57 BRock
+set 62 63 57 BIron
+set 63 63 57 BAluminium
+set 62 66 57 BChest
+set 63 66 57 BWoodPlate
+set 58 60 57 BWoodPlate
+set 58 63 57 BIron
+set 58 66 57 BChest
+set 59 63 57 BRock
+tp 55.5 63.5 58.6 0 -0.35
+wait 40
+shot luz_parcial
+quit

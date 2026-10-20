@@ -103,6 +103,15 @@ class ExpOffline {
 		return s;
 	}
 
+	/** nombres del sector, los sistemas y los planetas en el idioma actual (al cambiar de idioma con el mapa abierto) */
+	public static function relabel( d : ExpInfos ) {
+		d.sector.name = SEC + " " + d.sector.seed;
+		for( s in d.systems ) {
+			s.name = SYS + " " + NAMES[s.id % NAMES.length];
+			for( i in 0...s.planets.length ) s.planets[i].name = s.name + " " + (i + 1);
+		}
+	}
+
 	/**
 	 * `start` sustituye al planeta 0 del sistema 0 (con el que empieza la partida), `visited` son los planetas ya pisados (activos)
 	 * y `pos` donde esta la nave en el mapa.

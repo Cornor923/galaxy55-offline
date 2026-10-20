@@ -9,19 +9,19 @@ Les bugs corrigés sont déplacés à la fin. Les détails techniques sont dans 
 
 | # | Où | Ce qui se passe |
 |---|---|---|
-| 4 | Éclairage | Les **blocs non cubiques** (demi-blocs, modèles…) ne sont pas éclairés comme leurs voisins. |
+| 4 | Éclairage | **À vérifier en jouant :** les blocs partiels (plaques, fer, coffres…) prennent maintenant la lumière de chaque coin dans les cellules voisines, comme l'original (`Builder.addCustomQuad`) ; avant, toute la face avait une seule lumière. Les modèles utilisaient déjà la lumière de l'original. |
 | 8 | Hiver | Les **feuilles d'épicéa** donnent du matériau ; dans l'original, peut-être pas. |
 | 10 | Rendu | Les **cristaux** tombés (charges) paraissent trop larges. |
-| 12 | Eau | **À vérifier :** selon Sekhmet, dans l'original la cascade ne gelait pas à côté de la glace. Avant que l'eau s'écoule, elle gelait dans le port ; il faut le vérifier maintenant. |
-| 13 | Menu | **Saccades dans le menu** pendant la génération de la planète de fond : le générateur fait des étapes de 200 à 600 ms sur le fil principal et le jeu se fige de 0,4 à 1,1 s (mesuré avec `--frametime`, en DirectX et en OpenGL). Arrive pendant les premières secondes du menu. Correction possible : des étapes plus courtes ou générer sur un autre fil. |
+| 14 | Eau | **(À corriger ?)** Quand on ouvre une grotte à côté de la mer, l'eau entre et la remplit d'un coup à la même hauteur que la mer, sans baisser en avançant. |
 
 ## Corrigés
 
-- Prochaine version (signalés par **Sekhmet**, merci !) : l'eau s'écoule (`WorldProcess.hx`, le `Process.hx` d'origine) ; on peut poser des blocs sous l'eau ; il ne neige plus sous un toit ni dans les grottes ; la glace ne laisse plus de bloc en la cassant (comme l'original) ; raccourcis clavier (Tab creuse et 1–0 sont les 10 cases ; la dernière n'avait pas de touche).
-- Prochaine version : le bloc tenu en main ne tremble plus en marchant ; la surbrillance de la palette du mode créatif ne reste plus collée.
-- Prochaine version : le jeu fonctionne aussi avec DirectX (`port/game_dx.hxml`), utile là où OpenGL 3.2 manque (par ex. les machines virtuelles).
-- Prochaine version : la couche 0 (roche mère) est dessinée, comme dans l'original : le fond d'un trou creusé jusqu'à elle ne laisse plus voir le vide et le ciel sous la planète.
-- Prochaine version : le synthétiseur utilise d'abord les blocs de l'inventaire, comme l'original : tant que l'inventaire les a tous, les blocs posés dans sa zone restent comme modèle et on peut fabriquer la même recette encore et encore ; s'il en manque un, ce sont les blocs posés qui sont consommés (le changement de la v0.2 est annulé).
+- v0.4 : le menu utilise une seule petite planète de fond (avant, trois grandes qui changeaient toutes les 22 s) : plus de saccades pendant leur génération ; il reste un arrêt d'environ 0,4 s au début, quand la planète est dessinée pour la première fois (#13). La cascade ne gèle pas à côté de la glace, seulement avec le congélateur, comme l'original (#12, vérifié).
+- v0.4 (signalés par **Sekhmet**, merci !) : l'eau s'écoule (`WorldProcess.hx`, le `Process.hx` d'origine) ; on peut poser des blocs sous l'eau ; il ne neige plus sous un toit ni dans les grottes ; la glace ne laisse plus de bloc en la cassant (comme l'original) ; raccourcis clavier (Tab creuse et 1–0 sont les 10 cases ; la dernière n'avait pas de touche).
+- v0.4 : le bloc tenu en main ne tremble plus en marchant ; la surbrillance de la palette du mode créatif ne reste plus collée.
+- v0.4 : le jeu fonctionne aussi avec DirectX (`port/game_dx.hxml`), utile là où OpenGL 3.2 manque (par ex. les machines virtuelles).
+- v0.4 : la couche 0 (roche mère) est dessinée, comme dans l'original : le fond d'un trou creusé jusqu'à elle ne laisse plus voir le vide et le ciel sous la planète.
+- v0.4 : le synthétiseur utilise d'abord les blocs de l'inventaire, comme l'original : tant que l'inventaire les a tous, les blocs posés dans sa zone restent comme modèle et on peut fabriquer la même recette encore et encore ; s'il en manque un, ce sont les blocs posés qui sont consommés (le changement de la v0.2 est annulé).
 - v0.3 (trouvés et signalés par **Sekhmet**, merci !) : les sables mouvants et l'eau ne paraissent plus transparents de l'intérieur (voile et brouillard de la couleur du liquide, comme l'original) ; il ne neige plus sous l'eau ; l'eau a des faces latérales et de fond ; la glace immergée reste derrière l'eau ; les textes de la carte stellaire suivent la langue choisie.
 
 - v0.2 (changement par rapport à l'original) : les monticules de neige qui cachent une plante (`BWinterHidden`) ressemblent à la neige normale, sans lueur propre.

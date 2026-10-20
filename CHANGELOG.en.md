@@ -2,16 +2,35 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Next version
+## v0.4 — pre-release
+- **Health and oxygen**, like the original: hard falls, lava, acid water, burning coal and acid herbs hurt; under water
+  your oxygen runs out and then you drown; quicksand drowns you too; the healing plant and box heal. Health and oxygen bars
+  at the bottom (only shown when not full) and a red or blue flash. When you die you go back to the ship with full health,
+  without losing anything. No damage in creative mode.
+- Options split into sections (General, Controls, Graphics, Interface): it no longer fitted on one screen.
+- Plants and other models: you aim at what you see (their leaves, not the whole cell); with several plants together it is now easy to break the one you look at (port change).
+- **Water waves**, the original's; they can be turned off in Options.
+- Partial blocks (plates, iron, chests…): per-corner light like the original.
+- Menu: a single small background planet; no more stutter while it is generated.
 - **Flowing water** (the original `Process.hx`): the sea fills what you dig next to it up to its level; cascades and lava fall,
   spread and disappear without a source; grass gets covered and uncovered; anchored blocks and details break when their
   support is removed. Cascades and the water you place get lower at each step, with a sloped surface (port addition).
 - **Merchant robot on the star map:** it travels between the sector's systems; click it and it stops and waits for you, and
-  docking takes you into its ship (the mothership), with the shop. Leaving brings you back to the map.
+  docking takes you into its ship (the mothership), with the shop. Leaving brings you back to the map. On the map, its ship has the
+  shape of the mothership seen from above.
+- **Taking off is leaving the planet**, like the original: the planet is unloaded (its changes are saved) and nothing is
+  drawn behind the map. To go back, you land. If you save or close the game in space (or inside the robot's ship),
+  "Continue" brings you back to the map where you were; the save list says "In space".
+- Star map: Esc (or the gamepad's Start) opens a pause menu (Resume, Options, Main menu).
 - The original **GPS arrows** on the map: they point to the planets you visited (and their systems) and to the robot (in orange).
 - Options: a shadow of the block you are about to place and the name of the targeted block (small, bottom right); both can be turned off.
 - Creative mode: the four waters (normal, dark, acid and winter) are in the palette.
-- Fixes by **Cornor923** (thank you!): the bedrock (layer 0) is drawn and the main menu sticks to the edges on wide windows.
+- Fixes by **Cornor923** (thank you!): the bedrock (layer 0) is drawn and you can build on it; the main menu sticks to the
+  edges on wide windows; the synthesizer uses the inventory's blocks first and keeps the area as a template (like the
+  original); the game runs as `galaxy55.exe`, with its icon (Discord no longer says "Half-Life"); water and ice are drawn in
+  the right order; blocks can no longer be placed inside a cascade source or quicksand; shop, chest, palette and map
+  backgrounds cover the whole window; centered labels on the map buttons, clear of the Close button; names for many blocks
+  that had none (snowy variants, charges, plants, bonus crystals).
 - The block in the hand no longer shakes when walking.
 - Fixes reported by Sekhmet (thank you!): key shortcuts (Tab digs and 1-0 are the 10 slots), blocks can be placed underwater,
   no snow under a roof or in caves, ice no longer drops a block when broken, a shadow of the block about to be placed, the name

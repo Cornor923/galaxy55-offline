@@ -93,14 +93,22 @@ class Explorer extends h2d.Object {
 	public static inline var VH = 450;
 
 	public var infos(default, null) : ExpInfos;
-	/** el jugador ha pedido volver a la nave */
-	public dynamic function onExit() {}
+	/** Esc sin ventana abierta: menu de pausa del mapa (anadido del port: en el original el mapa era una pagina aparte) */
+	public dynamic function onPause() {}
+	/** con el menu de pausa abierto el mapa se para */
+	public var paused = false;
 	/** el jugador quiere aterrizar en un planeta */
 	public dynamic function onLand( p : ExpPlanet, s : ExpSystem ) {}
 	/** la nave ha cambiado de sitio en el mapa: [0, x, y] sector, [1, sistema], [2, planeta] (para guardarlo) */
 	public dynamic function onPos( pos : Array<Int> ) {}
 	/** acoplarse al robot comerciante (anadido del port): se entra en su nave, con la tienda */
 	public dynamic function onDock() {}
+	/** la nave ha avanzado `dist` (en el sector o dentro de un sistema): para Space */
+	public dynamic function onTravel( dist : Float, inSystem : Bool ) {}
+	/** antes de aterrizar o escanear: false = no se puede (Space) */
+	public dynamic function canLand( p : ExpPlanet ) : Bool return true;
+	/** boton del candado de un sistema cerrado (el original lo abria pagando la licencia): para Space */
+	public dynamic function onUnlock( s : ExpSystem ) {}
 	/** posicion guardada del robot comerciante (la pone el juego antes de abrir el mapa; null = en un sistema al azar) */
 	public static var robotStart : { x : Float, y : Float } = null;
 	/** al volver de la nave del robot: la nave aparece donde se acoplo (en el sector) */
@@ -439,6 +447,29 @@ class Explorer extends h2d.Object {
 		return t;
 	}
 
+	/** etiquetas centradas cuyo texto depende del idioma: se rehacen en relabel (las del sistema abierto van aparte: se borran con el) */
+	var relabels : Array<Void -> Void> = [];
+	var solarRelabels : Array<Void -> Void> = [];
+
+	function nameLabel( parent : h2d.Object, text : Void -> String, scale : Float, col : Int, solar = false ) {
+		var t = label(parent, text(), scale, col);
+		var set = function() {
+			t.text = text();
+			t.x = -Std.int(t.textWidth * t.scaleX * 0.5);
+		};
+		set();
+		(solar ? solarRelabels : relabels).push(set);
+		return t;
+	}
+
+	/** cambio de idioma con el mapa abierto: solo se cambian los textos (nombres y la ventana abierta), sin rehacer el mapa */
+	public function relabel() {
+		ExpOffline.relabel(infos);
+		for( f in relabels ) f();
+		for( f in solarRelabels ) f();
+		if( win != null && winSpot != null ) showWindow(winSpot);
+	}
+
 	// ---------------------------------------------------------------- robot comerciante
 
 	function openSystems() return [for( sp in sectorSpots ) if( sp.system != null && sp.system.status == SOpen ) sp];
@@ -451,20 +482,30 @@ class Explorer extends h2d.Object {
 		robot.e.speed = 0.08;
 		var obj = new h2d.Object(worldSector);
 		robot.obj = obj;
-		var g = new h2d.Graphics(obj);
-		g.lineStyle(1, 0x7A3A10, 0.9);
-		g.beginFill(0xFFA040, 1);
-		g.moveTo(-10, -7);
-		g.lineTo(11, 0);
-		g.lineTo(-10, 7);
-		g.lineTo(-6, 0);
-		g.lineTo(-10, -7);
-		g.endFill();
-		g.filter = new h2d.filter.Glow(0xFFA040, 0.5, 3, 1, 1, false);
+		// la nave del robot es la nave nodriza (la Hades): su forma vista desde arriba; si no se puede leer, una flecha
+		var g = new h2d.Object(obj);
+		var top = hadesTop();
+		if( top != null ) {
+			var b = new h2d.Bitmap(top.tile, g);
+			b.smooth = true;
+			b.setScale(HADES_ICON / top.len);
+			b.rotation = top.angle;
+			g.filter = new h2d.filter.Glow(0x000000, 1, 2, 2, 1, true);
+		} else {
+			var a = new h2d.Graphics(g);
+			a.lineStyle(1, 0x7A3A10, 0.9);
+			a.beginFill(0xFFA040, 1);
+			a.moveTo(-10, -7);
+			a.lineTo(11, 0);
+			a.lineTo(-10, 7);
+			a.lineTo(-6, 0);
+			a.lineTo(-10, -7);
+			a.endFill();
+			a.filter = new h2d.filter.Glow(0xFFA040, 0.5, 3, 1, 1, false);
+		}
 		robot.e.alpha = 1;
-		var name = label(obj, Lang.t("exp.robot"), 1.0, 0xFFC890);
-		name.y = 12;
-		name.x = -Std.int(name.textWidth * name.scaleX * 0.5);
+		var name = nameLabel(obj, function() return Lang.t("exp.robot"), 1.0, 0xFFC890);
+		name.y = top != null ? Std.int(HADES_ICON * 0.25) + 4 : 12;
 		robotGfx = g;
 		if( robotStart != null ) {
 			robot.e.x = robotStart.x;
@@ -476,7 +517,80 @@ class Explorer extends h2d.Object {
 		}
 		robotWait = 10;
 	}
-	var robotGfx : h2d.Graphics;
+	var robotGfx : h2d.Object;
+
+	/** largo del icono de la nave del robot en el mapa (px) */
+	static inline var HADES_ICON = 64;
+	static var hadesCache : { tile : h2d.Tile, len : Float, angle : Float };
+
+	/**
+	 * La nave nodriza vista desde arriba, a un pixel por bloque: el bloque mas alto de cada columna, con el color medio de su
+	 * textura y mas claro cuanto mas alto. angle gira la imagen para que la proa mire a +x (la cola es donde estan los motores).
+	 */
+	static function hadesTop() {
+		if( hadesCache != null ) return hadesCache;
+		var d = try Mothership.data() catch( e : Dynamic ) null;
+		var pix = Atlas.pixels;
+		if( d == null || d.cells.length == 0 ) return null;
+		var x0 = 99999, y0 = 99999, x1 = -1, y1 = -1, z0 = 99999, z1 = -1;
+		for( c in d.cells ) {
+			if( c.x < x0 ) x0 = c.x; if( c.x > x1 ) x1 = c.x;
+			if( c.y < y0 ) y0 = c.y; if( c.y > y1 ) y1 = c.y;
+			if( c.z < z0 ) z0 = c.z; if( c.z > z1 ) z1 = c.z;
+		}
+		var w = x1 - x0 + 1, h = y1 - y0 + 1;
+		var topZ = new haxe.ds.Vector<Int>(w * h), topId = new haxe.ds.Vector<Int>(w * h);
+		for( i in 0...w * h ) topZ[i] = -1;
+		var gx = 0., gy = 0., ex = 0., ey = 0., en = 0;
+		var engine = Type.enumIndex(Common.BlockKind.BShipEngine);
+		for( c in d.cells ) {
+			var i = (c.x - x0) + (c.y - y0) * w;
+			if( c.z > topZ[i] ) { topZ[i] = c.z; topId[i] = c.id; }
+			gx += c.x; gy += c.y;
+			if( c.id == engine ) { ex += c.x; ey += c.y; en++; }
+		}
+		// color medio de la textura de cada bloque (cara de arriba)
+		var cols = new Map<Int, Int>();
+		function colorOf( id : Int ) : Int {
+			var c = cols.get(id);
+			if( c != null ) return c;
+			c = 0x8890A0;
+			var b = Block.all[id];
+			if( b != null && pix != null && b.tu >= 0 && b.tu < 0xFFF ) {
+				var ts = Std.int(pix.width / 64), tx = (b.tu & 0xFFF & 63) * ts, ty = ((b.tu & 0xFFF) >> 6) * ts;
+				var r = 0., g = 0., bl = 0., n = 0;
+				for( yy in 0...ts )
+					for( xx in 0...ts ) {
+						var p = pix.getPixel(tx + xx, ty + yy);
+						if( (p >>> 24) < 128 ) continue;
+						// RGBA: el entero lleva R en el byte bajo
+						r += p & 0xFF; g += (p >> 8) & 0xFF; bl += (p >> 16) & 0xFF; n++;
+					}
+				if( n > 0 ) c = (Std.int(r / n) << 16) | (Std.int(g / n) << 8) | Std.int(bl / n);
+			}
+			cols.set(id, c);
+			return c;
+		}
+		var out = hxd.Pixels.alloc(w, h, BGRA);
+		for( y in 0...h )
+			for( x in 0...w ) {
+				var i = x + y * w;
+				if( topZ[i] < 0 ) { out.setPixel(x, y, 0); continue; }
+				var c = colorOf(topId[i]);
+				var k = 0.55 + 0.6 * (topZ[i] - z0) / Math.max(1, z1 - z0);
+				inline function ch( v : Int ) return Std.int(Math.min(255, v * k));
+				out.setPixel(x, y, 0xFF000000 | (ch((c >> 16) & 0xFF) << 16) | (ch((c >> 8) & 0xFF) << 8) | ch(c & 0xFF));
+			}
+		var tile = h2d.Tile.fromPixels(out).center();
+		// proa: lejos de los motores; sin motores, a lo largo del eje mas largo
+		gx /= d.cells.length; gy /= d.cells.length;
+		var angle = w >= h ? 0. : -Math.PI / 2;
+		if( en > 0 ) {
+			var fx = gx - ex / en, fy = gy - ey / en;
+			if( Math.abs(fx) + Math.abs(fy) > 0.5 ) angle = -Math.atan2(fy, fx);
+		}
+		return hadesCache = { tile : tile, len : Math.max(w, h), angle : angle };
+	}
 
 	/** donde esta el robot (para guardarlo) */
 	public function robotPos() return robot == null ? null : { x : robot.e.x, y : robot.e.y };
@@ -556,9 +670,8 @@ class Explorer extends h2d.Object {
 				t.x = -0.5 - t.textWidth * t.scaleX * 0.5;
 				t.y = 0.5 - t.textHeight * t.scaleY * 0.5;
 			}
-			var name = label(obj, si.name, 1.1, 0xCCD6EC);
+			var name = nameLabel(obj, function() return si.name, 1.1, 0xCCD6EC);
 			name.y = 16;
-			name.x = -Std.int(name.textWidth * name.scaleX * 0.5);
 			sp.half = 32 + 15;
 		}
 		sectorSpots.push(sp);
@@ -708,6 +821,7 @@ class Explorer extends h2d.Object {
 		disposeView(solarStars);
 		for( s in solarSpots ) s.obj.remove();
 		solarSpots = [];
+		solarRelabels = [];
 		if( worldSolar != null ) worldSolar.remove();
 
 		var job = jobs.get(si.id);
@@ -822,8 +936,8 @@ class Explorer extends h2d.Object {
 			ic.y = pv.iconY;
 		}
 		if( pv.showName ) {
-			var t = label(obj, pv.infos.name, 1.1, 0xFFFFFF);
-			t.x = -Std.int(t.textWidth * t.scaleX * 0.5);
+			var p = pv.infos;
+			var t = nameLabel(obj, function() return p.name, 1.1, 0xFFFFFF, true);
 			t.y = Std.int(pv.bd.height * pv.scale * 0.3);
 		}
 		sp.half = pv.bd.width * pv.scale * 0.5 - 10;
@@ -872,6 +986,7 @@ class Explorer extends h2d.Object {
 		var e = TBurnIn;
 		for( s in solarSpots ) s.obj.remove();
 		solarSpots = [];
+		solarRelabels = [];
 		disposeView(solar);
 		solar = null;
 		if( worldSolar != null ) worldSolar.remove();
@@ -1184,6 +1299,31 @@ class Explorer extends h2d.Object {
 		zoomGoal = 0;
 	}
 
+	/** ventana del robot, de un sistema cerrado o de un planeta, con los textos en el idioma actual */
+	function showWindow( sp : Spot ) {
+		if( sp == robot ) {
+			openWindow(sp, Lang.t("exp.robot"), "ESCorp", Lang.t("exp.dock"), dockRobot);
+			return;
+		}
+		if( sp.planet == null ) {
+			switch( sp.system.status ) {
+			case SLocked(cost): openWindow(sp, sp.system.name, sp.system.x + "," + sp.system.y, "" + cost, function() onUnlock(sp.system));
+			case SOpen:
+			}
+			return;
+		}
+		var p = sp.planet;
+		var bname = ExpOffline.biomeName(p.biome);
+		switch( p.status ) {
+		case PUnexplored:
+			openWindow(sp, p.name, bname, Lang.t("exp.scan"), function() startScan(p));
+		case PActive, PInvited:
+			openWindow(sp, p.name, bname, Lang.t("exp.land"), function() landPlanet(p));
+		case PAbandonned, PForbidden:
+			openWindow(sp, p.name, bname, null, function() {});
+		}
+	}
+
 	/** Manager.setWindow + addButton: barra superior con el nombre, barra inferior con el boton */
 	function openWindow( sp : Spot, title : String, subtitle : String, buttonLabel : String, cb : Void -> Void ) {
 		closeWindow();
@@ -1251,7 +1391,7 @@ class Explorer extends h2d.Object {
 			cursorE.scale = 4;
 			ship.onArriveDist = 30;
 			ship.onArrive = function() {
-				if( winSpot != sp ) openWindow(sp, Lang.t("exp.robot"), "ESCorp", Lang.t("exp.dock"), dockRobot);
+				if( winSpot != sp ) showWindow(sp);
 			};
 			return;
 		}
@@ -1266,26 +1406,16 @@ class Explorer extends h2d.Object {
 					pregen(sp.system);
 					ship.onArriveDist = 0;
 					ship.onArrive = function() onReachSystem(sp);
-				case SLocked(cost):
+				case SLocked(_):
 					ship.onArriveDist = 30;
 					ship.onArrive = function() {
-						if( winSpot != sp ) openWindow(sp, sp.system.name, sp.system.x + "," + sp.system.y, "" + cost, function() {});
+						if( winSpot != sp ) showWindow(sp);
 					};
 				}
 			} else {
-				var p = sp.planet;
 				ship.onArriveDist = 30;
 				ship.onArrive = function() {
-					if( winSpot == sp ) return;
-					var bname = ExpOffline.biomeName(p.biome);
-					switch( p.status ) {
-					case PUnexplored:
-						openWindow(sp, p.name, bname, Lang.t("exp.scan"), function() startScan(p));
-					case PActive, PInvited:
-						openWindow(sp, p.name, bname, Lang.t("exp.land"), function() landPlanet(p));
-					case PAbandonned, PForbidden:
-						openWindow(sp, p.name, bname, null, function() {});
-					}
+					if( winSpot != sp ) showWindow(sp);
 				};
 			}
 		}
@@ -1309,7 +1439,7 @@ class Explorer extends h2d.Object {
 	 * se oscurece un poco, sale el nombre una vez y se pasa a la pantalla de carga del juego (que tiene la barra de verdad).
 	 */
 	function landPlanet( p : ExpPlanet ) {
-		if( locked ) return;
+		if( locked || !canLand(p) ) return;
 		var sp = winSpot;
 		closeWindow();
 		locked = true;
@@ -1430,7 +1560,18 @@ class Explorer extends h2d.Object {
 		gpsCount = list.length;
 	}
 
+	/** Esc (o Start del mando): cierra la ventana abierta o abre el menu de pausa. No durante un viaje animado */
+	public function escape() {
+		if( paused || locked || serverLock ) return;
+		if( win != null ) {
+			closeWindow();
+			targetSpot = null;
+		} else onPause();
+	}
+
 	public function update( dt : Float ) {
+		// en pausa el mapa se sigue dibujando (y recolocando, y termina su animacion de entrada), pero no hay entrada y
+		// ni la nave ni el robot avanzan
 		var tmod = dt * 30;
 		lastTmod = tmod;
 		if( getScene() != null ) layout();
@@ -1439,7 +1580,7 @@ class Explorer extends h2d.Object {
 		if( spinner.visible && spinner.alpha > 0 ) spinner.rotation += 25 * Math.PI / 180 * tmod;
 
 		// entrada: clic en un objeto o en un punto libre (Manager.onMouseDown / onMouseUp)
-		if( !locked && !serverLock && getScene() != null ) {
+		if( !paused && !locked && !serverLock && getScene() != null ) {
 			var K = hxd.Key;
 			var m = mouseInMap();
 			var overButton = false;
@@ -1454,20 +1595,20 @@ class Explorer extends h2d.Object {
 				else if( h == null && downOnBg ) moveShip(null, m);
 				down = null;
 			}
-			if( K.isPressed(K.ESCAPE) ) {
-				if( win != null ) {
-					closeWindow();
-					targetSpot = null;
-				} else onExit();
-			}
+			if( K.isPressed(K.ESCAPE) ) escape();
 		}
 
-		ship.update(tmod);
+		if( !paused ) {
+			var ox = ship.x, oy = ship.y;
+			ship.update(tmod);
+			var d = Math.sqrt((ship.x - ox) * (ship.x - ox) + (ship.y - oy) * (ship.y - oy));
+			if( d > 0 ) onTravel(d, inSolar);
+		}
 		if( ship.getScreenSpeed() > 0.3 ) ship.rotation = ship.getAngleRad() * 180 / Math.PI;
 
 		// salida del sistema solar por los bordes (Manager.main). La respuesta del "servidor" tarda 500 ms y el salto otros 300:
 		// mientras, la nave sigue, cruza el anillo (exitDist) y se para en el.
-		if( inSolar && !locked ) {
+		if( inSolar && !locked && !paused ) {
 			var room = solar.room;
 			var d = Math.sqrt((ship.x - room.center.x) * (ship.x - room.center.x) + (ship.y - room.center.y) * (ship.y - room.center.y));
 			if( ship.target != null && !serverLock ) {
@@ -1522,7 +1663,7 @@ class Explorer extends h2d.Object {
 			sp.obj.setScale(1 + z);
 			sp.obj.alpha = sp.e.alpha;
 		}
-		updateRobot(tmod, dt);
+		if( !paused ) updateRobot(tmod, dt);
 		if( robot != null && !inSolar ) {
 			robot.obj.setPosition(Std.int(screenX(robot.e.x, vx, zoomT)), Std.int(screenY(robot.e.y, vy, zoomT)));
 			robot.obj.setScale(1 + zoomT);

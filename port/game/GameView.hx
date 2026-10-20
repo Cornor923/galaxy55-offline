@@ -96,6 +96,15 @@ class GameView {
 	var oldSpeedY = 0.;
 	var stun = 0.;
 
+	// vida y oxigeno (Hero.life, Hero.oxygen): de 0 a 100. En creativo no se recibe dano
+	public var life = 100.;
+	public var oxygen = 100.;
+	var damageRecover = 0.;
+	var healRecover = 0.;
+	/** fundido de color de pantalla (Game.fadeFX): golpe en rojo, curacion en azul, muerte en rojo hasta volver a la nave.
+	    t va de 0 a 1 (+ tmod * speed / 200); alpha(t) da la opacidad (null = t); lock: sin controles mientras dura */
+	public var fadeFX : { t : Float, col : Int, speed : Float, alpha : Null<Float -> Float>, done : Void -> Void, lock : Bool };
+
 	public inline function onGround() return standingBlock != null;
 	var s3d : h3d.scene.Scene;
 
@@ -104,6 +113,8 @@ class GameView {
 		this.world = world;
 		this.info = info;
 		playSeconds = info.playSeconds;
+		// Game.init: con la vida a 0 se vuelve a la nave (hero.hit(0)); aqui directamente con la vida llena
+		life = info.life != null && info.life > 0 ? info.life : 100;
 		creative = info.creative == true || Sys.args().indexOf("--creative") >= 0 || (editMother && info.mothership == true);
 		inv = new Inv(info.inv != null ? Inv.copy(info.inv) : Inv.defaults());
 		// solo pruebas: --inv=BIron,BGlass,... llena el inventario con esos bloques
@@ -233,6 +244,7 @@ class GameView {
 		info.pz = pz;
 		info.yaw = yaw;
 		info.pitch = pitch;
+		info.life = life;
 		info.fly = false;
 		info.playSeconds = playSeconds;
 		info.inv = Inv.copy(inv.inv);
@@ -279,6 +291,7 @@ class GameView {
 		playSeconds += realDt;
 		var tmod = realDt * FPS;
 		var K = hxd.Key;
+		if( fadeFX != null && fadeFX.lock ) controls = false; // hero.lock del original mientras se vuelve a la nave
 
 		var speed = 0., strafe = 0.;
 		var useJetpack = false;
@@ -357,6 +370,13 @@ class GameView {
 			walking = true;
 		}
 		stepPhysics(tmod, speed, strafe, useJetpack);
+		updateLife(tmod);
+		updateFade(tmod);
+		// olas: fx.time * animWater.speed (tiempo en segundos * 0.5)
+		if( world.wave != null ) {
+			world.wave.time += realDt * 0.5;
+			world.wave.amp = Settings.waterWaves ? World.WAVE_AMP : 0; // la opcion se aplica al momento
+		}
 		updateBobbing(realDt * 60);
 		if( hangar != null ) hangarUpdate(tmod);
 		else if( ship != null ) {
@@ -518,6 +538,91 @@ class GameView {
 
 	inline function stunnedLock() return false;
 
+	var fallBob = 0.;
+
+	// ---------------------------------------------------------------- vida (Hero.hit, Hero.heal, Hero.update)
+
+	/** Hero.hit: quita vida y aturde; a 0, fundido rojo y vuelta a la nave con la vida y el oxigeno llenos (Game.returnToShip, modo local) */
+	public function hit( dmg : Float ) {
+		if( creative || (fadeFX != null && fadeFX.lock) ) return;
+		life -= dmg;
+		stun = 10;
+		if( life <= 0 ) {
+			life = 0;
+			fadeFX = { t : 0., col : 0xFF0000, speed : 2., alpha : null, lock : true, done : function() {
+				life = 100;
+				oxygen = 100;
+				gravity = 0;
+				gotoShip(true);
+			} };
+		} else if( fadeFX == null ) {
+			var pow = dmg / 100;
+			fadeFX = { t : 0., col : 0xFF0000, speed : 3 + 10 * (1 - pow), alpha : t -> (1 - t) * (0.5 + pow * 0.5), lock : false, done : function() {} };
+		}
+	}
+
+	/** Hero.heal */
+	public function heal( v : Float ) {
+		if( life <= 0 ) return;
+		life += v;
+		if( life > 100 ) life = 100;
+		if( fadeFX == null )
+			fadeFX = { t : 0., col : 0x00C5E8, speed : 10., alpha : t -> Math.sin(t * 3.14) * 0.35, lock : false, done : function() {} };
+	}
+
+	/** Hero.update: bloques que hacen dano (lava, agua acida, carbon ardiente, hierbas acidas) o que curan (planta y caja de
+	    curacion), y ahogarse sin oxigeno */
+	function updateLife( dt : Float ) {
+		inline function at( z : Float ) return world.block(Math.floor(px), Math.floor(py), Std.int(z));
+		if( damageRecover > 0 )
+			damageRecover -= dt;
+		else {
+			var maxHit = 0.;
+			for( b in [standingBlock, at(pz + 0.1), at(pz + VIEW_Z + 0.15)] ) {
+				if( b == null ) continue;
+				for( f in b.flags )
+					switch( f ) {
+					case BFDamage(v): if( v > maxHit ) maxHit = v;
+					default:
+					}
+			}
+			if( maxHit > 0 ) {
+				hit(maxHit);
+				damageRecover = 10.;
+			}
+			if( swimming && oxygen <= 0 ) {
+				damageRecover = 4;
+				hit(1);
+			}
+		}
+		if( healRecover > 0 )
+			healRecover -= dt;
+		else
+			for( b in [standingBlock, at(pz + 0.1)] ) {
+				if( b == null ) continue;
+				for( f in b.flags )
+					switch( f ) {
+					case BFHeal(v):
+						heal(v);
+						healRecover = 20.;
+					default:
+					}
+			}
+	}
+
+	function updateFade( tmod : Float ) {
+		if( fadeFX == null ) return;
+		fadeFX.t += tmod * fadeFX.speed / 200;
+		if( fadeFX.t > 1 || fadeFX.t < 0 ) {
+			var done = fadeFX.done;
+			fadeFX = null;
+			done();
+		}
+	}
+
+	/** opacidad del fundido de color ahora mismo (0 si no hay) */
+	public function fadeAlpha() return fadeFX == null ? 0. : fadeFX.alpha != null ? fadeFX.alpha(fadeFX.t) : fadeFX.t;
+
 	// ---------------------------------------------------------------- fisica (Hero.doMove)
 
 	function doMove( dt : Float, speed : Float, strafe : Float, useJetpack : Bool ) {
@@ -526,12 +631,22 @@ class GameView {
 		var waterBlock = world.block(Math.floor(px), Math.floor(py), Std.int(pz + 0.1));
 		if( waterBlock != null && !waterBlock.hasFlag(BFLiquid) ) waterBlock = null;
 		if( waterBlock != null && waterBlock.k == BMarsQuickSand ) {
+			// hundido hasta los ojos: se ahoga poco a poco
+			if( world.block(Math.floor(px), Math.floor(py), Std.int(pz + VIEW_Z)) == waterBlock && Std.random(20) == 0 )
+				hit(dt * 5);
 			dt *= 0.3;
 			speed *= 0.6;
 			strafe *= 0.6;
 		}
 
 		swimming = inWater();
+		if( swimming ) {
+			if( oxygen > 0 ) oxygen -= dt * 0.1;
+			if( oxygen < 0 ) oxygen = 0;
+		} else {
+			if( oxygen < 100 ) oxygen += dt * 0.5;
+			if( oxygen > 100 ) oxygen = 100;
+		}
 
 		pz -= gravity * dt;
 
@@ -635,9 +750,17 @@ class GameView {
 					}
 			if( feet != standingBlock ) {
 				standingBlock = feet;
-				if( gravity / maxGravity > 0.4 && !creative ) {
+				// caida fuerte: dano segun la velocidad (Hero.doMove)
+				var threshold = 0.4;
+				var hitPow = gravity / maxGravity;
+				if( hitPow > threshold && !creative ) {
 					Snd.play("landHard", 1.5);
 					Snd.play("hit", 0.7);
+					hitPow = (hitPow - threshold) / (1 - threshold);
+					var dmg = 1 + Math.pow(hitPow * 15, 2);
+					if( dmg > life ) dmg = life;
+					hit(dmg);
+					fallBob = dmg + 20;
 				}
 			}
 			if( speed > 0 && footCD <= 0 && !swimming ) {
@@ -650,6 +773,8 @@ class GameView {
 				if( jetpack < 1 ) jetpack += 0.3;
 				else if( gravity >= 0.25 ) bobY = 15; // aterrizaje fuerte
 				else bobY = 5;
+				if( fallBob > 0 ) bobY = fallBob; // game.bobbingY = dmg + 20
+				fallBob = 0;
 				gravity = 0;
 			}
 			if( useJetpack && stun <= 0 ) {
@@ -810,6 +935,94 @@ class GameView {
 		return b.hasProp(PCanPick);
 	}
 
+	static var pickBoxes = new Map<Int, { x1 : Float, y1 : Float, z1 : Float, x2 : Float, y2 : Float, z2 : Float }>();
+
+	/**
+	 * Caja con la que se apunta a un bloque: la suya (BFSize) o, en las plantas y demas modelos, la de su dibujo.
+	 * Cambio del port: el original apuntaba a los modelos como a un bloque entero y, con varias plantas juntas, costaba
+	 * romper la que se miraba. Las plantas en cruz ocupan la celda en diagonal: se apuntan por su parte central.
+	 */
+	/**
+	 * Cambio del port: plantas y demas modelos se apuntan por lo que se ve. El tramo del rayo de (ax,ay,az) a (bx,by,bz),
+	 * en coordenadas de la celda, cruza alguna cara del modelo en un pixel no transparente de su textura.
+	 */
+	static function modelHit( b : Block, ax : Float, ay : Float, az : Float, bx : Float, by : Float, bz : Float ) : Bool {
+		var md = Models.get(b.model != null ? b.model : MCross);
+		var v = md.v, pix = Atlas.pixels;
+		var n = Std.int(v.length / 24);
+		for( q in 0...n ) {
+			var o = q * 24;
+			var sel = Std.int(v[o + 3]);
+			var tile = !md.multi || sel == 0 ? b.tlr : (sel == 1 ? b.tu : b.td);
+			if( tile < 0 || tile >= 0xFFF ) continue;
+			// plano de la cara (vertices 0, 1, 2)
+			var x0 = v[o], y0 = v[o + 1], z0 = v[o + 2];
+			var e1x = v[o + 6] - x0, e1y = v[o + 7] - y0, e1z = v[o + 8] - z0;
+			var e2x = v[o + 12] - x0, e2y = v[o + 13] - y0, e2z = v[o + 14] - z0;
+			var nx = e1y * e2z - e1z * e2y, ny = e1z * e2x - e1x * e2z, nz = e1x * e2y - e1y * e2x;
+			var da = nx * (ax - x0) + ny * (ay - y0) + nz * (az - z0);
+			var db = nx * (bx - x0) + ny * (by - y0) + nz * (bz - z0);
+			if( (da > 0 && db > 0) || (da < 0 && db < 0) || da == db ) continue;
+			var t = da / (da - db);
+			var px = ax + (bx - ax) * t, py = ay + (by - ay) * t, pz = az + (bz - az) * t;
+			// triangulos (0,1,2) y (2,1,3), como World.addModel
+			for( tri in 0...2 ) {
+				var i0 = tri == 0 ? 0 : 2, i1 = 1, i2 = tri == 0 ? 2 : 3;
+				var a0 = o + i0 * 6, a1 = o + i1 * 6, a2 = o + i2 * 6;
+				var ux = v[a1] - v[a0], uy = v[a1 + 1] - v[a0 + 1], uz = v[a1 + 2] - v[a0 + 2];
+				var wx = v[a2] - v[a0], wy = v[a2 + 1] - v[a0 + 1], wz = v[a2 + 2] - v[a0 + 2];
+				var rx = px - v[a0], ry = py - v[a0 + 1], rz = pz - v[a0 + 2];
+				var uu = ux * ux + uy * uy + uz * uz, uw = ux * wx + uy * wy + uz * wz, ww = wx * wx + wy * wy + wz * wz;
+				var ru = rx * ux + ry * uy + rz * uz, rw = rx * wx + ry * wy + rz * wz;
+				var den = uu * ww - uw * uw;
+				if( den == 0 ) continue;
+				var s1 = (ww * ru - uw * rw) / den, s2 = (uu * rw - uw * ru) / den;
+				if( s1 < 0 || s2 < 0 || s1 + s2 > 1 ) continue;
+				inline function fu( k : Int ) return v[k + 3] - Std.int(v[k + 3]);
+				var u = fu(a0) + (fu(a1) - fu(a0)) * s1 + (fu(a2) - fu(a0)) * s2;
+				var w = v[a0 + 4] + (v[a1 + 4] - v[a0 + 4]) * s1 + (v[a2 + 4] - v[a0 + 4]) * s2;
+				// con un margen de 3 pixeles (1/10 de bloque) alrededor: los huecos entre hojas no dejan pasar el rayo al suelo
+				var ts = Std.int(pix.width / 64);
+				var t0x = (tile & 63) * ts, t0y = (tile >> 6) * ts;
+				var tx = Std.int(((tile & 63) / 64 + u) * pix.width), ty = Std.int(((tile >> 6) / 64 + w) * pix.height);
+				for( ddy in -3...4 )
+					for( ddx in -3...4 ) {
+						var sx = tx + ddx, sy = ty + ddy;
+						if( sx < t0x || sy < t0y || sx >= t0x + ts || sy >= t0y + ts ) continue;
+						if( (pix.getPixel(sx, sy) >>> 24) >= 128 ) return true;
+					}
+			}
+		}
+		return false;
+	}
+
+	public static function pickBox( b : Block ) {
+		if( b.size != null ) return b.size;
+		if( b.type != BTModel && b.type != BTModel2Side && b.type != BTSprite ) return null;
+		var c = pickBoxes.get(b.index);
+		if( c != null ) return c;
+		var v = Models.get(b.model != null ? b.model : MCross).v;
+		var x1 = 1., y1 = 1., z1 = 1., x2 = 0., y2 = 0., z2 = 0.;
+		var i = 0;
+		while( i < v.length ) {
+			x1 = Math.min(x1, v[i]); x2 = Math.max(x2, v[i]);
+			y1 = Math.min(y1, v[i + 1]); y2 = Math.max(y2, v[i + 1]);
+			z1 = Math.min(z1, v[i + 2]); z2 = Math.max(z2, v[i + 2]);
+			i += 6;
+		}
+		if( x2 < x1 ) return null;
+		if( x2 - x1 > 0.9 && y2 - y1 > 0.9 ) {
+			x1 = y1 = 0.2;
+			x2 = y2 = 0.8;
+		}
+		// planos (enredaderas): un poco de grosor para poder apuntarlos
+		if( x2 - x1 < 0.16 ) { var cx = (x1 + x2) * 0.5; x1 = cx - 0.08; x2 = cx + 0.08; }
+		if( y2 - y1 < 0.16 ) { var cy = (y1 + y2) * 0.5; y1 = cy - 0.08; y2 = cy + 0.08; }
+		c = { x1 : x1, y1 : y1, z1 : Math.max(0, z1), x2 : x2, y2 : y2, z2 : Math.max(Math.min(1, z2), 0.25) };
+		pickBoxes.set(b.index, c);
+		return c;
+	}
+
 	/**
 	 * Primer bloque que toca el rayo del centro de la pantalla (alcance 7). Igual que Render.pick del original, la altura
 	 * se corrige con la curvatura del planeta (z + r2 * curve), porque lo que se ve esta curvado.
@@ -821,16 +1034,22 @@ class GameView {
 		var curve = hangar != null ? 0. : World.curve(world.size);
 		var lx = 0, ly = 0, lz = 0, have = false;
 		var t = 0.;
+		var ox = ex, oy = ey, oz = ez; // punto anterior del rayo
 		while( t < 7.0 ) {
 			t += 0.02;
 			var hx = dx * t, hy = dy * t;
 			var x = ex + hx, y = ey + hy, z = ez + dz * t + (hx * hx + hy * hy) * curve;
+			var px0 = ox, py0 = oy, pz0 = oz;
+			ox = x; oy = y; oz = z;
 			var ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
 			// (no se salta la misma celda: los bloques parciales solo cuentan si el rayo pasa por su caja)
 			// el agua que no se apunta (mar, cascada que cae, agua puesta) no para el rayo: se pone bajo el agua; la fuente de
 			// cascada y la arena movediza si lo paran: se pone contra ellas (Render.pick del original)
 			var b = world.block(ix, iy, iz);
-			if( b != null && blocking(b) && (b.size == null || (x - ix >= b.size.x1 && x - ix <= b.size.x2 && y - iy >= b.size.y1 && y - iy <= b.size.y2 && z - iz >= b.size.z1 && z - iz <= b.size.z2)) ) {
+			var bx = b != null ? pickBox(b) : null;
+			var model = b != null && b.size == null && bx != null && Atlas.pixels != null;
+			if( b != null && blocking(b) && (model ? modelHit(b, px0 - ix, py0 - iy, pz0 - iz, x - ix, y - iy, z - iz)
+				: (bx == null || (x - ix >= bx.x1 && x - ix <= bx.x2 && y - iy >= bx.y1 && y - iy <= bx.y2 && z - iz >= bx.z1 && z - iz <= bx.z2))) ) {
 				if( Dev.trace && iz >= World.SHIP_Z ) Sys.println("pick: toca " + b.k + "@" + ix + "," + iy + "," + iz + " antes=" + lx + "," + ly + "," + lz + " mano=" + (hand != null) + " enZona=" + ship.inCraft(lx, ly, lz));
 				// la capa 0 (roca madre) se apunta como en el original (Render.doPick: solo z < 0 queda fuera): se pone encima,
 				// pero no se rompe (power -1)
@@ -1154,6 +1373,10 @@ class GameView {
 		var cp = Math.cos(pitch);
 		var c = s3d.camera;
 		var ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
+		// en el agua la vista sube y baja con las olas (Game.hx, planet.animWater)
+		var wv = world.wave;
+		if( wv != null && (onWater() || inWater()) )
+			ez -= Math.sin(px * wv.width + wv.time) * Math.cos(py * wv.width + wv.time) * wv.amp;
 		c.fovY = Settings.fov;
 		c.zNear = 0.1;
 		c.zFar = 1500;

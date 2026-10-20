@@ -10,7 +10,7 @@ still to stay faithful to the original and not break immersion: before adding so
 Space exploration stays: it is part of the game's identity (Cornor923). Ideas to make travel and the ship's speed (engines
 and weight, like in the original) matter more:
 
-- **Fuel** (the favourite for now): travelling on the map uses energy according to the distance; a heavy ship uses more.
+- **Fuel** (Pvie's favourite; Cornor923 is against it: the player could get stranded): travelling on the map uses energy according to the distance; a heavy ship uses more.
   It is refilled with crystals (Citronox, Etherium). It adds strategy without turning travel into a chore.
 - **Unlocking systems** (from the original): a third of the systems are locked and were opened by paying for a licence
   (1500). The port shows the padlock, but the button does nothing yet.
@@ -18,9 +18,15 @@ and weight, like in the original) matter more:
   untouched, only the amount of ore changes.
 - **A "base" planet** (Cornor923).
 - **A merchant robot that wanders further:** it travels further and sometimes goes to distant systems; a fast ship catches it sooner.
-- **Turbo engines** (Cornor923 remembered finding them while exploring): the original data has only one engine block; the rare
-  items that do exist are the ancient bomb, the black light and the mining turbo (that one speeds up the digger). It would be
-  a new addition.
+- **Quests or fixed points in space** (Cornor923): Galaxy 55 belongs to the Alphabounce universe, whose goal was to discover
+  planets and Earth. A story that invites you to go from system to system would give speed a use.
+- **Engines on planets:** they already exist in the original and in the port (same generator): the crashed capsule
+  (`detCapsule`) holds 2 engines, hull, wires and glass. It appears on ~0.1% of small planets, ~0.3% of medium ones and ~1%
+  of large ones (found by Cornor923). Idea: make it a bit more common, or add other ship wrecks.
+
+Groundwork in the code (v0.4): `port/game/Space.hx` gets the take-off, the distance travelled on the map (saved in the
+game), system changes, landing (and can prevent it), the lock button and docking with the robot. It changes nothing in the
+game for now: any of these ideas plugs in there.
 
 ## Water and lava
 

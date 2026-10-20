@@ -11,7 +11,7 @@ añadir algo nuevo, se habla con la comunidad.
 La exploración espacial se queda: es parte de la identidad del juego (Cornor923). Ideas para que el viaje y la velocidad de la
 nave (motores y peso, como en el original) importen más:
 
-- **Combustible** (la favorita por ahora): viajar por el mapa gasta energía según la distancia; una nave pesada gasta más.
+- **Combustible** (la favorita de Pvie; Cornor923 está en contra: el jugador podría quedarse tirado): viajar por el mapa gasta energía según la distancia; una nave pesada gasta más.
   Se recarga con cristales (Citronox, Etherium). Añade estrategia, sin convertir el viaje en un trámite.
 - **Desbloquear sistemas** (del original): un tercio de los sistemas salen con candado y se abrían pagando una licencia
   (1500). En el port se ve el candado, pero el botón todavía no hace nada.
@@ -19,9 +19,15 @@ nave (motores y peso, como en el original) importen más:
   biomas originales, solo cuánto mineral sale.
 - **Un planeta "base"** (Cornor923).
 - **Robot comerciante que se aleja:** viaja más lejos y a veces se va a sistemas lejanos; con una nave rápida lo alcanzas antes.
-- **Motores turbo** (Cornor923 recordaba que se encontraban explorando): en los datos del original solo hay un tipo de motor;
-  los objetos raros que sí existen son la bomba antigua, la luz negra y el turbo minero (este acelera el excavador). Sería
-  un añadido nuevo.
+- **Misiones o puntos fijos en el espacio** (Cornor923): Galaxy 55 es del universo de Alphabounce, cuyo objetivo era
+  descubrir planetas y la Tierra. Una historia que invite a ir de sistema en sistema daría uso a la velocidad.
+- **Motores en los planetas:** ya existen en el original y en el port (mismo generador): la cápsula estrellada
+  (`detCapsule`) lleva 2 motores, casco, cables y cristal. Sale en ~0,1 % de los planetas pequeños, ~0,3 % de los medianos y
+  ~1 % de los grandes (lo encontró Cornor923). Idea: que sea algo más frecuente o que haya otros restos de naves.
+
+Base en el código (v0.4): `port/game/Space.hx` recibe el despegue, la distancia recorrida en el mapa (se guarda en la
+partida), los cambios de sistema, el aterrizaje (y puede impedirlo), el botón del candado y el acoplamiento al robot. Ahora no
+cambia nada del juego: cualquiera de estas ideas se engancha ahí.
 
 ## Agua y lava
 

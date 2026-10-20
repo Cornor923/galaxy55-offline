@@ -20,6 +20,12 @@ typedef UniInfo = {
 	var planets : Array<UniPlanet>;
 	/** donde esta el robot comerciante en el sector (anadido del port) */
 	@:optional var robot : { x : Float, y : Float };
+	/** la partida esta en el espacio (despegaste y no has aterrizado): al cargarla se abre el mapa */
+	@:optional var space : Bool;
+	/** en el espacio, fuera de un sistema: donde esta la nave en el sector */
+	@:optional var ship : { x : Float, y : Float };
+	/** distancia recorrida en el mapa (Space.travel; base para el combustible y otras ideas del viaje) */
+	@:optional var traveled : Float;
 }
 
 /** Datos de una partida guardada. Los cambios de terreno, inventario y creditos se anadiran aqui. */
@@ -39,6 +45,8 @@ typedef SaveInfo = {
 	var yaw : Float;
 	var pitch : Float;
 	var fly : Bool;
+	/** vida (0..100, Hero.life; se guarda como en el original). Las partidas antiguas no la tienen: 100 */
+	@:optional var life : Float;
 	/** inventario (null = el inicial del original) */
 	@:optional var inv : Protocol.InventoryInfos;
 	/** cambios del terreno: pares [celda, bloque global] */
@@ -96,6 +104,9 @@ class SaveData {
 				start : { seed : Std.int(o.start.seed), biome : o.start.biome, size : Std.int(o.start.size) },
 				planets : [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : [for( v in (p.edits : Array<Dynamic>) ) Std.int(v)] }],
 				robot : o.robot != null ? { x : (o.robot.x : Float), y : (o.robot.y : Float) } : null,
+				space : o.space == true ? true : null,
+				ship : o.ship != null ? { x : (o.ship.x : Float), y : (o.ship.y : Float) } : null,
+				traveled : o.traveled != null ? (o.traveled : Float) : 0,
 			};
 		} catch( e : Dynamic ) {
 			return null;
@@ -160,7 +171,7 @@ class SaveData {
 				created : o.created != null ? o.created : 0, saved : o.saved != null ? o.saved : 0,
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
-				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true,
+				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
 					creative : o.creative == true, inv : readInv(o.inv), uni : readUni(o.uni), credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 			};

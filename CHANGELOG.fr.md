@@ -2,17 +2,37 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
-## Prochaine version
+## v0.4 — pre-release
+- **Vie et oxygène**, comme l'original : les grosses chutes, la lave, l'eau acide, le charbon ardent et les herbes acides
+  blessent ; sous l'eau l'oxygène s'épuise, puis tu te noies ; les sables mouvants noient aussi ; la plante et la boîte de
+  soin soignent. Barres de vie et d'oxygène en bas (visibles seulement si elles ne sont pas pleines) et éclair rouge ou bleu.
+  Quand tu meurs, tu reviens au vaisseau avec toute ta vie, sans rien perdre. Pas de dégâts en mode créatif.
+- Options séparées en sections (Général, Commandes, Graphismes, Interface) : tout ne tenait plus sur un écran.
+- Plantes et autres modèles : on vise ce qu'on voit (leurs feuilles, pas toute la case) ; avec plusieurs plantes ensemble, on casse facilement celle qu'on regarde (changement du port).
+- **Vagues de l'eau**, celles de l'original ; on peut les désactiver dans les Options.
+- Blocs partiels (plaques, fer, coffres…) : lumière par coin comme l'original.
+- Menu : une seule petite planète de fond ; plus de saccades pendant sa génération.
 - **L'eau s'écoule** (le `Process.hx` d'origine) : la mer remplit ce que tu creuses à côté d'elle jusqu'à son niveau ; les
   cascades et la lave tombent, s'étendent et disparaissent sans source ; l'herbe se couvre et se découvre ; les blocs
   accrochés et les détails cassent quand on retire leur support. Les cascades et l'eau que tu poses baissent à chaque pas,
   avec une surface inclinée (ajout du port).
 - **Robot marchand sur la carte stellaire :** il voyage entre les systèmes du secteur ; clique dessus et il s'arrête pour
-  t'attendre, et en t'amarrant tu entres dans son vaisseau (le vaisseau mère), avec la boutique. En sortant, tu reviens sur la carte.
+  t'attendre, et en t'amarrant tu entres dans son vaisseau (le vaisseau mère), avec la boutique. En sortant, tu reviens sur la carte. Sur la
+  carte, son vaisseau a la forme du vaisseau mère vu d'en haut.
+- **Décoller, c'est quitter la planète**, comme dans l'original : la planète est déchargée (ses changements sont enregistrés)
+  et rien n'est dessiné derrière la carte. Pour revenir, tu atterris. Si tu sauvegardes ou fermes le jeu dans l'espace (ou dans
+  le vaisseau du robot), « Continuer » te ramène sur la carte là où tu étais ; la liste des parties indique « Dans l'espace ».
+- Carte stellaire : Échap (ou Start sur la manette) ouvre un menu de pause (Reprendre, Options, Menu principal).
 - Les **flèches GPS** d'origine sur la carte : elles pointent vers les planètes visitées (et leurs systèmes) et vers le robot (en orange).
 - Options : ombre du bloc que tu vas poser et nom du bloc visé (petit, en bas à droite) ; les deux peuvent être désactivés.
 - Mode créatif : les quatre eaux (normale, sombre, acide et d'hiver) sont dans la palette.
-- Corrections de **Cornor923** (merci !) : la roche mère (couche 0) est dessinée et le menu principal se colle aux bords des fenêtres larges.
+- Corrections de **Cornor923** (merci !) : la roche mère (couche 0) est dessinée et on peut construire dessus ; le menu
+  principal se colle aux bords des fenêtres larges ; le synthétiseur utilise d'abord les blocs de l'inventaire et garde la zone
+  comme modèle (comme l'original) ; le jeu se lance en `galaxy55.exe`, avec son icône (Discord n'affiche plus « Half-Life ») ;
+  l'eau et la glace sont dessinées dans le bon ordre ; on ne peut plus poser de bloc dans une source de cascade ni dans les
+  sables mouvants ; les fonds de la boutique, du coffre, de la palette et de la carte couvrent toute la fenêtre ; textes
+  centrés dans les boutons de la carte et sans chevaucher le bouton Fermer ; des noms pour beaucoup de blocs qui n'en avaient
+  pas (variantes enneigées, charges, plantes, cristaux bonus).
 - Le bloc tenu en main ne tremble plus en marchant.
 - Corrections signalées par Sekhmet (merci !) : raccourcis clavier (Tab creuse et 1-0 sont les 10 cases), on peut poser des blocs
   sous l'eau, il ne neige plus sous un toit ni dans les grottes, la glace ne laisse plus de bloc en la cassant, ombre du bloc à

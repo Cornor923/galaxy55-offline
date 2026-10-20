@@ -1,0 +1,19 @@
+# apuntar a las plantas por lo que se ve: el aire transparente encima de una hierba baja no la toca; sus hojas si
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 80 none
+filla 54 54 76 76 56 56 BRock
+set 63 64 57 BMarsHerb1
+set 66 64 57 BRock
+tp 60.5 64.5 57.01 0 0
+wait 10
+# 1) encima de la hierba (transparente): llega a la roca de detras
+lookat 66.5 64.5 57.6
+wait 25
+print select
+# 2) las hojas de la hierba
+lookat 63.5 64.5 57.08
+wait 25
+print select
+quit

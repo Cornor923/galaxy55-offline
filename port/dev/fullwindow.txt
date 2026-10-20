@@ -36,8 +36,10 @@ explore
 wait 200
 cover mapa_ancha
 shot fullwindow_mapa_ancha
+# del mapa se sale aterrizando: se carga otra vez el planeta (el modo creativo de prueba no se guarda)
 close
-wait 30
+wait 300
+creative
 winsize 800 900
 wait 10
 screen pause

@@ -1,0 +1,3 @@
+wait 900
+shot menu_bg
+quit

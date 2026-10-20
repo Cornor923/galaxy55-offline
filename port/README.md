@@ -8,7 +8,7 @@ bugs, see `BUGS.md` in the repository root); the original Flash game remains unt
 ## Play
 
 Build it (see below) and double-click `jugar.bat`, or download the portable zip from the
-[release](../../../releases/tag/v0.3.1). The start menu offers Continue, New game, Load game, Options and Quit.
+[release](../../../releases/tag/v0.4). The start menu offers Continue, New game, Load game, Options and Quit.
 In New game you choose name, seed, biome, size and mode: **Adventure** (as in the original) or **Creative** (our addition).
 Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable).
 The save format may change between versions: do not count on today's saves working forever.
@@ -96,5 +96,6 @@ A player got it running on Linux this way; we have not tested it.
   are additions of this port.
 - Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
   holes up to its level, like the original.
-- Added options: a shadow of the block you are about to place and the name of the targeted block.
+- Plants and other models are aimed at by what you see (the pixels of their leaves), not the whole cell (the original treated them as a full block).
+- Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

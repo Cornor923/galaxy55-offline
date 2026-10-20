@@ -1,0 +1,19 @@
+# caja de las plantas: el rayo pasa por el borde de la celda de la planta (donde no hay hojas) y debe llegar a la roca de detras
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 80 none
+filla 54 54 76 76 56 56 BRock
+set 63 64 57 BAutumnHerbs1
+set 66 64 57 BRock
+tp 60.5 64.9 56.01 0 0
+wait 10
+lookat 66.5 64.9 57.6
+wait 25
+print select
+# apuntando al centro de la planta si se toca
+lookat 63.5 64.5 57.2
+wait 25
+print select
+shot planta_caja
+quit
