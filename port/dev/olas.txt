@@ -11,4 +11,11 @@ wait 20
 shot olas1
 wait 45
 shot olas2
+# sin olas: la superficie queda quieta
+waves 0
+wait 10
+shot olas3
+wait 45
+shot olas4
+waves 1
 quit

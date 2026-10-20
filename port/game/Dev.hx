@@ -87,6 +87,7 @@ class Dev {
 					g.life = f(a[1]);
 					if( a.length > 2 ) g.oxygen = f(a[2]);
 				case "hurt": g.hit(f(a[1]));
+				case "waves": Settings.waterWaves = a[1] == "1"; // waves 0|1: opcion de olas del agua
 				case "vitals":
 					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming);
 				case "give":

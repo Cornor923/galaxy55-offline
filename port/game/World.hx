@@ -53,6 +53,8 @@ class World {
 	public var sky(default, null) : Sky;
 	/** olas del agua (animWater del original); null en la nave y en el hangar. GameView avanza su tiempo */
 	public var wave(default, null) : WaterWave;
+	/** altura de las olas: animWater.scale * 0.5 */
+	public static inline var WAVE_AMP = 0.3 * 0.5;
 	var gen : gen.DetailsGenerator;
 	var bytes : haxe.io.Bytes;
 	var atlas : h3d.mat.Texture;
@@ -127,12 +129,12 @@ class World {
 		}
 		// animWater = { width : 0.5, scale : 0.3, speed : 0.5 }; Render.init ajusta width para que las olas cierren la vuelta
 		// al planeta. La nave (sharedSky) no tiene agua que mover
-		if( sharedSky == null && Settings.waterWaves ) {
+		if( sharedSky == null ) {
 			wave = new WaterWave();
 			var w = 0.5;
 			w -= ((w * size) % (Math.PI * 2)) / size;
 			wave.width = w;
-			wave.amp = 0.3 * 0.5;
+			wave.amp = Settings.waterWaves ? WAVE_AMP : 0;
 			wave.time = 0;
 		}
 		gen = new gen.DetailsGenerator(size, seed);

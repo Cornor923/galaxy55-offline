@@ -13,7 +13,7 @@ class Settings {
 	public static var showHelp = true;
 	/** sombra del bloque de la mano en la celda donde se pondra */
 	public static var placePreview = true;
-	/** olas del agua (animWater del original, que las quitaba sin aceleracion grafica): se aplica al cargar un planeta */
+	/** olas del agua (animWater del original, que las quitaba sin aceleracion grafica): se aplica al momento */
 	public static var waterWaves = true;
 	/** nombre del bloque apuntado, pequeno en una esquina */
 	public static var targetName = true;

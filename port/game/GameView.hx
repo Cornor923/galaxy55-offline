@@ -373,7 +373,10 @@ class GameView {
 		updateLife(tmod);
 		updateFade(tmod);
 		// olas: fx.time * animWater.speed (tiempo en segundos * 0.5)
-		if( world.wave != null ) world.wave.time += realDt * 0.5;
+		if( world.wave != null ) {
+			world.wave.time += realDt * 0.5;
+			world.wave.amp = Settings.waterWaves ? World.WAVE_AMP : 0; // la opcion se aplica al momento
+		}
 		updateBobbing(realDt * 60);
 		if( hangar != null ) hangarUpdate(tmod);
 		else if( ship != null ) {
