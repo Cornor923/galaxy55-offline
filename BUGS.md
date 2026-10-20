@@ -12,6 +12,7 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 | 4 | Lighting | **To check while playing:** partial blocks (plates, iron, chests…) now take each corner's light from the neighbouring cells, like the original (`Builder.addCustomQuad`); before, the whole face had a single light. Models already used the original's light. |
 | 8 | Winter | **Spruce leaves** drop material; in the original they may not. |
 | 10 | Rendering | Dropped **crystals** (charges) look too wide. |
+| 14 | Water | **(Fix?)** When you open a cave next to the sea, the water rushes in and fills it at once at the same height as the sea, without getting lower as it advances. That is what the original does (the sea fills everything below its level) and what Cornor923 asked for, but it looks unnatural. Alternative: the sea going down in steps like the cascade (see [`IDEAS.en.md`](IDEAS.en.md)). Talk to Cornor923 before changing it. |
 
 ## Fixed
 
