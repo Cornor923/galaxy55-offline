@@ -1,0 +1,59 @@
+# paleta del modo creativo (I): la ayuda de abajo no se sale del panel ni pisa el nombre del bloque, en los 3 idiomas,
+# en una ventana 16:9, una ancha y una alta. Capturas port/out/palette_hint_<idioma>_<ventana>.png
+wait 3
+planet
+wait 30
+creative
+winsize 1280 720
+wait 10
+setlang es
+palette
+wait 5
+shot palette_hint_es_169
+close
+setlang en
+palette
+wait 5
+shot palette_hint_en_169
+close
+setlang fr
+palette
+wait 5
+shot palette_hint_fr_169
+close
+winsize 1600 600
+wait 10
+setlang es
+palette
+wait 5
+shot palette_hint_es_ancha
+close
+setlang en
+palette
+wait 5
+shot palette_hint_en_ancha
+close
+setlang fr
+palette 1
+wait 5
+shot palette_hint_fr_ancha
+close
+winsize 800 900
+wait 10
+setlang es
+palette
+wait 5
+shot palette_hint_es_alta
+close
+setlang en
+palette
+wait 5
+shot palette_hint_en_alta
+close
+setlang fr
+palette
+wait 5
+shot palette_hint_fr_alta
+close
+wait 5
+quit
