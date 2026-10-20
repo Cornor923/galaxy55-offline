@@ -724,7 +724,9 @@ class World {
 		var full = liquidFull(x, y, z, fam);
 		var h00 = fz + (full ? 1. : liquidCorner(x, y, z, fam)), h10 = fz + (full ? 1. : liquidCorner(x + 1, y, z, fam));
 		var h11 = fz + (full ? 1. : liquidCorner(x + 1, y + 1, z, fam)), h01 = fz + (full ? 1. : liquidCorner(x, y + 1, z, fam));
-		if( !full || open(x, y, z + 1) )
+		// con olas, la capa de arriba del mar tiene su cara de arriba aunque haya un bloque lleno encima (Builder.hx del original:
+		// anim && z == waterLevel): si no, al bajar la ola quedaba una franja sin agua bajo el borde del bloque
+		if( !full || open(x, y, z + 1) || (fam == 1 && wave != null && !isWaterId(voxel(x, y, z + 1)) && z == waterLevel()) )
 			addQuadL(m, [fx, fy, h00, fx + 1, fy, h10, fx + 1, fy + 1, h11, fx, fy + 1, h01], b.tu, su, neg, 0, 0, 1, x, y, z);
 		if( open(x, y, z - 1) ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
 		if( open(x - 1, y, z) ) addQuadL(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, h00, fx, fy + 1, h01], b.tlr, sx, neg, -1, 0, 0, x, y, z);
