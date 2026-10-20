@@ -290,13 +290,14 @@ class Dev {
 		var w = g.world;
 		switch( a[1] ) {
 		case "names":
-			// nombres de unos bloques en los tres idiomas
+			// nombres de unos bloques en los tres idiomas ("all" = todos, con el indice y si se puede apuntar)
 			var cur = Lang.cur;
-			for( k in a.slice(2) ) {
+			var all = a[2] == "all";
+			for( k in (all ? [for( b in Block.all ) Type.enumConstructor(b.k)] : a.slice(2)) ) {
 				var b = bk(k);
 				var s = [];
 				for( i in 0...3 ) { Lang.setCode(Lang.CODES[i]); s.push(b.getName()); }
-				Sys.println(k + ": " + s.join(" | "));
+				Sys.println((all ? b.index + " " : "") + k + (all && !b.hasProp(PCanPick) ? " (nopick)" : "") + ": " + s.join(" | "));
 			}
 			Lang.setCode(Lang.CODES[cur]);
 		case "lightsum":

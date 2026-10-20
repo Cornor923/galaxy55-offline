@@ -6,7 +6,8 @@ import Common;
  * - frances: el nombre de DataGen (el juego era frances: son los nombres oficiales)
  * - ingles: los oficiales de NamesGen.EN que estaban bien y el resto traducido
  * - espanol: NamesGen.ES y los bloques que se anadieron despues
- * Los bloques internos (hierbas, cascadas, variantes) siguen sin nombre ("-"), como en el original.
+ * Las variantes sin nombre propio (nevadas, giradas, abiertas...) llevan el de su bloque base (ver base()); los bloques
+ * internos (hierbas, cascadas...) siguen sin nombre ("-"), como en el original.
  */
 class BlockNames {
 
@@ -96,6 +97,28 @@ class BlockNames {
 			out[b.index] = { name : n };
 		}
 		for( i in 0...out.length ) if( out[i] == null ) out[i] = { name : "-" };
+		// el original solo nombraba lo que cabe en el inventario (getDrop ya da el bloque base); aqui se apunta a todo
+		for( b in Block.all ) {
+			var m = b, n = 0;
+			while( m != null && out[m.index].name == "-" && n++ < 8 ) m = base(m);
+			if( m != null && m != b ) out[b.index] = { name : out[m.index].name };
+		}
 		return cache[lang] = out;
+	}
+
+	/** bloque del que toma el nombre uno sin nombre propio, o null */
+	static function base( b : Block ) : Block {
+		// cubierto (nieve, hierba), girado o puerta abierta: el principal, como en Block.getDrop
+		var m = b.getMain();
+		if( m != b ) return m;
+		// lava que corre (BLava2-5): la fuente (las cascadas no se pueden apuntar)
+		if( b.hasProp(PCanPick) )
+			for( s in Block.all ) if( s != b && s.propagate == b ) return s;
+		// roca rota: lo que suelta siempre, si es un bloque (no las cargas ni las hierbas con suerte)
+		var d = b.getDrop();
+		if( d != null && d.b != b && d.b.charge == null && b.getDropChance() == 100 ) return d.b;
+		// agua de cada planeta (oscura, helada): agua
+		if( b.type == BTWater && b.k != BWater ) return Block.get(BWater);
+		return null;
 	}
 }
