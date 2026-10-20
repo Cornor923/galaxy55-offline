@@ -15,6 +15,6 @@ item are in [`port/RESUMEN.md`](port/RESUMEN.md) (Spanish).
 4. **Fix the bugs** in [`BUGS.md`](BUGS.md).
 5. **Water:** to decide: lava + water = basalt (see [`IDEAS.en.md`](IDEAS.en.md)). Flowing water and the original's waves are done.
 6. Quality option for slow PCs (water waves can already be turned off).
-7. More activatable blocks (e.g. the ancient bomb, which also hurts in the original); Dead City and Shed.
+7. More activatable blocks (e.g. the ancient bomb, which also hurts in the original); Dead City.
 8. Packaging: installer, and evaluate SDL/DirectX.
 9. To evaluate: **web version** (Heaps to JS/WebGL) for Eternaltwin, multiplayer and Steam (see [`IDEAS.en.md`](IDEAS.en.md)).
