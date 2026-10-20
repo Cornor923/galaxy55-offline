@@ -12,7 +12,13 @@
 - Les **flèches GPS** d'origine sur la carte : elles pointent vers les planètes visitées (et leurs systèmes) et vers le robot (en orange).
 - Options : ombre du bloc que tu vas poser et nom du bloc visé (petit, en bas à droite) ; les deux peuvent être désactivés.
 - Mode créatif : les quatre eaux (normale, sombre, acide et d'hiver) sont dans la palette.
-- Corrections de **Cornor923** (merci !) : la roche mère (couche 0) est dessinée et le menu principal se colle aux bords des fenêtres larges.
+- Corrections de **Cornor923** (merci !) : la roche mère (couche 0) est dessinée et on peut construire dessus ; le menu
+  principal se colle aux bords des fenêtres larges ; le synthétiseur utilise d'abord les blocs de l'inventaire et garde la zone
+  comme modèle (comme l'original) ; le jeu se lance en `galaxy55.exe`, avec son icône (Discord n'affiche plus « Half-Life ») ;
+  l'eau et la glace sont dessinées dans le bon ordre ; on ne peut plus poser de bloc dans une source de cascade ni dans les
+  sables mouvants ; les fonds de la boutique, du coffre, de la palette et de la carte couvrent toute la fenêtre ; textes
+  centrés dans les boutons de la carte et sans chevaucher le bouton Fermer ; des noms pour beaucoup de blocs qui n'en avaient
+  pas (variantes enneigées, charges, plantes, cristaux bonus).
 - Le bloc tenu en main ne tremble plus en marchant.
 - Corrections signalées par Sekhmet (merci !) : raccourcis clavier (Tab creuse et 1-0 sont les 10 cases), on peut poser des blocs
   sous l'eau, il ne neige plus sous un toit ni dans les grottes, la glace ne laisse plus de bloc en la cassant, ombre du bloc à

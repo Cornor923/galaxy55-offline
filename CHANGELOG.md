@@ -11,7 +11,12 @@
 - **Flechas GPS** del original en el mapa: apuntan a los planetas que visitaste (y a sus sistemas) y al robot (en naranja).
 - Opciones: sombra del bloque que vas a poner y nombre del bloque apuntado (pequeño, abajo a la derecha); los dos se pueden quitar.
 - Modo creativo: las cuatro aguas (normal, oscura, ácida y de invierno) están en la paleta.
-- Arreglos de **Cornor923** (¡gracias!): la roca madre (capa 0) se dibuja y el menú principal se pega a los bordes en ventanas anchas.
+- Arreglos de **Cornor923** (¡gracias!): la roca madre (capa 0) se dibuja y se puede construir encima; el menú principal se
+  pega a los bordes en ventanas anchas; el sintetizador gasta primero los bloques del inventario y deja la zona como plantilla
+  (como el original); el juego se abre como `galaxy55.exe`, con su icono (Discord ya no dice "Half-Life"); el agua y el hielo
+  se dibujan en el orden correcto; ya no se ponen bloques dentro de una fuente de cascada ni en arenas movedizas; los fondos
+  de la tienda, el cofre, la paleta y el mapa tapan toda la ventana; textos centrados en los botones del mapa y sin pisar el
+  botón Cerrar; nombres para muchos bloques que no lo tenían (variantes con nieve, cargas, plantas, cristales de bonus).
 - El bloque en la mano ya no tiembla al andar.
 - Arreglos reportados por Sekhmet (¡gracias!): atajos de teclado (Tab excava y 1-0 son las 10 casillas), se pueden poner
   bloques bajo el agua, no nieva bajo techo ni en cuevas, el hielo ya no suelta un bloque al romperlo, sombra del bloque que

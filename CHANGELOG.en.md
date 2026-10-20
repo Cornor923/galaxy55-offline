@@ -11,7 +11,12 @@
 - The original **GPS arrows** on the map: they point to the planets you visited (and their systems) and to the robot (in orange).
 - Options: a shadow of the block you are about to place and the name of the targeted block (small, bottom right); both can be turned off.
 - Creative mode: the four waters (normal, dark, acid and winter) are in the palette.
-- Fixes by **Cornor923** (thank you!): the bedrock (layer 0) is drawn and the main menu sticks to the edges on wide windows.
+- Fixes by **Cornor923** (thank you!): the bedrock (layer 0) is drawn and you can build on it; the main menu sticks to the
+  edges on wide windows; the synthesizer uses the inventory's blocks first and keeps the area as a template (like the
+  original); the game runs as `galaxy55.exe`, with its icon (Discord no longer says "Half-Life"); water and ice are drawn in
+  the right order; blocks can no longer be placed inside a cascade source or quicksand; shop, chest, palette and map
+  backgrounds cover the whole window; centered labels on the map buttons, clear of the Close button; names for many blocks
+  that had none (snowy variants, charges, plants, bonus crystals).
 - The block in the hand no longer shakes when walking.
 - Fixes reported by Sekhmet (thank you!): key shortcuts (Tab digs and 1-0 are the 10 slots), blocks can be placed underwater,
   no snow under a roof or in caves, ice no longer drops a block when broken, a shadow of the block about to be placed, the name
