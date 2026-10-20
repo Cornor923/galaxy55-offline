@@ -1,0 +1,29 @@
+# nombre del bloque apuntado (esquina abajo a la derecha, mano vacia) en las variantes sin nombre propio (BlockNames.base):
+# touffe de sapin nevada (BWinterLeavesCover) y normal (BWinterLeaves), suelo nevado (BWinterSoilCover)
+# -Extra "--lang=fr" (o en, es) para cada idioma
+wait 3
+planet
+wait 30
+filla 56 58 72 70 60 110 none
+filla 56 58 72 70 59 59 BRock
+set 63 63 60 BWinterLeavesCover
+set 63 66 60 BWinterLeaves
+set 63 60 59 BWinterSoilCover
+slot 0
+wait 20
+tp 60.5 64.5 60 0 0
+lookat 63.5 63.5 60.5
+wait 2
+print select
+shot vn_tuft_snow
+tp 60.5 64.5 60 0 0
+lookat 63.5 66.5 60.5
+wait 2
+print select
+shot vn_tuft
+tp 60.5 64.5 60 0 0
+lookat 63.5 60.5 59.9
+wait 2
+print select
+shot vn_soil_snow
+quit

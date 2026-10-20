@@ -1,0 +1,4 @@
+# nombre de todos los bloques en los tres idiomas (es | en | fr), para ver los que no tienen
+wait 3
+print names all
+quit

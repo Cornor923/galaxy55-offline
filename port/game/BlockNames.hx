@@ -6,7 +6,8 @@ import Common;
  * - frances: el nombre de DataGen (el juego era frances: son los nombres oficiales)
  * - ingles: los oficiales de NamesGen.EN que estaban bien y el resto traducido
  * - espanol: NamesGen.ES y los bloques que se anadieron despues
- * Los bloques internos (hierbas, cascadas, variantes) siguen sin nombre ("-"), como en el original.
+ * Las variantes sin nombre propio (nevadas, giradas, abiertas...) llevan el de su bloque base (ver base()); los bloques
+ * internos (hierbas, cascadas...) siguen sin nombre ("-"), como en el original.
  */
 class BlockNames {
 
@@ -48,6 +49,8 @@ class BlockNames {
 		"BStainGreen" => "Green Stainshroom", "BRawGreen" => "Green Aggregate", "BMarsWall" => "Brick Wall", "BWinterWall" => "Frost Wall",
 		"BAcidWall" => "Soft Rock Wall", "BPlantRock" => "Imprisoned Rock", "BAcidHerb1" => "Stinging Dryad", "BAcidHerb2" => "Young Stinging Dryad",
 		"BAcidHerbCeil" => "Underground Dryad", "BHealPlant" => "Wild Calendula", "BCavePlantCeil" => "Hangvine", "BMinIron" => "Pyrite",
+		// cristales verdes y su carga: sin nombre en ningun idioma del original
+		"BBonusSmall" => "Small Bonus Crystal", "BBonusMedium" => "Bonus Crystal", "BBonusLarge" => "Large Bonus Crystal", "BBonusCharge" => "Bonus Charge",
 		"BIron" => "Iron", "BIronFence" => "Wire Mesh", "BIronLight" => "Miner's Lantern", "BShipGlassBlack" => "Tinted Toughened Glass",
 		"BShiningWoodPlank" => "Starry Plank", "BHealBox" => "Boxed Calendula", "BCircuit" => "Circuit Block",
 		"BDeadRock" => "Dead Rock", "BDeadSoil" => "Dead Soil", "BDeadSwamp" => "Dead Swamp", "BDeadTree" => "Dead Tree", "BDarkLeaves" => "Dark Leaves",
@@ -58,6 +61,7 @@ class BlockNames {
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
 	static var ES : Map<String, String> = [
 		"BWinterFlowerDeleted" => "-",
+		"BBonusSmall" => "Cristal de bonus pequeño", "BBonusMedium" => "Cristal de bonus", "BBonusLarge" => "Cristal de bonus grande", "BBonusCharge" => "Carga de bonus",
 		"BDeadRock" => "Roca muerta", "BDeadSoil" => "Tierra muerta", "BDeadSwamp" => "Pantano muerto", "BDeadTree" => "Árbol muerto",
 		"BDarkLeaves" => "Hojas oscuras",
 		"BMotherHull" => "Blindaje de la nodriza", "BMotherPanel" => "Panel de la nodriza", "BMotherDark" => "Blindaje oscuro de la nodriza",
@@ -67,6 +71,7 @@ class BlockNames {
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */
 	static var FR_EXTRA : Map<String, String> = [
 		"BWinterFlowerDeleted" => "-",
+		"BBonusSmall" => "Petit cristal bonus", "BBonusMedium" => "Cristal bonus", "BBonusLarge" => "Gros cristal bonus", "BBonusCharge" => "Charge bonus",
 		"BDeadRock" => "Roche morte", "BDeadSoil" => "Terre morte", "BDeadSwamp" => "Marais mort", "BDeadTree" => "Arbre mort",
 		"BDarkLeaves" => "Feuillage sombre",
 		"BChest" => "Conteneur EScorp",
@@ -98,6 +103,28 @@ class BlockNames {
 			out[b.index] = { name : n };
 		}
 		for( i in 0...out.length ) if( out[i] == null ) out[i] = { name : "-" };
+		// el original solo nombraba lo que cabe en el inventario (getDrop ya da el bloque base); aqui se apunta a todo
+		for( b in Block.all ) {
+			var m = b, n = 0;
+			while( m != null && out[m.index].name == "-" && n++ < 8 ) m = base(m);
+			if( m != null && m != b ) out[b.index] = { name : out[m.index].name };
+		}
 		return cache[lang] = out;
+	}
+
+	/** bloque del que toma el nombre uno sin nombre propio, o null */
+	static function base( b : Block ) : Block {
+		// cubierto (nieve, hierba), girado o puerta abierta: el principal, como en Block.getDrop
+		var m = b.getMain();
+		if( m != b ) return m;
+		// lava que corre (BLava2-5): la fuente (las cascadas no se pueden apuntar)
+		if( b.hasProp(PCanPick) )
+			for( s in Block.all ) if( s != b && s.propagate == b ) return s;
+		// roca rota: lo que suelta siempre, si es un bloque (no las cargas ni las hierbas con suerte)
+		var d = b.getDrop();
+		if( d != null && d.b != b && d.b.charge == null && b.getDropChance() == 100 ) return d.b;
+		// agua de cada planeta (oscura, helada): agua
+		if( b.type == BTWater && b.k != BWater ) return Block.get(BWater);
+		return null;
 	}
 }
