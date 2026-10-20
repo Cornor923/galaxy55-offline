@@ -1518,8 +1518,18 @@ class Explorer extends h2d.Object {
 		gpsCount = list.length;
 	}
 
+	/** Esc (o Start del mando): cierra la ventana abierta o abre el menu de pausa. No durante un viaje animado */
+	public function escape() {
+		if( paused || locked || serverLock ) return;
+		if( win != null ) {
+			closeWindow();
+			targetSpot = null;
+		} else onPause();
+	}
+
 	public function update( dt : Float ) {
-		if( paused ) return;
+		// en pausa el mapa se sigue dibujando (y recolocando, y termina su animacion de entrada), pero no hay entrada y
+		// ni la nave ni el robot avanzan
 		var tmod = dt * 30;
 		lastTmod = tmod;
 		if( getScene() != null ) layout();
@@ -1528,7 +1538,7 @@ class Explorer extends h2d.Object {
 		if( spinner.visible && spinner.alpha > 0 ) spinner.rotation += 25 * Math.PI / 180 * tmod;
 
 		// entrada: clic en un objeto o en un punto libre (Manager.onMouseDown / onMouseUp)
-		if( !locked && !serverLock && getScene() != null ) {
+		if( !paused && !locked && !serverLock && getScene() != null ) {
 			var K = hxd.Key;
 			var m = mouseInMap();
 			var overButton = false;
@@ -1543,20 +1553,15 @@ class Explorer extends h2d.Object {
 				else if( h == null && downOnBg ) moveShip(null, m);
 				down = null;
 			}
-			if( K.isPressed(K.ESCAPE) ) {
-				if( win != null ) {
-					closeWindow();
-					targetSpot = null;
-				} else onPause();
-			}
+			if( K.isPressed(K.ESCAPE) ) escape();
 		}
 
-		ship.update(tmod);
+		if( !paused ) ship.update(tmod);
 		if( ship.getScreenSpeed() > 0.3 ) ship.rotation = ship.getAngleRad() * 180 / Math.PI;
 
 		// salida del sistema solar por los bordes (Manager.main). La respuesta del "servidor" tarda 500 ms y el salto otros 300:
 		// mientras, la nave sigue, cruza el anillo (exitDist) y se para en el.
-		if( inSolar && !locked ) {
+		if( inSolar && !locked && !paused ) {
 			var room = solar.room;
 			var d = Math.sqrt((ship.x - room.center.x) * (ship.x - room.center.x) + (ship.y - room.center.y) * (ship.y - room.center.y));
 			if( ship.target != null && !serverLock ) {
@@ -1611,7 +1616,7 @@ class Explorer extends h2d.Object {
 			sp.obj.setScale(1 + z);
 			sp.obj.alpha = sp.e.alpha;
 		}
-		updateRobot(tmod, dt);
+		if( !paused ) updateRobot(tmod, dt);
 		if( robot != null && !inSolar ) {
 			robot.obj.setPosition(Std.int(screenX(robot.e.x, vx, zoomT)), Std.int(screenY(robot.e.y, vy, zoomT)));
 			robot.obj.setScale(1 + zoomT);

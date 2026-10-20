@@ -197,6 +197,13 @@ class GalaxyApp extends hxd.App {
 		win.title = "Galaxy 55 (offline)";
 		applyVsync();
 		win.onClose = function() {
+			if( state == Exploring && explorer != null ) {
+				// en el mapa: se guarda como al volver a la nave (al cargar apareces en el planeta)
+				var rp = explorer.robotPos();
+				if( rp != null ) universe().robot = rp;
+				universe().pos = [2, universe().planetId];
+				saveGame(false);
+			}
 			if( state == Playing || state == Paused ) saveGame(false);
 			return true;
 		};
@@ -361,9 +368,23 @@ class GalaxyApp extends hxd.App {
 
 	/** Reconstruye todos los menus (al cambiar de idioma). */
 	function rebuildScreens( stay : String ) {
-		var again = state == Menu || state == Paused;
+		var again = state == Menu || state == Paused || state == Exploring;
 		clearUi();
+		if( state == Exploring && explorer != null ) rebuildExplorer();
 		if( again ) show(stay);
+	}
+
+	/** Rehace el mapa de estrellas donde esta la nave (al cambiar el idioma: sus textos se crean al abrirlo), en pausa */
+	function rebuildExplorer() {
+		var uni = universe();
+		// en el sector, la nave vuelve al punto exacto (la posicion guardada es la casilla por la que salio del sistema)
+		Explorer.shipStart = explorer.shipPos();
+		var rp = explorer.robotPos();
+		if( rp != null ) uni.robot = rp;
+		explorer.dispose();
+		explorer = null;
+		buildExplorer();
+		explorer.paused = true;
 	}
 
 	// ---------------------------------------------------------------- pantallas
@@ -1501,7 +1522,10 @@ class GalaxyApp extends hxd.App {
 		}
 
 		if( pendingExplorer > 0 && --pendingExplorer == 0 ) buildExplorer();
-		if( state == Exploring && explorer != null ) explorer.update(dt);
+		if( state == Exploring && explorer != null ) {
+			if( !explorer.paused && current == null && pad != null && pad.isPressed(pad.config.start) ) explorer.escape();
+			explorer.update(dt);
+		}
 		if( invBar != null ) invBar.visible = state == Playing || state == Paused;
 		cross.visible = state == Playing && game != null && game.laserActive;
 		dot.visible = state == Playing && game != null && !paletteOpen && !cross.visible;

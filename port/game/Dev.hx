@@ -250,6 +250,20 @@ class Dev {
 				case "exprinfo": Sys.println(app.explorer.devRobotInfo());
 				case "exppause": @:privateAccess app.openMapPause(); // Esc en el mapa
 				case "mapback": @:privateAccess app.leaveMap(); // menu de pausa del mapa: volver a la nave
+				case "expesc": app.explorer.escape(); // Esc o Start del mando en el mapa
+				case "screen2": @:privateAccess app.show(a[1]); // abre una pantalla de menu sin cambiar de estado
+				case "setlang":
+					// setlang es|en|fr: como el selector de idioma de Opciones > General
+					Settings.lang = a[1];
+					Lang.setCode(a[1]);
+					Settings.save();
+					@:privateAccess app.rebuildScreens("options.general");
+					Sys.println("pantalla " + @:privateAccess app.currentName + " mapa " + (app.explorer != null) + " pausa " + (app.explorer != null && app.explorer.paused));
+				case "closewin":
+					// closewin: lo que hace la X de la ventana (guardar), sin cerrar el juego
+					hxd.Window.getInstance().onClose();
+					var i = SaveData.read(g.info.id);
+					Sys.println("guardado: pos " + (i != null && i.uni != null ? "" + i.uni.pos : "-"));
 				case "walk":
 					g.debugSpeed = f(a[1]) * 0.15;
 					g.debugStrafe = a.length > 2 ? f(a[2]) * 0.15 : 0;

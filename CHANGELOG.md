@@ -18,7 +18,7 @@
 - **Robot comerciante en el mapa de estrellas:** viaja entre los sistemas del sector; al pulsarlo se para y te espera, y al
   acoplarte entras en su nave (la nave nodriza), con la tienda. Al salir vuelves al mapa. En el mapa, su nave tiene la forma
   de la nave nodriza vista desde arriba.
-- Mapa de estrellas: Esc abre un menú de pausa (Reanudar, Volver a la nave, Opciones, Menú principal). Al volver a la nave
+- Mapa de estrellas: Esc (o Start del mando) abre un menú de pausa (Reanudar, Volver a la nave, Opciones, Menú principal). Al volver a la nave
   sin aterrizar, el siguiente despegue sale del sistema de tu planeta.
 - **Flechas GPS** del original en el mapa: apuntan a los planetas que visitaste (y a sus sistemas) y al robot (en naranja).
 - Opciones: sombra del bloque que vas a poner y nombre del bloque apuntado (pequeño, abajo a la derecha); los dos se pueden quitar.
