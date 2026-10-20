@@ -49,7 +49,7 @@ class Chest extends h2d.Object {
 		close.y = py + h - 46;
 		var cg = new h2d.Graphics(close);
 		Theme.rect(cg, 0, 0, 140, 34, 0xFFFFFF, 0.08);
-		Theme.text(close, Lang.t("shop.close"), 1.7, Theme.TEXT, 26, 5);
+		Theme.center(Theme.text(close, Lang.t("shop.close"), 1.7, Theme.TEXT), 140, 34);
 		close.onClick = function(_) if( onClose != null ) onClose();
 		// la ayuda no cabe en una linea (en frances pisaba el boton y se salia del panel): se parte antes del boton
 		info.maxWidth = (close.x - 20 - info.x) / info.scaleX;

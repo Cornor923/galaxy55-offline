@@ -65,7 +65,7 @@ class Shop extends h2d.Object {
 		close.y = py + h - 52;
 		var cg = new h2d.Graphics(close);
 		Theme.rect(cg, 0, 0, 160, 36, 0xFFFFFF, 0.08);
-		Theme.text(close, Lang.t("shop.close"), 1.8, Theme.TEXT, 30, 6);
+		Theme.center(Theme.text(close, Lang.t("shop.close"), 1.8, Theme.TEXT), 160, 36);
 		close.onClick = function(_) if( onClose != null ) onClose();
 		// la ayuda no cabe en una linea (pisaba el boton): se parte antes del boton y se centra con el. La informacion
 		// se queda en la columna de la izquierda (a la derecha estan los precios del robot) y crece hacia arriba
