@@ -2,7 +2,7 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
-## Prochaine version
+## v0.4 — pre-release
 - **Vie et oxygène**, comme l'original : les grosses chutes, la lave, l'eau acide, le charbon ardent et les herbes acides
   blessent ; sous l'eau l'oxygène s'épuise, puis tu te noies ; les sables mouvants noient aussi ; la plante et la boîte de
   soin soignent. Barres de vie et d'oxygène en bas (visibles seulement si elles ne sont pas pleines) et éclair rouge ou bleu.
@@ -17,7 +17,8 @@
   accrochés et les détails cassent quand on retire leur support. Les cascades et l'eau que tu poses baissent à chaque pas,
   avec une surface inclinée (ajout du port).
 - **Robot marchand sur la carte stellaire :** il voyage entre les systèmes du secteur ; clique dessus et il s'arrête pour
-  t'attendre, et en t'amarrant tu entres dans son vaisseau (le vaisseau mère), avec la boutique. En sortant, tu reviens sur la carte.
+  t'attendre, et en t'amarrant tu entres dans son vaisseau (le vaisseau mère), avec la boutique. En sortant, tu reviens sur la carte. Sur la
+  carte, son vaisseau a la forme du vaisseau mère vu d'en haut.
 - Les **flèches GPS** d'origine sur la carte : elles pointent vers les planètes visitées (et leurs systèmes) et vers le robot (en orange).
 - Options : ombre du bloc que tu vas poser et nom du bloc visé (petit, en bas à droite) ; les deux peuvent être désactivés.
 - Mode créatif : les quatre eaux (normale, sombre, acide et d'hiver) sont dans la palette.

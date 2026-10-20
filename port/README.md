@@ -8,7 +8,7 @@ bugs, see `BUGS.md` in the repository root); the original Flash game remains unt
 ## Play
 
 Build it (see below) and double-click `jugar.bat`, or download the portable zip from the
-[release](../../../releases/tag/v0.3.1). The start menu offers Continue, New game, Load game, Options and Quit.
+[release](../../../releases/tag/v0.4). The start menu offers Continue, New game, Load game, Options and Quit.
 In New game you choose name, seed, biome, size and mode: **Adventure** (as in the original) or **Creative** (our addition).
 Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable).
 The save format may change between versions: do not count on today's saves working forever.

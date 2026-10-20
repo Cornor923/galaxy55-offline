@@ -8,7 +8,7 @@ connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine rest
 ## Jouer
 
 Compile-le (voir plus bas) et double-clique sur `jugar.bat`, ou télécharge le zip portable depuis la
-[release](../../../releases/tag/v0.3.1). Le menu de démarrage propose Continuer, Nouvelle partie, Charger une partie, Options et Quitter.
+[release](../../../releases/tag/v0.4). Le menu de démarrage propose Continuer, Nouvelle partie, Charger une partie, Options et Quitter.
 Dans Nouvelle partie, tu choisis le nom, la graine, le biome, la taille et le mode : **Aventure** (comme dans l'original) ou **Créatif** (notre ajout).
 Les parties et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`).
 Le format des sauvegardes peut changer d'une version à l'autre : ne compte pas sur le fait que les parties d'aujourd'hui fonctionnent toujours.

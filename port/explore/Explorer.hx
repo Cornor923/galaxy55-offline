@@ -451,19 +451,30 @@ class Explorer extends h2d.Object {
 		robot.e.speed = 0.08;
 		var obj = new h2d.Object(worldSector);
 		robot.obj = obj;
-		var g = new h2d.Graphics(obj);
-		g.lineStyle(1, 0x7A3A10, 0.9);
-		g.beginFill(0xFFA040, 1);
-		g.moveTo(-10, -7);
-		g.lineTo(11, 0);
-		g.lineTo(-10, 7);
-		g.lineTo(-6, 0);
-		g.lineTo(-10, -7);
-		g.endFill();
-		g.filter = new h2d.filter.Glow(0xFFA040, 0.5, 3, 1, 1, false);
+		// la nave del robot es la nave nodriza (la Hades): su forma vista desde arriba; si no se puede leer, una flecha
+		var g = new h2d.Object(obj);
+		var top = hadesTop();
+		if( top != null ) {
+			var b = new h2d.Bitmap(top.tile, g);
+			b.smooth = true;
+			b.setScale(HADES_ICON / top.len);
+			b.rotation = top.angle;
+			g.filter = new h2d.filter.Glow(0x000000, 1, 2, 2, 1, true);
+		} else {
+			var a = new h2d.Graphics(g);
+			a.lineStyle(1, 0x7A3A10, 0.9);
+			a.beginFill(0xFFA040, 1);
+			a.moveTo(-10, -7);
+			a.lineTo(11, 0);
+			a.lineTo(-10, 7);
+			a.lineTo(-6, 0);
+			a.lineTo(-10, -7);
+			a.endFill();
+			a.filter = new h2d.filter.Glow(0xFFA040, 0.5, 3, 1, 1, false);
+		}
 		robot.e.alpha = 1;
 		var name = label(obj, Lang.t("exp.robot"), 1.0, 0xFFC890);
-		name.y = 12;
+		name.y = top != null ? Std.int(HADES_ICON * 0.25) + 4 : 12;
 		name.x = -Std.int(name.textWidth * name.scaleX * 0.5);
 		robotGfx = g;
 		if( robotStart != null ) {
@@ -476,7 +487,80 @@ class Explorer extends h2d.Object {
 		}
 		robotWait = 10;
 	}
-	var robotGfx : h2d.Graphics;
+	var robotGfx : h2d.Object;
+
+	/** largo del icono de la nave del robot en el mapa (px) */
+	static inline var HADES_ICON = 64;
+	static var hadesCache : { tile : h2d.Tile, len : Float, angle : Float };
+
+	/**
+	 * La nave nodriza vista desde arriba, a un pixel por bloque: el bloque mas alto de cada columna, con el color medio de su
+	 * textura y mas claro cuanto mas alto. angle gira la imagen para que la proa mire a +x (la cola es donde estan los motores).
+	 */
+	static function hadesTop() {
+		if( hadesCache != null ) return hadesCache;
+		var d = try Mothership.data() catch( e : Dynamic ) null;
+		var pix = Atlas.pixels;
+		if( d == null || d.cells.length == 0 ) return null;
+		var x0 = 99999, y0 = 99999, x1 = -1, y1 = -1, z0 = 99999, z1 = -1;
+		for( c in d.cells ) {
+			if( c.x < x0 ) x0 = c.x; if( c.x > x1 ) x1 = c.x;
+			if( c.y < y0 ) y0 = c.y; if( c.y > y1 ) y1 = c.y;
+			if( c.z < z0 ) z0 = c.z; if( c.z > z1 ) z1 = c.z;
+		}
+		var w = x1 - x0 + 1, h = y1 - y0 + 1;
+		var topZ = new haxe.ds.Vector<Int>(w * h), topId = new haxe.ds.Vector<Int>(w * h);
+		for( i in 0...w * h ) topZ[i] = -1;
+		var gx = 0., gy = 0., ex = 0., ey = 0., en = 0;
+		var engine = Type.enumIndex(Common.BlockKind.BShipEngine);
+		for( c in d.cells ) {
+			var i = (c.x - x0) + (c.y - y0) * w;
+			if( c.z > topZ[i] ) { topZ[i] = c.z; topId[i] = c.id; }
+			gx += c.x; gy += c.y;
+			if( c.id == engine ) { ex += c.x; ey += c.y; en++; }
+		}
+		// color medio de la textura de cada bloque (cara de arriba)
+		var cols = new Map<Int, Int>();
+		function colorOf( id : Int ) : Int {
+			var c = cols.get(id);
+			if( c != null ) return c;
+			c = 0x8890A0;
+			var b = Block.all[id];
+			if( b != null && pix != null && b.tu >= 0 && b.tu < 0xFFF ) {
+				var ts = Std.int(pix.width / 64), tx = (b.tu & 0xFFF & 63) * ts, ty = ((b.tu & 0xFFF) >> 6) * ts;
+				var r = 0., g = 0., bl = 0., n = 0;
+				for( yy in 0...ts )
+					for( xx in 0...ts ) {
+						var p = pix.getPixel(tx + xx, ty + yy);
+						if( (p >>> 24) < 128 ) continue;
+						// RGBA: el entero lleva R en el byte bajo
+						r += p & 0xFF; g += (p >> 8) & 0xFF; bl += (p >> 16) & 0xFF; n++;
+					}
+				if( n > 0 ) c = (Std.int(r / n) << 16) | (Std.int(g / n) << 8) | Std.int(bl / n);
+			}
+			cols.set(id, c);
+			return c;
+		}
+		var out = hxd.Pixels.alloc(w, h, BGRA);
+		for( y in 0...h )
+			for( x in 0...w ) {
+				var i = x + y * w;
+				if( topZ[i] < 0 ) { out.setPixel(x, y, 0); continue; }
+				var c = colorOf(topId[i]);
+				var k = 0.55 + 0.6 * (topZ[i] - z0) / Math.max(1, z1 - z0);
+				inline function ch( v : Int ) return Std.int(Math.min(255, v * k));
+				out.setPixel(x, y, 0xFF000000 | (ch((c >> 16) & 0xFF) << 16) | (ch((c >> 8) & 0xFF) << 8) | ch(c & 0xFF));
+			}
+		var tile = h2d.Tile.fromPixels(out).center();
+		// proa: lejos de los motores; sin motores, a lo largo del eje mas largo
+		gx /= d.cells.length; gy /= d.cells.length;
+		var angle = w >= h ? 0. : -Math.PI / 2;
+		if( en > 0 ) {
+			var fx = gx - ex / en, fy = gy - ey / en;
+			if( Math.abs(fx) + Math.abs(fy) > 0.5 ) angle = -Math.atan2(fy, fx);
+		}
+		return hadesCache = { tile : tile, len : Math.max(w, h), angle : angle };
+	}
 
 	/** donde esta el robot (para guardarlo) */
 	public function robotPos() return robot == null ? null : { x : robot.e.x, y : robot.e.y };

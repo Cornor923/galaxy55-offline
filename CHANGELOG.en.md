@@ -2,7 +2,7 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Next version
+## v0.4 — pre-release
 - **Health and oxygen**, like the original: hard falls, lava, acid water, burning coal and acid herbs hurt; under water
   your oxygen runs out and then you drown; quicksand drowns you too; the healing plant and box heal. Health and oxygen bars
   at the bottom (only shown when not full) and a red or blue flash. When you die you go back to the ship with full health,
@@ -16,7 +16,8 @@
   spread and disappear without a source; grass gets covered and uncovered; anchored blocks and details break when their
   support is removed. Cascades and the water you place get lower at each step, with a sloped surface (port addition).
 - **Merchant robot on the star map:** it travels between the sector's systems; click it and it stops and waits for you, and
-  docking takes you into its ship (the mothership), with the shop. Leaving brings you back to the map.
+  docking takes you into its ship (the mothership), with the shop. Leaving brings you back to the map. On the map, its ship has the
+  shape of the mothership seen from above.
 - The original **GPS arrows** on the map: they point to the planets you visited (and their systems) and to the robot (in orange).
 - Options: a shadow of the block you are about to place and the name of the targeted block (small, bottom right); both can be turned off.
 - Creative mode: the four waters (normal, dark, acid and winter) are in the palette.

@@ -396,7 +396,7 @@ class GalaxyApp extends hxd.App {
 			Theme.text(s, Lang.t("continue") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 330);
 		}
 		hint(s, 110, 676);
-		versionText = Theme.text(s, "v0.3 · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
+		versionText = Theme.text(s, "v0.4 · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
 		anchorToWindow();
 		s.onBack = null;
 		return s;

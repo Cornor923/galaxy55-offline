@@ -2,7 +2,7 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Próxima versión
+## v0.4 — pre-release
 - **Vida y oxígeno**, como el original: las caídas fuertes, la lava, el agua ácida, el carbón ardiente y las hierbas ácidas
   hacen daño; bajo el agua se gasta el oxígeno y, sin él, te ahogas; las arenas movedizas también te ahogan; la planta y la
   caja de curación curan. Barras de vida y oxígeno abajo (solo se ven si no están llenas) y destello rojo o azul. Al morir
@@ -16,7 +16,8 @@
   caen y se extienden y desaparecen sin fuente; la hierba se cubre y descubre; lo anclado y los detalles se rompen al quitar
   su apoyo. La cascada y el agua que pones bajan de altura en cada paso, con la superficie inclinada (añadido del port).
 - **Robot comerciante en el mapa de estrellas:** viaja entre los sistemas del sector; al pulsarlo se para y te espera, y al
-  acoplarte entras en su nave (la nave nodriza), con la tienda. Al salir vuelves al mapa.
+  acoplarte entras en su nave (la nave nodriza), con la tienda. Al salir vuelves al mapa. En el mapa, su nave tiene la forma
+  de la nave nodriza vista desde arriba.
 - **Flechas GPS** del original en el mapa: apuntan a los planetas que visitaste (y a sus sistemas) y al robot (en naranja).
 - Opciones: sombra del bloque que vas a poner y nombre del bloque apuntado (pequeño, abajo a la derecha); los dos se pueden quitar.
 - Modo creativo: las cuatro aguas (normal, oscura, ácida y de invierno) están en la paleta.
