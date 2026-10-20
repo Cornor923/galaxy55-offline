@@ -11,13 +11,11 @@ Ordre approximatif. Ce qui est déjà fait se trouve dans [`CHANGELOG.fr.md`](CH
 2. **Carte stellaire :** vérifier s'il manque quelque chose aux particules des moteurs en marche. Les transitions d'origine,
    le fond commun avec son tourbillon, les particules du saut, l'éclat des réacteurs, les flèches GPS et le robot marchand
    sont faits.
-3. **Hangar** (fait, à tester davantage). Vitesse du vaisseau : l'original ne comptait que les moteurs dont la sortie était
-   libre ; le port les compte tous.
+3. **Hangar** (fait, à tester davantage). La vitesse sur la carte compte tous les moteurs, comme l'original (le message du
+   hangar ne compte que ceux dont la sortie est libre, comme l'original aussi).
 4. **Corriger les bugs** de [`BUGS.fr.md`](BUGS.fr.md).
-5. **Eau :** texture animée. L'eau qui s'écoule est faite (`port/game/WorldProcess.hx`, le `Process.hx` d'origine) : la mer
-   remplit tout jusqu'à son niveau ; les cascades et l'eau posée par le joueur baissent à chaque pas. À décider :
-   lave + eau = basalte (voir [`IDEAS.fr.md`](IDEAS.fr.md)).
-6. Option de qualité pour les PC lents.
-7. Vie, dégâts, oxygène et lave ; plus de blocs activables ; Cité morte et Shed.
+5. **Eau :** à décider : lave + eau = basalte (voir [`IDEAS.fr.md`](IDEAS.fr.md)). L'eau qui s'écoule et les vagues de l'original sont faites.
+6. Option de qualité pour les PC lents (on peut déjà désactiver les vagues de l'eau).
+7. Plus de blocs activables (p. ex. la bombe antique, qui blesse aussi dans l'original) ; Cité morte et Shed.
 8. Distribution : installateur, et évaluer SDL/DirectX.
 9. À évaluer : **version web** (Heaps → JS/WebGL) pour Eternaltwin, multijoueur et Steam (voir [`IDEAS.fr.md`](IDEAS.fr.md)).

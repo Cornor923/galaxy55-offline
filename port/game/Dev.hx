@@ -82,6 +82,13 @@ class Dev {
 				case "ship": g.gotoShip(true);
 				case "planet": g.gotoShip(false);
 				case "slot": g.inv.select(Std.parseInt(a[1]));
+				case "life":
+					// life N [OXIGENO]: pone la vida (y el oxigeno)
+					g.life = f(a[1]);
+					if( a.length > 2 ) g.oxygen = f(a[2]);
+				case "hurt": g.hit(f(a[1]));
+				case "vitals":
+					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming);
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);

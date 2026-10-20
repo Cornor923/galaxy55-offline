@@ -90,5 +90,5 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   que lo señala son un añadido de este port.
 - La cascada y el agua que pone el jugador bajan de altura en cada paso, con la superficie inclinada: añadido de este port.
   El mar llena los huecos hasta su nivel, como el original.
-- Opciones añadidas: sombra del bloque que vas a poner y nombre del bloque apuntado.
+- Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).

@@ -96,6 +96,15 @@ class GameView {
 	var oldSpeedY = 0.;
 	var stun = 0.;
 
+	// vida y oxigeno (Hero.life, Hero.oxygen): de 0 a 100. En creativo no se recibe dano
+	public var life = 100.;
+	public var oxygen = 100.;
+	var damageRecover = 0.;
+	var healRecover = 0.;
+	/** fundido de color de pantalla (Game.fadeFX): golpe en rojo, curacion en azul, muerte en rojo hasta volver a la nave.
+	    t va de 0 a 1 (+ tmod * speed / 200); alpha(t) da la opacidad (null = t); lock: sin controles mientras dura */
+	public var fadeFX : { t : Float, col : Int, speed : Float, alpha : Null<Float -> Float>, done : Void -> Void, lock : Bool };
+
 	public inline function onGround() return standingBlock != null;
 	var s3d : h3d.scene.Scene;
 
@@ -104,6 +113,8 @@ class GameView {
 		this.world = world;
 		this.info = info;
 		playSeconds = info.playSeconds;
+		// Game.init: con la vida a 0 se vuelve a la nave (hero.hit(0)); aqui directamente con la vida llena
+		life = info.life != null && info.life > 0 ? info.life : 100;
 		creative = info.creative == true || Sys.args().indexOf("--creative") >= 0 || (editMother && info.mothership == true);
 		inv = new Inv(info.inv != null ? Inv.copy(info.inv) : Inv.defaults());
 		// solo pruebas: --inv=BIron,BGlass,... llena el inventario con esos bloques
@@ -233,6 +244,7 @@ class GameView {
 		info.pz = pz;
 		info.yaw = yaw;
 		info.pitch = pitch;
+		info.life = life;
 		info.fly = false;
 		info.playSeconds = playSeconds;
 		info.inv = Inv.copy(inv.inv);
@@ -279,6 +291,7 @@ class GameView {
 		playSeconds += realDt;
 		var tmod = realDt * FPS;
 		var K = hxd.Key;
+		if( fadeFX != null && fadeFX.lock ) controls = false; // hero.lock del original mientras se vuelve a la nave
 
 		var speed = 0., strafe = 0.;
 		var useJetpack = false;
@@ -357,6 +370,10 @@ class GameView {
 			walking = true;
 		}
 		stepPhysics(tmod, speed, strafe, useJetpack);
+		updateLife(tmod);
+		updateFade(tmod);
+		// olas: fx.time * animWater.speed (tiempo en segundos * 0.5)
+		if( world.wave != null ) world.wave.time += realDt * 0.5;
 		updateBobbing(realDt * 60);
 		if( hangar != null ) hangarUpdate(tmod);
 		else if( ship != null ) {
@@ -518,6 +535,91 @@ class GameView {
 
 	inline function stunnedLock() return false;
 
+	var fallBob = 0.;
+
+	// ---------------------------------------------------------------- vida (Hero.hit, Hero.heal, Hero.update)
+
+	/** Hero.hit: quita vida y aturde; a 0, fundido rojo y vuelta a la nave con la vida y el oxigeno llenos (Game.returnToShip, modo local) */
+	public function hit( dmg : Float ) {
+		if( creative || (fadeFX != null && fadeFX.lock) ) return;
+		life -= dmg;
+		stun = 10;
+		if( life <= 0 ) {
+			life = 0;
+			fadeFX = { t : 0., col : 0xFF0000, speed : 2., alpha : null, lock : true, done : function() {
+				life = 100;
+				oxygen = 100;
+				gravity = 0;
+				gotoShip(true);
+			} };
+		} else if( fadeFX == null ) {
+			var pow = dmg / 100;
+			fadeFX = { t : 0., col : 0xFF0000, speed : 3 + 10 * (1 - pow), alpha : t -> (1 - t) * (0.5 + pow * 0.5), lock : false, done : function() {} };
+		}
+	}
+
+	/** Hero.heal */
+	public function heal( v : Float ) {
+		if( life <= 0 ) return;
+		life += v;
+		if( life > 100 ) life = 100;
+		if( fadeFX == null )
+			fadeFX = { t : 0., col : 0x00C5E8, speed : 10., alpha : t -> Math.sin(t * 3.14) * 0.35, lock : false, done : function() {} };
+	}
+
+	/** Hero.update: bloques que hacen dano (lava, agua acida, carbon ardiente, hierbas acidas) o que curan (planta y caja de
+	    curacion), y ahogarse sin oxigeno */
+	function updateLife( dt : Float ) {
+		inline function at( z : Float ) return world.block(Math.floor(px), Math.floor(py), Std.int(z));
+		if( damageRecover > 0 )
+			damageRecover -= dt;
+		else {
+			var maxHit = 0.;
+			for( b in [standingBlock, at(pz + 0.1), at(pz + VIEW_Z + 0.15)] ) {
+				if( b == null ) continue;
+				for( f in b.flags )
+					switch( f ) {
+					case BFDamage(v): if( v > maxHit ) maxHit = v;
+					default:
+					}
+			}
+			if( maxHit > 0 ) {
+				hit(maxHit);
+				damageRecover = 10.;
+			}
+			if( swimming && oxygen <= 0 ) {
+				damageRecover = 4;
+				hit(1);
+			}
+		}
+		if( healRecover > 0 )
+			healRecover -= dt;
+		else
+			for( b in [standingBlock, at(pz + 0.1)] ) {
+				if( b == null ) continue;
+				for( f in b.flags )
+					switch( f ) {
+					case BFHeal(v):
+						heal(v);
+						healRecover = 20.;
+					default:
+					}
+			}
+	}
+
+	function updateFade( tmod : Float ) {
+		if( fadeFX == null ) return;
+		fadeFX.t += tmod * fadeFX.speed / 200;
+		if( fadeFX.t > 1 || fadeFX.t < 0 ) {
+			var done = fadeFX.done;
+			fadeFX = null;
+			done();
+		}
+	}
+
+	/** opacidad del fundido de color ahora mismo (0 si no hay) */
+	public function fadeAlpha() return fadeFX == null ? 0. : fadeFX.alpha != null ? fadeFX.alpha(fadeFX.t) : fadeFX.t;
+
 	// ---------------------------------------------------------------- fisica (Hero.doMove)
 
 	function doMove( dt : Float, speed : Float, strafe : Float, useJetpack : Bool ) {
@@ -526,12 +628,22 @@ class GameView {
 		var waterBlock = world.block(Math.floor(px), Math.floor(py), Std.int(pz + 0.1));
 		if( waterBlock != null && !waterBlock.hasFlag(BFLiquid) ) waterBlock = null;
 		if( waterBlock != null && waterBlock.k == BMarsQuickSand ) {
+			// hundido hasta los ojos: se ahoga poco a poco
+			if( world.block(Math.floor(px), Math.floor(py), Std.int(pz + VIEW_Z)) == waterBlock && Std.random(20) == 0 )
+				hit(dt * 5);
 			dt *= 0.3;
 			speed *= 0.6;
 			strafe *= 0.6;
 		}
 
 		swimming = inWater();
+		if( swimming ) {
+			if( oxygen > 0 ) oxygen -= dt * 0.1;
+			if( oxygen < 0 ) oxygen = 0;
+		} else {
+			if( oxygen < 100 ) oxygen += dt * 0.5;
+			if( oxygen > 100 ) oxygen = 100;
+		}
 
 		pz -= gravity * dt;
 
@@ -635,9 +747,17 @@ class GameView {
 					}
 			if( feet != standingBlock ) {
 				standingBlock = feet;
-				if( gravity / maxGravity > 0.4 && !creative ) {
+				// caida fuerte: dano segun la velocidad (Hero.doMove)
+				var threshold = 0.4;
+				var hitPow = gravity / maxGravity;
+				if( hitPow > threshold && !creative ) {
 					Snd.play("landHard", 1.5);
 					Snd.play("hit", 0.7);
+					hitPow = (hitPow - threshold) / (1 - threshold);
+					var dmg = 1 + Math.pow(hitPow * 15, 2);
+					if( dmg > life ) dmg = life;
+					hit(dmg);
+					fallBob = dmg + 20;
 				}
 			}
 			if( speed > 0 && footCD <= 0 && !swimming ) {
@@ -650,6 +770,8 @@ class GameView {
 				if( jetpack < 1 ) jetpack += 0.3;
 				else if( gravity >= 0.25 ) bobY = 15; // aterrizaje fuerte
 				else bobY = 5;
+				if( fallBob > 0 ) bobY = fallBob; // game.bobbingY = dmg + 20
+				fallBob = 0;
 				gravity = 0;
 			}
 			if( useJetpack && stun <= 0 ) {
@@ -1154,6 +1276,10 @@ class GameView {
 		var cp = Math.cos(pitch);
 		var c = s3d.camera;
 		var ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
+		// en el agua la vista sube y baja con las olas (Game.hx, planet.animWater)
+		var wv = world.wave;
+		if( wv != null && (onWater() || inWater()) )
+			ez -= Math.sin(px * wv.width + wv.time) * Math.cos(py * wv.width + wv.time) * wv.amp;
 		c.fovY = Settings.fov;
 		c.zNear = 0.1;
 		c.zFar = 1500;

@@ -1,0 +1,14 @@
+# olas del agua (animWater): estanque y dos capturas separadas; la superficie debe moverse
+wait 3
+planet
+wait 30
+filla 50 50 80 78 70 72 BRock
+filla 50 50 80 78 73 90 none
+filla 51 51 79 77 71 72 BWater
+filla 64 66 64 66 71 74 BRock
+tp 64.5 66.5 75.01 -1.6 -0.5
+wait 20
+shot olas1
+wait 45
+shot olas2
+quit

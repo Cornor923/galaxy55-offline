@@ -3,6 +3,13 @@
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
 ## Prochaine version
+- **Vie et oxygène**, comme l'original : les grosses chutes, la lave, l'eau acide, le charbon ardent et les herbes acides
+  blessent ; sous l'eau l'oxygène s'épuise, puis tu te noies ; les sables mouvants noient aussi ; la plante et la boîte de
+  soin soignent. Barres de vie et d'oxygène en bas (visibles seulement si elles ne sont pas pleines) et éclair rouge ou bleu.
+  Quand tu meurs, tu reviens au vaisseau avec toute ta vie, sans rien perdre. Pas de dégâts en mode créatif.
+- **Vagues de l'eau**, celles de l'original ; on peut les désactiver dans les Options.
+- Blocs partiels (plaques, fer, coffres…) : lumière par coin comme l'original.
+- Menu : une seule petite planète de fond ; plus de saccades pendant sa génération.
 - **L'eau s'écoule** (le `Process.hx` d'origine) : la mer remplit ce que tu creuses à côté d'elle jusqu'à son niveau ; les
   cascades et la lave tombent, s'étendent et disparaissent sans source ; l'herbe se couvre et se découvre ; les blocs
   accrochés et les détails cassent quand on retire leur support. Les cascades et l'eau que tu poses baissent à chaque pas,

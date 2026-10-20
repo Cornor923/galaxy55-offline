@@ -39,6 +39,8 @@ typedef SaveInfo = {
 	var yaw : Float;
 	var pitch : Float;
 	var fly : Bool;
+	/** vida (0..100, Hero.life; se guarda como en el original). Las partidas antiguas no la tienen: 100 */
+	@:optional var life : Float;
 	/** inventario (null = el inicial del original) */
 	@:optional var inv : Protocol.InventoryInfos;
 	/** cambios del terreno: pares [celda, bloque global] */
@@ -160,7 +162,7 @@ class SaveData {
 				created : o.created != null ? o.created : 0, saved : o.saved != null ? o.saved : 0,
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
-				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true,
+				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
 					creative : o.creative == true, inv : readInv(o.inv), uni : readUni(o.uni), credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 			};

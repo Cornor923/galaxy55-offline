@@ -13,6 +13,8 @@ class Settings {
 	public static var showHelp = true;
 	/** sombra del bloque de la mano en la celda donde se pondra */
 	public static var placePreview = true;
+	/** olas del agua (animWater del original, que las quitaba sin aceleracion grafica): se aplica al cargar un planeta */
+	public static var waterWaves = true;
 	/** nombre del bloque apuntado, pequeno en una esquina */
 	public static var targetName = true;
 	/** sincronizacion vertical (sin ella los FPS solo los limita maxFps) */
@@ -50,6 +52,7 @@ class Settings {
 			if( o.turnKeys != null ) turnKeys = o.turnKeys;
 			if( o.showHelp != null ) showHelp = o.showHelp;
 			if( o.placePreview != null ) placePreview = o.placePreview;
+			if( o.waterWaves != null ) waterWaves = o.waterWaves;
 			if( o.targetName != null ) targetName = o.targetName;
 			if( o.vsync != null ) vsync = o.vsync;
 			if( o.maxFps != null ) maxFps = Std.int(o.maxFps);
@@ -58,7 +61,7 @@ class Settings {
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp, placePreview : placePreview, targetName : targetName, vsync : vsync, maxFps : maxFps };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp, placePreview : placePreview, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }

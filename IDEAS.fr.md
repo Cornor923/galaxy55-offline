@@ -11,7 +11,7 @@ Avant d'ajouter quelque chose de nouveau, on en parle avec la communauté.
 L'exploration spatiale reste : elle fait partie de l'identité du jeu (Cornor923). Des idées pour que le voyage et la vitesse
 du vaisseau (moteurs et poids, comme dans l'original) comptent davantage :
 
-- **Carburant** (la préférée pour l'instant) : voyager sur la carte consomme de l'énergie selon la distance ; un vaisseau
+- **Carburant** (la préférée de Pvie ; Cornor923 est contre : le joueur pourrait rester bloqué) : voyager sur la carte consomme de l'énergie selon la distance ; un vaisseau
   lourd consomme plus. On le recharge avec des cristaux (Citronox, Etherium). Cela ajoute de la stratégie sans faire du
   voyage une corvée.
 - **Débloquer des systèmes** (de l'original) : un tiers des systèmes sont verrouillés et s'ouvraient en payant une licence
@@ -21,9 +21,13 @@ du vaisseau (moteurs et poids, comme dans l'original) comptent davantage :
 - **Une planète « base »** (Cornor923).
 - **Un robot marchand qui va plus loin :** il voyage plus loin et part parfois vers des systèmes lointains ; un vaisseau
   rapide le rattrape plus vite.
-- **Moteurs turbo** (Cornor923 se souvenait d'en trouver en explorant) : les données de l'original n'ont qu'un seul bloc de
-  moteur ; les objets rares qui existent sont la bombe antique, la lumière noire et le turbo minier (celui-ci accélère le
-  laser de minage). Ce serait un ajout nouveau.
+- **Des quêtes ou des points fixes dans l'espace** (Cornor923) : Galaxy 55 fait partie de l'univers d'Alphabounce, dont le
+  but était de découvrir des planètes et la Terre. Une histoire qui pousse à aller de système en système donnerait un usage
+  à la vitesse.
+- **Des moteurs sur les planètes :** ils existent déjà dans l'original et dans le port (même générateur) : la capsule écrasée
+  (`detCapsule`) contient 2 moteurs, de la coque, des câbles et du verre. Elle apparaît sur ~0,1 % des petites planètes,
+  ~0,3 % des moyennes et ~1 % des grandes (trouvé par Cornor923). Idée : la rendre un peu plus fréquente, ou ajouter
+  d'autres épaves.
 
 ## Eau et lave
 

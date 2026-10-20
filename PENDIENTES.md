@@ -11,13 +11,11 @@ técnicos de cada punto están en [`port/RESUMEN.md`](port/RESUMEN.md).
 2. **Mapa de estrellas:** comprobar si falta algo de las partículas del motor en marcha. Ya están las transiciones del
    original, el fondo común con remolino, las partículas del salto, el destello de los reactores, las flechas GPS y el
    robot comerciante.
-3. **Hangar** (hecho, falta probarlo a fondo). Velocidad de la nave: el original solo contaba los motores con la salida
-   libre; el port cuenta todos.
+3. **Hangar** (hecho, falta probarlo a fondo). La velocidad en el mapa cuenta todos los motores, como el original (el mensaje del
+   hangar solo cuenta los de salida libre, también como el original).
 4. **Arreglar los errores** de [`ERRORES.md`](ERRORES.md).
-5. **Agua:** textura animada. El agua que fluye ya está (`port/game/WorldProcess.hx`, el `Process.hx` del original): el mar
-   llena por completo hasta su nivel; la cascada y el agua puesta por el jugador bajan de altura en cada paso. Por decidir:
-   lava + agua = basalto (ver [`IDEAS.md`](IDEAS.md)).
-6. Opción de calidad para PC lentas.
-7. Vida, daño, oxígeno y lava; más bloques activables; Ciudad Muerta y Shed.
+5. **Agua:** por decidir lava + agua = basalto (ver [`IDEAS.md`](IDEAS.md)). Ya están el agua que fluye y las olas del original.
+6. Opción de calidad para PC lentas (ya se pueden quitar las olas del agua).
+7. Más bloques activables (p. ej. la bomba antigua, que en el original también hace daño); Ciudad Muerta y Shed.
 8. Empaquetado: instalador, y evaluar SDL/DirectX.
 9. A evaluar: **versión web** (Heaps → JS/WebGL) para Eternaltwin, multijugador y Steam (ver [`IDEAS.md`](IDEAS.md)).

@@ -9,14 +9,13 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 
 | # | Dónde | Qué pasa |
 |---|---|---|
-| 4 | Luz | Los bloques que **no son cuadrados** (medios bloques, modelos…) tienen la luz mal respecto a los vecinos. |
+| 4 | Luz | **Por comprobar jugando:** los bloques parciales (placas, hierro, cofres…) ahora toman la luz de cada esquina de las celdas vecinas, como el original (`Builder.addCustomQuad`); antes toda la cara tenía una sola luz. Los modelos ya usaban la luz del original. |
 | 8 | Invierno | Las **hojas del abeto** sueltan material; puede que en el original no. |
 | 10 | Render | Los **cristales** sueltos (cargas) se ven demasiado anchos. |
-| 12 | Agua | **Por comprobar:** según Sekhmet, en el original la cascada no se congelaba junto al hielo. Antes de que el agua fluyera, en el port sí; falta comprobarlo ahora. |
-| 13 | Menú | **Tirones en el menú** mientras se genera el planeta de fondo: el generador hace pasos de 200–600 ms en el hilo principal y el juego se para de 0,4 a 1,1 s (medido con `--frametime`, en DirectX y en OpenGL). Pasa los primeros segundos del menú. Arreglo posible: pasos más cortos o generar en otro hilo. |
 
 ## Arreglados
 
+- Próxima versión: el menú usa un solo planeta de fondo, pequeño (antes tres grandes que cambiaban cada 22 s): ya no da tirones mientras se generan; queda uno de ~0,4 s al principio, cuando se dibuja el planeta por primera vez (#13). La cascada no se congela junto al hielo, solo con el congelador, como el original (#12, comprobado).
 - v0.3 (encontrados y reportados por **Sekhmet**, ¡gracias!): la arena movediza y el agua ya no se ven transparentes desde dentro (velo y niebla del color del líquido, como el original); ya no nieva bajo el agua; el agua tiene caras laterales y de fondo; el hielo sumergido queda detrás del agua; los textos del mapa de estrellas salen en el idioma elegido.
 - Próxima versión (reportados por **Sekhmet**, ¡gracias!): el agua fluye (`WorldProcess.hx`, el `Process.hx` del original); se pueden poner bloques bajo el agua; ya no nieva bajo techo ni en cuevas; el hielo no suelta un bloque al romperlo (como el original); atajos de teclado (Tab excava y 1–0 son las 10 casillas; antes la última no tenía tecla).
 - Próxima versión: el bloque en la mano ya no tiembla al andar; el resaltado de la paleta creativa ya no se queda pegado.

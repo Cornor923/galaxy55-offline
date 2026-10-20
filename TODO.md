@@ -10,13 +10,11 @@ item are in [`port/RESUMEN.md`](port/RESUMEN.md) (Spanish).
    [`IDEAS.en.md`](IDEAS.en.md) ("Space travel" section); for now, fuel is the favourite.
 2. **Star map:** check whether anything is missing from the running-engine particles. The original transitions, the common
    background with its whirlpool, jump particles, reactor flash, GPS arrows and the merchant robot are done.
-3. **Hangar** (done, needs more testing). Ship speed: the original only counted engines with a free exhaust; the port
-   counts all of them.
+3. **Hangar** (done, needs more testing). Speed on the map counts all engines, like the original (the hangar message only
+   counts the ones with a free exhaust, also like the original).
 4. **Fix the bugs** in [`BUGS.md`](BUGS.md).
-5. **Water:** animated texture. Flowing water is done (`port/game/WorldProcess.hx`, the original `Process.hx`): the sea fills
-   completely up to its level; cascades and player-placed water get lower at each step. To decide: lava + water = basalt
-   (see [`IDEAS.en.md`](IDEAS.en.md)).
-6. Quality option for slow PCs.
-7. Health, damage, oxygen and lava; more activatable blocks; Dead City and Shed.
+5. **Water:** to decide: lava + water = basalt (see [`IDEAS.en.md`](IDEAS.en.md)). Flowing water and the original's waves are done.
+6. Quality option for slow PCs (water waves can already be turned off).
+7. More activatable blocks (e.g. the ancient bomb, which also hurts in the original); Dead City and Shed.
 8. Packaging: installer, and evaluate SDL/DirectX.
 9. To evaluate: **web version** (Heaps to JS/WebGL) for Eternaltwin, multiplayer and Steam (see [`IDEAS.en.md`](IDEAS.en.md)).

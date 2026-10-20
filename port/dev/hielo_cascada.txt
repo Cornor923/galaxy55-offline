@@ -1,0 +1,24 @@
+# ERRORES #12: el hielo junto a una cascada no la congela (solo el congelador, como en el original)
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 80 none
+filla 54 54 76 76 56 56 BRock
+tp 60.5 60.5 57.01 0 0
+wait 5
+setp 64 64 60 BCascadeSource
+set 65 64 60 BIce
+set 63 64 59 BIce
+set 64 65 57 BIce
+wait 200
+print block 64 64 60
+print block 64 64 59
+print block 64 64 57
+print block 65 64 57
+shot hielo_cascada
+# con el congelador si se congela
+setp 66 66 57 BFreezer
+wait 60
+print block 64 64 60
+print block 64 64 57
+quit

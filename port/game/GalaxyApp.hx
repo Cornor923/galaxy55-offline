@@ -118,6 +118,11 @@ class GalaxyApp extends hxd.App {
 	var msgText : h2d.Text;
 	var jetGlow : h2d.Bitmap;
 	var jetBar : h2d.Graphics;
+	/** barras de vida y de oxigeno (Interface.lifeMC, oxygenMC): solo se ven si no estan llenas */
+	var lifeBar : h2d.Graphics;
+	var oxyBar : h2d.Graphics;
+	/** fundido de color de los golpes, la curacion y la muerte (Game.fadeFX) */
+	var hurtRect : h2d.Bitmap;
 	var invBar : InvBar;
 	var cross : h2d.Graphics;
 	var dot : h2d.Graphics;
@@ -222,12 +227,22 @@ class GalaxyApp extends hxd.App {
 		jetBar.y = H - 25;
 		jetBar.alpha = 0.9;
 		jetBar.visible = false;
+		// mismos colores, tamanos y brillo que el original (Interface: vida 350x5 a 20 px del borde, oxigeno 350x10 a 35)
+		oxyBar = new h2d.Graphics(s2d);
+		oxyBar.filter = new h2d.filter.Glow(0x2C66D3, 0.8, 4, 1);
+		oxyBar.visible = false;
+		lifeBar = new h2d.Graphics(s2d);
+		lifeBar.filter = new h2d.filter.Glow(0xA6FF00, 0.8, 4, 1);
+		lifeBar.alpha = 0.8;
+		lifeBar.visible = false;
 		// mira cian que aparece al excavar (Interface.cross: lineas de 7 px, alfa 0.4)
 		// fundido blanco del teletransporte (Hero.enteringShip -> fades)
 		fadeRect = new h2d.Bitmap(h2d.Tile.fromColor(0xFFFFFF, W, H), s2d);
 		fadeRect.alpha = 0;
 		fadeRect.visible = false;
-		for( b in [liquidVeil, dim, fadeRect] ) Theme.coverWindow(b);
+		hurtRect = new h2d.Bitmap(h2d.Tile.fromColor(0xFFFFFF, W, H), s2d);
+		hurtRect.visible = false;
+		for( b in [liquidVeil, dim, fadeRect, hurtRect] ) Theme.coverWindow(b);
 		cross = new h2d.Graphics(s2d);
 		cross.lineStyle(1, 0x00FFFF, 1);
 		cross.moveTo(0, -7);
@@ -559,15 +574,17 @@ class GalaxyApp extends hxd.App {
 		pp.index = Settings.placePreview ? 1 : 0;
 		var tn = new Selector(s, Lang.t("targetname"), [Lang.t("off"), Lang.t("on")], 660);
 		tn.index = Settings.targetName ? 1 : 0;
+		var ww = new Selector(s, Lang.t("waterwaves"), [Lang.t("off"), Lang.t("on")], 660);
+		ww.index = Settings.waterWaves ? 1 : 0;
 		var vs = new Selector(s, Lang.t("vsync"), [Lang.t("off"), Lang.t("on")], 660);
 		vs.index = Settings.vsync ? 1 : 0;
 		var fpsNames = [for( v in Settings.FPS_STEPS ) v == 0 ? Lang.t("maxfps.none") : "" + v];
 		var mf = new Selector(s, Lang.t("maxfps"), fpsNames, 660);
 		mf.index = Std.int(Math.max(0, Settings.FPS_STEPS.indexOf(Settings.maxFps)));
 		var back = new Button(s, Lang.t("back"), 660);
-		// 12 filas: mas juntas para que quepan en 720 de alto
-		var step = 42;
-		var rows : Array<Ui.Widget> = [lang, sens, fov, vol, full, vs, mf, inv, tk, help, pp, tn];
+		// 13 filas: mas juntas para que quepan en 720 de alto
+		var step = 40;
+		var rows : Array<Ui.Widget> = [lang, sens, fov, vol, full, vs, mf, ww, inv, tk, help, pp, tn];
 		for( i in 0...rows.length ) s.add(rows[i], x, y - 10 + i * step);
 		s.add(back, x, y - 10 + rows.length * step + 8);
 		var origin = state == Paused ? "pause" : "main";
@@ -589,6 +606,7 @@ class GalaxyApp extends hxd.App {
 		help.onChange = function(i) Settings.showHelp = i == 1;
 		pp.onChange = function(i) Settings.placePreview = i == 1;
 		tn.onChange = function(i) Settings.targetName = i == 1;
+		ww.onChange = function(i) Settings.waterWaves = i == 1;
 		vs.onChange = function(i) {
 			Settings.vsync = i == 1;
 			applyVsync();
@@ -1214,6 +1232,12 @@ class GalaxyApp extends hxd.App {
 		jetBar.setScale(1 / scale);
 		jetBar.x = offX + (visW - 350 / scale) * 0.5;
 		jetBar.y = offY + visH - 25 / scale;
+		for( b in [lifeBar, oxyBar] ) {
+			b.setScale(1 / scale);
+			b.x = jetBar.x;
+		}
+		lifeBar.y = offY + visH - 20 / scale;
+		oxyBar.y = offY + visH - 35 / scale;
 	}
 
 	/** Barra de combustible y brillo del jetpack, como Interface.updateJetpack y el HUD del original. */
@@ -1232,9 +1256,24 @@ class GalaxyApp extends hxd.App {
 			jetBar.drawRect(0, 0, ratio * 350, 4);
 			jetBar.endFill();
 		}
+		drawBar(oxyBar, p.oxygen / 100, 10, 0x4AA5FF);
+		drawBar(lifeBar, p.life / 100, 5, 0xA3F50A);
 		// el brillo solo se ve con el casco puesto (Hero.hx: if game.hudOn)
 		jetGlow.visible = p.thrusting && helmetOn;
 		if( jetGlow.visible ) jetGlow.alpha = 0.3 + Math.random() * 0.7;
+	}
+
+	/** Interface.updateLife / updateOxygen: fondo negro y la parte llena; oculta si esta llena */
+	static function drawBar( g : h2d.Graphics, ratio : Float, h : Int, col : Int ) {
+		g.visible = ratio < 1;
+		if( !g.visible ) return;
+		if( ratio < 0 ) ratio = 0;
+		g.clear();
+		g.beginFill(0x000000, 0.3);
+		g.drawRect(0, 0, 350, h);
+		g.beginFill(col, 1);
+		g.drawRect(0, 0, ratio * 350, h);
+		g.endFill();
 	}
 
 	function showToast( msg : String ) {
@@ -1296,6 +1335,8 @@ class GalaxyApp extends hxd.App {
 		if( dt > 0.1 ) dt = 0.1;
 		if( state != Playing ) {
 			jetBar.visible = false;
+			lifeBar.visible = false;
+			oxyBar.visible = false;
 			jetGlow.visible = false;
 		}
 		// el casco se ve jugando y en pausa; en los menus no
@@ -1387,6 +1428,12 @@ class GalaxyApp extends hxd.App {
 		var fade = (state == Playing || state == Paused) && game != null ? Math.min(0.999, game.enteringShip) : 0.;
 		fadeRect.visible = fade > 0;
 		fadeRect.alpha = fade;
+		var hurt = (state == Playing || state == Paused) && game != null ? game.fadeAlpha() : 0.;
+		hurtRect.visible = hurt > 0;
+		if( hurtRect.visible ) {
+			hurtRect.alpha = Math.min(1, hurt);
+			hurtRect.color.setColor(0xFF000000 | game.fadeFX.col);
+		}
 
 		if( modal != null && modal.parent != null ) modal.update(dt, pad);
 		else {
@@ -1558,10 +1605,11 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function bgUpdate( dt : Float ) {
-		// construir el siguiente planeta de fondo (hasta 3 listos a la vez)
-		if( bgBuilding == null && bgWorlds.length < 3 && bgQueue.length > 0 ) {
+		// un solo planeta de fondo, pequeno (1 trozo): generar planetas grandes y cambiarlos cada 22 s daba tirones de hasta un
+		// segundo en el menu (ERRORES #13). Cada vez que se vuelve al menu sale otro bioma
+		if( bgBuilding == null && bgWorlds.length < 1 && bgQueue.length > 0 ) {
 			var b = bgQueue.shift();
-			bgBuilding = new World(Std.random(100000), b, 2, s3d, atlas, true);
+			bgBuilding = new World(Std.random(100000), b, 1, s3d, atlas, true);
 			bgBuilding.root.visible = false;
 		}
 		if( bgBuilding != null ) {

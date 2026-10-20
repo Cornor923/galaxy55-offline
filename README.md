@@ -44,15 +44,14 @@ scanning, landing, GPS arrows) with the **merchant robot**: follow it, dock and 
 
 ![Star map: solar system](docs/img/mapa-estrellas.jpg)
 
-Still to do: give space travel more depth (fuel and other ideas in [`IDEAS.en.md`](IDEAS.en.md)), animated water, health and
-oxygen, a quality option for slow PCs. See [`TODO.md`](TODO.md).
+Also health and oxygen (falls, lava, drowning) and the original's water waves. Still to do: give space travel more depth
+(fuel and other ideas in [`IDEAS.en.md`](IDEAS.en.md)) and a quality option for slow PCs. See [`TODO.md`](TODO.md).
 
 ## Known bugs (summary)
 
 Full numbered list in [`BUGS.md`](BUGS.md). The main ones:
-- Lighting errors on non-square blocks (half blocks, models).
+- Light on partial blocks (plates, iron, chests): fixed like the original, to be checked while playing.
 - Spruce leaves drop material; dropped crystals look too wide.
-- The menu stutters for a moment while the background planet is generated.
 
 **Found another one?** Tell me in a GitHub *issue* or on Discord, with what you were doing and a screenshot if you can.
 
@@ -116,15 +115,15 @@ Menú de inicio, partidas guardadas, planetas idénticos a los del original (ver
 excavar y colocar, jetpack, modo creativo (añadido nuestro), la nave con teletransportador, puertas, sintetizador con las
 recetas del original y ordenador de a bordo, el **hangar** para rehacer tu nave, el **sonido**, el **agua que fluye** (la del
 original) y el **mapa de estrellas** (sector, sistemas solares, escaneo, aterrizaje, flechas GPS) con el **robot comerciante**:
-lo sigues, te acoplas y comercias en su nave. Falta dar más profundidad al viaje espacial (combustible y otras ideas en
-[`IDEAS.md`](IDEAS.md)), el agua animada, la vida y el oxígeno, y una opción de calidad para PC lentas; ver [`PENDIENTES.md`](PENDIENTES.md).
+lo sigues, te acoplas y comercias en su nave. También la vida y el oxígeno (caídas, lava, ahogarse) y las olas del agua del
+original. Falta dar más profundidad al viaje espacial (combustible y otras ideas en [`IDEAS.md`](IDEAS.md)) y una opción de
+calidad para PC lentas; ver [`PENDIENTES.md`](PENDIENTES.md).
 
 ### Errores conocidos (resumen)
 
 Lista completa y numerada en [`ERRORES.md`](ERRORES.md). Los principales:
-- Fallos de luz en bloques no cuadrados (medios bloques, modelos).
+- Luz de los bloques parciales (placas, hierro, cofres): arreglada como el original, falta comprobarla jugando.
 - Las hojas del abeto sueltan material; los cristales sueltos se ven demasiado anchos.
-- El menú da un tirón un momento mientras se genera el planeta de fondo.
 
 **¿Has encontrado otro?** Cuéntalo en un *issue* de GitHub o por Discord, con lo que hacías y una captura si puedes.
 
@@ -182,16 +181,15 @@ Menu de démarrage, parties sauvegardées, planètes identiques à celles de l'o
 creuser et poser des blocs, jetpack, mode créatif (notre ajout), le vaisseau avec son téléporteur, les portes, le synthétiseur avec
 les recettes d'origine et l'ordinateur de bord, le **hangar** pour refaire ton vaisseau, le **son**, l'**eau qui s'écoule** (celle
 de l'original) et la **carte stellaire** (secteur, systèmes solaires, scan, atterrissage, flèches GPS) avec le **robot marchand** :
-tu le suis, tu t'amarres et tu fais du commerce dans son vaisseau. Il reste à donner plus de profondeur au voyage spatial
-(carburant et autres idées dans [`IDEAS.fr.md`](IDEAS.fr.md)), l'eau animée, la vie et l'oxygène, et une option de qualité
-pour les PC lents ; voir [`TODO.fr.md`](TODO.fr.md).
+tu le suis, tu t'amarres et tu fais du commerce dans son vaisseau. Aussi la vie et l'oxygène (chutes, lave, noyade) et les
+vagues de l'eau de l'original. Il reste à donner plus de profondeur au voyage spatial (carburant et autres idées dans
+[`IDEAS.fr.md`](IDEAS.fr.md)) et une option de qualité pour les PC lents ; voir [`TODO.fr.md`](TODO.fr.md).
 
 ### Bugs connus (résumé)
 
 Liste complète et numérotée dans [`BUGS.fr.md`](BUGS.fr.md). Les principaux :
-- Erreurs d'éclairage sur les blocs non cubiques (demi-blocs, modèles).
+- Lumière des blocs partiels (plaques, fer, coffres) : corrigée comme l'original, à vérifier en jouant.
 - Les feuilles d'épicéa donnent du matériau ; les cristaux tombés paraissent trop larges.
-- Le menu saccade un instant pendant la génération de la planète de fond.
 
 **Tu en as trouvé un autre ?** Signale-le dans une *issue* GitHub ou sur Discord, avec ce que tu faisais et une capture d'écran si possible.
 

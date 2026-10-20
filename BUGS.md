@@ -9,14 +9,13 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 
 | # | Where | What happens |
 |---|---|---|
-| 4 | Lighting | **Non-square blocks** (half blocks, models...) are lit differently from their neighbours. |
+| 4 | Lighting | **To check while playing:** partial blocks (plates, iron, chests…) now take each corner's light from the neighbouring cells, like the original (`Builder.addCustomQuad`); before, the whole face had a single light. Models already used the original's light. |
 | 8 | Winter | **Spruce leaves** drop material; in the original they may not. |
 | 10 | Rendering | Dropped **crystals** (charges) look too wide. |
-| 12 | Water | **To check:** according to Sekhmet, in the original the cascade did not freeze next to ice. Before water could flow, it did in the port; it needs checking now. |
-| 13 | Menu | **Stutter in the menu** while the background planet is generated: the generator runs 200–600 ms steps on the main thread and the game freezes for 0.4–1.1 s (measured with `--frametime`, on DirectX and OpenGL). Happens during the first seconds of the menu. Possible fix: shorter steps or generating on another thread. |
 
 ## Fixed
 
+- Next version: the menu uses a single small background planet (it used to be three big ones that changed every 22 s): no more stutter while they are generated; one ~0.4 s hitch remains at the start, when the planet is first drawn (#13). The cascade does not freeze next to ice, only with the freezer, like the original (#12, checked).
 - v0.3 (found and reported by **Sekhmet**, thank you!): quicksand and water no longer look transparent from inside (screen tint and fog in the liquid's colour, like the original); it no longer snows under water; water has side and bottom faces; submerged ice stays behind the water; star map texts follow the chosen language.
 - Next version (reported by **Sekhmet**, thank you!): water flows (`WorldProcess.hx`, the original `Process.hx`); blocks can be placed underwater; no more snow under a roof or in caves; ice no longer drops a block when broken (like the original); key shortcuts (Tab digs and 1–0 are the 10 slots; the last one used to have no key).
 - Next version: the block in the hand no longer shakes when walking; the creative palette highlight no longer sticks.

@@ -96,5 +96,5 @@ A player got it running on Linux this way; we have not tested it.
   are additions of this port.
 - Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
   holes up to its level, like the original.
-- Added options: a shadow of the block you are about to place and the name of the targeted block.
+- Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

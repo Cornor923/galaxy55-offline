@@ -3,6 +3,13 @@
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Next version
+- **Health and oxygen**, like the original: hard falls, lava, acid water, burning coal and acid herbs hurt; under water
+  your oxygen runs out and then you drown; quicksand drowns you too; the healing plant and box heal. Health and oxygen bars
+  at the bottom (only shown when not full) and a red or blue flash. When you die you go back to the ship with full health,
+  without losing anything. No damage in creative mode.
+- **Water waves**, the original's; they can be turned off in Options.
+- Partial blocks (plates, iron, chests…): per-corner light like the original.
+- Menu: a single small background planet; no more stutter while it is generated.
 - **Flowing water** (the original `Process.hx`): the sea fills what you dig next to it up to its level; cascades and lava fall,
   spread and disappear without a source; grass gets covered and uncovered; anchored blocks and details break when their
   support is removed. Cascades and the water you place get lower at each step, with a sloped surface (port addition).

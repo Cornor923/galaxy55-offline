@@ -1,0 +1,59 @@
+# vida y oxigeno (Hero.hx): caida, planta de curacion, lava, ahogarse y morir. Zona de pruebas: suelo de roca en z=56
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 90 none
+filla 54 54 76 76 56 56 BRock
+tp 64.5 64.5 57.01 0 0
+wait 10
+vitals
+# 1) caida de 6 bloques: sin dano (gravedad por debajo del umbral)
+tp 64.5 64.5 63 0 0
+wait 40
+vitals
+# 2) caidas de 9 y 12 bloques: dano y fundido rojo (de unos 15 bloques en adelante se muere, como en el original)
+tp 64.5 64.5 66 0 0
+wait 60
+vitals
+life 100
+tp 64.5 64.5 69 0 0
+wait 70
+vitals
+shot vida_caida
+# 3) planta de curacion: +2 cada 20 tmod
+set 66 64 57 BHealPlant
+tp 66.5 64.5 57.01 0 0
+wait 90
+vitals
+# 4) lava: 15 de dano cada 10 tmod
+set 64 68 56 BLava
+life 100
+tp 64.5 68.5 57.01 0 0
+wait 25
+vitals
+shot vida_lava
+tp 60.5 60.5 57.01 0 0
+wait 5
+# 5) agua: el oxigeno baja; sin oxigeno, 1 de dano cada 4 tmod
+filla 68 56 72 60 57 61 BRock
+filla 69 57 71 59 57 61 BWater
+life 100 3
+tp 70.5 58.5 57.01 0 0
+wait 40
+vitals
+wait 60
+vitals
+shot vida_agua
+# 6) fuera del agua el oxigeno se recupera
+tp 60.5 60.5 57.01 0 0
+wait 60
+vitals
+# 7) morir: fundido rojo y vuelta a la nave con la vida llena
+hurt 500
+wait 20
+vitals
+shot vida_muerte
+wait 200
+vitals
+print pos
+quit

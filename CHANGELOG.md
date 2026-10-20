@@ -3,6 +3,13 @@
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Próxima versión
+- **Vida y oxígeno**, como el original: las caídas fuertes, la lava, el agua ácida, el carbón ardiente y las hierbas ácidas
+  hacen daño; bajo el agua se gasta el oxígeno y, sin él, te ahogas; las arenas movedizas también te ahogan; la planta y la
+  caja de curación curan. Barras de vida y oxígeno abajo (solo se ven si no están llenas) y destello rojo o azul. Al morir
+  vuelves a la nave con la vida llena, sin perder nada. En creativo no hay daño.
+- **Olas del agua**, las del original; se pueden quitar en Opciones.
+- Bloques parciales (placas, hierro, cofres…): luz por esquina como el original.
+- Menú: un solo planeta de fondo pequeño; ya no da tirones mientras se genera.
 - **Agua que fluye** (el `Process.hx` del original): el mar llena lo que cavas a su lado hasta su nivel; la cascada y la lava
   caen y se extienden y desaparecen sin fuente; la hierba se cubre y descubre; lo anclado y los detalles se rompen al quitar
   su apoyo. La cascada y el agua que pones bajan de altura en cada paso, con la superficie inclinada (añadido del port).
