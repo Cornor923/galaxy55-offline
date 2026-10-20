@@ -11,6 +11,11 @@ import Common;
 class BlockNames {
 
 	static var EN : Map<String, String> = [
+		// plantas, rocas y cristal con carga: sin nombre en ningun idioma del original
+		"BYellowPlant" => "Citronox Plant", "BBluePlant" => "Etherium Plant", "BYellowCeil" => "Citronox Stalactite",
+		"BMarsBlueRock" => "Etherium Meteorite", "BMarsCactusFlower" => "Flowering Twister", "BPinkCharge" => "Pink Charge",
+		// monticulo de nieve con una planta de citronox dentro: el nombre de la nieve, para no desvelarla
+		"BWinterHidden" => "Frozen Earth",
 		"BBedrock" => "Bedrock", "BWater" => "Water", "BSoil" => "Red Earth", "BSoilCover" => "Red Earth", "BRock" => "Rock",
 		"BWood" => "Wood", "BGreenLeaves" => "Green Leaves", "BYellowCrystalLight" => "Old Citronox", "BPinkFlower" => "Wood Rose",
 		"BChampiLight" => "Mushlite", "BAutumnStraw" => "Stellar Straw", "BVines" => "Creeping Vines", "BCactus" => "Cactus",
@@ -57,6 +62,9 @@ class BlockNames {
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
 	static var ES : Map<String, String> = [
+		"BYellowPlant" => "Planta de citronox", "BBluePlant" => "Planta de eterium", "BYellowCeil" => "Estalactita de citronox",
+		"BMarsBlueRock" => "Meteorito de eterium", "BMarsCactusFlower" => "Cactus salvaje florido", "BPinkCharge" => "Carga rosa",
+		"BWinterHidden" => "Tierra glacial",
 		"BWinterFlowerDeleted" => "-",
 		"BDeadRock" => "Roca muerta", "BDeadSoil" => "Tierra muerta", "BDeadSwamp" => "Pantano muerto", "BDeadTree" => "Árbol muerto",
 		"BDarkLeaves" => "Hojas oscuras",
@@ -65,6 +73,9 @@ class BlockNames {
 	];
 
 	static var FR_EXTRA : Map<String, String> = [
+		"BYellowPlant" => "Plante à citronox", "BBluePlant" => "Plante à etherium", "BYellowCeil" => "Stalactite de citronox",
+		"BMarsBlueRock" => "Météorite d'etherium", "BMarsCactusFlower" => "Tortillant fleuri", "BPinkCharge" => "Charge rose",
+		"BWinterHidden" => "Terre glaciale",
 		"BWinterFlowerDeleted" => "-",
 		"BDeadRock" => "Roche morte", "BDeadSoil" => "Terre morte", "BDeadSwamp" => "Marais mort", "BDeadTree" => "Arbre mort",
 		"BDarkLeaves" => "Feuillage sombre",
