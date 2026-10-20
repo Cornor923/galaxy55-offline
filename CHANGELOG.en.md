@@ -8,7 +8,7 @@
   at the bottom (only shown when not full) and a red or blue flash. When you die you go back to the ship with full health,
   without losing anything. No damage in creative mode.
 - Options split into sections (General, Controls, Graphics, Interface): it no longer fitted on one screen.
-- Plants and other models: you aim at their shape, not the whole cell; with several plants together it is now easy to break the one you look at (port change).
+- Plants and other models: you aim at what you see (their leaves, not the whole cell); with several plants together it is now easy to break the one you look at (port change).
 - **Water waves**, the original's; they can be turned off in Options.
 - Partial blocks (plates, iron, chests…): per-corner light like the original.
 - Menu: a single small background planet; no more stutter while it is generated.

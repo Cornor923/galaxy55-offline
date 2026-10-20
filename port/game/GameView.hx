@@ -939,7 +939,61 @@ class GameView {
 	 * Cambio del port: el original apuntaba a los modelos como a un bloque entero y, con varias plantas juntas, costaba
 	 * romper la que se miraba. Las plantas en cruz ocupan la celda en diagonal: se apuntan por su parte central.
 	 */
-	function pickBox( b : Block ) {
+	/**
+	 * Cambio del port: plantas y demas modelos se apuntan por lo que se ve. El tramo del rayo de (ax,ay,az) a (bx,by,bz),
+	 * en coordenadas de la celda, cruza alguna cara del modelo en un pixel no transparente de su textura.
+	 */
+	static function modelHit( b : Block, ax : Float, ay : Float, az : Float, bx : Float, by : Float, bz : Float ) : Bool {
+		var md = Models.get(b.model != null ? b.model : MCross);
+		var v = md.v, pix = Atlas.pixels;
+		var n = Std.int(v.length / 24);
+		for( q in 0...n ) {
+			var o = q * 24;
+			var sel = Std.int(v[o + 3]);
+			var tile = !md.multi || sel == 0 ? b.tlr : (sel == 1 ? b.tu : b.td);
+			if( tile < 0 || tile >= 0xFFF ) continue;
+			// plano de la cara (vertices 0, 1, 2)
+			var x0 = v[o], y0 = v[o + 1], z0 = v[o + 2];
+			var e1x = v[o + 6] - x0, e1y = v[o + 7] - y0, e1z = v[o + 8] - z0;
+			var e2x = v[o + 12] - x0, e2y = v[o + 13] - y0, e2z = v[o + 14] - z0;
+			var nx = e1y * e2z - e1z * e2y, ny = e1z * e2x - e1x * e2z, nz = e1x * e2y - e1y * e2x;
+			var da = nx * (ax - x0) + ny * (ay - y0) + nz * (az - z0);
+			var db = nx * (bx - x0) + ny * (by - y0) + nz * (bz - z0);
+			if( (da > 0 && db > 0) || (da < 0 && db < 0) || da == db ) continue;
+			var t = da / (da - db);
+			var px = ax + (bx - ax) * t, py = ay + (by - ay) * t, pz = az + (bz - az) * t;
+			// triangulos (0,1,2) y (2,1,3), como World.addModel
+			for( tri in 0...2 ) {
+				var i0 = tri == 0 ? 0 : 2, i1 = 1, i2 = tri == 0 ? 2 : 3;
+				var a0 = o + i0 * 6, a1 = o + i1 * 6, a2 = o + i2 * 6;
+				var ux = v[a1] - v[a0], uy = v[a1 + 1] - v[a0 + 1], uz = v[a1 + 2] - v[a0 + 2];
+				var wx = v[a2] - v[a0], wy = v[a2 + 1] - v[a0 + 1], wz = v[a2 + 2] - v[a0 + 2];
+				var rx = px - v[a0], ry = py - v[a0 + 1], rz = pz - v[a0 + 2];
+				var uu = ux * ux + uy * uy + uz * uz, uw = ux * wx + uy * wy + uz * wz, ww = wx * wx + wy * wy + wz * wz;
+				var ru = rx * ux + ry * uy + rz * uz, rw = rx * wx + ry * wy + rz * wz;
+				var den = uu * ww - uw * uw;
+				if( den == 0 ) continue;
+				var s1 = (ww * ru - uw * rw) / den, s2 = (uu * rw - uw * ru) / den;
+				if( s1 < 0 || s2 < 0 || s1 + s2 > 1 ) continue;
+				inline function fu( k : Int ) return v[k + 3] - Std.int(v[k + 3]);
+				var u = fu(a0) + (fu(a1) - fu(a0)) * s1 + (fu(a2) - fu(a0)) * s2;
+				var w = v[a0 + 4] + (v[a1 + 4] - v[a0 + 4]) * s1 + (v[a2 + 4] - v[a0 + 4]) * s2;
+				// con un margen de 3 pixeles (1/10 de bloque) alrededor: los huecos entre hojas no dejan pasar el rayo al suelo
+				var ts = Std.int(pix.width / 64);
+				var t0x = (tile & 63) * ts, t0y = (tile >> 6) * ts;
+				var tx = Std.int(((tile & 63) / 64 + u) * pix.width), ty = Std.int(((tile >> 6) / 64 + w) * pix.height);
+				for( ddy in -3...4 )
+					for( ddx in -3...4 ) {
+						var sx = tx + ddx, sy = ty + ddy;
+						if( sx < t0x || sy < t0y || sx >= t0x + ts || sy >= t0y + ts ) continue;
+						if( (pix.getPixel(sx, sy) >>> 24) >= 128 ) return true;
+					}
+			}
+		}
+		return false;
+	}
+
+	public static function pickBox( b : Block ) {
 		if( b.size != null ) return b.size;
 		if( b.type != BTModel && b.type != BTModel2Side && b.type != BTSprite ) return null;
 		var c = pickBoxes.get(b.index);
@@ -977,17 +1031,22 @@ class GameView {
 		var curve = hangar != null ? 0. : World.curve(world.size);
 		var lx = 0, ly = 0, lz = 0, have = false;
 		var t = 0.;
+		var ox = ex, oy = ey, oz = ez; // punto anterior del rayo
 		while( t < 7.0 ) {
 			t += 0.02;
 			var hx = dx * t, hy = dy * t;
 			var x = ex + hx, y = ey + hy, z = ez + dz * t + (hx * hx + hy * hy) * curve;
+			var px0 = ox, py0 = oy, pz0 = oz;
+			ox = x; oy = y; oz = z;
 			var ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
 			// (no se salta la misma celda: los bloques parciales solo cuentan si el rayo pasa por su caja)
 			// el agua que no se apunta (mar, cascada que cae, agua puesta) no para el rayo: se pone bajo el agua; la fuente de
 			// cascada y la arena movediza si lo paran: se pone contra ellas (Render.pick del original)
 			var b = world.block(ix, iy, iz);
 			var bx = b != null ? pickBox(b) : null;
-			if( b != null && blocking(b) && (bx == null || (x - ix >= bx.x1 && x - ix <= bx.x2 && y - iy >= bx.y1 && y - iy <= bx.y2 && z - iz >= bx.z1 && z - iz <= bx.z2)) ) {
+			var model = b != null && b.size == null && bx != null && Atlas.pixels != null;
+			if( b != null && blocking(b) && (model ? modelHit(b, px0 - ix, py0 - iy, pz0 - iz, x - ix, y - iy, z - iz)
+				: (bx == null || (x - ix >= bx.x1 && x - ix <= bx.x2 && y - iy >= bx.y1 && y - iy <= bx.y2 && z - iz >= bx.z1 && z - iz <= bx.z2))) ) {
 				if( Dev.trace && iz >= World.SHIP_Z ) Sys.println("pick: toca " + b.k + "@" + ix + "," + iy + "," + iz + " antes=" + lx + "," + ly + "," + lz + " mano=" + (hand != null) + " enZona=" + ship.inCraft(lx, ly, lz));
 				// la capa 0 (roca madre) se apunta como en el original (Render.doPick: solo z < 0 queda fuera): se pone encima,
 				// pero no se rompe (power -1)

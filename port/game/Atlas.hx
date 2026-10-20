@@ -11,6 +11,9 @@ class Atlas {
 	static inline var LIQUID_ALPHA = 0.55;
 	static var patched = false;
 
+	/** pixeles del ultimo atlas construido: para apuntar a las plantas por lo que se ve (GameView.modelHit) */
+	public static var pixels(default, null) : hxd.Pixels;
+
 	public static function build( png : haxe.io.Bytes ) : h3d.mat.Texture {
 		var pix = hxd.res.Any.fromBytes("texture.png", png).toImage().getPixels();
 		if( !patched ) {
@@ -19,6 +22,7 @@ class Atlas {
 		} else
 			patch(pix, true);
 		pix.convert(RGBA); // DirectX no acepta BGRA
+		pixels = pix;
 		var t = h3d.mat.Texture.fromPixels(pix);
 		t.filter = Nearest;
 		t.mipMap = None;
