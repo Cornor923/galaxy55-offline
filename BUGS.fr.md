@@ -21,6 +21,7 @@ Les bugs corrigés sont déplacés à la fin. Les détails techniques sont dans 
 - Prochaine version : le bloc tenu en main ne tremble plus en marchant ; la surbrillance de la palette du mode créatif ne reste plus collée.
 - Prochaine version : le jeu fonctionne aussi avec DirectX (`port/game_dx.hxml`), utile là où OpenGL 3.2 manque (par ex. les machines virtuelles).
 - Prochaine version : la couche 0 (roche mère) est dessinée, comme dans l'original : le fond d'un trou creusé jusqu'à elle ne laisse plus voir le vide et le ciel sous la planète.
+- Prochaine version : le synthétiseur utilise d'abord les blocs de l'inventaire, comme l'original : tant que l'inventaire les a tous, les blocs posés dans sa zone restent comme modèle et on peut fabriquer la même recette encore et encore ; s'il en manque un, ce sont les blocs posés qui sont consommés (le changement de la v0.2 est annulé).
 - v0.3 (trouvés et signalés par **Sekhmet**, merci !) : les sables mouvants et l'eau ne paraissent plus transparents de l'intérieur (voile et brouillard de la couleur du liquide, comme l'original) ; il ne neige plus sous l'eau ; l'eau a des faces latérales et de fond ; la glace immergée reste derrière l'eau ; les textes de la carte stellaire suivent la langue choisie.
 
 - v0.2 (changement par rapport à l'original) : les monticules de neige qui cachent une plante (`BWinterHidden`) ressemblent à la neige normale, sans lueur propre.

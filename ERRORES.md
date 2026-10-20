@@ -22,6 +22,7 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 - Próxima versión: el bloque en la mano ya no tiembla al andar; el resaltado de la paleta creativa ya no se queda pegado.
 - Próxima versión: el juego funciona también con DirectX (`port/game_dx.hxml`), útil donde no hay OpenGL 3.2 (p. ej. máquinas virtuales).
 - Próxima versión: la capa 0 (roca madre) se dibuja, como en el original: el fondo de un hoyo excavado hasta ella ya no deja ver el vacío y el cielo bajo el planeta.
+- Próxima versión: el sintetizador gasta primero los bloques del inventario, como el original: mientras el inventario los tenga todos, los puestos en su zona se quedan como plantilla y se puede fabricar la misma receta una y otra vez; si falta alguno, se gastan los puestos (se deshace el cambio de la v0.2).
 
 - v0.2 (cambio respecto al original): los montículos de nieve con una planta escondida (`BWinterHidden`) se ven como la nieve, sin brillo propio.
 - v0.2: borrar una partida desde el menú (botón Borrar y después elegir la partida; la confirmación ya no se abre dos veces).

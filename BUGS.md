@@ -22,6 +22,7 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 - Next version: the block in the hand no longer shakes when walking; the creative palette highlight no longer sticks.
 - Next version: the game also runs with DirectX (`port/game_dx.hxml`), useful where OpenGL 3.2 is missing (e.g. virtual machines).
 - Next version: layer 0 (bedrock) is drawn, like in the original: the bottom of a hole dug down to it no longer shows the void and the sky under the planet.
+- Next version: the synthesizer uses the blocks in the inventory first, like the original: while the inventory has all of them, the blocks placed in its area stay as a template and the same recipe can be crafted again and again; when one is missing, the placed blocks are used up (this undoes the v0.2 change).
 
 - v0.2 (change from the original): snow mounds hiding a plant (`BWinterHidden`) look like regular snow, without their own glow.
 - v0.2: deleting a saved game from the menu (Delete button, then pick the save; the confirmation no longer opens twice).
