@@ -343,6 +343,7 @@ class GalaxyApp extends hxd.App {
 				case "new": buildNew();
 				case "load": buildLoad();
 				case "options": buildOptions();
+				case "options.general", "options.controls", "options.graphics", "options.interface": buildOptionsSection(name.substr(8));
 				case "firstlang": buildFirstLang();
 				case "pause": buildPause();
 				case "computer": buildComputer();
@@ -550,71 +551,102 @@ class GalaxyApp extends hxd.App {
 		return s;
 	}
 
+	static var OPTION_SECTIONS = ["general", "controls", "graphics", "interface"];
+
+	/** Opciones: una lista de secciones (todo junto ya no cabia en 720 de alto) */
 	function buildOptions() : Screen {
-		var s = panelFor(860, 704, Lang.t("options.title"));
-		var x = (W - 660) * 0.5;
-		var y = 114.;
-		var lang = new Selector(s, Lang.t("language"), Lang.LABELS, 660);
-		lang.index = Lang.cur;
-		var sens = new Slider(s, Lang.t("sens"), 0.2, 3.0, 0.1, 660);sens.decimals = 1;
-		sens.value = Settings.mouseSens;
-		var fov = new Slider(s, Lang.t("fov"), 60, 110, 5, 660);
-		fov.value = Settings.fov;
-		var vol = new Slider(s, Lang.t("volume"), 0, 100, 5, 660);
-		vol.value = Settings.volume;
-		var full = new Selector(s, Lang.t("fullscreen"), [Lang.t("off"), Lang.t("on")], 660);
-		full.index = Settings.fullscreen ? 1 : 0;
-		var inv = new Selector(s, Lang.t("invert"), [Lang.t("off"), Lang.t("on")], 660);
-		inv.index = Settings.invertY ? 1 : 0;
-		var tk = new Selector(s, Lang.t("turnkeys"), [Lang.t("turnkeys.strafe"), Lang.t("turnkeys.turn")], 660);
-		tk.index = Settings.turnKeys ? 1 : 0;
-		var help = new Selector(s, Lang.t("helptext"), [Lang.t("off"), Lang.t("on")], 660);
-		help.index = Settings.showHelp ? 1 : 0;
-		var pp = new Selector(s, Lang.t("placepreview"), [Lang.t("off"), Lang.t("on")], 660);
-		pp.index = Settings.placePreview ? 1 : 0;
-		var tn = new Selector(s, Lang.t("targetname"), [Lang.t("off"), Lang.t("on")], 660);
-		tn.index = Settings.targetName ? 1 : 0;
-		var ww = new Selector(s, Lang.t("waterwaves"), [Lang.t("off"), Lang.t("on")], 660);
-		ww.index = Settings.waterWaves ? 1 : 0;
-		var vs = new Selector(s, Lang.t("vsync"), [Lang.t("off"), Lang.t("on")], 660);
-		vs.index = Settings.vsync ? 1 : 0;
-		var fpsNames = [for( v in Settings.FPS_STEPS ) v == 0 ? Lang.t("maxfps.none") : "" + v];
-		var mf = new Selector(s, Lang.t("maxfps"), fpsNames, 660);
-		mf.index = Std.int(Math.max(0, Settings.FPS_STEPS.indexOf(Settings.maxFps)));
-		var back = new Button(s, Lang.t("back"), 660);
-		// 13 filas: mas juntas para que quepan en 720 de alto
-		var step = 40;
-		var rows : Array<Ui.Widget> = [lang, sens, fov, vol, full, vs, mf, ww, inv, tk, help, pp, tn];
-		for( i in 0...rows.length ) s.add(rows[i], x, y - 10 + i * step);
-		s.add(back, x, y - 10 + rows.length * step + 8);
-		var origin = state == Paused ? "pause" : "main";
-		lang.onChange = function(i) {
-			Settings.lang = Lang.CODES[i];
-			Lang.setCode(Settings.lang);
-			Settings.save();
-			rebuildScreens("options");
-		};
-		sens.onChange = function(v) Settings.mouseSens = v;
-		fov.onChange = function(v) Settings.fov = Std.int(v);
-		vol.onChange = function(v) Settings.volume = Std.int(v);
-		full.onChange = function(i) {
-			Settings.fullscreen = i == 1;
-			hxd.Window.getInstance().displayMode = Settings.fullscreen ? Borderless : Windowed;
-		};
-		inv.onChange = function(i) Settings.invertY = i == 1;
-		tk.onChange = function(i) Settings.turnKeys = i == 1;
-		help.onChange = function(i) Settings.showHelp = i == 1;
-		pp.onChange = function(i) Settings.placePreview = i == 1;
-		tn.onChange = function(i) Settings.targetName = i == 1;
-		ww.onChange = function(i) Settings.waterWaves = i == 1;
-		vs.onChange = function(i) {
-			Settings.vsync = i == 1;
-			applyVsync();
-		};
-		mf.onChange = function(i) Settings.maxFps = Settings.FPS_STEPS[i];
+		var n = OPTION_SECTIONS.length;
+		var s = panelFor(640, 160 + (n + 1) * 64, Lang.t("options.title"));
+		var x = (W - 460) * 0.5;
+		var y = (H - (160 + (n + 1) * 64)) * 0.5 + 110;
+		for( i in 0...n ) {
+			var sec = OPTION_SECTIONS[i];
+			var b = new Button(s, Lang.t("options." + sec));
+			b.onActivate = function() show("options." + sec);
+			s.add(b, x, y + i * 64);
+		}
+		var back = new Button(s, Lang.t("back"));
+		s.add(back, x, y + n * 64 + 10);
 		var leave = function() {
 			Settings.save();
 			show(state == Paused ? "pause" : "main");
+		};
+		back.onActivate = leave;
+		s.onBack = leave;
+		return s;
+	}
+
+	/** Una seccion de Opciones: sus filas y Volver (a la lista de secciones) */
+	function buildOptionsSection( sec : String ) : Screen {
+		var rows : Array<Ui.Widget> = [];
+		var onOff = [Lang.t("off"), Lang.t("on")];
+		var count = switch( sec ) { case "general": 2; case "graphics": 5; default: 3; };
+		var h = 170 + (count + 1) * 60;
+		var s = panelFor(860, h, Lang.t("options." + sec).toUpperCase());
+		var x = (W - 660) * 0.5;
+		var y = (H - h) * 0.5 + 105;
+		inline function sel( key : String, v : Bool, set : Bool -> Void ) {
+			var w = new Selector(s, Lang.t(key), onOff, 660);
+			w.index = v ? 1 : 0;
+			w.onChange = function(i) set(i == 1);
+			rows.push(w);
+		}
+		switch( sec ) {
+		case "general":
+			var lang = new Selector(s, Lang.t("language"), Lang.LABELS, 660);
+			lang.index = Lang.cur;
+			lang.onChange = function(i) {
+				Settings.lang = Lang.CODES[i];
+				Lang.setCode(Settings.lang);
+				Settings.save();
+				rebuildScreens("options.general");
+			};
+			rows.push(lang);
+			var vol = new Slider(s, Lang.t("volume"), 0, 100, 5, 660);
+			vol.value = Settings.volume;
+			vol.onChange = function(v) Settings.volume = Std.int(v);
+			rows.push(vol);
+		case "controls":
+			var sens = new Slider(s, Lang.t("sens"), 0.2, 3.0, 0.1, 660);
+			sens.decimals = 1;
+			sens.value = Settings.mouseSens;
+			sens.onChange = function(v) Settings.mouseSens = v;
+			rows.push(sens);
+			sel("invert", Settings.invertY, v -> Settings.invertY = v);
+			var tk = new Selector(s, Lang.t("turnkeys"), [Lang.t("turnkeys.strafe"), Lang.t("turnkeys.turn")], 660);
+			tk.index = Settings.turnKeys ? 1 : 0;
+			tk.onChange = function(i) Settings.turnKeys = i == 1;
+			rows.push(tk);
+		case "graphics":
+			sel("fullscreen", Settings.fullscreen, function(v) {
+				Settings.fullscreen = v;
+				hxd.Window.getInstance().displayMode = v ? Borderless : Windowed;
+			});
+			sel("vsync", Settings.vsync, function(v) {
+				Settings.vsync = v;
+				applyVsync();
+			});
+			var fpsNames = [for( v in Settings.FPS_STEPS ) v == 0 ? Lang.t("maxfps.none") : "" + v];
+			var mf = new Selector(s, Lang.t("maxfps"), fpsNames, 660);
+			mf.index = Std.int(Math.max(0, Settings.FPS_STEPS.indexOf(Settings.maxFps)));
+			mf.onChange = function(i) Settings.maxFps = Settings.FPS_STEPS[i];
+			rows.push(mf);
+			var fov = new Slider(s, Lang.t("fov"), 60, 110, 5, 660);
+			fov.value = Settings.fov;
+			fov.onChange = function(v) Settings.fov = Std.int(v);
+			rows.push(fov);
+			sel("waterwaves", Settings.waterWaves, v -> Settings.waterWaves = v);
+		default:
+			sel("helptext", Settings.showHelp, v -> Settings.showHelp = v);
+			sel("placepreview", Settings.placePreview, v -> Settings.placePreview = v);
+			sel("targetname", Settings.targetName, v -> Settings.targetName = v);
+		}
+		for( i in 0...rows.length ) s.add(rows[i], x, y + i * 60);
+		var back = new Button(s, Lang.t("back"), 660);
+		s.add(back, x, y + rows.length * 60 + 14);
+		var leave = function() {
+			Settings.save();
+			show("options");
 		};
 		back.onActivate = leave;
 		s.onBack = leave;
@@ -1359,7 +1391,7 @@ class GalaxyApp extends hxd.App {
 				ui.removeChildren();
 				bar = null;
 				if( Settings.firstRun && shotPath == null ) show("firstlang") else
-				show(shotScreen == "load" || shotScreen == "options" || shotScreen == "new" ? shotScreen : "main");
+				show(shotScreen == "load" || shotScreen == "new" || StringTools.startsWith(shotScreen, "options") ? shotScreen : "main");
 			}
 		}
 		if( state == Menu || state == Loading ) {

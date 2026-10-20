@@ -7,6 +7,7 @@
   hacen daño; bajo el agua se gasta el oxígeno y, sin él, te ahogas; las arenas movedizas también te ahogan; la planta y la
   caja de curación curan. Barras de vida y oxígeno abajo (solo se ven si no están llenas) y destello rojo o azul. Al morir
   vuelves a la nave con la vida llena, sin perder nada. En creativo no hay daño.
+- Opciones separadas en secciones (General, Controles, Gráficos, Interfaz): todo junto ya no cabía.
 - **Olas del agua**, las del original; se pueden quitar en Opciones.
 - Bloques parciales (placas, hierro, cofres…): luz por esquina como el original.
 - Menú: un solo planeta de fondo pequeño; ya no da tirones mientras se genera.

@@ -7,6 +7,7 @@
   your oxygen runs out and then you drown; quicksand drowns you too; the healing plant and box heal. Health and oxygen bars
   at the bottom (only shown when not full) and a red or blue flash. When you die you go back to the ship with full health,
   without losing anything. No damage in creative mode.
+- Options split into sections (General, Controls, Graphics, Interface): it no longer fitted on one screen.
 - **Water waves**, the original's; they can be turned off in Options.
 - Partial blocks (plates, iron, chests…): per-corner light like the original.
 - Menu: a single small background planet; no more stutter while it is generated.
