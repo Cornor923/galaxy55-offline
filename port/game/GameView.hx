@@ -96,7 +96,7 @@ class GameView {
 	var oldSpeedY = 0.;
 	var stun = 0.;
 
-	// vida y oxigeno (Hero.life, Hero.oxygen): de 0 a 100. En creativo no se recibe dano
+	// vida y oxigeno (Hero.life, Hero.oxygen): de 0 a 100. En creativo no se recibe dano ni se gasta oxigeno
 	public var life = 100.;
 	public var oxygen = 100.;
 	var damageRecover = 0.;
@@ -640,7 +640,9 @@ class GameView {
 		}
 
 		swimming = inWater();
-		if( swimming ) {
+		if( creative ) {
+			oxygen = 100;
+		} else if( swimming ) {
 			if( oxygen > 0 ) oxygen -= dt * 0.1;
 			if( oxygen < 0 ) oxygen = 0;
 		} else {
