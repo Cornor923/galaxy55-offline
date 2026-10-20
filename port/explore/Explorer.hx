@@ -95,6 +95,10 @@ class Explorer extends h2d.Object {
 	public var infos(default, null) : ExpInfos;
 	/** el jugador ha pedido volver a la nave */
 	public dynamic function onExit() {}
+	/** Esc sin ventana abierta: menu de pausa del mapa (anadido del port: en el original el mapa era una pagina aparte) */
+	public dynamic function onPause() {}
+	/** con el menu de pausa abierto el mapa se para */
+	public var paused = false;
 	/** el jugador quiere aterrizar en un planeta */
 	public dynamic function onLand( p : ExpPlanet, s : ExpSystem ) {}
 	/** la nave ha cambiado de sitio en el mapa: [0, x, y] sector, [1, sistema], [2, planeta] (para guardarlo) */
@@ -1515,6 +1519,7 @@ class Explorer extends h2d.Object {
 	}
 
 	public function update( dt : Float ) {
+		if( paused ) return;
 		var tmod = dt * 30;
 		lastTmod = tmod;
 		if( getScene() != null ) layout();
@@ -1542,7 +1547,7 @@ class Explorer extends h2d.Object {
 				if( win != null ) {
 					closeWindow();
 					targetSpot = null;
-				} else onExit();
+				} else onPause();
 			}
 		}
 

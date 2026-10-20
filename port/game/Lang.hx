@@ -83,6 +83,7 @@ class Lang {
 		"options.graphics" => ["Gráficos", "Graphics", "Graphismes"],
 		"options.interface" => ["Interfaz", "Interface", "Interface"],
 		"pause.title" => ["PAUSA", "PAUSED", "PAUSE"],
+		"map.backship" => ["Volver a la nave", "Back to the ship", "Retour au vaisseau"],
 		"nosaves" => ["No hay partidas guardadas", "No saved games", "Aucune partie sauvegardée"],
 		"delete" => ["Borrar", "Delete", "Supprimer"],
 		"delete.ask" => ["¿Borrar esta partida?", "Delete this save?", "Supprimer cette partie ?"],

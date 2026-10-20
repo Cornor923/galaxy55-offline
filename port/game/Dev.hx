@@ -248,6 +248,8 @@ class Dev {
 				case "expinfo": Sys.println(app.explorer.devInfo());
 				case "exprobot": app.explorer.devClickRobot();
 				case "exprinfo": Sys.println(app.explorer.devRobotInfo());
+				case "exppause": @:privateAccess app.openMapPause(); // Esc en el mapa
+				case "mapback": @:privateAccess app.leaveMap(); // menu de pausa del mapa: volver a la nave
 				case "walk":
 					g.debugSpeed = f(a[1]) * 0.15;
 					g.debugStrafe = a.length > 2 ? f(a[2]) * 0.15 : 0;

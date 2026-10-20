@@ -19,6 +19,8 @@
 - **Robot marchand sur la carte stellaire :** il voyage entre les systèmes du secteur ; clique dessus et il s'arrête pour
   t'attendre, et en t'amarrant tu entres dans son vaisseau (le vaisseau mère), avec la boutique. En sortant, tu reviens sur la carte. Sur la
   carte, son vaisseau a la forme du vaisseau mère vu d'en haut.
+- Carte stellaire : Échap ouvre un menu de pause (Reprendre, Retour au vaisseau, Options, Menu principal). Si tu reviens au
+  vaisseau sans atterrir, le prochain décollage part du système de ta planète.
 - Les **flèches GPS** d'origine sur la carte : elles pointent vers les planètes visitées (et leurs systèmes) et vers le robot (en orange).
 - Options : ombre du bloc que tu vas poser et nom du bloc visé (petit, en bas à droite) ; les deux peuvent être désactivés.
 - Mode créatif : les quatre eaux (normale, sombre, acide et d'hiver) sont dans la palette.

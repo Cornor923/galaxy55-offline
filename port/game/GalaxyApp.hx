@@ -346,6 +346,7 @@ class GalaxyApp extends hxd.App {
 				case "options.general", "options.controls", "options.graphics", "options.interface": buildOptionsSection(name.substr(8));
 				case "firstlang": buildFirstLang();
 				case "pause": buildPause();
+				case "mappause": buildMapPause();
 				case "computer": buildComputer();
 				default: null;
 			}
@@ -569,7 +570,7 @@ class GalaxyApp extends hxd.App {
 		s.add(back, x, y + n * 64 + 10);
 		var leave = function() {
 			Settings.save();
-			show(state == Paused ? "pause" : "main");
+			show(state == Paused ? "pause" : state == Exploring ? "mappause" : "main");
 		};
 		back.onActivate = leave;
 		s.onBack = leave;
@@ -831,6 +832,7 @@ class GalaxyApp extends hxd.App {
 		explorer = new Explorer(s2d, infos, game.ship.captureFrames(engine, s3d));
 		s2d.under(explorer);
 		explorer.onExit = closeExplorer;
+		explorer.onPause = openMapPause;
 		explorer.onLand = landOnPlanet;
 		explorer.onPos = function( pos ) universe().pos = pos;
 		explorer.onDock = dockRobot;
@@ -908,6 +910,52 @@ class GalaxyApp extends hxd.App {
 		captureMouse(false);
 		hud.visible = false; msgText.visible = false;
 		show("computer");
+	}
+
+	/** Esc en el mapa de estrellas: el mapa se para y se abre este menu */
+	function openMapPause() {
+		if( explorer == null ) return;
+		explorer.paused = true;
+		pausedThisFrame = true; // el mismo Esc no lo cierra
+		show("mappause");
+	}
+
+	function closeMapPause() {
+		current = null;
+		ui.removeChildren();
+		screens = new Map();
+		if( explorer != null ) explorer.paused = false;
+	}
+
+	/** dejar el mapa sin aterrizar: se vuelve a la nave en el planeta, y el proximo despegue sale de su sistema */
+	function leaveMap() {
+		closeMapPause();
+		var uni = universe();
+		uni.pos = [2, uni.planetId];
+		closeExplorer();
+	}
+
+	function buildMapPause() : Screen {
+		var s = panelFor(560, 370, Lang.t("pause.title"));
+		var x = (W - 460) * 0.5;
+		var y = (H - 370) * 0.5 + 92;
+		var res = new Button(s, Lang.t("resume"));
+		var back = new Button(s, Lang.t("map.backship"));
+		var op = new Button(s, Lang.t("options"));
+		var mm = new Button(s, Lang.t("mainmenu"));
+		s.add(res, x, y);
+		s.add(back, x, y + 62);
+		s.add(op, x, y + 124);
+		s.add(mm, x, y + 186);
+		res.onActivate = closeMapPause;
+		back.onActivate = leaveMap;
+		op.onActivate = function() show("options");
+		mm.onActivate = function() {
+			leaveMap();
+			toMainMenu();
+		};
+		s.onBack = closeMapPause;
+		return s;
 	}
 
 	function buildPause() : Screen {
