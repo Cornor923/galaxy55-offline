@@ -132,7 +132,7 @@ class Ship {
 		beam = null;
 	}
 
-	// ---------------------------------------------------------------- teletransporte (ShipLogic.update)
+	// ---------------------------------------------------------------- teletransporte y vida a bordo (ShipLogic.update)
 
 	public function update( g : GameView, tmod : Float ) {
 		time += tmod;
@@ -158,6 +158,12 @@ class Ship {
 		} else {
 			g.enteringShip -= tmod * 0.1;
 			if( g.enteringShip < 0 ) g.enteringShip = 0;
+		}
+
+		// ShipLogic.checkHero: de pie en la nave se recupera vida; se suma a la de las plantas y cajas de curacion (GameView.updateLife)
+		if( g.pz >= World.SHIP_Z && g.standingBlock != null ) {
+			g.life += tmod * 0.05;
+			if( g.life > 100 ) g.life = 100;
 		}
 	}
 

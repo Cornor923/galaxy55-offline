@@ -19,7 +19,7 @@ import Common;
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
- *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]
+ *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]|life
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png
  *   quit
@@ -28,6 +28,9 @@ class Dev {
 
 	static var shoreX = 0;
 	static var shoreY = 0;
+	/** vida y tiempo de juego del ultimo `print life` (para el ritmo de curacion) */
+	static var lifeV = 0.;
+	static var lifeT = -1.;
 
 	/** mensajes de seguimiento del juego (orden `trace`) */
 	public static var trace = false;
@@ -366,6 +369,13 @@ class Dev {
 			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "life":
+			// vida, tiempo de juego y ritmo desde el ultimo `print life` (vida por segundo)
+			var t = g.playSeconds;
+			var rate = lifeT < 0 || t <= lifeT ? "" : " ritmo " + Math.round((g.life - lifeV) / (t - lifeT) * 100) / 100 + "/s en " + Math.round((t - lifeT) * 10) / 10 + " s";
+			Sys.println("vida " + Math.round(g.life * 100) / 100 + " t " + Math.round(t * 100) / 100 + rate + " z " + Math.round(g.pz * 100) / 100 + " suelo " + (g.standingBlock == null ? "-" : "" + g.standingBlock.k));
+			lifeV = g.life;
+			lifeT = t;
 		case "hangar":
 			Sys.println("hangar: " + (g.hangar == null ? "no" : "valida=" + g.hangarValid + " error=" + g.hangar.error + " velocidad=" + g.hangar.speed) + " mensaje=" + g.message);
 		case "wares":
