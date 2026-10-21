@@ -1,0 +1,167 @@
+# bomba antigua (BArtiBomb, Process.onActivate): al activarla (pulsar y soltar) vacia una esfera de radio 8 sin soltar nada
+# (dx, dy, dz de -8 a 7), quita de 20 (en el borde) a 150 (en el centro) de vida, pone el temblor a 1 y funde la pantalla de
+# blanco (en el borde) a rojo (en el centro). Las bombas que alcanza explotan despues, una por fotograma (cambio del port).
+# La roca madre (capa 0), la nave y el hangar no se rompen. Excavada hasta el final (con la carga rosa) se recoge sin explotar.
+# Losa de roca de z=46 a 56 con aire encima en x 44..84, y 52..76
+wait 3
+maxfps 30
+planet
+wait 30
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+wait 20
+# 1) excavarla hasta el final (100 fotogramas con la carga rosa, como la roca antigua): sale suelta sin explotar y se recoge;
+#    se vuelve a poner desde el inventario y, al activarla (pulsar y soltar), explota
+set 64 64 57 BArtiBomb
+tp 64.5 60.5 57.01 0 0
+lookat 64.5 64.5 57.5
+slot 0
+wait 10
+print around 64 64 57 8
+print inv
+key dig
+wait 60
+print select
+wait 39
+print select
+print block 64 64 57
+unkey
+wait 30
+print block 64 64 57
+print around 64 64 57 8
+print drops
+vitals
+# se acerca a lo suelto para recogerlo (Dummy: a menos de 1.5 bloques)
+tp 64.5 64.5 57.01 0 0
+wait 30
+print drops
+print inv
+tp 64.5 60.5 57.01 0 0
+slot 10
+lookat 64.5 64.5 56.95
+wait 5
+key place
+wait 3
+unkey
+wait 5
+print block 64 64 57
+print inv
+# un clic desde 5.5 bloques: explota (89 de dano)
+slot 0
+tp 64.5 58.5 57.01 0 0
+lookat 64.5 64.5 57.5
+wait 5
+key dig
+wait 3
+unkey
+wait 2
+print block 64 64 57
+print around 64 64 57 8
+vitals
+wait 100
+# 2) una bomba sola; el jugador a 5.5 (dentro del alcance): 1 - 30.5/64 = 0.52 -> 89 de dano, fundido rosado
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+tp 64.5 69.5 57.01 0 0
+wait 20
+life 100
+set 64 64 57 BArtiBomb
+lookat 64.5 64.5 57.5
+wait 10
+shot bomb_before
+print around 64 64 57 8
+vitals
+activate 64 64 57
+print around 64 64 57 8
+vitals
+print fade
+print shake
+print parts
+shot bomb_flash
+wait 100
+print fade
+tp 64.5 76.5 66 0 0
+lookat 64.5 64.5 52
+wait 10
+shot bomb_crater
+# 3) cadena: A en x=52, B en 58, C en 64 (cada una a 6 de la anterior) y D en 73 (a 9 de C, fuera de su alcance)
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+tp 64.5 78.5 57.01 0 0
+wait 20
+life 100
+set 52 64 57 BArtiBomb
+set 58 64 57 BArtiBomb
+set 64 64 57 BArtiBomb
+set 73 64 57 BArtiBomb
+wait 10
+print around 64 64 57 16
+activate 52 64 57
+print around 64 64 57 16
+print around 64 64 57 16
+print around 64 64 57 16
+print block 73 64 57
+print parts
+vitals
+wait 20
+tp 62.5 80.5 68 0 0
+lookat 62.5 64.5 52
+wait 10
+shot bomb_chain
+# 4) junto al jugador: 1 - 2.5/64 = 0.96 -> 145 de dano: muere, fundido casi rojo y, al acabar, vida llena junto a la nave
+#    (como al morir de otra forma, ver vida.txt)
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+tp 65.5 64.5 57.01 3.14 -0.2
+wait 20
+life 100
+set 64 64 57 BArtiBomb
+wait 10
+activate 64 64 57
+vitals
+print fade
+wait 1
+shot bomb_flash_near
+wait 40
+vitals
+print fade
+wait 40
+vitals
+print fade
+print pos
+# 5) la roca madre (capa 0) no se rompe
+planet
+wait 10
+filla 56 56 72 72 1 75 none
+set 64 64 1 BArtiBomb
+print around 64 64 1 8
+activate 64 64 1
+print around 64 64 1 8
+print block 64 64 0
+# 6) la nave no se toca: bomba bajo ella, a 5 bloques de su primera capa
+print ship
+set 124 21 125 BArtiBomb
+print around 124 21 128 8
+activate 124 21 125
+print around 124 21 128 8
+# 7) creativo: sin dano
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+tp 65.5 64.5 57.01 0 0
+wait 20
+life 100
+creative
+set 64 64 57 BArtiBomb
+wait 5
+activate 64 64 57
+print around 64 64 57 8
+vitals
+# 8) en el hangar no explota
+hangar
+wait 60
+set 7 3 1 BArtiBomb
+print around 7 3 1 8
+activate 7 3 1
+print block 7 3 1
+print around 7 3 1 8
+quit
