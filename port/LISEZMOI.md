@@ -117,4 +117,6 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - Le turbo mineur fait creuser trois fois plus vite jusqu'à 15 blocs autour de lui (5 dans l'original) et se récupère quand
   on le casse (dans l'original, il était perdu).
 - La capture d'écran de F2 est enregistrée directement dans le dossier `screenshots` et un message indique où (l'original ouvrait la boîte de dialogue de Flash pour l'enregistrer).
+- Dans le hangar, on ne peut poser ni liquides (eau, cascades, sable mouvant, lave...) ni la bombe antique : un message dit
+  qu'ils ne sont pas autorisés à bord. L'original n'empêchait de poser que ce qui se propage (source de cascade et lave), sans message.
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).

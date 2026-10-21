@@ -17,6 +17,7 @@ import Common;
  *   slot N                  elegir casilla (0 = excavador)
  *   give Bloque [n]         meter n bloques (50) en el inventario
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
+ *   hand Bloque             poner ese bloque en la casilla elegida (como la paleta creativa)
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local
  *   synth N                 usar el ordenador del sintetizador N
@@ -161,6 +162,7 @@ class Dev {
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
+				case "hand": g.setSlot(bk(a[1])); // hand Bloque: lo pone en la casilla elegida, como la paleta creativa
 				case "set", "setl":
 					var l = a[0] == "setl";
 					var x = Std.parseInt(a[1]) + (l ? sdx : 0), y = Std.parseInt(a[2]) + (l ? sdy : 0), z = Std.parseInt(a[3]) + (l ? sz : 0);
@@ -576,7 +578,7 @@ class Dev {
 			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ");
 			var c = app.chest;
 			Sys.println("cantina: " + (c == null ? "cerrada" : "abierta [" + items(c.box) + "]") + "  guardadas: " + (g.info.chests == null ? "" : [for( e in g.info.chests ) e.key + " [" + items(e.t) + "]"].join(", ")));
-		case "msg": Sys.println("mensaje: " + g.message);
+		case "msg": Sys.println("mensaje: " + g.message + (g.messageRed ? " (rojo)" : ""));
 		case "shake":
 			// temblor, subida de la camara y del HUD (en pixeles de la ventana) de este fotograma, y segundos de juego
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;

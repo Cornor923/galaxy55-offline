@@ -31,6 +31,18 @@ class Hangar {
 		return !(x <= 1 || y <= 1 || x > SX + 1 || y > SY + 1 || z <= 0 || z > SZ);
 	}
 
+	/**
+	 * Lo que no se puede poner en el hangar (cambio del port): devuelve la clave del aviso (hangar.<clave> en Lang) o null.
+	 * - liquidos: BFLiquid (agua de cada planeta, cascada, arena movediza) y la lava (BFIsLava: en el original no es
+	 *   BFLiquid). Incluye lo que se extiende (propagate), lo unico que el original no dejaba poner (EditShip.checkSelect).
+	 * - la bomba exotica (BArtiBomb).
+	 */
+	public static function forbidden( b : Block ) : String {
+		if( b.hasProp(PLiquid) || b.hasProp(PLava) || b.propagate != null ) return "no_liquid";
+		if( b.k == BArtiBomb ) return "no_bomb";
+		return null;
+	}
+
 	public static function shedData( ship : haxe.io.Bytes ) : ShipData.ShipDataInfo {
 		var cells = new Map<Int, Int>();
 		inline function set( x : Int, y : Int, z : Int, b : BlockKind ) {
