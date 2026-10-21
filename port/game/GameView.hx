@@ -156,6 +156,10 @@ class GameView {
 		if( info.hangar == true ) {
 			// hangar (EditShip): el cobertizo con la nave; sin la nave colgada encima
 			hangar = new Hangar(world);
+			// el proceso del mundo sigue (soportes, detalles, hierba) sin transformaciones (EditShip: process.allowTransforms = false)
+			// y, cambio del port, sin mover liquidos
+			process.allowTransforms = false;
+			process.allowFlow = false;
 			hangarCheck();
 			var sp = Hangar.spawn();
 			px = sp.x;
@@ -415,7 +419,7 @@ class GameView {
 			if( debugTele == 6 ) enteringShip = 0; // como si se hubiera apartado y vuelto a pisar la plataforma
 		}
 		updateAction(tmod, controls, pad);
-		if( hangar == null ) process.update(realDt);
+		process.update(realDt);
 		world.flush();
 		drops.update(this, tmod);
 		fx.update(this, realDt, tmod);
@@ -1232,7 +1236,7 @@ class GameView {
 		// el agua puesta por el jugador se extiende como la cascada (si no, inundaria como el mar)
 		if( put.type == BTWater && !inShip && hangar == null ) world.setWater(x, y, z, put, WorldProcess.PLACED);
 		else world.setBlock(x, y, z, put);
-		if( !inShip && hangar == null ) process.onSet(x, y, z, here, put);
+		if( !inShip ) process.onSet(x, y, z, here, put);
 		if( inShip ) ship.craft(x, y, z, put, this);
 		select = null;
 	}
@@ -1288,7 +1292,7 @@ class GameView {
 		parts.doBreak(x, y, z, b);
 		if( !isProcess ) Snd.play("destroyBlock", 0.25);
 		if( z >= World.SHIP_Z ) ship.craft(x, y, z, null, this);
-		else if( hangar == null ) process.onSet(x, y, z, b, null);
+		else process.onSet(x, y, z, b, null);
 	}
 
 	/** bloque de una zona de sintetizador gastado en una receta: desaparece con su efecto de rotura */
