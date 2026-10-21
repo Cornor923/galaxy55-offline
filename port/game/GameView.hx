@@ -1266,6 +1266,7 @@ class GameView {
 				for( s in c.t ) if( s != null ) {
 					var d = drops.add(x + 0.5, y + 0.5, z + 0.5, Block.all[s.k]);
 					d.n = s.n;
+					Snd.play("destroyBlock", 0.25); // como cada objeto que cae al romper un bloque
 				}
 				info.chests.remove(c);
 				return;
@@ -1282,11 +1283,12 @@ class GameView {
 			for( i in 0...get.count ) {
 				if( Std.random(100) >= chance ) continue;
 				drops.add(x + 0.5, y + 0.5, z + 0.5, get.b);
+				// un sonido por cada objeto que cae, tambien en las roturas en cadena; si no cae nada, no suena
+				Snd.play("destroyBlock", 0.25);
 			}
 		}
 		world.setBlock(x, y, z, null);
 		parts.doBreak(x, y, z, b);
-		if( !isProcess ) Snd.play("destroyBlock", 0.25);
 		if( z >= World.SHIP_Z ) ship.craft(x, y, z, null, this);
 		else if( hangar == null ) process.onSet(x, y, z, b, null);
 	}
