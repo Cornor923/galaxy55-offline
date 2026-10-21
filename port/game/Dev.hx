@@ -375,6 +375,8 @@ class Dev {
 			Sys.println("creditos: " + g.info.credits);
 		case "palette":
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
+		case "time":
+			Sys.println("tiempo: " + Std.int(g.playSeconds));
 		case "hangar":
 			Sys.println("hangar: " + (g.hangar == null ? "no" : "valida=" + g.hangarValid + " error=" + g.hangar.error + " velocidad=" + g.hangar.speed) + " mensaje=" + g.message);
 		case "wares":
