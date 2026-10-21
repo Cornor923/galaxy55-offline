@@ -108,8 +108,8 @@ class GameView {
 	public var oxygen = 100.;
 	var damageRecover = 0.;
 	var healRecover = 0.;
-	/** fundido de color de pantalla (Game.fadeFX): golpe en rojo, curacion en azul, muerte en rojo hasta volver a la nave.
-	    t va de 0 a 1 (+ tmod * speed / 200); alpha(t) da la opacidad (null = t); lock: sin controles mientras dura */
+	/** fundido de color de pantalla (Game.fadeFX): golpe en rojo, curacion en azul, muerte en rojo y Mayus+K en blanco hasta
+	    volver a la nave. t va de 0 a 1 (+ tmod * speed / 200); alpha(t) da la opacidad (null = t); lock: sin controles mientras dura */
 	public var fadeFX : { t : Float, col : Int, speed : Float, alpha : Null<Float -> Float>, done : Void -> Void, lock : Bool };
 
 	public inline function onGround() return standingBlock != null;
@@ -179,6 +179,9 @@ class GameView {
 			// partida nueva: se empieza dentro de la nave, encima del teletransportador
 			gotoShip(true);
 			pitch = -0.25;
+		} else if( info.life != null && info.life <= 0 ) {
+			// guardada con la vida a 0 (durante el fundido de la muerte): de vuelta en la nave, como hero.hit(0) en Game.init
+			gotoShip(true);
 		} else {
 			px = info.px;
 			py = info.py;
@@ -378,7 +381,6 @@ class GameView {
 		}
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateLife(tmod);
-		updateFade(tmod);
 		// temblor (Game.update): baja con el tiempo y la camara sube o baja al azar hasta 0.4 * shake
 		if( shake > 0 ) {
 			shake -= 0.01 * tmod;
@@ -397,6 +399,9 @@ class GameView {
 			ship.update(this, tmod);
 			message = ship.message(this);
 		}
+		// despues del teletransportador (el original sale de Game.update al acabar el fundido): la muerte lleva a la nave y
+		// ship.update, con el standingBlock del suelo, pondria enteringShip a 0 y el teletransportador lo bajaria
+		updateFade(tmod);
 		if( debugDoorFrames > 0 && ++debugDoorFrames == 12 ) {
 			// solo pruebas: abre la puerta de la nave que hay cerca del teletransportador
 			if( Sys.args().indexOf("--computer") >= 0 ) onComputer();
@@ -567,16 +572,23 @@ class GameView {
 		stun = 10;
 		if( life <= 0 ) {
 			life = 0;
-			fadeFX = { t : 0., col : 0xFF0000, speed : 2., alpha : null, lock : true, done : function() {
-				life = 100;
-				oxygen = 100;
-				gravity = 0;
-				gotoShip(true);
-			} };
+			returnToShip(false);
 		} else if( fadeFX == null ) {
 			var pow = dmg / 100;
 			fadeFX = { t : 0., col : 0xFF0000, speed : 3 + 10 * (1 - pow), alpha : t -> (1 - t) * (0.5 + pow * 0.5), lock : false, done : function() {} };
 		}
+	}
+
+	/** Game.returnToShip (modo local): fundido sin controles, rojo al morir y blanco con Mayus+K; al acabar, de vuelta en la
+	    nave con la vida y el oxigeno llenos. Sustituye a un fundido de golpe o de curacion */
+	public function returnToShip( manual : Bool ) {
+		if( fadeFX != null && fadeFX.lock ) return; // hero.lock: ya se esta volviendo
+		fadeFX = { t : 0., col : manual ? 0xFFFFFF : 0xFF0000, speed : 2., alpha : null, lock : true, done : function() {
+			life = 100;
+			oxygen = 100;
+			gravity = 0;
+			gotoShip(true);
+		} };
 	}
 
 	/** Hero.heal */
@@ -1173,8 +1185,11 @@ class GameView {
 			for( i in 1...11 )
 				if( K.isPressed(K.NUMBER_0 + (i % 10)) && inv.inv.t.length >= i ) inv.select(i);
 			if( K.isPressed(K.TAB) ) inv.select(0);
-			// Mayus + K: volver a la nave (Game.checkKeys)
-			if( K.isDown(K.SHIFT) && K.isPressed(K.K) ) gotoShip(true);
+			// Mayus + K: volver a la nave (Game.checkKeys); sin nave (nave nodriza) gotoShip sale de ella al momento
+			if( K.isDown(K.SHIFT) && K.isPressed(K.K) ) {
+				if( ship != null ) returnToShip(true);
+				else gotoShip(true);
+			}
 			if( (K.isPressed(K.R) || K.isPressed(K.DELETE)) && inv.getCurrentBlock() != null ) dropCurrent();
 		}
 		if( debugAction || debugKey != null ) {
