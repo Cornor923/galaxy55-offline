@@ -1,0 +1,112 @@
+# Mayus+K (Game.returnToShip(true), modo local): fundido blanco sin controles y, al acabar, en la nave con la vida y el oxigeno
+# a 100. Zona de pruebas: suelo de roca en z=56 y una poza de agua. press/release mandan las teclas de verdad.
+# "fundido" en vitals es la opacidad: la del golpe baja; la de la vuelta (y la de la muerte) sube de 0 a 1 en 100 tmod (~3 s)
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 90 none
+filla 54 54 76 76 56 56 BRock
+filla 68 56 72 60 57 61 BRock
+filla 69 57 71 59 57 61 BWater
+print ship
+# 1) en el agua, golpeado y casi sin oxigeno: Mayus+K en mitad del fundido rojo del golpe lo cambia por el blanco
+life 100 10
+tp 70.5 58.5 57.01 0 0
+wait 60
+hurt 35
+wait 2
+vitals
+shot vuelta_golpe
+press shift k
+wait 1
+release shift k
+vitals
+wait 15
+vitals
+shot vuelta_agua1
+wait 20
+vitals
+shot vuelta_agua2
+wait 12
+vitals
+shot vuelta_agua3
+wait 250
+vitals
+print pos
+# 2) sigue en la nave 4 s despues: el teletransportador no lo baja
+wait 120
+vitals
+print pos
+# 3) en el suelo: W pulsada no mueve durante el fundido y un segundo Mayus+K no lo vuelve a empezar
+tp 60.5 60.5 57.01 0 0
+wait 30
+life 60 40
+vitals
+press shift k
+wait 1
+release shift k
+press w
+wait 20
+release w
+vitals
+press shift k
+wait 1
+release shift k
+vitals
+wait 250
+vitals
+print pos
+# 4) ya en la nave, lejos del teletransportador: tambien fundido, vida y oxigeno a 100 y de vuelta encima de el
+walk 1
+wait 15
+walk 0 0
+wait 10
+life 50 50
+print pos
+press shift k
+wait 1
+release shift k
+wait 30
+vitals
+shot vuelta_en_nave
+wait 250
+vitals
+print pos
+wait 120
+print pos
+# 5) durante el fundido rojo de la muerte Mayus+K no hace nada: sigue rojo y no vuelve a empezar
+planet
+wait 30
+hurt 500
+wait 5
+vitals
+press shift k
+wait 1
+release shift k
+vitals
+shot vuelta_muerte
+wait 250
+vitals
+print pos
+# 6) en el hangar Mayus+K no hace nada (EditShip no tiene nave)
+hangar
+wait 60
+print pos
+press shift k
+wait 1
+release shift k
+wait 30
+vitals
+print pos
+hangarexit
+wait 60
+# 7) en la nave nodriza Mayus+K sigue saliendo al momento, sin fundido
+mothership
+wait 300
+print pos
+press shift k
+wait 1
+release shift k
+wait 200
+print pos
+quit
