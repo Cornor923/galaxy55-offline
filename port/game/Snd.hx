@@ -4,6 +4,8 @@ class Snd {
 	public static var VOLUME = 0.3;
 	static var cache = new Map<String, hxd.res.Sound>();
 	static var broken = false;
+	/** veces que se ha pedido cada sonido, aunque no haya audio (para los guiones de prueba: print snd) */
+	public static var played = new Map<String, Int>();
 
 	static function get( name : String ) : hxd.res.Sound {
 		var s = cache.get(name);
@@ -18,6 +20,8 @@ class Snd {
 	}
 
 	public static function play( name : String, vol = 1.0, loop = false ) : hxd.snd.Channel {
+		var n = played.get(name);
+		played.set(name, n == null ? 1 : n + 1);
 		if( broken ) return null;
 		var s = get(name);
 		if( s == null ) return null;

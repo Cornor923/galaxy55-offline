@@ -1,0 +1,115 @@
+# sonido de rotura (destroyBlock): uno por cada objeto que cae (Game.blockBreak), tambien en las roturas en cadena;
+# si no cae nada (hielo, modo creativo) no suena. Cada "print snd" dice cuantas veces ha sonado desde el anterior.
+wait 3
+planet
+wait 20
+# plataforma en el aire, para que nada del terreno se rompa en cadena
+filla 60 60 70 70 99 99 BRock
+tp 64.5 64.5 100 0 0
+wait 20
+print snd destroyBlock
+# 1) excavar a mano una roca: cae 1 -> 1
+set 66 64 101 BRock
+lookat 66.5 64.5 101.5
+slot 0
+key dig
+wait 200
+unkey
+wait 5
+print block 66 64 101
+print snd destroyBlock
+# 2) excavar a mano hielo: no suelta nada -> 0
+set 66 64 101 BIce
+lookat 66.5 64.5 101.5
+slot 0
+key dig
+wait 200
+unkey
+wait 5
+print block 66 64 101
+print snd destroyBlock
+# 3) en cadena: roca con un neon encima -> 2 (roca + neon)
+setp 66 62 100 BRock
+setp 66 62 101 BLight
+print snd destroyBlock
+breakp 66 62 100
+print block 66 62 101
+print snd destroyBlock
+# 4) en cadena: roca con una puerta encima -> 2 (roca + puerta)
+setp 67 62 100 BRock
+setp 67 62 101 BShipDoor
+print snd destroyBlock
+breakp 67 62 100
+print block 67 62 101
+print snd destroyBlock
+# 5) en cadena: hielo con un neon encima -> 1 (solo el neon)
+setp 68 62 100 BIce
+setp 68 62 101 BLight
+print snd destroyBlock
+breakp 68 62 100
+print block 68 62 101
+print snd destroyBlock
+# 6) bonus grande: suelta 25 cargas de golpe -> 25
+setp 66 66 100 BBonusLarge
+print snd destroyBlock
+breakp 66 66 100
+print snd destroyBlock
+# 7) cantina con dos montones dentro (lamparas y congeladores del inventario): 2 montones + la cantina -> 3
+print inv
+setp 64 67 100 BChest
+activate 64 67 100
+wait 5
+chestclick 1 0
+chestclick 0 0
+chestclick 1 1
+chestclick 0 2
+wait 5
+close
+wait 5
+print inv
+print snd destroyBlock
+breakp 64 67 100
+print snd destroyBlock
+# 8) sintetizador (sin madera en el inventario): la receta gasta la madera de la zona sin sonido de rotura -> 0
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+setl 59 62 3 BWood
+wait 10
+print cells
+print snd destroyBlock
+activatel 61 62 4
+wait 45
+print cells
+print snd destroyBlock
+# 9) creativo: no cae nada -> 0 (a mano, en cadena y con breakp)
+planet
+wait 10
+tp 64.5 64.5 100 0 0
+wait 10
+creative
+set 66 64 101 BRock
+lookat 66.5 64.5 101.5
+slot 0
+print snd destroyBlock
+key dig
+wait 20
+unkey
+wait 5
+print block 66 64 101
+print snd destroyBlock
+setp 66 62 100 BRock
+setp 66 62 101 BLight
+print snd destroyBlock
+breakp 66 62 100
+print block 66 62 101
+print snd destroyBlock
+# 10) hangar: una roca puesta sobre la nave y rota -> 1
+hangar
+wait 60
+settop 10 10 BRock
+print snd destroyBlock
+breakp 10 10 6
+print snd destroyBlock
+quit
