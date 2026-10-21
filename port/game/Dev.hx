@@ -309,7 +309,7 @@ class Dev {
 					while( z > 0 && w.block(x, y, z) == null ) z--;
 					w.setBlock(x, y, z + 1, bk(a[3]));
 					Sys.println("settop " + x + "," + y + "," + (z + 1));
-				case "hangarexit": if( g.onHangarExit != null ) g.onHangarExit();
+				case "hangarexit": if( g != null && g.onHangarExit != null ) g.onHangarExit(); // sin partida (en el mapa) no hace nada
 				case "chestclick": if( app.chest != null ) app.chest.click(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "chestfocus": if( app.chest != null ) app.chest.devFocus(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "shopclose": if( app.shop != null ) @:privateAccess app.closeShop();
