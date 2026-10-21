@@ -64,13 +64,18 @@ class Parts {
 		}
 	}
 
+	/** Game.update: un trozo en el punto de impacto del laser (doBreakParts con scale 1); (bx, by, bz) el bloque golpeado */
+	public function doLaser( sx : Float, sy : Float, sz : Float, b : Block, bx : Int, by : Int, bz : Int ) {
+		add(sx, sy, sz, b, bx, by, bz, 1.);
+	}
+
 	/** Particles.doBreakParts (la velocidad inicial que depende de la direccion se sustituye enseguida, como en el original) */
 	function add( sx : Float, sy : Float, sz : Float, b : Block, bx : Int, by : Int, bz : Int, scale : Float ) {
 		var p = new Part();
 		p.x = sx;
 		p.y = sy;
 		p.z = sz;
-		p.light = Math.min(1.3, world.lightAt(Math.floor(sx), Math.floor(sy), Math.floor(sz)) / World.LBASE);
+		p.light = Math.min(1.3, lightAt(sx, sy, sz) / World.LBASE);
 		if( p.x % 1 > 0.01 ) {
 			var d;
 			do d = Math.random() * 0.3 - 0.25 while( Std.int(p.x) != Std.int(p.x + d) );
@@ -116,6 +121,31 @@ class Parts {
 			p.v.push(tv + ty / 64);
 		}
 		list.push(p);
+	}
+
+	/** Level.getLightAt: dentro de un bloque cuenta tambien la luz de la celda de su cara mas cercana (los trozos del laser
+	    salen en la cara del bloque golpeado, que no tiene luz) */
+	function lightAt( x : Float, y : Float, z : Float ) : Int {
+		var ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+		var l = world.lightAt(ix, iy, iz);
+		var b = world.block(ix, iy, iz);
+		if( b == null ) return l;
+		var h = b.getHeight();
+		var distX = x - ix, dx = -1;
+		if( distX >= 0.5 ) { distX = 1 - distX; dx = 1; }
+		var distY = y - iy, dy = -1;
+		if( distY >= 0.5 ) { distY = 1 - distY; dy = 1; }
+		var distZ = z - iz, dz = -1;
+		if( distZ >= h * 0.5 ) { distZ = h - distZ; dz = 1; }
+		var x2 = ix, y2 = iy, z2 = iz;
+		if( distX < distY ) {
+			if( distX < distZ ) x2 += dx else z2 += dz;
+		} else if( distY < distZ )
+			y2 += dy;
+		else
+			z2 += dz;
+		var l2 = world.lightAt(x2, y2, z2);
+		return l2 > l ? l2 : l;
 	}
 
 	/** MovingPart.update y Particles.update; dt en tmod (30 por segundo) */
