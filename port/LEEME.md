@@ -91,5 +91,7 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - La cascada y el agua que pone el jugador bajan de altura en cada paso, con la superficie inclinada: añadido de este port.
   El mar llena los huecos hasta su nivel, como el original.
 - Las plantas y demás modelos se apuntan por lo que se ve (los píxeles de sus hojas), no por toda la celda (el original las trataba como un bloque entero).
+- Las texturas lejanas usan mipmaps como el original, pero las plantas no se borran con la distancia y cada bloque lejano
+  conserva su color (en el original las plantas finas desaparecían de lejos y, más lejos aún, se mezclaban texturas vecinas).
 - Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).

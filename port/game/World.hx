@@ -1101,7 +1101,8 @@ class World {
 		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = m.uvs;
 		poly.colors = m.cols;
-		var mat = h3d.mat.Material.create(atlas);
+		// con mipmaps como el original (DefShader, TransShader, WaterShader1); el hielo y el cristal sin ellos (AlphaShader1)
+		var mat = h3d.mat.Material.create(kind == 3 || Atlas.mipped == null ? atlas : Atlas.mipped);
 		mat.shadows = false;
 		mat.mainPass.enableLights = false;
 		mat.mainPass.culling = None;

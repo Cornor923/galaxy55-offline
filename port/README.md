@@ -97,5 +97,7 @@ A player got it running on Linux this way; we have not tested it.
 - Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
   holes up to its level, like the original.
 - Plants and other models are aimed at by what you see (the pixels of their leaves), not the whole cell (the original treated them as a full block).
+- Distant textures use mipmaps like the original, but far plants do not fade away and each far block keeps its own colour
+  (in the original, thin plants disappeared with distance and, further away, neighbouring textures got mixed).
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).
