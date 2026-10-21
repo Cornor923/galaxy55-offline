@@ -19,7 +19,7 @@ import Common;
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
- *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]
+ *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]|palette|time
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png
  *   quit

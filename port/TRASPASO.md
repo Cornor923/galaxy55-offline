@@ -1,6 +1,6 @@
 # Traspaso para seguir en otra PC (2026-10-16)
 
-Léelo entero antes de tocar nada. Lo escribió Claude para el Claude de la otra PC. El usuario es **Pvie** (Pv1E en GitHub): habla español,
+Léelo entero antes de tocar nada. El usuario es **Pvie** (Pv1E en GitHub): habla español,
 quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Twin, sin inventar**. Lo que añadimos nosotros se marca como
 "cambio del port" o "añadido del port".
 
@@ -11,7 +11,7 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
 - Lista de lo que falta: `PENDIENTES.md` / `TODO.md`.
 - Errores conocidos: `ERRORES.md` / `BUGS.md`.
 - Novedades: `CHANGELOG.md`.
-- El zip trae también `claude-memoria/`, la memoria de Claude de la PC anterior: preferencias del usuario y datos del entorno.
+- El zip trae también `claude-memoria/`, las notas de la PC anterior: preferencias del usuario y datos del entorno.
   Cópiala a la carpeta de memoria del proyecto en la nueva PC si quieres que se cargue sola.
 - `nave-hades-atlas-2-0.zip`: el mapa de Minecraft con la nave nodriza. La hizo un amigo de Pvie, que dio permiso y no pide créditos.
 
@@ -69,8 +69,7 @@ Los PR 17-30 se fusionaron en local en `port-hashlink` (sin publicar), en orden.
 (`haxe port\game.hxml`); los guiones de los PR no se han vuelto a ejecutar tras la fusión. El PR 26 incluye el 25.
 Cambios: oxígeno en creativo (17), hielo/agua con desplazamiento de profundidad (18, 22), paleta creativa (19, 20),
 `devrun.ps1` con `galaxy55.exe` (21), muerte en la nave (23), sin daño en el hangar (24), guardado y tiempo en la nodriza
-(25, 26), nave del mapa: color, rumbo y centrado (27, 28, 29), TODO sin "Shed" (30). Pendiente: comprobar cada uno contra el
-original Flash (fidelidad).
+(25, 26), nave del mapa: color, rumbo y centrado (27, 28, 29), TODO sin "Shed" (30).
 
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
@@ -116,6 +115,8 @@ otros jugadores en VMs o por streaming.
   `--novsync` quita el VSync siempre (para diagnosticar); no resolvió los tirones.
 
 ## Avisos
+- Commits, PR, notas de publicación y `.md` van sin créditos de IA (ni `Co-Authored-By` ni "Generated with"); los commits
+  antiguos que ya los llevan se quedan como están (decisión del usuario, 2026-10-21). El Flash original ya no se usa de referencia.
 - El mensaje de validez del hangar puede ir un cambio por detrás (se comprueba cada 15 tmod).
 - Las piezas de nave están a la venta en la tienda (ya sirven para el hangar).
 - No probado con ratón real: la tienda, el cofre, el hangar y la ventana del idioma inicial (solo con el banco de pruebas).

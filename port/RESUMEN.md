@@ -90,6 +90,7 @@ El explorador original arranca en modo depuracion dentro de un sistema solar (`P
 ## Banco de pruebas (`port/game/Dev.hx`, guiones en `port/dev/`)
 Solo para desarrollo: `hl galaxy55.hl --script=guion.txt` arranca una partida nueva y ejecuta ordenes (tp, tpl, lookat, set, activate, synth, give, print, map, shot...;
 la lista esta en la cabecera de `Dev.hx`). `port/dev/devrun.ps1 -Script port/dev/synth.txt` lo lanza y muestra la salida. Ejemplos: `zones.txt`, `map.txt`, `synth.txt`.
+Desde los PR 17-30 de Cornor923 (cambio del port), `devrun.ps1` lanza `galaxy55.exe` (con `hl` de reserva), hay `print palette` y `print time`, y cada arreglo trae su guion (`creative_oxygen`, `hielo_bajo_agua`, `palette_hint`, `palette_focus`, `olas_bloque`, `muerte_nave`, `hangar_vida`, `mother_save`, `play_time`, `map_ship_color`, `map_ship_angle`, `map_ship_center`).
 Los ganchos antiguos `--screen=... --craft --at=...` siguen funcionando, pero para pruebas nuevas se usa Dev.
 
 ## Siguiente paso acordado (mañana): paquete de prueba
@@ -148,7 +149,7 @@ Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-rele
 
 
 ## Cómo retomar
-    . C:\Users\Usuario\Desktop\Claude\tools-portable\env.ps1     (Haxe 4.3.7, HashLink 1.16, Neko)
+    . ..\tools-portable\env.ps1         (Haxe 4.3.7, HashLink 1.16, Neko)
     haxe port\game.hxml                 compila el juego
     port\jugar.bat                      lo abre
 Verificación de generadores: `haxe port\headless.hxml` y `haxe port\headless_flash.hxml` (comparar hashes).
