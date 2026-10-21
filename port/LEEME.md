@@ -102,6 +102,8 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   quitaba), la bomba no explota en el hangar y suelta 8 trozos por bloque en vez de 75 para que el juego no se congele.
 - Las texturas lejanas usan mipmaps como el original, pero las plantas no se borran con la distancia y cada bloque lejano
   conserva su color (en el original las plantas finas desaparecían de lejos y, más lejos aún, se mezclaban texturas vecinas).
+- El haz de luz del aterrizaje sigue cualquier cambio en la columna bajo la nave y empieza encima de los bloques bajos como las
+  placas (el original solo lo movía al romper un bloque ahí); se vuelve a la nave solo de pie en su base, no desde más arriba.
 - Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
 - El turbo minero hace excavar tres veces más rápido hasta 15 bloques a su alrededor (5 en el original) y se recupera al
   romperlo (en el original se perdía).

@@ -171,6 +171,8 @@ class World {
 	/** desplazamiento (x, y) de la nave respecto al planeta: celda de la nave + desplazamiento = posicion en el planeta */
 	public var shipDX = 0;
 	public var shipDY = 0;
+	/** se llama tras cambiar una celda del planeta con setBlock (x, y ya dentro del planeta): la nave vigila la columna de su rayo */
+	public var onSetBlock : Int -> Int -> Int -> Void;
 	/** true en el mundo de la nave: no da la vuelta y usa el cielo del planeta */
 	public var isShip(default, null) = false;
 	/** altura desde la que entra el sol (-1 = desde arriba del todo); el hangar la pone bajo el techo (EditShip: planet.lightHeight) */
@@ -244,6 +246,9 @@ class World {
 			if( !busy ) {
 				bytes = gen.getBytes().b;
 				initLightTables();
+				// el sitio de la nave se elige antes de aplicar los cambios guardados: si no, con el suelo cavado o construido bajo
+				// la nave, al cargar la partida la nave aparecia en otro sitio
+				if( savedEdits != null && savedEdits.length > 0 ) shipPlace();
 				applySaved();
 				var tl = haxe.Timer.stamp();
 				computeLight();
@@ -660,6 +665,13 @@ class World {
 		}
 		return null;
 	}
+
+	/** sitio de aterrizaje de la nave (Game.placeShip): fijo por semilla, elegido sobre el terreno generado */
+	public function shipPlace() : { x : Int, y : Int, z : Int } {
+		if( shipSpot == null ) shipSpot = startPlace(new mt.Rand(seed ^ 0x5A17));
+		return shipSpot;
+	}
+	var shipSpot : { x : Int, y : Int, z : Int };
 
 	/** casi plano: pocos huecos alrededor (Level.freePlace) */
 	function freePlace( x : Int, y : Int, z : Int ) : Bool {
@@ -1146,6 +1158,7 @@ class World {
 		// la luz de la zona se recalcula cuando se deja de editar un momento: al excavar seguido (creativo) no se
 		// recalcula en cada bloque, que en la nave nodriza (miles de luces) bajaba mucho los fotogramas
 		editQuiet = 8;
+		if( onSetBlock != null ) onSetBlock(x, y, z);
 	}
 
 	var editQuiet = 0;

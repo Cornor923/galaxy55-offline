@@ -13,7 +13,9 @@ import Common;
  *   nudge dx dy [dz]        mover al jugador desde donde esta
  *   lookat x y z            mirar a ese punto (planeta)    lookl x y z   (nave)
  *   ship | planet           ir a la nave / bajar al planeta
- *   tele                    como si se volviera a pisar el teletransportador (enteringShip = 0): empieza a cargar
+ *   tele                    pisar de nuevo el teletransporte (o el rayo): si se cumplen las condiciones, transporta al rato
+ *   tpdock dx dy [dz]       colocar al jugador respecto al centro y la base del rayo de la nave
+ *   dockp dz Bloque|none    poner o romper (como al jugar) en la columna del rayo; dz = 0 es su bloque de arriba
  *   slot N                  elegir casilla (0 = excavador)
  *   give Bloque [n]         meter n bloques (50) en el inventario
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
@@ -139,8 +141,24 @@ class Dev {
 					g.yaw = Math.atan2(dy, dx);
 					g.pitch = Math.atan2(dz, Math.sqrt(dx * dx + dy * dy));
 				case "ship": g.gotoShip(true);
-				case "tele": g.enteringShip = 0;
+				case "tele": g.enteringShip = 0; // como si se hubiera apartado y vuelto a pisar el teletransporte (o el rayo)
 				case "planet": g.gotoShip(false);
+				case "tpdock":
+					g.px = g.ship.x + 0.5 + f(a[1]);
+					g.py = g.ship.y + 0.5 + f(a[2]);
+					g.pz = g.ship.z + (a.length > 3 ? f(a[3]) : 0);
+				case "dockp":
+					// dockp DZ BLOQUE|none: setp / breakp en la columna del rayo, DZ sobre su bloque de arriba
+					var x = g.ship.x, y = g.ship.y, z = Math.ceil(g.ship.z) - 1 + Std.parseInt(a[1]);
+					var old = w.block(x, y, z);
+					var nb = a[2] == "none" ? null : bk(a[2]);
+					if( nb == null ) {
+						if( old != null ) g.breakBlock(x, y, z, old);
+					} else {
+						if( nb.type == BTWater ) w.setWater(x, y, z, nb, WorldProcess.PLACED) else w.setBlock(x, y, z, nb);
+						g.process.onSet(x, y, z, old, nb);
+					}
+					Sys.println("dockp " + x + "," + y + "," + z + " antes=" + (old == null ? "aire" : "" + old.k) + " ahora=" + (nb == null ? "aire" : "" + nb.k));
 				case "slot": g.inv.select(Std.parseInt(a[1]));
 				case "life":
 					// life N [OXIGENO]: pone la vida (y el oxigeno)
@@ -607,7 +625,9 @@ class Dev {
 			var f = g.fadeFX;
 			Sys.println(f == null ? "fundido: ninguno" : "fundido: color " + StringTools.hex(f.col, 6) + " t=" + Math.round(f.t * 100) / 100 + " opacidad " + Math.round(g.fadeAlpha() * 100) / 100 + " bloqueo " + f.lock);
 		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poder=" + g.select.power));
-		case "ship": Sys.println("nave en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z);
+		case "ship":
+			var beam = @:privateAccess g.ship.beam;
+			Sys.println("nave en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z + (beam == null ? "" : " rayo z=" + beam.z + " alto=" + Math.round(beam.scaleZ * 100) / 100));
 		case "sky":
 			// giro de las estrellas (Sky.follow): a donde apuntan los ejes x y z del cubo de estrellas
 			var m = @:privateAccess w.sky.starRot;
