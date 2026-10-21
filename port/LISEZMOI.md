@@ -101,4 +101,6 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   les trous jusqu'à son niveau, comme l'original.
 - Les plantes et autres modèles se visent par ce qu'on voit (les pixels de leurs feuilles), pas par toute la case (l'original les traitait comme un bloc entier).
 - Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé et désactiver les vagues de l'eau.
+- Dans le hangar, on creuse quatre fois plus vite et sans charges, comme dans les zones de synthétiseur du vaisseau : changement
+  du port, pour modifier le vaisseau confortablement. Dans l'original, on y creusait comme sur une planète, avec les charges.
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).

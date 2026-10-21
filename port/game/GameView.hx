@@ -1163,6 +1163,8 @@ class GameView {
 			activatePending = s;
 		}
 		// en una zona de sintetizador se excava x4 y sin necesitar cargas (ShipLogic.checkSelect)
+		// cambio del port: en el hangar tambien, a proposito, para editar la nave con comodidad (alli la velocidad y las cargas
+		// no importan). En el original (EditShip) se excava x1 y con las cargas, como en el planeta
 		var inCraft = hangar != null || (s.z >= World.SHIP_Z && ship.inCraft(s.x, s.y, s.z));
 		var matter = b.matter;
 		var req = b.requiredPower != null ? b.requiredPower : matter.requiredPower;

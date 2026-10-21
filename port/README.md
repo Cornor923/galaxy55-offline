@@ -98,4 +98,6 @@ A player got it running on Linux this way; we have not tested it.
   holes up to its level, like the original.
 - Plants and other models are aimed at by what you see (the pixels of their leaves), not the whole cell (the original treated them as a full block).
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
+- In the hangar you dig four times faster and without charges, like in the ship's synthesizer areas: a change of this port,
+  so that editing the ship is comfortable. In the original you dug there as on a planet, with the charges.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).
