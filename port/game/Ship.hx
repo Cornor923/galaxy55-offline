@@ -10,8 +10,8 @@ class Ship {
 	/** aterrizaje en el planeta */
 	public var x(default, null) : Int;
 	public var y(default, null) : Int;
-	/** altura del suelo en el punto de aterrizaje (Ship.z) */
-	public var z(default, null) = 0;
+	/** altura del suelo en el punto de aterrizaje (ShipLogic.z): base del rayo, donde se aparece al bajar */
+	public var z(default, null) = 0.;
 	/** posicion del jugador al aparecer en la nave (encima del teletransportador), en coordenadas del planeta */
 	public var start(default, null) : { x : Int, y : Int, z : Int };
 	public var world(default, null) : World;
@@ -43,7 +43,7 @@ class Ship {
 		var data = ShipData.load(shipBytes != null ? shipBytes : Const.DEFAULT_SHIP);
 		crafts = data.crafts;
 		// el sitio de aterrizaje es fijo para cada planeta (misma semilla = mismo sitio), como en Game.placeShip
-		var p = planet.startPlace(new mt.Rand(planet.seed ^ 0x5A17));
+		var p = planet.shipPlace();
 		x = p != null ? p.x : 14;
 		y = p != null ? p.y : 12;
 		start = { x : data.entry.x, y : data.entry.y, z : data.entry.z + 1 + World.SHIP_Z };
@@ -62,15 +62,24 @@ class Ship {
 		world.root.setPosition(dx, dy, World.SHIP_Z);
 		// el punto de aparicion del jugador, ya en coordenadas del planeta
 		start = { x : x, y : y, z : start.z };
+		// cambio del port: el rayo se recalcula con cualquier cambio en su columna (poner, romper, agua, procesos); el original solo
+		// al romper un bloque de esa columna (Game.blockBreak) y al cargar su trozo
+		planet.onSetBlock = function( cx, cy, cz ) if( cx == x && cy == y ) needRecal = true;
 		recalDock();
 		buildBeam(planet);
 	}
 
-	/** altura del suelo bajo la nave (ShipLogic.update: needRecal) */
+	/**
+	 * Altura del suelo bajo la nave (ShipLogic.update: needRecal): encima del bloque mas alto de la columna que tenga colision.
+	 * El agua, la lava y las plantas no tienen: con liquido encima el rayo baja hasta el fondo.
+	 */
 	public function recalDock() {
 		var zz = World.HEIGHT - 1;
 		while( zz > 0 && !planet.collidePoint(x + 0.5, y + 0.5, zz) ) zz--;
-		z = zz + 1;
+		// cambio del port: sobre un bloque bajo (placa, cofre) la base es su cara de arriba; el original la ponia un bloque encima
+		// y desde la placa ya no se podia volver a la nave
+		var b = planet.block(x, y, zz);
+		z = zz + (b != null && b.size != null ? b.size.z2 : 1);
 		needRecal = false;
 		updateBeam();
 	}
@@ -130,6 +139,7 @@ class Ship {
 	public function dispose() {
 		if( beam != null ) beam.remove();
 		beam = null;
+		planet.onSetBlock = null;
 	}
 
 	// ---------------------------------------------------------------- teletransporte (ShipLogic.update)
@@ -150,7 +160,9 @@ class Ship {
 		}
 		var d = Math.sqrt(ddx * ddx + ddy * ddy);
 		var onShipEntry = g.pz > Const.SIZE && g.standingBlock == Block.all[Type.enumIndex(BShipEntry)];
-		if( d < 0.6 && g.pz >= z && (g.pz <= Const.SIZE || onShipEntry) ) {
+		// cambio del port: desde el planeta solo se sube de pie a la altura de la base del rayo (g.pz < z + 1); el original valia
+		// cualquier altura por encima (g.pz <= Const.SIZE), p. ej. el borde de un hoyo cavado bajo la nave, a menos de 0.6 del centro
+		if( d < 0.6 && g.pz >= z && (g.pz < z + 1 || onShipEntry) ) {
 			if( g.enteringShip >= 0 && g.standingBlock != null ) {
 				g.enteringShip += tmod * 0.05;
 				if( g.enteringShip >= 1.5 ) g.gotoShip(!onShipEntry);

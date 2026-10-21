@@ -10,6 +10,9 @@ import Common;
  *   look yaw pitch          orientar la camara
  *   lookat x y z            mirar a ese punto (planeta)    lookl x y z   (nave)
  *   ship | planet           ir a la nave / bajar al planeta
+ *   tele                    pisar de nuevo el teletransporte (o el rayo): si se cumplen las condiciones, transporta al rato
+ *   tpdock dx dy [dz]       colocar al jugador respecto al centro y la base del rayo de la nave
+ *   dockp dz Bloque|none    poner o romper (como al jugar) en la columna del rayo; dz = 0 es su bloque de arriba
  *   slot N                  elegir casilla (0 = excavador)
  *   give Bloque [n]         meter n bloques (50) en el inventario
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
@@ -82,6 +85,23 @@ class Dev {
 					g.pitch = Math.atan2(dz, Math.sqrt(dx * dx + dy * dy));
 				case "ship": g.gotoShip(true);
 				case "planet": g.gotoShip(false);
+				case "tele": g.enteringShip = 0; // como si se hubiera apartado y vuelto a pisar
+				case "tpdock":
+					g.px = g.ship.x + 0.5 + f(a[1]);
+					g.py = g.ship.y + 0.5 + f(a[2]);
+					g.pz = g.ship.z + (a.length > 3 ? f(a[3]) : 0);
+				case "dockp":
+					// dockp DZ BLOQUE|none: setp / breakp en la columna del rayo, DZ sobre su bloque de arriba
+					var x = g.ship.x, y = g.ship.y, z = Math.ceil(g.ship.z) - 1 + Std.parseInt(a[1]);
+					var old = w.block(x, y, z);
+					var nb = a[2] == "none" ? null : bk(a[2]);
+					if( nb == null ) {
+						if( old != null ) g.breakBlock(x, y, z, old);
+					} else {
+						if( nb.type == BTWater ) w.setWater(x, y, z, nb, WorldProcess.PLACED) else w.setBlock(x, y, z, nb);
+						g.process.onSet(x, y, z, old, nb);
+					}
+					Sys.println("dockp " + x + "," + y + "," + z + " antes=" + (old == null ? "aire" : "" + old.k) + " ahora=" + (nb == null ? "aire" : "" + nb.k));
 				case "slot": g.inv.select(Std.parseInt(a[1]));
 				case "life":
 					// life N [OXIGENO]: pone la vida (y el oxigeno)
@@ -410,7 +430,9 @@ class Dev {
 			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));
 			Sys.println("bloque: " + (b == null ? "nada" : "" + b.k));
 		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poder=" + g.select.power));
-		case "ship": Sys.println("nave en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z);
+		case "ship":
+			var beam = @:privateAccess g.ship.beam;
+			Sys.println("nave en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z + (beam == null ? "" : " rayo z=" + beam.z + " alto=" + Math.round(beam.scaleZ * 100) / 100));
 		default: Sys.println("print desconocido: " + a[1]);
 		}
 	}

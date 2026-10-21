@@ -97,5 +97,7 @@ A player got it running on Linux this way; we have not tested it.
 - Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
   holes up to its level, like the original.
 - Plants and other models are aimed at by what you see (the pixels of their leaves), not the whole cell (the original treated them as a full block).
+- The landing light beam follows any change in the column under the ship and starts on top of low blocks such as plates (the
+  original only moved it when a block was broken there); you return to the ship only standing at its base, not from higher up.
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).
