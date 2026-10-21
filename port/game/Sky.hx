@@ -44,6 +44,28 @@ class FogShader extends hxsl.Shader {
 	};
 }
 
+/**
+	Estrellas como el Skybox del original: un cubo alrededor de la camara que lee la textura cubica con la direccion local de
+	cada pixel (tuv = pos), sin filtrar (nearest) ni mipmaps. Una estrella es blanca con alfa = skyBoxAlpha sobre el degradado.
+**/
+class StarShader extends hxsl.Shader {
+	static var SRC = {
+		var relativePosition : Vec3;
+		var pixelColor : Vec4;
+		@var var starDir : Vec3;
+		@param var tex : SamplerCube;
+		@param var alpha : Float;
+
+		function vertex() {
+			starDir = relativePosition;
+		}
+
+		function fragment() {
+			pixelColor = vec4(1.0, 1.0, 1.0, tex.get(starDir).r * alpha);
+		}
+	};
+}
+
 /** Cielo de un planeta: degradado, estrellas y parametros de niebla. */
 class Sky {
 
@@ -51,11 +73,21 @@ class Sky {
 	public var root(default, null) : h3d.scene.Object;
 	var cols : Array<Int>;
 	var stars : h3d.scene.Mesh;
+	var starTex : h3d.mat.Texture;
 	var dome : h3d.scene.Mesh;
 	var starAlpha : Float;
+	/** tamano del planeta en bloques: una vuelta del cielo por circunferencia */
+	var psize : Float;
+	/** giro acumulado de las estrellas y ultima posicion (skyPos del original, que empieza en 0,0) */
+	var starRot : h3d.Matrix;
+	var tmpRot = new h3d.Matrix();
+	var starQ = new h3d.Quat();
+	var starX = 0.;
+	var starY = 0.;
 
-	/** menuFog: niebla suave para el fondo del menu (se ve mas planeta). */
-	public function new( parent : h3d.scene.Object, biome : BiomeKind, menuFog : Bool ) {
+	/** menuFog: niebla suave para el fondo del menu (se ve mas planeta). size: tamano del planeta en bloques. */
+	public function new( parent : h3d.scene.Object, biome : BiomeKind, menuFog : Bool, size : Int ) {
+		psize = size;
 		var bd = Data.getBiome(biome);
 		cols = bd.fog.copy();
 		while( cols.length < 3 ) cols.push(cols[cols.length - 1]);
@@ -78,6 +110,20 @@ class Sky {
 	/** Mueve el cielo con la camara. */
 	public function follow( x : Float, y : Float, z : Float ) {
 		root.setPosition(x, y, z);
+		if( stars == null || (x == starX && y == starY) ) return;
+		// como Render.hx del original: al andar, las estrellas giran una vuelta entera por circunferencia del planeta
+		// (alrededor de Y al moverse en x, de X al moverse en y), sumando el giro de cada paso
+		var rx = ((x - starX) * Math.PI * 2 / psize) % (Math.PI * 2);
+		var ry = ((y - starY) * Math.PI * 2 / psize) % (Math.PI * 2);
+		var m = tmpRot;
+		m.initRotationY(-rx);
+		starRot.multiply(starRot, m);
+		m.initRotationX(ry);
+		starRot.multiply(starRot, m);
+		starX = x;
+		starY = y;
+		starQ.initRotateMatrix(starRot);
+		stars.setRotationQuat(starQ);
 	}
 
 	var liquidCol : Null<Int> = null;
@@ -181,7 +227,10 @@ class Sky {
 
 	public function dispose() {
 		dome.primitive.dispose();
-		if( stars != null ) stars.primitive.dispose();
+		if( stars != null ) {
+			stars.primitive.dispose();
+			starTex.dispose();
+		}
 		root.remove();
 	}
 
@@ -248,48 +297,44 @@ class Sky {
 	}
 
 	function buildStars() {
-		if( starAlpha <= 0.02 ) return;
-		var R = 650.;
-		var n = 1800;
-		var pts = new Array<h3d.col.Point>();
-		var cl = new Array<h3d.col.Point>();
-		var idx = new hxd.IndexBuffer();
-		var rnd = new hxd.Rand(55);
-		for( i in 0...n ) {
-			// direccion uniforme sobre la esfera
-			var z = rnd.srand();
-			var a = rnd.rand() * Math.PI * 2;
-			var r = Math.sqrt(1 - z * z);
-			var dx = Math.cos(a) * r, dy = Math.sin(a) * r, dz = z;
-			// base ortonormal tangente
-			var ux = -dy, uy = dx, uz = 0.;
-			var ul = Math.sqrt(ux * ux + uy * uy);
-			if( ul < 1e-4 ) { ux = 1; uy = 0; ul = 1; }
-			ux /= ul; uy /= ul;
-			var vx = dy * uz - dz * uy, vy = dz * ux - dx * uz, vz = dx * uy - dy * ux;
-			var s = 0.9 + rnd.rand() * 0.9;
-			var b = pts.length;
-			var cx = dx * R, cy = dy * R, cz = dz * R;
-			pts.push(new h3d.col.Point(cx - ux * s - vx * s, cy - uy * s - vy * s, cz - uz * s - vz * s));
-			pts.push(new h3d.col.Point(cx + ux * s - vx * s, cy + uy * s - vy * s, cz + uz * s - vz * s));
-			pts.push(new h3d.col.Point(cx + ux * s + vx * s, cy + uy * s + vy * s, cz + uz * s + vz * s));
-			pts.push(new h3d.col.Point(cx - ux * s + vx * s, cy - uy * s + vy * s, cz - uz * s + vz * s));
-			var k = starAlpha * (0.55 + rnd.rand() * 0.45);
-			for( j in 0...4 ) cl.push(new h3d.col.Point(k, k, k));
-			idx.push(b); idx.push(b + 1); idx.push(b + 2);
-			idx.push(b); idx.push(b + 2); idx.push(b + 3);
+		// como el original (Render.hx: skyBoxAlpha > 0): con niebla muy densa no hay estrellas
+		if( starAlpha <= 0 ) return;
+		// como Game.init del original: 1024 px por cara y size * size * 0.003 = 3 145 estrellas de un texel, blancas y opacas,
+		// en sitios al azar (Std.random, otro cielo en cada carga); el mismo dibujo en las 6 caras
+		var size = 1024;
+		var px = hxd.Pixels.alloc(size, size, R8);
+		for( i in 0...Std.int(size * size * 0.003) ) {
+			var x = Std.random(size);
+			var y = Std.random(size);
+			px.bytes.set(x + y * size, 255);
 		}
-		var poly = new h3d.prim.Polygon(pts, idx);
-		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
-		poly.colors = cl;
+		starTex = new h3d.mat.Texture(size, size, [Cube], R8);
+		starTex.filter = Nearest;
+		starTex.mipMap = None;
+		starTex.wrap = Clamp;
+		for( side in 0...6 )
+			starTex.uploadPixels(px, 0, side);
+		px.dispose();
+		var cube = new h3d.prim.Cube(2, 2, 2, true);
+		cube.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		var mat = h3d.mat.Material.create();
 		mat.shadows = false;
 		mat.mainPass.enableLights = false;
 		mat.mainPass.culling = None;
+		// estrella = blanco * alfa + degradado * (1 - alfa), como la pasada de niebla del original sobre el alfa del cielo
+		mat.blendMode = Alpha;
 		mat.mainPass.depthWrite = false;
-		// las estrellas se suman al cielo
-		mat.blendMode = Add;
-		mat.mainPass.addShader(new h3d.shader.VertexColor());
-		stars = new h3d.scene.Mesh(poly, mat, root);
+		// orden del original (Render.hx): el agua, luego el cielo y despues los bloques con alfa (hielo, cristal)
+		mat.mainPass.layer = World.LAYER_SKY;
+		var sh = new StarShader();
+		sh.tex = starTex;
+		sh.alpha = starAlpha;
+		mat.mainPass.addShader(sh);
+		stars = new h3d.scene.Mesh(cube, mat, root);
+		// mas alla del terreno visible y dentro de zFar (las esquinas a ~700, como el degradado)
+		stars.setScale(400);
+		starRot = new h3d.Matrix();
+		starRot.identity();
+		stars.setRotationQuat(starQ);
 	}
 }

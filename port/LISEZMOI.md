@@ -91,7 +91,6 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 
 ## Différences avec l'original
 
-- Le ciel, le dégradé et le brouillard utilisent les couleurs d'origine de chaque biome. Les étoiles sont celles du port.
 - La neige du biome d'hiver est un ajout du port : l'original ne l'a pas.
 - Le mode créatif et sa palette sont un ajout du port.
 - Le menu de l'ordinateur de bord a son propre style, comme dans la version Flash (l'original était une page web).

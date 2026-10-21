@@ -82,7 +82,6 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 
 ## Diferencias con el original
 
-- El cielo, el degradado y la niebla usan los colores originales de cada bioma. Las estrellas son de este port.
 - La nieve del bioma de invierno es un añadido de este port: el original no la tiene.
 - El modo creativo y su paleta son un añadido de este port.
 - El menú del ordenador de a bordo tiene un aspecto propio, como en la versión Flash (el original era una página web).

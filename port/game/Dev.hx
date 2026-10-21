@@ -24,11 +24,11 @@ import Common;
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|msg|shake|fade|block x y z|around x y z r|select|ship|map [z]|power|life|fov
+ *   print inv|pos|zones|drops|msg|shake|fade|block x y z|around x y z r|select|ship|map [z]|power|life|fov|sky
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
- *   shot nombre             captura en port/out/nombre.png
+ *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
  *   quit
  */
 class Dev {
@@ -381,7 +381,8 @@ class Dev {
 				case "unkey": g.debugKey = null;
 				case "print": print(a, g, app);
 				case "shot":
-					app.capture("port/out/" + a[1] + ".png", false);
+					// "%b" = bioma: un mismo guion sirve para varios biomas (--bgbiome)
+					app.capture("port/out/" + (w != null ? StringTools.replace(a[1], "%b", w.biomeName) : a[1]) + ".png", false);
 				case "quit":
 					return true;
 				default:
@@ -525,6 +526,12 @@ class Dev {
 			Sys.println(f == null ? "fundido: ninguno" : "fundido: color " + StringTools.hex(f.col, 6) + " t=" + Math.round(f.t * 100) / 100 + " opacidad " + Math.round(g.fadeAlpha() * 100) / 100 + " bloqueo " + f.lock);
 		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poder=" + g.select.power));
 		case "ship": Sys.println("nave en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z);
+		case "sky":
+			// giro de las estrellas (Sky.follow): a donde apuntan los ejes x y z del cubo de estrellas
+			var m = @:privateAccess w.sky.starRot;
+			function r( v : Float ) return Math.round(v * 1000) / 1000;
+			if( m == null ) Sys.println("cielo: sin estrellas");
+			else Sys.println("cielo: x -> " + r(m._11) + "," + r(m._12) + "," + r(m._13) + "  z -> " + r(m._31) + "," + r(m._32) + "," + r(m._33));
 		default: Sys.println("print desconocido: " + a[1]);
 		}
 	}

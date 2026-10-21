@@ -1,0 +1,48 @@
+# cielo estrellado del original: cubo de 1024 px por cara con 3 145 estrellas de un texel (el mismo dibujo en las 6 caras)
+# que gira al andar, una vuelta por circunferencia del planeta (aqui 128 bloques)
+# uso: devrun.ps1 -Script port/dev/estrellas.txt   y otra vez con -Extra "--bgbiome=BIMoon"
+wait 3
+planet
+wait 20
+# a y b: a 2 bloques en x, las mismas estrellas giradas 5.6 grados; c: lejos, otro trozo del cielo
+tp 20 64 top 0 1.2
+wait 30
+print sky
+shot estrellas_%b_a
+tp 22 64 top 0 1.2
+wait 30
+print sky
+shot estrellas_%b_b
+tp 70 100 top 0 1.2
+wait 30
+print sky
+shot estrellas_%b_c
+# vuelta entera al planeta en x (8 pasos de 16 bloques, 45 grados cada uno) en el aire, donde nada empuja al jugador:
+# el cielo vuelve a quedar igual
+tp 20 64 120 0 0.2
+wait 1
+print sky
+tp 36 64 120
+wait 1
+print sky
+tp 52 64 120
+wait 1
+tp 68 64 120
+wait 1
+tp 84 64 120
+wait 1
+print sky
+tp 100 64 120
+wait 1
+tp 116 64 120
+wait 1
+tp 4 64 120
+wait 1
+tp 20 64 120
+wait 1
+print sky
+tp 20 64 top 0 0.2
+wait 30
+print sky
+shot estrellas_%b_horizonte
+quit
