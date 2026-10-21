@@ -2,6 +2,30 @@ import Common;
 import GameView.Select;
 
 /**
+ * SelectShader del original: los vertices con uv.x = 1 se desplazan max(1 / ancho, 1 / alto) * 2 en x y en y de la pantalla,
+ * asi cada arista de la caja es una linea de ~1 px sea cual sea la distancia.
+ */
+class SelectShader extends hxsl.Shader {
+	static var SRC = {
+		@input var input : {
+			var uv : Vec2;
+		};
+		@global var global : {
+			var pixelSize : Vec2;
+		};
+		var projectedPosition : Vec4;
+		function vertex() {
+			projectedPosition.xy += input.uv.x * max(global.pixelSize.x, global.pixelSize.y) * projectedPosition.w;
+		}
+	};
+
+	public function new() {
+		super();
+		setPriority(-1); // despues de la curvatura del planeta (Sky.FogShader rehace projectedPosition)
+	}
+}
+
+/**
  * Efectos de excavar, copiados de Render.hx del original:
  * - caja de seleccion naranja (SelectShader: 1, 0.3, 0, 0.5) cuando no se esta usando el laser;
  * - al excavar, una copia del bloque un poco mas grande que tiembla (escala 1.015 + rand * 0.075) con alfa 0.5;
@@ -13,7 +37,7 @@ class Fx {
 
 	var world : World;
 	var atlas : h3d.mat.Texture;
-	var box : h3d.scene.Graphics;
+	var box : h3d.scene.Mesh;
 	var overlay : h3d.scene.Mesh;
 	var overlayBlock : Block;
 	var denied : h3d.scene.Mesh;
@@ -29,8 +53,7 @@ class Fx {
 		this.atlas = atlas;
 		var root = world.root;
 
-		box = new h3d.scene.Graphics(root);
-		box.lineStyle(0.03, 0xFF4D00, 0.6);
+		// Render.initSelect: cada arista es un quad (a, b, a + pixel, b + pixel); SelectShader desplaza los dos ultimos en la pantalla
 		var edges = [
 			[0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1],
 			[1, 0, 0, 1, 1, 0], [1, 0, 0, 1, 0, 1],
@@ -38,13 +61,32 @@ class Fx {
 			[0, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1],
 			[1, 1, 1, 0, 1, 1], [1, 1, 1, 1, 0, 1], [1, 1, 1, 1, 1, 0],
 		];
+		var pts = [], uvs = [], nrm = [], idx = new hxd.IndexBuffer();
 		for( e in edges ) {
-			box.moveTo(e[0], e[1], e[2]);
-			box.lineTo(e[3], e[4], e[5]);
+			var p = pts.length;
+			for( d in 0...2 )
+				for( k in 0...2 ) {
+					pts.push(new h3d.col.Point(e[k * 3], e[k * 3 + 1], e[k * 3 + 2]));
+					uvs.push(new h3d.prim.UV(d, 0));
+					nrm.push(new h3d.col.Point(0, 0, 1));
+				}
+			idx.push(p); idx.push(p + 1); idx.push(p + 3);
+			idx.push(p); idx.push(p + 3); idx.push(p + 2);
 		}
-		box.material.mainPass.depthWrite = false;
-		box.material.blendMode = Alpha;
-		box.material.mainPass.addShader(world.sky.fog);
+		var poly = new h3d.prim.Polygon(pts, idx);
+		poly.uvs = uvs;
+		poly.normals = nrm; // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
+		var mat = h3d.mat.Material.create();
+		mat.shadows = false;
+		mat.mainPass.enableLights = false;
+		mat.mainPass.culling = None;
+		mat.color.set(1, 0.3, 0, 0.5);
+		mat.blendMode = Alpha;
+		mat.mainPass.depthWrite = false;
+		// world.sky.fog solo pone la curvatura del planeta: la niebla empieza a 10 bloques y la caja esta a menos de 7 (sin niebla, como el original)
+		mat.mainPass.addShader(world.sky.fog);
+		mat.mainPass.addShader(new SelectShader());
+		box = new h3d.scene.Mesh(poly, mat, root);
 		box.visible = false;
 
 		denied = new h3d.scene.Mesh(IconMesh.cube(51), blendMaterial(), root);
@@ -263,6 +305,7 @@ class Fx {
 
 	public function dispose() {
 		overlay_hide(true);
+		box.primitive.dispose();
 		box.remove();
 		denied.remove();
 		beamRoot.remove();
