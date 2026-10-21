@@ -1,0 +1,82 @@
+# trozos del laser (Game.update: doBreakParts mientras se excava): salen trozos del bloque en el punto de impacto;
+# nada si no se excava, con un bloque en la mano ni en la roca madre (no se puede romper)
+wait 3
+planet
+wait 20
+# suelo de roca plano a z=50 con aire encima; un bloque de madera en el suelo para que los trozos se distingan
+filla 56 56 72 72 50 80 none
+filla 56 56 72 72 50 50 BRock
+set 66 64 50 BWood
+tp 64.5 64.5 51 0 -0.75
+wait 30
+slot 0
+print select
+print parts
+# apuntar sin excavar: nada
+wait 20
+print parts
+# 1) excavar la madera del suelo (cara de arriba); se suelta antes de que se rompa
+key dig
+wait 10
+print select
+print parts
+shot trozos_suelo1
+wait 8
+print select
+print parts
+shot trozos_suelo2
+unkey
+wait 4
+print parts
+# sin excavar se gastan en el suelo y no salen mas
+wait 80
+print parts
+wait 20
+print parts
+# 2) un pilar de madera mirado de lado desde -x: la cara x=67 esta en la celda del propio bloque, que no tiene luz;
+# los trozos toman la de la celda de delante (Level.getLightAt) y no salen negros
+filla 67 64 67 64 51 53 BWood
+tp 65.2 64.5 51 0 0
+wait 10
+print select
+key dig
+wait 12
+print select
+print parts
+shot trozos_lado
+unkey
+wait 100
+print parts
+# 3) un cristal (modelo) de cerca
+set 66 64 51 BYellowCrystalDense
+tp 64.5 64.5 51 0 -0.35
+wait 10
+print select
+key dig
+wait 8
+print parts
+shot trozos_cristal
+unkey
+wait 100
+print parts
+# 4) con un bloque en la mano se coloca: ningun trozo
+tp 64.5 64.5 51 3.14 -0.75
+slot 1
+wait 5
+key dig
+wait 20
+unkey
+print parts
+# 5) roca madre (no se rompe): el cubo de "no" y ningun trozo
+filla 62 62 66 66 1 50 none
+tp 64.5 64.5 1 0 -1.2
+slot 0
+wait 20
+print select
+key dig
+wait 20
+print select
+print parts
+shot trozos_rocamadre
+unkey
+quit

@@ -64,6 +64,8 @@ class GameView {
 	var activatePending : Select;
 	var actionWait = false;
 	var armed = false;
+	/** tmod acumulado para los trozos del laser (laserParts) */
+	var laserPartsTime = 0.;
 	public var drops : Drops;
 	var fx : Fx;
 	var parts : Parts;
@@ -1273,7 +1275,11 @@ class GameView {
 			return;
 		}
 		if( select == null ) return;
-		if( hand == null ) mine(tmod) else place(hand);
+		if( hand == null ) {
+			mine(tmod);
+			laserParts(tmod);
+		} else
+			place(hand);
 	}
 
 	/** Game.checkAction con la mano vacia: acumula potencia segun la dureza del bloque (requiredPower) y las cargas. */
@@ -1322,6 +1328,38 @@ class GameView {
 		breakBlock(s.x, s.y, s.z, b);
 		if( creative ) actionPause = 8;
 		select = null;
+	}
+
+	/**
+	 * Game.update: mientras el laser toca un bloque que se puede romper, salta un trozo de su textura en el punto de impacto
+	 * 1 vez de cada 2 (1 de cada 6 sin potencia acumulada). Nada si no se puede romper (roca madre, sin la carga, puertas y
+	 * ordenador de la nave) ni, en lo que se activa (puertas, ordenadores, cofres), por debajo de 0.15.
+	 * Cambio del port: el original tira el dado en cada fotograma dibujado; aqui una vez por tmod (1/32 s,
+	 * mt.Timer.wantedFPS), para que no dependa de los FPS.
+	 */
+	function laserParts( tmod : Float ) {
+		var s = select;
+		if( s == null || !canBreak || ((s.b.activable != null || s.b.toggle != null) && s.power < 0.15) ) return;
+		laserPartsTime += tmod;
+		if( laserPartsTime < 1 ) return;
+		// punto de impacto en la cara del bloque (Selection.pt de Render.pick): el punto del rayo ya esta dentro de la celda,
+		// se vuelve atras por el rayo hasta su borde
+		var cp = Math.cos(pitch);
+		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
+		var fx = wrapDist(s.hx - s.x), fy = wrapDist(s.hy - s.y), fz = s.hz - s.z;
+		inline function back( f : Float, d : Float ) return d > 0 ? f / d : (d < 0 ? (f - 1) / d : 1e9);
+		var tx = back(fx, dx), ty = back(fy, dy), tz = back(fz, dz);
+		var t = Math.min(tx, Math.min(ty, tz));
+		fx -= dx * t;
+		fy -= dy * t;
+		fz -= dz * t;
+		if( t == tx ) fx = dx > 0 ? 0 : 1;
+		else if( t == ty ) fy = dy > 0 ? 0 : 1;
+		else fz = dz > 0 ? 0 : 1;
+		while( laserPartsTime >= 1 ) {
+			laserPartsTime -= 1;
+			if( Std.random(s.power > 0 ? 2 : 6) == 0 ) parts.doLaser(s.x + fx, s.y + fy, s.z + fz, s.b, s.x, s.y, s.z);
+		}
 	}
 
 	/** Game.checkAction con un bloque en la mano: se coloca si algo lo sujeta (anclas e imanes). */
