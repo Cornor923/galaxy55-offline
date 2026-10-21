@@ -1,0 +1,69 @@
+# nave cambiada en el hangar (morro alargado: placa de 35 bloques en x 12..16): sus imagenes del mapa deben salir centradas en ella
+# (expship = 8 de los 32 fotogramas) al despegar, al cargar la partida guardada en el espacio y al volver de la nave nodriza
+wait 3
+ship
+wait 10
+hangar
+wait 60
+set 18 7 3 BShipHull
+set 19 7 3 BShipHull
+set 20 7 3 BShipHull
+set 21 7 3 BShipHull
+set 22 7 3 BShipHull
+set 18 8 3 BShipHull
+set 19 8 3 BShipHull
+set 20 8 3 BShipHull
+set 21 8 3 BShipHull
+set 22 8 3 BShipHull
+set 18 9 3 BShipHull
+set 19 9 3 BShipHull
+set 20 9 3 BShipHull
+set 21 9 3 BShipHull
+set 22 9 3 BShipHull
+set 18 10 3 BShipHull
+set 19 10 3 BShipHull
+set 20 10 3 BShipHull
+set 21 10 3 BShipHull
+set 22 10 3 BShipHull
+set 18 11 3 BShipHull
+set 19 11 3 BShipHull
+set 20 11 3 BShipHull
+set 21 11 3 BShipHull
+set 22 11 3 BShipHull
+set 18 12 3 BShipHull
+set 19 12 3 BShipHull
+set 20 12 3 BShipHull
+set 21 12 3 BShipHull
+set 22 12 3 BShipHull
+set 18 13 3 BShipHull
+set 19 13 3 BShipHull
+set 20 13 3 BShipHull
+set 21 13 3 BShipHull
+set 22 13 3 BShipHull
+wait 20
+print hangar
+hangarexit
+wait 80
+print hangar
+explore
+wait 200
+expship map_ship_center_takeoff_frames
+shot map_ship_center_takeoff
+expgo 2400 1000
+wait 400
+closewin
+reload
+wait 600
+expinfo
+expship map_ship_center_reload_frames
+exprobot
+wait 700
+expbutton
+wait 400
+print pos
+hangarexit
+wait 1200
+exprinfo
+expship map_ship_center_mother_frames
+shot map_ship_center_mother
+quit
