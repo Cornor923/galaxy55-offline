@@ -27,7 +27,7 @@ They are the original game's (movement and physics are a copy of `ent/Hero.hx` a
 | Dig or place | left click, E or Shift (hold). With an empty hand you dig; with a block you place it if something supports it |
 | Choose slot | 1-0 or mouse wheel; Tab = digger (empty hand) |
 | Drop the selected stack | R or Del |
-| Activate (on-board computer, doors) | aim, press and release |
+| Activate (on-board computer, doors, canteens, ancient bomb) | aim, press and release. Holding on until the block breaks digs it out instead: that is how an ancient bomb is picked up without setting it off (it needs a pink charge, like ancient rock) |
 | Return to the ship | Shift+K, or step into the landing light beam |
 | Creative: block palette | I (click = put the block in the selected slot, wheel = page) |
 | Pause | Esc |
@@ -97,5 +97,8 @@ A player got it running on Linux this way; we have not tested it.
 - Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
   holes up to its level, like the original.
 - Plants and other models are aimed at by what you see (the pixels of their leaves), not the whole cell (the original treated them as a full block).
+- The ancient bomb also sets off the other bombs caught in its blast, one per frame: the original had the code for it, but a
+  check made it never fire. The blast leaves the bedrock (layer 0) in place (the original removed it too), the bomb does not
+  explode in the hangar, and it throws 8 shards per block instead of 75 so that the game does not freeze.
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

@@ -26,6 +26,7 @@ class Parts {
 	var mat : h3d.mat.Material;
 	var list : Array<Part> = [];
 	var partStep = 0;
+	static inline var MAX = 20000;
 
 	public function new( world : World, atlas : h3d.mat.Texture ) {
 		this.world = world;
@@ -39,10 +40,10 @@ class Parts {
 		mat.textureShader.killAlphaThreshold = 0.001;
 	}
 
-	/** Particles.doBreak */
-	public function doBreak( x : Int, y : Int, z : Int, b : Block ) {
+	/** Particles.doBreak (count: intentos, 75 en el original) */
+	public function doBreak( x : Int, y : Int, z : Int, b : Block, count = 75 ) {
 		var h = b.getHeight();
-		for( i in 0...75 ) {
+		for( i in 0...count ) {
 			var fx : Float = x, fy : Float = y, fz : Float = z;
 			var face = Std.random(6);
 			switch( face ) {
@@ -66,6 +67,8 @@ class Parts {
 
 	/** Particles.doBreakParts (la velocidad inicial que depende de la direccion se sustituye enseguida, como en el original) */
 	function add( sx : Float, sy : Float, sz : Float, b : Block, bx : Int, by : Int, bz : Int, scale : Float ) {
+		// cambio del port: como mucho MAX trozos a la vez (una cadena de bombas antiguas soltaba decenas de miles)
+		if( list.length >= MAX ) return;
 		var p = new Part();
 		p.x = sx;
 		p.y = sy;
@@ -141,7 +144,9 @@ class Parts {
 				p.vx *= Math.pow(0.95, dt);
 				p.vy *= Math.pow(0.95, dt);
 			}
-			if( p.life <= 0 ) {
+			// cambio del port: con muchos trozos el choque se mira cada partCount pasos y alguno atravesaba el suelo y caia
+			// para siempre; por debajo del mundo desaparece
+			if( p.life <= 0 || p.z < 0 ) {
 				list[i] = list[list.length - 1];
 				list.pop();
 				continue;

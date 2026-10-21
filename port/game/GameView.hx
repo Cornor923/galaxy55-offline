@@ -427,6 +427,10 @@ class GameView {
 			if( debugTele == 6 ) enteringShip = 0; // como si se hubiera apartado y vuelto a pisar la plataforma
 		}
 		updateAction(tmod, controls, pad);
+		if( bombQueue.length > 0 ) {
+			var c = bombQueue.shift();
+			explodeBomb(c.x, c.y, c.z);
+		}
 		if( hangar == null ) process.update(realDt);
 		world.flush();
 		drops.update(this, tmod);
@@ -912,7 +916,8 @@ class GameView {
 	public var message : String;
 	public var messageRed = false;
 
-	/** ShipLogic.activateBlock y Process.toggle: ordenador de a bordo y bloques que se abren o cierran (puertas) */
+	/** ShipLogic.activateBlock, Process.onActivate y Process.toggle: ordenador de a bordo, cantinas, bomba antigua y bloques
+	    que se abren o cierran (puertas) */
 	public function activateBlock( x : Int, y : Int, z : Int, b : Block ) {
 		if( b.activable != null ) {
 			var ok = switch( b.activable ) {
@@ -924,6 +929,8 @@ class GameView {
 			switch( b.k ) {
 			case BShipComputer: lastComputer = { x : x, y : y, z : z }; onComputer();
 			case BCrafterComputer: if( ship != null ) ship.activateCraft(x, y, z, this);
+			// cambio del port: en el hangar (EditShip) y en la nave nodriza no explota, para no romper la nave
+			case BArtiBomb: if( hangar == null && info.mothership != true ) explodeBomb(x, y, z);
 			default:
 				if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
 			}
@@ -935,6 +942,54 @@ class GameView {
 				z++;
 			}
 		}
+	}
+
+	/** bombas alcanzadas por una explosion: explotan despues, una por fotograma (Process.onActivateLate) */
+	var bombQueue : Array<{ x : Int, y : Int, z : Int }> = [];
+
+	/**
+	 * Process.onActivate (BArtiBomb): dano de 20 (en el borde) a 150 (en el centro), temblor a 1, fundido de blanco (en el
+	 * borde) a rojo (en el centro), y vacia una esfera de radio 8 sin soltar nada. Al activarla se explota; si se excava
+	 * hasta el final se recoge, como cualquier bloque (Game.checkToggle / checkAction).
+	 */
+	function explodeBomb( x : Int, y : Int, z : Int ) {
+		var ray = 8;
+		var hx = wrapDist(px - x), hy = wrapDist(py - y), hz = pz - z;
+		var pow = 1 - (hx * hx + hy * hy + hz * hz) / (ray * ray);
+		var dmg = Math.ceil(130 * pow) + 20;
+		// fuera de su alcance (solo en cadena) ni golpe ni fundido: con el dano negativo el original curaria
+		if( dmg > 0 ) {
+			hit(dmg);
+			// conserva el final del fundido anterior (morir: volver a la nave)
+			var old = fadeFX;
+			var gb = Std.int(255 * (1 - (pow < 0 ? 0 : pow)));
+			fadeFX = { t : 0., col : 0xFF0000 | (gb << 8) | gb, speed : 2.5, alpha : t -> (Math.random() * 0.1 + 0.9) * (1 - t),
+				lock : old != null && old.lock, done : old != null ? old.done : function() {} };
+		}
+		shake = 1;
+		for( dx in -ray...ray )
+			for( dy in -ray...ray )
+				for( dz in -ray...ray ) {
+					if( dx * dx + dy * dy + dz * dz > ray * ray ) continue;
+					var bx = wrapI(x + dx), by = wrapI(y + dy), bz = z + dz;
+					// la nave no se toca; la capa 0 y la de arriba del todo tampoco (World.setBlock no las cambia)
+					if( bz >= World.SHIP_Z || bz < 1 || bz >= World.HEIGHT - 1 ) continue;
+					var old = world.block(bx, by, bz);
+					if( old == null ) continue;
+					// cambio del port: lo que no se rompe (power -1, la roca madre) se queda; el original miraba la potencia
+					// de la bomba y no la del bloque
+					var req = old.requiredPower != null ? old.requiredPower : old.matter.requiredPower;
+					if( req != null && req < 0 ) continue;
+					if( old.hasProp(PContainer) ) breakChest(bx, by, bz);
+					world.setBlock(bx, by, bz, null);
+					// cambio del port: 8 trozos por bloque en vez de 75; con unos 1000 bloques salian hasta 70000 y el juego se
+					// quedaba a pocos fotogramas por segundo
+					parts.doBreak(bx, by, bz, old, 8);
+					process.onSet(bx, by, bz, old, null);
+					// cambio del port: en el original onActivateLate comprobaba que la bomba alcanzada seguia ahi, pero ya
+					// se habia quitado y nunca explotaba; aqui explota, como pretendia el codigo
+					if( old.k == BArtiBomb && (dx != 0 || dy != 0 || dz != 0) ) bombQueue.push({ x : bx, y : by, z : bz });
+				}
 	}
 
 	// ---------------------------------------------------------------- excavar y colocar
