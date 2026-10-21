@@ -212,7 +212,7 @@ class Fx {
 			var fwd = new h3d.Vector(Math.cos(g.yaw) * cp, Math.sin(g.yaw) * cp, Math.sin(g.pitch));
 			var right = new h3d.Vector(-Math.sin(g.yaw), Math.cos(g.yaw), 0);
 			var down = new h3d.Vector(0, 0, -1);
-			var ex = g.px, ey = g.py, ez = g.pz + GameView.VIEW_Z + g.shakeZ; // sale de la camara, que tiembla (Render: lazer)
+			var ex = g.px, ey = g.py, ez = g.pz + g.viewZ + g.shakeZ; // sale de la camara, que tiembla (Render: lazer)
 			var start = new h3d.Vector(
 				ex + fwd.x * 1.0 + right.x * 0.8 + down.x * 0.8 + right.x * g.bobX / 50,
 				ey + fwd.y * 1.0 + right.y * 0.8 + down.y * 0.8 + right.y * g.bobX / 50,
