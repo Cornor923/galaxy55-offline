@@ -1,0 +1,176 @@
+# altura de los ojos (Hero.viewZ, Hero.updateAngleView): baja hacia 0.7 con el fundido de la muerte, sube hacia 2 con el de
+# Mayus+K, baja hacia 1.4 con un golpe y sube (en el planeta) o baja (en la nave) 0.3 con el teletransportador; luego vuelve
+# a 1.5. "ojos" en vitals es la altura sobre los pies y "tele" la carga del teletransportador.
+# Zona de pruebas: suelo de roca en z=56, un poste 3 bloques delante (hierro y dos de madera), un tunel de 2 de alto y una
+# poza de 1 de hondo
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 90 none
+filla 54 54 76 76 56 56 BRock
+filla 63 60 63 60 57 57 BIron
+filla 63 60 63 60 58 59 BWood
+filla 66 64 74 64 59 59 BRock
+filla 68 68 72 72 57 57 BRock
+filla 69 69 71 71 57 57 BWater
+# 1) morir en el suelo mirando al poste: los ojos bajan durante el fundido rojo (1.5 - 0.8 t, con algo de retraso) y, ya en
+#    la nave, vuelven a 1.5
+tp 60.5 60.5 57.01 0 0
+wait 30
+vitals
+shot ojos_normal
+hurt 500
+until fade 0.3
+vitals
+shot ojos_muerte1
+until fade 0.6
+vitals
+shot ojos_muerte2
+until fade 0.9
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 30
+vitals
+# 2) Mayus+K en el suelo: los ojos suben durante el fundido blanco (1.5 + 0.5 t) y, ya en la nave, bajan a 1.5 (mas despacio)
+tp 60.5 60.5 57.01 0 0
+wait 30
+vitals
+press shift k
+wait 1
+release shift k
+until fade 0.3
+vitals
+shot ojos_vuelta1
+until fade 0.6
+vitals
+shot ojos_vuelta2
+until fade 0.9
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 30
+vitals
+# 3) Mayus+K en un tunel de 2 de alto (techo a 1.99 de los pies): los ojos no suben dentro del techo, la cabeza se queda a
+#    0.13 por debajo (ojos 1.86 como mucho)
+tp 70.5 64.5 57.01 0 0
+wait 30
+vitals
+press shift k
+wait 1
+release shift k
+until fade 0.6
+vitals
+until fade 0.8
+vitals
+shot ojos_tunel
+until fade 0.95
+vitals
+wait 30
+# 4) morir en una poza por las rodillas: al bajar, los ojos quedan bajo el agua (nadando true, velo azul)
+tp 70.5 70.5 57.01 3.14 0
+wait 30
+vitals
+hurt 500
+until fade 0.5
+vitals
+until fade 0.8
+vitals
+shot ojos_poza
+wait 60
+# 5) un golpe: los ojos bajan un poco (hacia 1.5 - 0.1 t) y vuelven al acabar el fundido
+tp 60.5 60.5 57.01 0 0
+wait 30
+life 100
+hurt 30
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 30
+vitals
+# 6) teletransportador del planeta a la nave: los ojos suben con la carga (1.5 + 0.2 por unidad) y, en la nave, vuelven a 1.5
+planet
+wait 30
+vitals
+tele
+until tele 0.3
+vitals
+shot ojos_tele_sube1
+until tele 0.7
+vitals
+shot ojos_tele_sube2
+until tele 1.2
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 30
+vitals
+# 7) teletransportador de la nave al planeta: los ojos bajan con la carga y, en el planeta, vuelven a 1.5
+tele
+until tele 0.3
+vitals
+shot ojos_tele_baja1
+until tele 0.7
+vitals
+shot ojos_tele_baja2
+until tele 1.2
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 3
+vitals
+wait 30
+vitals
+# 8) sigue abajo 3 s despues (el teletransportador no lo vuelve a subir)
+wait 100
+vitals
+# 9) hangar: las casillas de teletransporte (EditShip, 0.03 por tmod hasta 1) tambien suben los ojos, hasta 1.7
+ship
+wait 10
+hangar
+wait 60
+vitals
+tele
+until tele 0.5
+vitals
+until tele 0.9
+vitals
+wait 60
+print pos
+vitals
+quit

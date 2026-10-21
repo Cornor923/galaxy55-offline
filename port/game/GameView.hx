@@ -27,7 +27,7 @@ class GameView {
 
 	/** unidades de tiempo del juego (mt.Timer.wantedFPS) */
 	static inline var FPS = 32.;
-	/** altura de los ojos (Hero.viewZ) */
+	/** altura normal de los ojos (Hero.viewZ = 1.5); la de ahora es viewZ */
 	public static inline var VIEW_Z = 1.5;
 	/** colision de cabeza (cambio del port): puntos alrededor del centro y su radio, que cubre el plano cercano de la camara
 	    (llega a unos 0.18 del ojo a 70 grados) */
@@ -43,6 +43,8 @@ class GameView {
 	public var pz = 0.;
 	public var yaw = 0.;
 	public var pitch = 0.;
+	/** altura de los ojos sobre los pies (Hero.viewZ): baja y sube con los fundidos y el teletransportador (updateViewZ) */
+	public var viewZ = VIEW_Z;
 	public var playSeconds = 0.;
 
 	// excavar y colocar (Game.checkAction)
@@ -102,8 +104,9 @@ class GameView {
 	var damageRecover = 0.;
 	var healRecover = 0.;
 	/** fundido de color de pantalla (Game.fadeFX): golpe en rojo, curacion en azul, muerte en rojo y Mayus+K en blanco hasta
-	    volver a la nave. t va de 0 a 1 (+ tmod * speed / 200); alpha(t) da la opacidad (null = t); lock: sin controles mientras dura */
-	public var fadeFX : { t : Float, col : Int, speed : Float, alpha : Null<Float -> Float>, done : Void -> Void, lock : Bool };
+	    volver a la nave. t va de 0 a 1 (+ tmod * speed / 200); alpha(t) da la opacidad (null = t); lock: sin controles mientras dura;
+	    dz: cuanto bajan los ojos al acabar (negativo: suben) */
+	public var fadeFX : { t : Float, col : Int, speed : Float, alpha : Null<Float -> Float>, done : Void -> Void, lock : Bool, dz : Float };
 
 	public inline function onGround() return standingBlock != null;
 	var s3d : h3d.scene.Scene;
@@ -282,7 +285,7 @@ class GameView {
 	inline function onWater() return inWater(0.01);
 
 	function inWater( ?dz : Float ) : Bool {
-		if( dz == null ) dz = VIEW_Z;
+		if( dz == null ) dz = viewZ;
 		var b = world.block(Math.floor(px), Math.floor(py), Std.int(pz + dz));
 		return b != null && b.hasFlag(BFLiquid);
 	}
@@ -373,6 +376,7 @@ class GameView {
 			walking = true;
 		}
 		stepPhysics(tmod, speed, strafe, useJetpack);
+		updateViewZ(tmod);
 		updateLife(tmod);
 		// olas: fx.time * animWater.speed (tiempo en segundos * 0.5)
 		if( world.wave != null ) {
@@ -431,7 +435,7 @@ class GameView {
 	public function debugPick() : String {
 		var cp = Math.cos(pitch);
 		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
-		var ex = px, ey = py, ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
+		var ex = px, ey = py, ez = pz + viewZ + Math.sin(walkBobbing) * 0.05;
 		var curve = World.curve(world.size);
 		var out = [];
 		var t = 0.;
@@ -557,15 +561,16 @@ class GameView {
 			returnToShip(false);
 		} else if( fadeFX == null ) {
 			var pow = dmg / 100;
-			fadeFX = { t : 0., col : 0xFF0000, speed : 3 + 10 * (1 - pow), alpha : t -> (1 - t) * (0.5 + pow * 0.5), lock : false, done : function() {} };
+			fadeFX = { t : 0., col : 0xFF0000, speed : 3 + 10 * (1 - pow), alpha : t -> (1 - t) * (0.5 + pow * 0.5), lock : false, dz : 0.1, done : function() {} };
 		}
 	}
 
 	/** Game.returnToShip (modo local): fundido sin controles, rojo al morir y blanco con Mayus+K; al acabar, de vuelta en la
-	    nave con la vida y el oxigeno llenos. Sustituye a un fundido de golpe o de curacion */
+	    nave con la vida y el oxigeno llenos; los ojos bajan 0.8 al morir y suben 0.5 con Mayus+K. Sustituye a un fundido de
+	    golpe o de curacion */
 	public function returnToShip( manual : Bool ) {
 		if( fadeFX != null && fadeFX.lock ) return; // hero.lock: ya se esta volviendo
-		fadeFX = { t : 0., col : manual ? 0xFFFFFF : 0xFF0000, speed : 2., alpha : null, lock : true, done : function() {
+		fadeFX = { t : 0., col : manual ? 0xFFFFFF : 0xFF0000, speed : 2., alpha : null, lock : true, dz : manual ? -0.5 : 0.8, done : function() {
 			life = 100;
 			oxygen = 100;
 			gravity = 0;
@@ -579,7 +584,7 @@ class GameView {
 		life += v;
 		if( life > 100 ) life = 100;
 		if( fadeFX == null )
-			fadeFX = { t : 0., col : 0x00C5E8, speed : 10., alpha : t -> Math.sin(t * 3.14) * 0.35, lock : false, done : function() {} };
+			fadeFX = { t : 0., col : 0x00C5E8, speed : 10., alpha : t -> Math.sin(t * 3.14) * 0.35, lock : false, dz : 0., done : function() {} };
 	}
 
 	/** Hero.update: bloques que hacen dano (lava, agua acida, carbon ardiente, hierbas acidas) o que curan (planta y caja de
@@ -590,7 +595,7 @@ class GameView {
 			damageRecover -= dt;
 		else {
 			var maxHit = 0.;
-			for( b in [standingBlock, at(pz + 0.1), at(pz + VIEW_Z + 0.15)] ) {
+			for( b in [standingBlock, at(pz + 0.1), at(pz + viewZ + 0.15)] ) {
 				if( b == null ) continue;
 				for( f in b.flags )
 					switch( f ) {
@@ -622,6 +627,35 @@ class GameView {
 			}
 	}
 
+	/** Hero.updateAngleView: los ojos van hacia 1.5 - t * dz del fundido (bajan al morir o con un golpe, suben con Mayus+K) o,
+	    sin fundido, hacia 1.5 + 0.2 por unidad del teletransporte (suben en el planeta, bajan en la nave); suben mas deprisa
+	    (0.8 por tmod) de lo que bajan (0.9) */
+	function updateViewZ( tmod : Float ) {
+		var target = VIEW_Z;
+		if( fadeFX != null )
+			target -= fadeFX.t * fadeFX.dz;
+		else if( enteringShip > 0 )
+			target += enteringShip * 0.2 * (pz > Const.SIZE ? -1 : 1);
+		if( viewZ != target ) {
+			var p = Math.pow(viewZ < target ? 0.8 : 0.9, tmod);
+			viewZ = viewZ * p + target * (1 - p);
+			if( Math.abs(viewZ - target) < 0.01 ) viewZ = target;
+		}
+		// cambio del port: por encima de 1.5 los ojos dejan de subir cuando la cabeza (0.13 mas arriba, como en doMove) toca un
+		// bloque; si no, bajo un techo bajo la camara se metia en el
+		while( viewZ > VIEW_Z && headCollide(pz + viewZ + 0.13) )
+			viewZ = Math.max(VIEW_Z, viewZ - 0.01);
+	}
+
+	/** algun punto de la cabeza (HEAD_POINTS a HEAD_RADIUS del centro, como en doMove) dentro de un bloque a esa altura */
+	function headCollide( z : Float ) {
+		for( i in 0...HEAD_POINTS ) {
+			var ha = yaw + i * Math.PI * 2 / HEAD_POINTS;
+			if( collide(px + Math.cos(ha) * HEAD_RADIUS, py + Math.sin(ha) * HEAD_RADIUS, z) ) return true;
+		}
+		return false;
+	}
+
 	function updateFade( tmod : Float ) {
 		if( fadeFX == null ) return;
 		fadeFX.t += tmod * fadeFX.speed / 200;
@@ -644,7 +678,7 @@ class GameView {
 		if( waterBlock != null && !waterBlock.hasFlag(BFLiquid) ) waterBlock = null;
 		if( waterBlock != null && waterBlock.k == BMarsQuickSand ) {
 			// hundido hasta los ojos: se ahoga poco a poco
-			if( world.block(Math.floor(px), Math.floor(py), Std.int(pz + VIEW_Z)) == waterBlock && Std.random(20) == 0 )
+			if( world.block(Math.floor(px), Math.floor(py), Std.int(pz + viewZ)) == waterBlock && Std.random(20) == 0 )
 				hit(dt * 5);
 			dt *= 0.3;
 			speed *= 0.6;
@@ -691,7 +725,7 @@ class GameView {
 		// la cabeza y la camara se metian de lado en el bloque: las sondas de las paredes no pasan de 1.3. Se empuja hacia abajo,
 		// como al chocar subiendo, en vez de frenar el avance (frenarlo impedia saltar a un escalon bajo un techo bajo).
 		if( !col ) {
-			var d = VIEW_Z + 0.13;
+			var d = viewZ + 0.13;
 			var recal = 0.;
 			for( i in 0...HEAD_POINTS ) {
 				var ha = a + i * Math.PI * 2 / HEAD_POINTS;
@@ -1042,7 +1076,7 @@ class GameView {
 	function pick( hand : Block ) : Select {
 		var cp = Math.cos(pitch);
 		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
-		var ex = px, ey = py, ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
+		var ex = px, ey = py, ez = pz + viewZ + Math.sin(walkBobbing) * 0.05;
 		var curve = hangar != null ? 0. : World.curve(world.size);
 		var lx = 0, ly = 0, lz = 0, have = false;
 		var t = 0.;
@@ -1387,7 +1421,7 @@ class GameView {
 	public function updateCamera() {
 		var cp = Math.cos(pitch);
 		var c = s3d.camera;
-		var ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
+		var ez = pz + viewZ + Math.sin(walkBobbing) * 0.05;
 		// en el agua la vista sube y baja con las olas (Game.hx, planet.animWater)
 		var wv = world.wave;
 		if( wv != null && (onWater() || inWater()) )
