@@ -14,6 +14,22 @@ class Atlas {
 	/** pixeles del ultimo atlas construido: para apuntar a las plantas por lo que se ve (GameView.modelHit) */
 	public static var pixels(default, null) : hxd.Pixels;
 
+	/**
+	 * Copia con mipmaps para los trozos del mundo, como el original (Render.initTextures: tex.uploadMipMap(Data.TEXTURE, true);
+	 * DefShader, TransShader, SpriteShader y WaterShader1 muestrean con nearest, mm_linear): sin ellos el terreno lejano parpadea
+	 * al moverse. El hielo y el cristal (AlphaShader1), la mano y los objetos sueltos (DummyShader), las particulas (PartShader)
+	 * y los iconos (IconShader) no usan mipmaps en el original: siguen con la textura que devuelve build().
+	 */
+	public static var mipped(default, null) : h3d.mat.Texture;
+	/** segundos que tardaron los mipmaps (orden `print mips` de Dev) */
+	public static var mipTime(default, null) = 0.;
+
+	/**
+	 * Niveles de 2048 a 64 px: 1 texel por casilla en el ultimo. Cambio del port: el original seguia hasta 1x1 y, por debajo de
+	 * 64x64, cada texel mezclaba casillas vecinas (colores de otros bloques en el terreno lejano).
+	 */
+	static inline var MIP_LEVELS = 6;
+
 	public static function build( png : haxe.io.Bytes ) : h3d.mat.Texture {
 		var pix = hxd.res.Any.fromBytes("texture.png", png).toImage().getPixels();
 		if( !patched ) {
@@ -26,7 +42,119 @@ class Atlas {
 		var t = h3d.mat.Texture.fromPixels(pix);
 		t.filter = Nearest;
 		t.mipMap = None;
+		var t0 = haxe.Timer.stamp();
+		mipped = buildMips(pix);
+		mipTime = haxe.Timer.stamp() - t0;
 		return t;
+	}
+
+	static function buildMips( pix : hxd.Pixels ) : h3d.mat.Texture {
+		// por casilla: 1 = algun texel visible, 2 = algun texel no opaco; solo las mixtas (3) necesitan fillClear y keepCoverage
+		var kinds = new haxe.ds.Vector<Int>((pix.width >> 5) * (pix.height >> 5));
+		var levels = [pix.clone()];
+		for( l in 1...MIP_LEVELS )
+			levels.push(halve(levels[l - 1], l == 1 ? kinds : null));
+		for( i in 0...kinds.length )
+			if( kinds[i] == 3 ) {
+				fillClear(levels, i & 63, i >> 6);
+				keepCoverage(levels, i & 63, i >> 6);
+			}
+		var t = new h3d.mat.Texture(pix.width, pix.height, [MipMapped, ManualMipMapGen, NoAlloc], pix.format);
+		@:privateAccess t.customMipLevels = MIP_LEVELS;
+		t.alloc();
+		for( l in 0...MIP_LEVELS )
+			t.uploadPixels(levels[l], l);
+		// nearest dentro de cada nivel y lineal entre niveles (nearest, mm_linear del original)
+		t.filter = Nearest;
+		t.mipMap = Linear;
+		return t;
+	}
+
+	/**
+	 * Nivel siguiente: media de cada 2x2 pesada por el alfa (el dibujo suavizado de Flash trabaja con alfa premultiplicado), asi
+	 * los huecos no oscurecen ni aclaran los bordes. `kinds` (solo del nivel 0 al 1) recibe que hay en cada casilla.
+	 */
+	static function halve( src : hxd.Pixels, kinds : haxe.ds.Vector<Int> ) : hxd.Pixels {
+		var w = src.width >> 1, h = src.height >> 1;
+		var dst = hxd.Pixels.alloc(w, h, src.format);
+		// hl.Bytes: sin comprobar los limites en cada acceso (haxe.io.Bytes hacia que tardase varias veces mas)
+		var sb = hl.Bytes.fromBytes(src.bytes), db = hl.Bytes.fromBytes(dst.bytes), row = src.width << 2, dp = dst.offset;
+		for( y in 0...h ) {
+			var sp = src.offset + y * 2 * row;
+			for( x in 0...w ) {
+				var c0 = sb.getI32(sp), c1 = sb.getI32(sp + 4), c2 = sb.getI32(sp + row), c3 = sb.getI32(sp + row + 4);
+				// canales rojo y azul, verde y alfa: dos sumas de 4 bytes por entero, sin desbordar
+				var rb = (c0 & 0xFF00FF) + (c1 & 0xFF00FF) + (c2 & 0xFF00FF) + (c3 & 0xFF00FF);
+				var ga = ((c0 >>> 8) & 0xFF00FF) + ((c1 >>> 8) & 0xFF00FF) + ((c2 >>> 8) & 0xFF00FF) + ((c3 >>> 8) & 0xFF00FF);
+				var sa = ga >>> 16;
+				if( kinds != null ) kinds[(y >> 4) * (w >> 4) + (x >> 4)] |= sa == 0 ? 2 : (sa == 1020 ? 1 : 3);
+				if( sa == 1020 || sa == 0 )
+					db.setI32(dp, (((rb + 0x20002) >> 2) & 0xFF00FF) | ((((ga + 0x20002) >> 2) & 0xFF00FF) << 8));
+				else {
+					var a0 = c0 >>> 24, a1 = c1 >>> 24, a2 = c2 >>> 24, a3 = c3 >>> 24;
+					var a = a0 + a1 + a2 + a3;
+					inline function ch( s : Int ) {
+						var v0 = (c0 >> s) & 0xFF, v1 = (c1 >> s) & 0xFF, v2 = (c2 >> s) & 0xFF, v3 = (c3 >> s) & 0xFF;
+						return a == 0 ? (v0 + v1 + v2 + v3 + 2) >> 2 : Std.int((v0 * a0 + v1 * a1 + v2 * a2 + v3 * a3 + (a >> 1)) / a);
+					}
+					db.setI32(dp, (((a + 2) >> 2) << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0));
+				}
+				sp += 8;
+				dp += 4;
+			}
+		}
+		return dst;
+	}
+
+	static inline function pos( p : hxd.Pixels, x : Int, y : Int ) return p.offset + ((y * p.width + x) << 2);
+
+	/**
+	 * Los texeles transparentes de la casilla toman el color del nivel siguiente (la media de lo que se ve alrededor): al mezclar
+	 * dos niveles no salen bordes claros ni oscuros (el png tiene colores sueltos, casi siempre blanco, en los huecos). Solo cambia
+	 * lo que el corte de alfa ya oculta.
+	 */
+	static function fillClear( levels : Array<hxd.Pixels>, tx : Int, ty : Int ) {
+		var l = levels.length - 2;
+		while( l >= 0 ) {
+			var p = levels[l], q = levels[l + 1], s = 32 >> l;
+			var pb = hl.Bytes.fromBytes(p.bytes), qb = hl.Bytes.fromBytes(q.bytes);
+			for( y in ty * s...(ty + 1) * s )
+				for( x in tx * s...(tx + 1) * s ) {
+					var i = pos(p, x, y);
+					if( pb[i + 3] == 0 )
+						pb.setI32(i, qb.getI32(pos(q, x >> 1, y >> 1)) & 0xFFFFFF);
+				}
+			l--;
+		}
+	}
+
+	/**
+	 * Cambio del port: con la media del alfa, las hierbas y demas casillas recortadas (killAlpha 0.5) se iban borrando de lejos.
+	 * En cada nivel se escala el alfa de la casilla para que pase el corte la misma parte que en el nivel 0.
+	 */
+	static function keepCoverage( levels : Array<hxd.Pixels>, tx : Int, ty : Int ) {
+		var base = levels[0], bb = hl.Bytes.fromBytes(base.bytes), full = 0;
+		for( y in ty << 5...(ty + 1) << 5 )
+			for( x in tx << 5...(tx + 1) << 5 )
+				if( bb[pos(base, x, y) + 3] >= 128 ) full++;
+		// sin nada que pase el corte, o todo: la media ya deja pasar lo mismo que el nivel 0
+		if( full == 0 || full == 1024 ) return;
+		var hist = new haxe.ds.Vector<Int>(256);
+		for( l in 1...levels.length ) {
+			var p = levels[l], pb = hl.Bytes.fromBytes(p.bytes), s = 32 >> l;
+			for( i in 0...256 ) hist[i] = 0;
+			for( y in ty * s...(ty + 1) * s )
+				for( x in tx * s...(tx + 1) * s )
+					hist[pb[pos(p, x, y) + 3]]++;
+			// alfa minimo de los texeles que deben pasar el corte (256 = ninguno)
+			var want = Math.round(full * s * s / 1024), cut = 256, n = 0;
+			while( n < want && cut > 1 ) n += hist[--cut];
+			for( y in ty * s...(ty + 1) * s )
+				for( x in tx * s...(tx + 1) * s ) {
+					var i = pos(p, x, y) + 3, a = pb[i];
+					pb[i] = cut == 256 ? (a < 128 ? a : 127) : a >= cut ? Std.int(Math.min(255, Math.max(128, a * 128 / cut + 0.5))) : Std.int(a * 128 / cut);
+				}
+		}
 	}
 
 	static function fillTile( pix : hxd.Pixels, tile : Int, argb : Int ) {

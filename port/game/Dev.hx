@@ -496,6 +496,7 @@ class Dev {
 			// potencia de excavacion (turbo minero) y el icono "power" del casco
 			var ic = @:privateAccess app.statusIcon;
 			Sys.println("potencia " + g.miningPower + " icono " + (ic.visible ? "visible alfa " + Math.round(ic.alpha * 100) / 100 : "no"));
+		case "mips": Sys.println("mipmaps del atlas: " + Math.round(Atlas.mipTime * 1000) + " ms");
 		case "msg": Sys.println("mensaje: " + g.message);
 		case "shake":
 			// temblor, subida de la camara y del HUD (en pixeles de la ventana) de este fotograma, y segundos de juego

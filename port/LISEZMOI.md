@@ -104,6 +104,9 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   une vérification l'empêchait de se déclencher. L'explosion laisse la roche mère (couche 0) en place (l'original l'enlevait
   aussi), la bombe n'explose pas dans le hangar et elle projette 8 éclats par bloc au lieu de 75 pour que le jeu ne se
   fige pas.
+- Les textures lointaines utilisent des mipmaps comme l'original, mais les plantes ne s'effacent pas avec la distance et chaque
+  bloc lointain garde sa couleur (dans l'original, les plantes fines disparaissaient de loin et, plus loin encore, les textures
+  voisines se mélangeaient).
 - Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé et désactiver les vagues de l'eau.
 - Le turbo mineur fait creuser trois fois plus vite jusqu'à 15 blocs autour de lui (5 dans l'original) et se récupère quand
   on le casse (dans l'original, il était perdu).

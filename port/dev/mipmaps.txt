@@ -1,0 +1,59 @@
+# mipmaps del atlas (Render.initTextures del original): el paisaje lejano no debe parpadear al moverse.
+# Cada vista se captura dos veces (_a y _b) con la camara girada y desplazada muy poco: sin mipmaps el terreno lejano
+# cambia mucho de una captura a otra. De cerca (mip_close*, la mano, los iconos) debe salir igual que sin mipmaps.
+# Probar en varios biomas: devrun.ps1 -Script port/dev/mipmaps.txt -Extra "--bgbiome=BIMars"
+wait 3
+planet
+wait 20
+waves 0
+print mips
+# a ras de suelo (sobre un poste de 3 bloques, para no tener nada delante), mirando al horizonte
+fillt 64 64 64 64 1 3 BRock
+tp 64.5 64.5 top 0.8 -0.1
+wait 60
+shot mip_ground_a
+tp 64.52 64.51 top 0.8006 -0.1005
+wait 3
+shot mip_ground_b
+# desde lo alto: el mismo poste, 30 bloques mas
+fillt 64 64 64 64 1 30 BRock
+tp 64.5 64.5 top 0.8 -0.7
+wait 60
+shot mip_high_a
+tp 64.52 64.51 top 0.8006 -0.7005
+wait 3
+shot mip_high_b
+# jardin sobre una losa: hierbas (recorte con alfa) a los lados de un pasillo y paredes de hojas, de 2 a 58 bloques
+fillt 66 14 125 30 1 1 BRock
+fillt 72 14 125 17 0 0 BAutumnHerbs2
+fillt 85 18 86 19 0 2 BGreenLeaves
+fillt 100 18 101 19 0 2 BGreenLeaves
+fillt 115 18 116 19 0 2 BGreenLeaves
+fillt 72 25 125 30 0 0 BAutumnHerbs1
+tp 67.5 22.5 top 0 -0.15
+wait 60
+shot mip_garden_a
+tp 67.52 22.51 top 0.0006 -0.1505
+wait 3
+shot mip_garden_b
+# de cerca: la losa a los pies y las primeras hierbas
+tp 70.5 22.5 top 0 -0.9
+wait 20
+shot mip_close
+# agua (con mipmaps, como WaterShader1) a un lado y hielo y cristal (sin ellos, como AlphaShader1) al otro
+fillt 66 34 125 46 1 1 BRock
+fillt 72 34 125 38 0 0 BWater
+fillt 74 42 75 44 0 1 BIce
+fillt 90 42 91 44 0 1 BGlass
+fillt 105 42 106 44 0 1 BIce
+tp 67.5 40.5 top 0 -0.15
+wait 60
+shot mip_water_a
+tp 67.52 40.51 top 0.0006 -0.1505
+wait 3
+shot mip_water_b
+# de cerca: el agua y el hielo junto al jugador
+tp 72.5 40.5 top 0 -0.6
+wait 20
+shot mip_close_water
+quit
