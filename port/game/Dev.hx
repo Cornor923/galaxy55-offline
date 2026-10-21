@@ -12,6 +12,7 @@ import Common;
  *   ship | planet           ir a la nave / bajar al planeta
  *   slot N                  elegir casilla (0 = excavador)
  *   give Bloque [n]         meter n bloques (50) en el inventario
+ *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local
  *   synth N                 usar el ordenador del sintetizador N
@@ -22,6 +23,7 @@ import Common;
  *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png
+ *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
  *   quit
  */
 class Dev {
@@ -34,6 +36,8 @@ class Dev {
 	var lines : Array<String>;
 	var pc = 0;
 	var waiting = 0;
+	var loadShot : String;
+	var loadShotWait = 0;
 
 	public function new( path : String ) {
 		lines = sys.io.File.getContent(path).split("\n").map(StringTools.trim).filter(function(l) return l != "" && l.charAt(0) != "#");
@@ -45,6 +49,13 @@ class Dev {
 	}
 
 	static function f( s : String ) return Std.parseFloat(s);
+
+	/** en cada imagen de la carga de un planeta (orden loadshot) */
+	public function loadingFrame( app : GalaxyApp ) {
+		if( loadShot == null || --loadShotWait > 0 ) return;
+		app.capture("port/out/" + loadShot + ".png", false);
+		loadShot = null;
+	}
 
 	/** una orden por actualizacion; devuelve true al terminar */
 	public function tick( app : GalaxyApp, g : GameView ) : Bool {
@@ -91,6 +102,11 @@ class Dev {
 				case "waves": Settings.waterWaves = a[1] == "1"; // waves 0|1: opcion de olas del agua
 				case "vitals":
 					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming);
+				case "drop":
+					// drop x y z Bloque [vida]: un bloque suelto quieto (sin velocidad) con esa vida en segundos (180)
+					var d = g.drops.add(f(a[1]), f(a[2]), f(a[3]), bk(a[4]));
+					d.vx = d.vy = 0;
+					if( a.length > 5 ) d.time = f(a[5]);
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
@@ -314,6 +330,9 @@ class Dev {
 				case "key": g.debugKey = a[1];
 				case "unkey": g.debugKey = null;
 				case "print": print(a, g, app);
+				case "loadshot":
+					loadShot = a[1];
+					loadShotWait = a.length > 2 ? Std.parseInt(a[2]) : 5;
 				case "shot":
 					app.capture("port/out/" + a[1] + ".png", false);
 				case "quit":
@@ -404,7 +423,7 @@ class Dev {
 			}
 			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
 		case "hit": Sys.println(g.debugPick());
-		case "drops": Sys.println("sueltos: " + g.drops.count());
+		case "drops": Sys.println("sueltos: " + g.drops.count() + " " + [for( d in @:privateAccess g.drops.list ) d.block.k + " z=" + Math.round(d.z * 100) / 100 + " vida=" + Math.round(d.time * 100) / 100].join("  "));
 		case "msg": Sys.println("mensaje: " + g.message);
 		case "block":
 			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));

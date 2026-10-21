@@ -1,0 +1,83 @@
+# detalles copiados del original:
+# 1) caja de seleccion: lineas de ~1 px (SelectShader), naranja 1, 0.3, 0 a alfa 0.5, cerca y a 6 bloques;
+#    con el laser sobre roca madre no hay caja, solo el cubo (51,0) que parpadea
+# 2) bloques sueltos a 0.3 de su tamano, apoyados en el suelo; en su ultimo segundo de vida se encogen hasta desaparecer
+# 3) iconos: sombreado al cuadrado (lados mas oscuros) y contorno negro, en la barra, el cofre, la tienda y la paleta
+# 4) carga de un planeta: solo la barra naranja de 300x4 que avanza, centrada sobre negro (ventana 16:9, alta y ancha)
+wait 3
+planet
+wait 30
+filla 50 54 76 76 57 90 none
+filla 50 54 76 76 56 56 BRock
+set 63 64 57 BRock
+set 63 67 57 BBedrock
+tp 61.5 64.5 57.01 0 0
+wait 5
+lookat 63.5 64.5 57.5
+wait 10
+print select
+shot sd_sel_near
+tp 57.5 64.5 57.01 0 0
+lookat 63.5 64.5 57.5
+wait 10
+print select
+shot sd_sel_far
+tp 61.5 67.5 57.01 0 0
+lookat 63.5 67.5 57.5
+wait 10
+key dig
+wait 10
+shot sd_sel_denied
+unkey
+wait 5
+# 2) sueltos (el de vida 2 se encoge en su ultimo segundo)
+tp 60.5 64.5 57.01 0 -0.5
+wait 5
+drop 62.3 63.4 57.3 BRock
+drop 62.3 64.1 57.3 BYellowCharge
+drop 62.3 64.8 57.3 BAutumnHerbs1
+drop 62.3 65.5 57.3 BWood
+drop 61.9 66.1 57.3 BRock 2
+wait 20
+print drops
+shot sd_drops
+wait 10
+print drops
+shot sd_drops_shrink
+wait 30
+print drops
+shot sd_drops_gone
+# 3) iconos: barra (arriba), cofre, tienda y paleta
+set 59 62 57 BChest
+wait 5
+activate 59 62 57
+wait 5
+shot sd_icons_chest
+close
+wait 5
+shop
+wait 5
+shot sd_icons_shop
+close
+wait 5
+creative
+palette
+wait 5
+shot sd_icons_palette
+close
+wait 5
+# 4) carga de un planeta (mientras carga el guion no corre: loadshot hace la captura)
+loadshot sd_load_169 5
+reload
+wait 60
+winsize 800 900
+wait 10
+loadshot sd_load_alta 8
+reload
+wait 60
+winsize 1600 600
+wait 10
+loadshot sd_load_ancha 11
+reload
+wait 60
+quit
