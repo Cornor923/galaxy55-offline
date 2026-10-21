@@ -291,10 +291,11 @@ class GameView {
 
 	inline function onWater() return inWater(0.01);
 
-	function inWater( ?dz : Float ) : Bool {
+	/** Hero.inWater: isRealWater = solo agua (BTWater), no cascadas ni arena movediza */
+	function inWater( ?dz : Float, isRealWater = false ) : Bool {
 		if( dz == null ) dz = viewZ;
 		var b = world.block(Math.floor(px), Math.floor(py), Std.int(pz + dz));
-		return b != null && b.hasFlag(BFLiquid);
+		return b != null && b.hasFlag(BFLiquid) && (!isRealWater || b.type == BTWater);
 	}
 
 	// ---------------------------------------------------------------- bucle de entrada (Game.moveHero)
@@ -1501,7 +1502,8 @@ class GameView {
 		var wv = world.wave;
 		if( wv != null && (onWater() || inWater()) )
 			ez -= Math.sin(px * wv.width + wv.time) * Math.cos(py * wv.width + wv.time) * wv.amp;
-		c.fovY = Settings.fov;
+		// con los ojos en el agua el campo de vision se cierra al momento (Game.hx: hero.inWater(true), fov * 0.8)
+		c.fovY = inWater(null, true) ? Settings.fov * 0.8 : Settings.fov;
 		c.zNear = 0.1;
 		c.zFar = 1500;
 		// temblor (Game.update: pz + random * 0.4 * shake); en pausa y en los menus se queda como estaba
