@@ -82,6 +82,9 @@ class GameView {
 	public var thrusting(default, null) = false;
 	/** true si el raton gobierna la vista; si no, los cursores giran (Game.drag.active) */
 	public var mouseLook = true;
+	/** Game.actionKeys: false con la cantina abierta (Chest.onOpen): se anda y se mira, pero no se salta ni se usa el jetpack,
+	    el laser, la activacion ni las teclas de casilla. Cambio del port: las flechas tampoco mueven, son de la ventana */
+	public var actionKeys = true;
 
 	// vaiven del casco y de la camara (Game.walkBobbing, bobbingX, bobbingY)
 	public var walking = false;
@@ -302,13 +305,14 @@ class GameView {
 			// (Settings.turnKeys); por defecto se desplazan de lado
 			var move = false;
 			var turnMode = Settings.turnKeys;
-			if( K.isDown(K.RIGHT) || K.isDown(K.D) || K.isDown(K.NUMPAD_6) ) {
+			var arrows = actionKeys;
+			if( (arrows && K.isDown(K.RIGHT)) || K.isDown(K.D) || K.isDown(K.NUMPAD_6) ) {
 				if( turnSpeed < 0 ) turnSpeed = 0;
 				if( turnMode ) turnSpeed += 0.008 * tmod;
 				else strafe += 0.15;
 				move = true;
 			}
-			if( K.isDown(K.LEFT) || K.isDown(K.A) || K.isDown(K.Q) || K.isDown(K.NUMPAD_4) ) {
+			if( (arrows && K.isDown(K.LEFT)) || K.isDown(K.A) || K.isDown(K.Q) || K.isDown(K.NUMPAD_4) ) {
 				if( turnSpeed > 0 ) turnSpeed = 0;
 				if( turnMode ) turnSpeed -= 0.008 * tmod;
 				else strafe -= 0.15;
@@ -321,11 +325,11 @@ class GameView {
 			var turn = turnSpeed;
 
 			walkingSlow = K.isDown(K.X);
-			if( K.isDown(K.UP) || K.isDown(K.W) || K.isDown(K.Z) || K.isDown(K.X) || K.isDown(K.NUMPAD_8) ) {
+			if( (arrows && K.isDown(K.UP)) || K.isDown(K.W) || K.isDown(K.Z) || K.isDown(K.X) || K.isDown(K.NUMPAD_8) ) {
 				speed += 0.15;
 				walking = true;
 			} else pushPower = 0.0;
-			if( K.isDown(K.DOWN) || K.isDown(K.S) || K.isDown(K.NUMPAD_2) ) {
+			if( (arrows && K.isDown(K.DOWN)) || K.isDown(K.S) || K.isDown(K.NUMPAD_2) ) {
 				speed -= 0.15;
 				walking = true;
 			}
@@ -337,7 +341,7 @@ class GameView {
 				if( Math.abs(lx) > dead ) { strafe += 0.15 * lx; walking = true; }
 				if( Math.abs(ly) > dead ) { speed += -0.15 * ly; walking = true; }
 				walkingSlow = walkingSlow || pad.isDown(pad.config.B);
-				if( pad.isDown(pad.config.A) ) useJetpack = true;
+				if( actionKeys && pad.isDown(pad.config.A) ) useJetpack = true;
 				var rx = pad.rxAxis, ry = pad.ryAxis;
 				if( Math.abs(rx) > dead ) yaw += rx * 0.054 * Settings.mouseSens * tmod;
 				if( Math.abs(ry) > dead ) pitch -= ry * 0.036 * Settings.mouseSens * tmod * (Settings.invertY ? -1 : 1);
@@ -357,13 +361,13 @@ class GameView {
 				strafe *= 0.4;
 				turn *= 0.4;
 			}
-			if( K.isDown(K.SPACE) || K.isDown(K.CTRL) ) useJetpack = true;
+			if( actionKeys && (K.isDown(K.SPACE) || K.isDown(K.CTRL)) ) useJetpack = true;
 			yaw += turn;
 			clampPitch();
 		} else
 			turnSpeed = 0;
 
-		if( debugJet ) useJetpack = true;
+		if( debugJet && actionKeys ) useJetpack = true;
 		if( debugSpeed != 0 || debugStrafe != 0 ) {
 			speed = debugSpeed;
 			strafe = debugStrafe;
@@ -1080,7 +1084,7 @@ class GameView {
 	function updateAction( tmod : Float, controls : Bool, pad : hxd.Pad ) {
 		var K = hxd.Key;
 		var held = false, forceEmpty = false;
-		if( controls ) {
+		if( controls && actionKeys ) {
 			held = K.isDown(K.MOUSE_LEFT) || K.isDown(K.E) || K.isDown(K.SHIFT);
 			if( pad != null ) {
 				var rt = pad.isDown(pad.config.RT), lt = pad.isDown(pad.config.LT);
@@ -1103,7 +1107,7 @@ class GameView {
 			if( K.isDown(K.SHIFT) && K.isPressed(K.K) ) gotoShip(true);
 			if( (K.isPressed(K.R) || K.isPressed(K.DELETE)) && inv.getCurrentBlock() != null ) dropCurrent();
 		}
-		if( debugAction || debugKey != null ) {
+		if( debugAction || (debugKey != null && actionKeys) ) {
 			held = true;
 			armed = true;
 		}
@@ -1263,6 +1267,8 @@ class GameView {
 		var k = chestKey(x, y, z);
 		for( c in info.chests )
 			if( c.key == k ) {
+				// si esta abierta, la ventana se cierra antes de soltar lo que tiene (ya no se puede sacar nada de ella)
+				if( onChestBreak != null ) onChestBreak(c.t);
 				for( s in c.t ) if( s != null ) {
 					var d = drops.add(x + 0.5, y + 0.5, z + 0.5, Block.all[s.k]);
 					d.n = s.n;
@@ -1273,6 +1279,7 @@ class GameView {
 	}
 
 	public var onChest : Protocol.BlockInventory -> Void;
+	public var onChestBreak : Protocol.BlockInventory -> Void;
 
 	public function breakBlock( x : Int, y : Int, z : Int, b : Block, isProcess = false ) {
 		if( b.hasProp(PContainer) ) breakChest(x, y, z);

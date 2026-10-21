@@ -8,6 +8,7 @@ import Common;
  *   tp x y z [yaw pitch]    colocar al jugador (z = "top" pone sobre el suelo)
  *   tpl x y z [yaw pitch]   igual, con coordenadas locales de la nave
  *   look yaw pitch          orientar la camara
+ *   nudge dx dy [dz]        mover al jugador desde donde esta
  *   lookat x y z            mirar a ese punto (planeta)    lookl x y z   (nave)
  *   ship | planet           ir a la nave / bajar al planeta
  *   slot N                  elegir casilla (0 = excavador)
@@ -19,7 +20,7 @@ import Common;
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
- *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]
+ *   print inv|pos|zones|drops|loose|chest|msg|block x y z|select|ship|map [z]
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png
  *   quit
@@ -75,6 +76,11 @@ class Dev {
 				case "look":
 					g.yaw = f(a[1]);
 					g.pitch = f(a[2]);
+				case "nudge":
+					// nudge dx dy [dz]: mover al jugador desde donde esta (alejarse un poco de la cantina abierta)
+					g.px += f(a[1]);
+					g.py += f(a[2]);
+					if( a.length > 3 ) g.pz += f(a[3]);
 				case "lookat", "lookl":
 					var l = a[0] == "lookl";
 					var dx = f(a[1]) + (l ? sdx : 0) - g.px, dy = f(a[2]) + (l ? sdy : 0) - g.py, dz = f(a[3]) + (l ? sz : 0) - (g.pz + GameView.VIEW_Z);
@@ -405,6 +411,14 @@ class Dev {
 			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
 		case "hit": Sys.println(g.debugPick());
 		case "drops": Sys.println("sueltos: " + g.drops.count());
+		case "loose":
+			// sueltos con su bloque y cantidad
+			Sys.println("sueltos: " + [for( d in @:privateAccess g.drops.list ) d.block.k + "x" + d.n].join(" "));
+		case "chest":
+			// ventana de la cantina (abierta o no) y las cantinas de la partida con lo que tienen
+			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ");
+			var c = app.chest;
+			Sys.println("cantina: " + (c == null ? "cerrada" : "abierta [" + items(c.box) + "]") + "  guardadas: " + (g.info.chests == null ? "" : [for( e in g.info.chests ) e.key + " [" + items(e.t) + "]"].join(", ")));
 		case "msg": Sys.println("mensaje: " + g.message);
 		case "block":
 			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));

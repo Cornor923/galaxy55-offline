@@ -28,6 +28,7 @@ Ce sont celles du jeu original (le déplacement et la physique sont copiés de `
 | Choisir une case | 1–0 ou molette de la souris ; Tab = laser de minage (main vide) |
 | Jeter la pile choisie | R ou Suppr |
 | Activer (ordinateur de bord, portes) | viser, appuyer et relâcher |
+| Conteneur EScorp (coffre) | viser, appuyer et relâcher. Le jeu continue : clic prend et pose (Maj la moitié, Ctrl un ; ou flèches et Entrée, ou croix et A), glisser hors de la fenêtre fait regarder et s'éloigner le ferme (Échap et B aussi) |
 | Retourner au vaisseau | Maj+K, ou entrer dans le rayon de lumière d'atterrissage |
 | Créatif : palette de blocs | I (clic = mettre le bloc dans la case choisie, molette = page) |
 | Pause | Échap |
@@ -95,6 +96,9 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - La neige du biome d'hiver est un ajout du port : l'original ne l'a pas.
 - Le mode créatif et sa palette sont un ajout du port.
 - Le menu de l'ordinateur de bord a son propre style, comme dans la version Flash (l'original était une page web).
+- La fenêtre du conteneur EScorp montre aussi ton inventaire, se ferme aussi avec Échap, B ou Fermer et se manie au clavier
+  et à la manette (tant qu'elle est ouverte, les flèches déplacent sa sélection et pas le joueur). Son contenu est gardé dans
+  la partie (dans l'original, sur le serveur) et tombe au sol quand on le casse.
 - La boutique du robot marchand (dans l'original, c'était un panneau web), son vaisseau sur la carte stellaire et la flèche
   GPS orange qui le désigne sont des ajouts du port.
 - Les cascades et l'eau posée par le joueur baissent à chaque pas, avec une surface inclinée : ajout du port. La mer remplit
