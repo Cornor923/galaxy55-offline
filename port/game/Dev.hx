@@ -21,6 +21,8 @@ import Common;
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
+ *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
+ *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png
  *   quit
  */
@@ -89,6 +91,8 @@ class Dev {
 					if( a.length > 2 ) g.oxygen = f(a[2]);
 				case "hurt": g.hit(f(a[1]));
 				case "waves": Settings.waterWaves = a[1] == "1"; // waves 0|1: opcion de olas del agua
+				case "seaflood": w.waterFlood = w.floodThreshold() - (a.length > 1 ? Std.parseInt(a[1]) : 1);
+				case "seadrop": w.reduceWater();
 				case "vitals":
 					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming);
 				case "give":
@@ -366,6 +370,16 @@ class Dev {
 			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "sea":
+			// nivel del mar, contador y agua del bioma en la capa de arriba, en la de encima y en la de debajo
+			var wl = w.waterLevel(), cnt = [0, 0, 0];
+			for( y in 0...w.size ) for( x in 0...w.size ) for( i in 0...3 )
+				if( w.block(x, y, wl + 1 - i) == w.seaBlock ) cnt[i]++;
+			Sys.println("mar: nivel " + wl + " (generador " + @:privateAccess w.gen.getWaterInfos().level + ") inundacion " + w.waterFlood + "/" + w.floodThreshold()
+				+ " total " + w.waterTotal + " agua z" + (wl + 1) + "=" + cnt[0] + " z" + wl + "=" + cnt[1] + " z" + (wl - 1) + "=" + cnt[2]
+				+ " trozos pendientes " + @:privateAccess w.seaChunks.length + (@:privateAccess w.seaJob != null ? " (luz a medias)" : ""));
+		case "lightcheck":
+			Sys.println("luz: " + w.debugLightCheck());
 		case "hangar":
 			Sys.println("hangar: " + (g.hangar == null ? "no" : "valida=" + g.hangarValid + " error=" + g.hangar.error + " velocidad=" + g.hangar.speed) + " mensaje=" + g.message);
 		case "wares":

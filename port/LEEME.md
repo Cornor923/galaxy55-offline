@@ -89,7 +89,8 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - La tienda del robot comerciante (en el original era un panel web), su nave por el mapa de estrellas y la flecha GPS naranja
   que lo señala son un añadido de este port.
 - La cascada y el agua que pone el jugador bajan de altura en cada paso, con la superficie inclinada: añadido de este port.
-  El mar llena los huecos hasta su nivel, como el original.
+  El mar llena los huecos hasta su nivel y, cuando el agua que entra suma el volumen de una capa del mar, el nivel baja un
+  bloque en todo el planeta, como el original.
 - Las plantas y demás modelos se apuntan por lo que se ve (los píxeles de sus hojas), no por toda la celda (el original las trataba como un bloque entero).
 - Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).
