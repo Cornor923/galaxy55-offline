@@ -10,6 +10,7 @@ import Common;
  *   tp x y z [yaw pitch]    colocar al jugador (z = "top" pone sobre el suelo)
  *   tpl x y z [yaw pitch]   igual, con coordenadas locales de la nave
  *   look yaw pitch          orientar la camara
+ *   nudge dx dy [dz]        mover al jugador desde donde esta
  *   lookat x y z            mirar a ese punto (planeta)    lookl x y z   (nave)
  *   ship | planet           ir a la nave / bajar al planeta
  *   tele                    como si se volviera a pisar el teletransportador (enteringShip = 0): empieza a cargar
@@ -25,7 +26,7 @@ import Common;
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|msg|shake|fade|block x y z|around x y z r|select|ship|map [z]|power|life|fov|sky
+ *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|around x y z r|select|ship|map [z]|power|life|fov|sky
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
@@ -126,6 +127,11 @@ class Dev {
 				case "look":
 					g.yaw = f(a[1]);
 					g.pitch = f(a[2]);
+				case "nudge":
+					// nudge dx dy [dz]: mover al jugador desde donde esta (alejarse un poco de la cantina abierta)
+					g.px += f(a[1]);
+					g.py += f(a[2]);
+					if( a.length > 3 ) g.pz += f(a[3]);
 				case "lookat", "lookl":
 					var l = a[0] == "lookl";
 					var dx = f(a[1]) + (l ? sdx : 0) - g.px, dy = f(a[2]) + (l ? sdy : 0) - g.py, dz = f(a[3]) + (l ? sz : 0) - (g.pz + g.viewZ);
@@ -562,6 +568,14 @@ class Dev {
 			var ic = @:privateAccess app.statusIcon;
 			Sys.println("potencia " + g.miningPower + " icono " + (ic.visible ? "visible alfa " + Math.round(ic.alpha * 100) / 100 : "no"));
 		case "mips": Sys.println("mipmaps del atlas: " + Math.round(Atlas.mipTime * 1000) + " ms");
+		case "loose":
+			// sueltos con su bloque y cantidad
+			Sys.println("sueltos: " + [for( d in @:privateAccess g.drops.list ) d.block.k + "x" + d.n].join(" "));
+		case "chest":
+			// ventana de la cantina (abierta o no) y las cantinas de la partida con lo que tienen
+			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ");
+			var c = app.chest;
+			Sys.println("cantina: " + (c == null ? "cerrada" : "abierta [" + items(c.box) + "]") + "  guardadas: " + (g.info.chests == null ? "" : [for( e in g.info.chests ) e.key + " [" + items(e.t) + "]"].join(", ")));
 		case "msg": Sys.println("mensaje: " + g.message);
 		case "shake":
 			// temblor, subida de la camara y del HUD (en pixeles de la ventana) de este fotograma, y segundos de juego

@@ -27,7 +27,8 @@ Son los del juego original (el movimiento y la física son una copia de `ent/Her
 | Excavar o colocar | clic izquierdo, E o Mayús (mantener). Con la mano vacía excava; con un bloque, lo coloca si algo lo sujeta |
 | Elegir casilla | 1–0 o la rueda del ratón; Tab = excavador (mano vacía) |
 | Tirar la pila elegida | R o Supr |
-| Activar (ordenador de a bordo, puertas, cantinas, bomba exótica) | apuntar y pulsar y soltar. Si se mantiene hasta que el bloque se rompe, se excava: así se recoge la bomba exótica sin que explote (hace falta la carga rosa, como para la roca exótica) |
+| Activar (ordenador de a bordo, puertas, bomba exótica) | apuntar y pulsar y soltar. Si se mantiene hasta que el bloque se rompe, se excava: así se recoge la bomba exótica sin que explote (hace falta la carga rosa, como para la roca exótica) |
+| Cantina de ESCorp (cofre) | apuntar y pulsar y soltar. El juego no se para: clic coge y deja (Mayús la mitad, Ctrl una; o flechas e Intro, o cruceta y A), arrastrar fuera de la ventana mira y alejarse la cierra (Esc y B también) |
 | Volver a la nave | Mayús+K, o entrar en el haz de luz del aterrizaje |
 | Creativo: paleta de bloques | I (clic = poner el bloque en la casilla elegida, rueda = página) |
 | Pausa | Esc |
@@ -87,6 +88,9 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - La nieve del bioma de invierno es un añadido de este port: el original no la tiene.
 - El modo creativo y su paleta son un añadido de este port.
 - El menú del ordenador de a bordo tiene un aspecto propio, como en la versión Flash (el original era una página web).
+- La ventana de la cantina de ESCorp muestra también tu inventario, se cierra además con Esc, B o Cerrar y se maneja con el
+  teclado y el mando (mientras está abierta, las flechas mueven su marca y no al jugador). Lo que guarda va en la partida
+  (en el original, en el servidor) y sale suelto si se rompe.
 - La tienda del robot comerciante (en el original era un panel web), su nave por el mapa de estrellas y la flecha GPS naranja
   que lo señala son un añadido de este port.
 - La cascada y el agua que pone el jugador bajan de altura en cada paso, con la superficie inclinada: añadido de este port.

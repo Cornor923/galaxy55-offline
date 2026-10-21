@@ -44,7 +44,9 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
    roca helada, tinte muerto. Ahora se recuperan (`PortRules.hx`).
 4. **Cantina de ESCorp = cofre de 4 casillas**, copiado de `ent/Chest.hx` (`Chest.hx`):
    - clic coge/deja, Mayús la mitad, Ctrl una;
-   - se guarda en la partida (`chests`); al romperla suelta lo que tenía.
+   - se guarda en la partida (`chests`); al romperla suelta lo que tenía;
+   - no es modal, como el original: el juego sigue (sin saltar ni láser, `GameView.actionKeys`) y se cierra al alejarse más
+     de 0,5 de donde se abrió (`Chest.far`); con el cursor libre, arrastrar fuera de la ventana mueve la vista.
 5. **Hangar** (`Hangar.hx`, copia de `EditShip` y `net/EditShip.initLevel`):
    - cobertizo, zona de 17x17x14 y validación completa con los mensajes del original;
    - se entra desde ordenador → "Modificar la nave" y se sale pisando las casillas de teletransporte;

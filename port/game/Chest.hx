@@ -6,6 +6,7 @@ import IconMesh.Icons;
  * Cantina de ESCorp (BChest, BFContainer(4)): cofre de 4 casillas, copiado de ent/Chest.hx del original.
  * Clic en una casilla para cogerla y clic en otra para dejarla: junta pilas iguales, mueve a una vacia o intercambia.
  * Mayus = la mitad, Ctrl = una. En el original el contenido lo guardaba el servidor; aqui va en la partida (SaveInfo.chests).
+ * No es modal, como el original: el juego sigue y la ventana se cierra si el jugador se aleja (far).
  */
 class Chest extends h2d.Object {
 
@@ -17,7 +18,7 @@ class Chest extends h2d.Object {
 
 	var atlas : h3d.mat.Texture;
 	var inv : Inv;
-	var box : Protocol.BlockInventory;
+	public var box(default, null) : Protocol.BlockInventory;
 	var maxWeight : Int;
 	var grid : h2d.Object;
 	var info : h2d.Text;
@@ -27,18 +28,25 @@ class Chest extends h2d.Object {
 	var cur : Array<Int>;
 	/** añadido del port: casilla marcada con el mando o las flechas [lado, indice] (null = solo raton) */
 	var focus : Array<Int>;
-	var navCooldown = 0.;
+	/** posicion del jugador al abrirla (Chest.hpos del original) */
+	var hpos : { x : Float, y : Float, z : Float };
+	/** zona del panel: un clic fuera de ella mueve la vista (GalaxyApp) */
+	var panel : h2d.col.Bounds;
+	/** contenido dibujado (stamp): el juego sigue con la ventana abierta y lo recogido entra en el inventario */
+	var shown : String;
 
-	public function new( parent : h2d.Object, atlas : h3d.mat.Texture, inv : Inv, box : Protocol.BlockInventory ) {
+	public function new( parent : h2d.Object, atlas : h3d.mat.Texture, inv : Inv, box : Protocol.BlockInventory, hpos : { x : Float, y : Float, z : Float } ) {
 		super(parent);
 		this.atlas = atlas;
 		this.inv = inv;
 		this.box = box;
+		this.hpos = hpos;
 		maxWeight = inv.inv.maxWeight;
 		var w = 700, h = 330;
 		var px = (PX - w) * 0.5, py = 120.;
+		panel = h2d.col.Bounds.fromValues(px, py, w, h);
+		// sin oscurecer el fondo: no es modal (el original solo ponia el inventario del cofre arriba, sobre el juego)
 		var bg = new h2d.Graphics(this);
-		Theme.fullRect(bg, 0x000000, 0.45);
 		Theme.rect(bg, px, py, w, h, Theme.PANEL, 0.96);
 		Theme.rect(bg, px, py, w, 4, Theme.ACCENT);
 		Theme.text(this, Block.get(BChest).getName(), 2.4, Theme.TEXT, px + 24, py + 18);
@@ -61,7 +69,23 @@ class Chest extends h2d.Object {
 		refresh();
 	}
 
+	function stamp() {
+		return [for( s in box.concat(inv.inv.t) ) s == null ? "-" : s.k + "x" + s.n].join(",");
+	}
+
+	/** Chest.update del original: se cierra si el jugador se aleja mas de 0.5 de donde la abrio (girar o mirar no cuenta) */
+	public function far( g : GameView ) : Bool {
+		var dx = g.wrapDist(hpos.x - g.px), dy = g.wrapDist(hpos.y - g.py), dz = hpos.z - g.pz;
+		return Math.sqrt(dx * dx + dy * dy + dz * dz) > 0.5;
+	}
+
+	/** el punto (de la escena 2D) esta sobre el panel */
+	public function isOver( x : Float, y : Float ) : Bool {
+		return panel.contains(new h2d.col.Point(x, y));
+	}
+
 	function refresh() {
+		shown = stamp();
 		grid.removeChildren();
 		var w = 652;
 		for( i in 0...box.length ) slot(0, i, (w - box.length * CELL) * 0.5 + i * CELL, 0, box[i]);
@@ -118,11 +142,12 @@ class Chest extends h2d.Object {
 
 	inline function tab( side : Int ) return side == 0 ? box : inv.inv.t;
 
-	/** Mando y teclado (añadido del port; el original solo tenia raton): cruceta/stick/flechas mueven la marca,
-	 * A/Intro = clic, X = la mitad (como Mayus), Y = una (como Ctrl), B/Esc = cerrar. */
+	/** Mando y teclado (añadido del port; el original solo tenia raton): cruceta/flechas mueven la marca,
+	 * A/Intro = clic, X = la mitad (como Mayus), Y = una (como Ctrl), B/Esc = cerrar.
+	 * La palanca izquierda mueve al jugador (la ventana no es modal); las flechas, en cambio, son de la ventana (GameView.actionKeys). */
 	public function update( dt : Float, pad : hxd.Pad ) {
+		if( stamp() != shown ) refresh();
 		var K = hxd.Key;
-		if( navCooldown > 0 ) navCooldown -= dt;
 		var dx = 0, dy = 0;
 		if( K.isPressed(K.LEFT) ) dx = -1;
 		if( K.isPressed(K.RIGHT) ) dx = 1;
@@ -135,12 +160,6 @@ class Chest extends h2d.Object {
 			if( pad.isPressed(pad.config.dpadRight) ) dx = 1;
 			if( pad.isPressed(pad.config.dpadUp) ) dy = -1;
 			if( pad.isPressed(pad.config.dpadDown) ) dy = 1;
-			if( navCooldown <= 0 ) {
-				if( pad.xAxis < -0.6 ) { dx = -1; navCooldown = 0.18; }
-				else if( pad.xAxis > 0.6 ) { dx = 1; navCooldown = 0.18; }
-				else if( pad.yAxis < -0.6 ) { dy = -1; navCooldown = 0.18; }
-				else if( pad.yAxis > 0.6 ) { dy = 1; navCooldown = 0.18; }
-			}
 			if( pad.isPressed(pad.config.A) ) ok = true;
 			if( pad.isPressed(pad.config.X) ) { ok = true; half = true; }
 			if( pad.isPressed(pad.config.Y) ) { ok = true; one = true; }
@@ -184,7 +203,7 @@ class Chest extends h2d.Object {
 		var src = tab(cur[0]), isrc = cur[1];
 		var dst = tab(side), idst = idx;
 		var bsrc = src[isrc], bdst = dst[idst];
-		if( src == dst && isrc == idst ) {
+		if( bsrc == null || (src == dst && isrc == idst) ) {
 			cur = null;
 			refresh();
 			return;

@@ -44,7 +44,7 @@ class Theme {
 
 	/*
 	 * Con LetterBox la zona W x H no llega a los bordes de una ventana mas ancha o mas alta que 16:9: quedan bandas a los lados o
-	 * arriba y abajo. Todo lo que deba tapar la ventana entera (velos, oscurecido detras de un menu, la tienda, un cofre, la
+	 * arriba y abajo. Todo lo que deba tapar la ventana entera (velos, oscurecido detras de un menu, la tienda, la
 	 * paleta, el fondo del mapa de estrellas) se dibuja con fullRect o se agranda con coverWindow, nunca como un rectangulo
 	 * 0, 0, W, H. Lo que deba pegarse a un borde real de la ventana se coloca con visibleArea. port/dev/fullwindow.txt lo comprueba.
 	 */

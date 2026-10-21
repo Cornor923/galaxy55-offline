@@ -1169,6 +1169,7 @@ class GalaxyApp extends hxd.App {
 		invBar = new InvBar(s2d, game.inv, atlas, W);
 		game.onComputer = openComputer;
 		game.onChest = openChest;
+		game.onChestBreak = function(t) if( chest != null && chest.box == t ) closeChest();
 		if( game.info.mothership == true ) game.onHangarExit = backFromMothership;
 		if( game.hangar != null ) {
 			game.onHangarExit = exitHangar;
@@ -1257,12 +1258,16 @@ class GalaxyApp extends hxd.App {
 	public var shop : Shop;
 	public var chest : Chest;
 
-	/** Cantina de ESCorp (cofre) */
+	/** cantina abierta: se esta mirando con el raton (arrastrar fuera de la ventana) */
+	var chestDrag = false;
+
+	/** Cantina de ESCorp (cofre). No es modal (ent/Chest.hx): el juego sigue y se cierra al alejarse (update).
+	    El original tenia siempre el cursor libre (se miraba arrastrando): aqui se suelta el raton mientras esta abierta */
 	public function openChest( box : Protocol.BlockInventory ) {
 		if( game == null || chest != null || shop != null ) return;
-		chest = new Chest(s2d, atlas, game.inv, box);
+		chest = new Chest(s2d, atlas, game.inv, box, { x : game.px, y : game.py, z : game.pz });
 		chest.onClose = closeChest;
-		paletteOpen = true;
+		game.actionKeys = false;
 		captureMouse(false);
 	}
 
@@ -1270,10 +1275,25 @@ class GalaxyApp extends hxd.App {
 		if( chest == null ) return;
 		chest.remove();
 		chest = null;
-		paletteOpen = false;
-		if( game != null && state == Playing ) {
+		chestDrag = false;
+		if( game == null ) return;
+		game.actionKeys = true;
+		if( state == Playing ) {
 			captureMouse(true);
 			game.releaseAction();
+		}
+	}
+
+	/** Game.click/drag del original: con la cantina abierta, pulsar fuera de la ventana y arrastrar mueve la vista.
+	    Mientras se arrastra se captura el raton; al soltar, el cursor vuelve a donde estaba */
+	function updateChestDrag() {
+		var K = hxd.Key;
+		if( !chestDrag && K.isPressed(K.MOUSE_LEFT) && !chest.isOver(s2d.mouseX, s2d.mouseY) ) {
+			chestDrag = true;
+			captureMouse(true);
+		} else if( chestDrag && !K.isDown(K.MOUSE_LEFT) ) {
+			chestDrag = false;
+			captureMouse(false);
 		}
 	}
 
@@ -1658,21 +1678,26 @@ class GalaxyApp extends hxd.App {
 			var K = hxd.Key;
 			if( paletteOpen ) {
 				game.stopSounds();
-				if( chest != null ) {
-					chest.update(dt, pad);
-				} else if( shop != null ) {
+				if( shop != null ) {
 					shop.update(dt, pad);
 				} else if( palette != null ) {
 					palette.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
 				game.updateCamera();
-			} else if( game.creative && (K.isPressed(K.I) || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
+			} else if( chest == null && game.creative && (K.isPressed(K.I) || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
 				openPalette();
-			} else if( K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start)) ) { pause(); pausedThisFrame = true; }
+			} else if( chest == null && (K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start))) ) { pause(); pausedThisFrame = true; }
 			else {
+				// con la cantina abierta el juego sigue (Esc o B la cierran, sin pausar)
+				if( chest != null ) {
+					updateChestDrag();
+					chest.update(dt, pad);
+				}
 				game.update(dt, true, pad);
 				// salir de la nodriza o del hangar (ordenador, teletransporte) cambia de mundo dentro de update
 				if( game == null || state != Playing ) return;
+				// Process.update del original: la cantina se cierra si el jugador se ha alejado
+				if( chest != null && chest.far(game) ) closeChest();
 				game.updateCamera();
 				if( K.isPressed(K.F5) ) saveGame(true);
 				autosaveTimer += dt;
@@ -1685,10 +1710,11 @@ class GalaxyApp extends hxd.App {
 				// en pausa y en los menus no se recalcula y se queda quieto
 				hudShake = p.shake <= 0 ? 0 : Math.random() * 10 * p.shake * (Std.random(2) * 2 - 1) * Theme.visibleArea().w / engine.width;
 				// F (Game.checkKeys) muestra u oculta solo la linea de coordenadas y fps; la ayuda en pantalla (anadido del port) va con su opcion
-				if( K.isPressed(K.F) ) showFps = !showFps;
+				if( chest == null && K.isPressed(K.F) ) showFps = !showFps;
 				var lines = [];
 				if( showFps ) lines.push(Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps");
-				if( Settings.showHelp ) lines.push(Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : ""));
+				// con la cantina abierta, la ayuda de las teclas del juego no (casi todas estan desactivadas; la ventana tiene la suya)
+				if( Settings.showHelp && chest == null ) lines.push(Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : ""));
 				hud.text = lines.join("\n");
 				msgText.visible = game.message != null;
 				if( game.message != null ) {
@@ -1697,7 +1723,7 @@ class GalaxyApp extends hxd.App {
 					msgText.maxWidth = 600 / msgText.scaleX;
 					msgText.setPosition(s2d.width * 0.5 - 300, s2d.height * 0.72 + hudShake);
 				}
-				if( K.isPressed(K.H) || (pad != null && pad.isPressed(pad.config.back)) ) toggleHelmet();
+				if( chest == null && (K.isPressed(K.H) || (pad != null && pad.isPressed(pad.config.back))) ) toggleHelmet();
 				if( !helmet.visible && helmetOn ) helmet.visible = true;
 				updateHelmet(dt, p);
 				layoutHelmet();
@@ -1719,7 +1745,7 @@ class GalaxyApp extends hxd.App {
 		}
 		if( invBar != null ) invBar.visible = state == Playing || state == Paused;
 		cross.visible = state == Playing && game != null && game.laserActive;
-		dot.visible = state == Playing && game != null && !paletteOpen && !cross.visible;
+		dot.visible = state == Playing && game != null && !paletteOpen && (chest == null || chestDrag) && !cross.visible;
 		var fade = (state == Playing || state == Paused) && game != null ? Math.min(0.999, game.enteringShip) : 0.;
 		fadeRect.visible = fade > 0;
 		fadeRect.alpha = fade;
