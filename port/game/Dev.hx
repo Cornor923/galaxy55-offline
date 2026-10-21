@@ -532,6 +532,13 @@ class Dev {
 			function r( v : Float ) return Math.round(v * 1000) / 1000;
 			if( m == null ) Sys.println("cielo: sin estrellas");
 			else Sys.println("cielo: x -> " + r(m._11) + "," + r(m._12) + "," + r(m._13) + "  z -> " + r(m._31) + "," + r(m._32) + "," + r(m._33));
+			// dentro de un liquido (Sky.setLiquid): el color plano que tapa el degradado y si se ven las estrellas
+			@:privateAccess {
+				var flat = w.sky.dome.material.mainPass.getShader(h3d.shader.FixedColor);
+				var st = w.sky.stars;
+				Sys.println("cielo: " + (flat == null ? "degradado" : "color " + StringTools.hex(flat.color.toColor() & 0xFFFFFF, 6))
+					+ ", estrellas " + (st != null && st.visible ? "si" : "no"));
+			}
 		default: Sys.println("print desconocido: " + a[1]);
 		}
 	}
