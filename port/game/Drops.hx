@@ -36,6 +36,9 @@ class Drop {
  */
 class Drops {
 
+	/** Render (dummies): todos los bloques sueltos a 0.3 de su tamano */
+	static inline var SCALE = 0.3;
+
 	var list = new Array<Drop>();
 	var world : World;
 	var atlas : h3d.mat.Texture;
@@ -47,7 +50,7 @@ class Drops {
 
 	public function add( x : Float, y : Float, z : Float, b : Block ) : Drop {
 		var d = new Drop(x, y, z, b);
-		var poly = IconMesh.polygon(b, true, b.type == BTFull || b.type == BTReduced || b.type == BTExtended ? 0.38 : 0.6);
+		var poly = IconMesh.polygon(b, true);
 		if( poly != null ) {
 			var mat = h3d.mat.Material.create(atlas);
 			mat.shadows = false;
@@ -59,8 +62,10 @@ class Drops {
 			mat.textureShader.killAlphaThreshold = 0.5;
 			d.mat = mat;
 			d.obj = new h3d.scene.Object(world.root);
+			d.obj.setScale(SCALE);
+			// Render (dummies): centrado en x e y, apoyado por debajo (initTranslate(-0.5, -0.5) sin z)
 			var m = new h3d.scene.Mesh(poly, mat, d.obj);
-			m.setPosition(-0.5, -0.5, -0.5);
+			m.setPosition(-0.5, -0.5, 0);
 		}
 		d.light = world.lightAt(Std.int(x), Std.int(y), Std.int(z)) / World.LBASE;
 		list.push(d);
@@ -101,6 +106,7 @@ class Drops {
 				if( d.obj != null ) {
 					d.obj.setPosition(d.x, d.y, d.z);
 					d.obj.setRotation(0, 0, clock);
+					d.obj.setScale(SCALE);
 				}
 				i++;
 				continue;
@@ -179,8 +185,10 @@ class Drops {
 			}
 			if( d.obj != null ) {
 				var s = world.size;
-				d.obj.setPosition(d.x + s * Math.round((g.px - d.x) / s), d.y + s * Math.round((g.py - d.y) / s), d.z + 0.2);
+				d.obj.setPosition(d.x + s * Math.round((g.px - d.x) / s), d.y + s * Math.round((g.py - d.y) / s), d.z);
 				d.obj.setRotation(0, 0, clock);
+				// en su ultimo segundo de vida se encoge hasta desaparecer (if( d.time < 1 ) mpos.scale(d.time, ...))
+				d.obj.setScale(SCALE * Math.min(1, d.time));
 				var l = Math.min(1.3, d.light);
 				d.mat.color.set(l, l, l, 1);
 			}
