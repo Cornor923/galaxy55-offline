@@ -19,7 +19,7 @@ import Common;
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
- *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]
+ *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png
  *   quit
@@ -88,6 +88,7 @@ class Dev {
 					g.life = f(a[1]);
 					if( a.length > 2 ) g.oxygen = f(a[2]);
 				case "hurt": g.hit(f(a[1]));
+				case "shake": g.shake = f(a[1]); // shake V: pone el temblor (la bomba antigua lo pone a 1)
 				case "waves": Settings.waterWaves = a[1] == "1"; // waves 0|1: opcion de olas del agua
 				case "vitals":
 					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming);
@@ -417,6 +418,11 @@ class Dev {
 		case "hit": Sys.println(g.debugPick());
 		case "drops": Sys.println("sueltos: " + g.drops.count());
 		case "msg": Sys.println("mensaje: " + g.message);
+		case "shake":
+			// temblor, subida de la camara y del HUD (en pixeles de la ventana) de este fotograma, y segundos de juego
+			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
+			var hudPx = @:privateAccess app.hudShake * h3d.Engine.getCurrent().width / Ui.Theme.visibleArea().w;
+			Sys.println("temblor " + r(g.shake) + " camara " + r(g.shakeZ) + " hud " + r(hudPx) + " px  t=" + r(g.playSeconds));
 		case "block":
 			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));
 			Sys.println("bloque: " + (b == null ? "nada" : "" + b.k));

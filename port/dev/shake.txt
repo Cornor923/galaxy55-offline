@@ -1,0 +1,179 @@
+# temblor de la camara y del HUD (Game.shake): romper un bloque suma 0.05 * azar; al caer, con g = gravedad / 0.9: si g <= 0.4
+# (caida suave) suma 0.7 * g^2 y si no (caida fuerte, con dano) 0.4 * golpe, golpe = (g - 0.4) / 0.6. Baja 0.01 por tmod
+# (0.32 por segundo), maximo 1.5. La camara sube o baja hasta 0.4 * shake y el HUD hasta 10 px * shake; con la tienda abierta
+# (o en pausa) todo se queda quieto. Suelo de roca en z=56
+wait 3
+# a 30 imagenes por segundo como mucho, para que el aterrizaje caiga dentro de las impresiones seguidas
+maxfps 30
+planet
+wait 30
+filla 54 54 76 76 57 90 none
+filla 54 54 76 76 56 56 BRock
+filla 67 64 67 64 57 58 BWood
+tp 64.5 64.5 57.01 0 0
+wait 60
+print shake
+# 1) romper bloques
+breakp 60 60 56
+print shake
+breakp 61 60 56
+print shake
+breakp 62 60 56
+print shake
+breakp 63 60 56
+print shake
+wait 30
+print shake
+# 2) caida suave de 4 bloques (sin dano): se imprime cada fotograma alrededor del aterrizaje
+tp 64.5 64.5 61 0 0
+wait 10
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+vitals
+wait 60
+print shake
+# 3) caida fuerte de 12 bloques (dano): sube 0.4 * golpe, con dano = 1 + (15 * golpe)^2
+tp 64.5 64.5 69 0 0
+wait 25
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+vitals
+wait 60
+print shake
+# 4) imagenes: sin temblor y con el maximo (1.5); vida y oxigeno a medias para ver sus barras abajo
+life 60 50
+wait 5
+shot shake_0
+shake 3
+print shake
+shot shake_1
+shot shake_2
+shot shake_3
+print shake
+# 5) con la tienda abierta no se mueve nada (ni baja el temblor); al cerrarla sigue
+shop
+wait 5
+print shake
+wait 10
+print shake
+shot shake_tienda1
+shot shake_tienda2
+close
+wait 10
+print shake
+wait 30
+print shake
+wait 200
+print shake
+# 5b) excavando con temblor: el rayo sale de la mano aunque la camara suba y baje (Render: lazer, en el espacio de la camara)
+tp 64.5 64.5 57.01 0 -0.3
+slot 0
+key dig
+wait 5
+shake 1.5
+shot shake_rayo1
+shot shake_rayo2
+unkey
+wait 150
+# 6) creativo: sin dano; una caida fuerte cuenta como suave (el original igual con cheating)
+creative
+life 100
+tp 64.5 64.5 69 0 0
+wait 25
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+print shake
+vitals
+# 7) ventana mas alta que 16:9: el HUD sigue pegado a los bordes (Theme.visibleArea) y tiembla igual, en pixeles de la ventana
+winsize 800 900
+life 60 50
+wait 10
+shot shake_alta0
+shake 1.5
+shot shake_alta1
+shot shake_alta2
+print shake
+quit
