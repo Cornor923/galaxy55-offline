@@ -19,7 +19,7 @@ import Common;
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
- *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]
+ *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]|fov
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png
  *   quit
@@ -89,6 +89,7 @@ class Dev {
 					if( a.length > 2 ) g.oxygen = f(a[2]);
 				case "hurt": g.hit(f(a[1]));
 				case "waves": Settings.waterWaves = a[1] == "1"; // waves 0|1: opcion de olas del agua
+				case "fov": Settings.fov = Std.parseInt(a[1]); // fov N: opcion de campo de vision
 				case "vitals":
 					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming);
 				case "give":
@@ -406,6 +407,10 @@ class Dev {
 		case "hit": Sys.println(g.debugPick());
 		case "drops": Sys.println("sueltos: " + g.drops.count());
 		case "msg": Sys.println("mensaje: " + g.message);
+		case "fov":
+			// campo de vision de la camara y bloque en los ojos (en el agua: opcion * 0.8)
+			var b = w.block(Math.floor(g.px), Math.floor(g.py), Std.int(g.pz + GameView.VIEW_Z));
+			Sys.println("fov " + Math.round(@:privateAccess g.s3d.camera.fovY * 100) / 100 + " opcion=" + Settings.fov + " ojos=" + (b == null ? "aire" : "" + b.k));
 		case "block":
 			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));
 			Sys.println("bloque: " + (b == null ? "nada" : "" + b.k));
