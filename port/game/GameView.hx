@@ -172,6 +172,9 @@ class GameView {
 			// partida nueva: se empieza dentro de la nave, encima del teletransportador
 			gotoShip(true);
 			pitch = -0.25;
+		} else if( info.life != null && info.life <= 0 ) {
+			// guardada con la vida a 0 (durante el fundido de la muerte): de vuelta en la nave, como hero.hit(0) en Game.init
+			gotoShip(true);
 		} else {
 			px = info.px;
 			py = info.py;
@@ -371,7 +374,6 @@ class GameView {
 		}
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateLife(tmod);
-		updateFade(tmod);
 		// olas: fx.time * animWater.speed (tiempo en segundos * 0.5)
 		if( world.wave != null ) {
 			world.wave.time += realDt * 0.5;
@@ -383,6 +385,9 @@ class GameView {
 			ship.update(this, tmod);
 			message = ship.message(this);
 		}
+		// despues del teletransportador (el original sale de Game.update al acabar el fundido): la muerte lleva a la nave y
+		// ship.update, con el standingBlock del suelo, pondria enteringShip a 0 y el teletransportador lo bajaria
+		updateFade(tmod);
 		if( debugDoorFrames > 0 && ++debugDoorFrames == 12 ) {
 			// solo pruebas: abre la puerta de la nave que hay cerca del teletransportador
 			if( Sys.args().indexOf("--computer") >= 0 ) onComputer();

@@ -1,0 +1,30 @@
+# morir: vuelta a la nave y se queda en ella (el teletransportador no la baja); una partida guardada con la vida a 0 tambien vuelve a la nave
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 90 none
+filla 54 54 76 76 56 56 BRock
+set 64 68 56 BLava
+# 1) morir en el suelo: fundido rojo, nave (z 133) con la vida llena, y 2 s despues sigue en la nave
+tp 60.5 60.5 57.01 0 0
+wait 5
+hurt 500
+wait 100
+vitals
+wait 120
+vitals
+print pos
+# 2) morir en la lava, cerrar la ventana durante el fundido y Continuar: en la nave con la vida llena, no en la lava
+tp 64.5 68.5 57.01 0 0
+wait 5
+hurt 500
+wait 10
+vitals
+closewin
+reload
+wait 2
+vitals
+wait 120
+vitals
+print pos
+quit
