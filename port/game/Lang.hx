@@ -107,6 +107,8 @@ class Lang {
 		"resume" => ["Reanudar", "Resume", "Reprendre"],
 		"save" => ["Guardar partida", "Save game", "Sauvegarder"],
 		"saved.ok" => ["Partida guardada", "Game saved", "Partie sauvegardée"],
+		// captura con F2 (anadido del port: el original abria el dialogo de Flash para guardarla y no decia nada mas)
+		"shot.saved" => ["Captura guardada en %dir%", "Screenshot saved to %dir%", "Capture d'écran enregistrée dans %dir%"],
 		"mainmenu" => ["Menú principal", "Main menu", "Menu principal"],
 		"loading" => ["Generando el planeta...", "Generating the planet...", "Génération de la planète..."],
 		"loading.mesh" => ["Construyendo el terreno...", "Building the terrain...", "Construction du terrain..."],

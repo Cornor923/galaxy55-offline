@@ -9,7 +9,7 @@ conocidos, ver `ERRORES.md` en la raíz); el juego original en Flash sigue intac
 
 Compila (ver abajo) y haz doble clic en `jugar.bat`. Abre el menú de inicio: Continuar, Nueva partida, Cargar partida, Opciones y Salir.
 En Nueva partida eliges nombre, semilla, bioma, tamaño y modo: **Aventura** (como el original) o **Creativo** (añadido nuestro).
-Las partidas y los ajustes se guardan en `%APPDATA%\Galaxy55\` (se puede cambiar con la variable `GALAXY55_DATA`).
+Las partidas y los ajustes se guardan en `%APPDATA%\Galaxy55\` (se puede cambiar con la variable `GALAXY55_DATA`), y las capturas (F2) en su carpeta `screenshots`.
 El formato de las partidas puede cambiar entre versiones: no cuentes con que las de hoy sirvan siempre.
 
 ## Controles
@@ -31,6 +31,7 @@ Son los del juego original (el movimiento y la física son una copia de `ent/Her
 | Creativo: paleta de bloques | I (clic = poner el bloque en la casilla elegida, rueda = página) |
 | Pausa | Esc |
 | Guardado rápido | F5 |
+| Captura de pantalla | F2: un PNG sin el casco ni el HUD, al tamaño de la ventana, en `%APPDATA%\Galaxy55\screenshots\` |
 
 No hay botón de correr, como en el original. Mando: palanca izquierda mueve, derecha mira, A salta y jetpack, B camina despacio,
 RT excava, LT coloca, RB/LB o cruceta derecha/izquierda cambian de casilla, Y tira el bloque, Back casco, Start pausa. Menús: flechas/Intro/Esc, ratón o mando.
@@ -92,4 +93,5 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   El mar llena los huecos hasta su nivel, como el original.
 - Las plantas y demás modelos se apuntan por lo que se ve (los píxeles de sus hojas), no por toda la celda (el original las trataba como un bloque entero).
 - Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
+- La captura de F2 se guarda directamente en la carpeta `screenshots` y un mensaje dice dónde (el original abría el diálogo de Flash para guardarla).
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).

@@ -23,6 +23,8 @@ class Fx {
 	var beamTex : Array<h3d.mat.Texture>;
 	var beamId = -1;
 	var time = 0.;
+	/** excavando: overlay es la copia que tiembla; si no, la sombra del bloque que se va a poner */
+	var mining = false;
 
 	public function new( world : World, atlas : h3d.mat.Texture ) {
 		this.world = world;
@@ -149,7 +151,7 @@ class Fx {
 			box.scaleZ = sz + 0.003;
 		}
 
-		var mining = laser && hand == null;
+		mining = laser && hand == null;
 		// copia temblorosa del bloque
 		if( mining && g.canBreak ) {
 			if( overlayBlock != sel.b ) {
@@ -247,6 +249,14 @@ class Fx {
 			}
 		} else
 			beamRoot.visible = false;
+	}
+
+	/** Render.render(screenShot) del original: la captura de F2 no lleva la caja de seleccion (ni la sombra del bloque que se va
+	    a poner, anadido del port); el rayo y el bloque que tiembla al excavar si salen */
+	public function screenShotHidden() : Array<h3d.scene.Object> {
+		var l : Array<h3d.scene.Object> = [box];
+		if( overlay != null && !mining ) l.push(overlay);
+		return l;
 	}
 
 	function overlay_hide( drop = false ) {
