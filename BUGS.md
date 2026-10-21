@@ -12,7 +12,7 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 | 4 | Lighting | **To check while playing:** partial blocks (plates, iron, chests…) now take each corner's light from the neighbouring cells, like the original (`Builder.addCustomQuad`); before, the whole face had a single light. Models already used the original's light. |
 | 8 | Winter | **Spruce leaves** drop material; in the original they may not. |
 | 10 | Rendering | Dropped **crystals** (charges) look too wide. |
-| 14 | Water | **(Fix?)** When you open a cave next to the sea, the water rushes in and fills it at once at the same height as the sea, without getting lower as it advances. |
+| 14 | Water | **(Fix?)** When you open a cave next to the sea, the water rushes in and fills it at once at the same height as the sea, without getting lower as it advances. Now, as in the original (`net/Local.hx` and `SReduceWater`), the water that flows in is counted and, each time it adds up to the volume of one layer of the sea (hundreds or thousands of blocks, depending on the planet), the top layer disappears on the whole planet: the sea goes down one block. A small cave does not get there and still fills at once up to the sea level, as in the original. |
 
 ## Fixed
 

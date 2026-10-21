@@ -12,8 +12,10 @@ import Block;
  * - la hierba se cubre al quedar al aire (covered) y se descubre al taparla (uncover);
  * - al quitar un bloque se rompen los detalles de encima y lo anclado arriba o abajo;
  * - congelador (BFreezer): el agua cercana pasa a hielo y la lava a roca; BFTransform cambia el bloque al quitarlo;
- * - bloques con BFTrack (PTrack: el turbo minero): con el jugador dentro de su radio, la potencia de excavacion pasa a 3.
- * No se porta lo del servidor: camara compartida y la bajada del nivel del mar (SReduceWater).
+ * - bloques con BFTrack (PTrack: el turbo minero): con el jugador dentro de su radio, la potencia de excavacion pasa a 3;
+ * - cada bloque del agua del bioma que se pone aqui cuenta para bajar el nivel del mar (api.processBlock de Process.set, que
+ *   en el cliente original hace net/Local.hx); la bajada (World.reduceWater) se hace en la siguiente actualizacion.
+ * No se porta lo del servidor: camara compartida.
  */
 class WorldProcess {
 
@@ -25,12 +27,10 @@ class WorldProcess {
 	var propagate : Array<{ x : Int, y : Int, z : Int, b : Block, t : Int }> = [];
 	var time = 0.;
 	var frame = 0;
-	var waterLevel : Int;
 	public var allowTransforms = true;
 
-	public function new( world : World, waterLevel : Int, breakFn ) {
+	public function new( world : World, breakFn ) {
 		this.world = world;
-		this.waterLevel = waterLevel;
 		this.breakFn = breakFn;
 		initTrack();
 	}
@@ -48,11 +48,14 @@ class WorldProcess {
 		x = real(x);
 		y = real(y);
 		world.setBlock(x, y, z, b);
+		if( b != null && b == world.seaBlock && z < World.SHIP_Z ) world.addFlood();
 		onSet(x, y, z, old, b);
 	}
 
 	/** Process.update: pasos de 0,1 s. (hx, hy, hz): el jugador a media altura de los ojos (hero.z + viewZ * 0.5) */
 	public function update( dt : Float, hx : Float, hy : Float, hz : Float ) {
+		// la bajada del mar pedida por addFlood (Local: haxe.Timer.delay(reduceWater, 1))
+		if( world.floodFlag ) world.reduceWater();
 		time += dt;
 		var n = 0;
 		while( time >= 0.1 && n < 3 ) {
@@ -81,7 +84,7 @@ class WorldProcess {
 
 	function updateFlood() {
 		if( flooding.length == 0 ) return;
-		var wlevel = waterLevel;
+		var wlevel = world.waterLevel();
 		var flood = flooding;
 		flooding = [];
 		var i = 0;
@@ -128,6 +131,7 @@ class WorldProcess {
 		propagate.push({ x : real(x), y : real(y), z : z, b : b, t : 2 + Std.random(3) });
 	}
 
+	/** cambio del port: estos pasos no cuentan para bajar el nivel del mar (en el original el agua puesta inundaba como el mar) */
 	function setWater( x : Int, y : Int, z : Int, b : Block, level : Int ) {
 		x = real(x);
 		y = real(y);

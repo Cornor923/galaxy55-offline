@@ -1,0 +1,79 @@
+# bajada del nivel del mar (net/Local.hx y Game.onCommand(SReduceWater) del original), en BIWinterPeaks (mar en z = 32):
+#   powershell -File port/dev/devrun.ps1 -Script port/dev/nivel_mar.txt -Extra "--bgbiome=BIWinterPeaks" -Timeout 300
+# Una zanja abierta desde el lago y una cueva en un cerro de roca; con el contador a 12 bloques de la bajada, el agua que entra baja el
+# mar una capa en todo el planeta. Capturas antes (1) y despues (2) de la bajada y despues de guardar y volver a cargar (3):
+# el lago desde la colina, la orilla, bajo el agua y la cueva. lightcheck compara la luz con la de recalcular todo el planeta.
+# Sin olas, para que las capturas 2 y 3 (la luz de la bajada y la recalculada al cargar) se puedan comparar.
+wait 3
+planet
+wait 30
+trace
+waves 0
+print sea
+# cueva: un cerro de roca junto a la playa con un tunel (z 31..35) y un saliente seco en y = 106; zanja abierta en la playa
+# (z 31..32) entre el lago y la boca del tunel
+filla 107 103 116 108 31 37 BWinterRock
+filla 107 105 114 105 31 35 none
+filla 107 106 114 106 33 35 none
+filla 102 105 106 105 31 32 none
+wait 30
+tp 110.5 100.5 top 3.1416 -0.35
+wait 20
+shot nm_lago1
+tp 104.5 103.5 top 3.1416 -0.45
+wait 2
+shot nm_orilla1
+tp 92.5 105.5 28.5 0 0.35
+wait 2
+shot nm_agua1
+tp 113.5 106.5 33.01 3.1416 -0.3
+wait 2
+shot nm_cueva1
+print lightcheck
+# se abre la zanja al lago: el mar entra en la zanja y en la cueva
+seaflood 12
+breakp 101 105 32
+breakp 101 105 31
+wait 600
+print sea
+print block 104 105 32
+print block 104 105 31
+print block 112 105 32
+print block 112 105 31
+print lightcheck
+tp 110.5 100.5 top 3.1416 -0.35
+wait 20
+shot nm_lago2
+tp 104.5 103.5 top 3.1416 -0.45
+wait 2
+shot nm_orilla2
+tp 92.5 105.5 28.5 0 0.35
+wait 2
+shot nm_agua2
+tp 113.5 106.5 33.01 3.1416 -0.3
+wait 2
+shot nm_cueva2
+# el agua que fluye solo llega al nivel nuevo
+breakp 115 105 31
+breakp 115 105 32
+wait 60
+print block 115 105 31
+print block 115 105 32
+# guardar y volver a cargar: el nivel y el contador se guardan con la partida
+closewin
+reload
+wait 600
+print sea
+print block 104 105 32
+print block 88 105 32
+tp 110.5 100.5 top 3.1416 -0.35
+wait 20
+shot nm_lago3
+tp 104.5 103.5 top 3.1416 -0.45
+wait 2
+shot nm_orilla3
+tp 113.5 106.5 33.01 3.1416 -0.3
+wait 2
+shot nm_cueva3
+waves 1
+quit

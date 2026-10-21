@@ -12,7 +12,7 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 | 4 | Luz | **Por comprobar jugando:** los bloques parciales (placas, hierro, cofres…) ahora toman la luz de cada esquina de las celdas vecinas, como el original (`Builder.addCustomQuad`); antes toda la cara tenía una sola luz. Los modelos ya usaban la luz del original. |
 | 8 | Invierno | Las **hojas del abeto** sueltan material; puede que en el original no. |
 | 10 | Render | Los **cristales** sueltos (cargas) se ven demasiado anchos. |
-| 14 | Agua | **(¿Arreglar?)** Al abrir una cueva junto al mar, el agua entra y la llena de golpe a la misma altura que el mar, sin bajar mientras avanza. |
+| 14 | Agua | **(¿Arreglar?)** Al abrir una cueva junto al mar, el agua entra y la llena de golpe a la misma altura que el mar, sin bajar mientras avanza. Ahora, como en el original (`net/Local.hx` y `SReduceWater`), el agua que entra cuenta y, cada vez que suma el volumen de una capa del mar (cientos o miles de bloques, según el planeta), la capa de arriba desaparece en todo el planeta: el mar baja un bloque. Una cueva pequeña no llega a tanto y se sigue llenando de golpe hasta el nivel del mar, como en el original. |
 
 ## Arreglados
 

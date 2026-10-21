@@ -39,6 +39,34 @@ class MeshBuf {
 	public function new() {}
 }
 
+/** Una bajada del mar mientras se reparte su luz (World.reduceWater), que puede durar varios fotogramas. */
+class SeaLight {
+	public var z = 0;
+	public var top = 0;
+	public var lmax = 0;
+	/** columnas con una celda quitada o con otra luz */
+	public var chg : haxe.io.Bytes;
+	/** por columna, la primera altura con aire hasta arriba (255 = sin calcular) */
+	public var sky : haxe.io.Bytes;
+	/** celdas ya repartidas, un bit por celda */
+	public var seen : haxe.io.Bytes;
+	/** columnas de la capa quitada que pueden estar al sol y por cual se va */
+	public var cand : Array<Int>;
+	public var ci = 0;
+	public var lsun = 0;
+	/** anillo actual del reparto (al principio, las semillas), el siguiente y su luz */
+	public var cur : Array<Int>;
+	public var next = new Array<Int>();
+	public var i = 0;
+	public var lvalue = 0.;
+	public var removed = 0;
+	public var sunCols = 0;
+	public var cells = 0;
+	public var frames = 0;
+	public var time = 0.;
+	public function new() {}
+}
+
 /**
 	Un planeta: lo genera con los generadores originales y construye su geometria.
 	Se carga por tandas (step) para poder mostrar una barra de progreso sin congelar la ventana.
@@ -104,6 +132,32 @@ class World {
 	 * Sin entrada = fuente (llena, como todo el agua del original). Se guarda en editMap junto al bloque: indice | nivel << 16.
 	 */
 	public var waterLvl = new Map<Int, Int>();
+
+	/**
+	 * Mar del planeta (planet.waterLevel, waterTotal y waterFlood del original). Cada bloque del agua del bioma que pone Process
+	 * suma uno a waterFlood (net/Local.processBlock); al llegar al volumen de una capa (waterTotal / nivel) la capa de arriba
+	 * desaparece en todo el planeta y el nivel baja 1 (Local.reduceWater y Game.onCommand(SReduceWater)).
+	 * El nivel y el contador se guardan con los cambios del terreno, con las claves negativas SEA_LEVEL y SEA_FLOOD.
+	 */
+	var seaLevel = 0;
+	public var waterTotal(default, null) = 0;
+	public var waterFlood = 0;
+	/** agua del bioma (Local.waterId); null en la nave y en el hangar */
+	public var seaBlock(default, null) : Block;
+	var seaId = -1;
+	/** agua del mar que puso el generador en cada altura (lo que descuenta Local.reduceWater) */
+	var seaCount : Array<Int>;
+	/** floodFlag de Local: hay una bajada pendiente */
+	public var floodFlag(default, null) = false;
+	/** trozos que rehacer tras una bajada, los mas cercanos primero */
+	var seaChunks = new Array<Int>();
+	static inline var SEA_LEVEL = -1;
+	static inline var SEA_FLOOD = -2;
+	/** posicion de la camara (updateWrap): para rehacer primero lo que se ve */
+	var viewX = 0.;
+	var viewY = 0.;
+	/** reparto de la luz de una bajada del mar que aun no ha acabado */
+	var seaJob : SeaLight;
 	var chunkMeshes : Array<Array<Int>>;
 	var curList : Array<Int>;
 	var immediate = new Array<Int>();
@@ -159,7 +213,11 @@ class World {
 		gen.alloc(BMinIron);
 		gen.alloc(BMinAluminium);
 		for( s in bd.soils ) gen.alloc(s);
-		if( shipData == null ) gen.startGenerate(biome);
+		if( shipData == null ) {
+			gen.startGenerate(biome);
+			seaLevel = gen.getWaterInfos().level;
+			seaBlock = Block.get(bd.water);
+		}
 		else initShip(shipData);
 		// como Builder.init: los modelos sin BFSize usan su propia caja para las colisiones
 		for( b in Block.all )
@@ -280,9 +338,9 @@ class World {
 	}
 
 	/** bloque en una celda (null si es aire) */
-	/** nivel del mar del generador (Planet.waterLevel del original) */
+	/** nivel del mar actual (planet.waterLevel del original): el del generador menos las capas que han desaparecido */
 	public function waterLevel() : Int {
-		return gen == null ? 0 : gen.getWaterInfos().level;
+		return seaLevel;
 	}
 
 	public function block( x : Int, y : Int, z : Int ) : Block {
@@ -360,6 +418,30 @@ class World {
 			s += id + ":" + (b == null ? "null" : Std.string(b.k) + "/" + Std.string(b.type)) + "=" + counts.get(id) + " ";
 		}
 		return s;
+	}
+
+	/** diagnostico: compara la luz actual con la de recalcular todo el planeta (solo para pruebas; la luz actual se queda) */
+	public function debugLightCheck() : String {
+		var cur = light;
+		computeLight();
+		var fresh = light;
+		light = cur;
+		var diff = 0, brighter = 0, maxd = 0, at = -1, seam = 0;
+		for( p in 0...fresh.length ) {
+			var d = cur.get(p) - fresh.get(p);
+			if( d == 0 ) continue;
+			diff++;
+			if( d > 0 ) brighter++;
+			var c = p >> ZBITS, x = c % size, y = Std.int(c / size);
+			if( x < 12 || y < 12 || x >= size - 12 || y >= size - 12 ) seam++;
+			if( (d < 0 ? -d : d) > maxd ) {
+				maxd = d < 0 ? -d : d;
+				at = p;
+			}
+		}
+		var col = at >> ZBITS;
+		return "celdas con otra luz " + diff + " (mas claras " + brighter + ", mas oscuras " + (diff - brighter) + ", junto a x = 0 o y = 0: " + seam + "), mayor diferencia " + maxd
+			+ (at < 0 ? "" : " en " + (col % size) + "," + Std.int(col / size) + "," + (at & (HEIGHT - 1)));
 	}
 
 	/** añadido del port para la nave nodriza (hecha en Minecraft): caida de la luz de las lamparas por bloque (null = la de cada bloque) */
@@ -554,6 +636,8 @@ class World {
 	public function startPlace( rnd : mt.Rand ) : { x : Int, y : Int, z : Int } {
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
 		var binf = Data.getBiome(biome);
+		// cambio del port: con el nivel del mar del generador, no con el actual (el original usa planet.waterLevel): si no, tras
+		// una bajada la nave podia aterrizar en otro sitio y una partida guardada dentro de ella quedaba en el aire
 		var water = gen.getWaterInfos().level;
 		var soil = Block.get(binf.soils[1]);
 		var through = new Map<Int, Bool>();
@@ -630,11 +714,25 @@ class World {
 	}
 
 	function applySaved() {
+		// el mar va antes que los cambios: las capas quitadas son del terreno generado y lo puesto despues se queda
+		if( seaBlock != null ) {
+			var level = seaLevel, flood = 0;
+			if( savedEdits != null ) {
+				var i = 0;
+				while( i + 1 < savedEdits.length ) {
+					if( savedEdits[i] == SEA_LEVEL ) level = savedEdits[i + 1];
+					else if( savedEdits[i] == SEA_FLOOD ) flood = savedEdits[i + 1];
+					i += 2;
+				}
+			}
+			initSea(level, flood);
+		}
 		if( savedEdits == null ) return;
 		var i = 0;
 		while( i + 1 < savedEdits.length ) {
 			var key = savedEdits[i], gi = savedEdits[i + 1];
 			i += 2;
+			if( key < 0 ) continue;
 			var lvl = gi >> 16;
 			var b = (gi & 0xFFFF) == 0 ? null : Block.all[gi & 0xFFFF];
 			bytes.set(key, localId(b));
@@ -651,7 +749,260 @@ class World {
 			out.push(k);
 			out.push(editMap.get(k));
 		}
+		// el mar, si ha cambiado (las partidas sin estas claves cargan el del generador)
+		if( seaBlock != null && (seaLevel != gen.getWaterInfos().level || waterFlood != 0) ) {
+			out.push(SEA_LEVEL);
+			out.push(seaLevel);
+			out.push(SEA_FLOOD);
+			out.push(waterFlood);
+		}
 		return out;
+	}
+
+	// ---------------------------------------------------------------- nivel del mar
+
+	/**
+	 * Al terminar de generar: el total de agua (Offline: planet.waterTotal), el agua de cada altura y, si la partida tenia el
+	 * mar mas bajo, las capas que ya habian desaparecido (solo el agua del generador: lo cambiado despues esta en editMap).
+	 */
+	function initSea( level : Int, flood : Int ) {
+		var gl = gen.getWaterInfos().level;
+		waterTotal = gen.getWaterInfos().total;
+		waterFlood = flood;
+		seaId = localId(seaBlock);
+		if( gl > HEIGHT - 2 ) gl = HEIGHT - 2;
+		seaLevel = level < 0 ? 0 : (level > gl ? gl : level);
+		seaCount = [for( _ in 0...gl + 1 ) 0];
+		if( seaId <= 0 ) return;
+		for( col in 0...size * size ) {
+			var base = col << ZBITS;
+			for( z in 1...gl + 1 ) {
+				if( bytes.get(base | z) != seaId ) continue;
+				seaCount[z]++;
+				if( z > seaLevel ) bytes.set(base | z, 0);
+			}
+		}
+	}
+
+	/** Local.processBlock: Process ha puesto un bloque del agua del bioma */
+	public function addFlood() {
+		waterFlood++;
+		// cambio del port: sin mar (waterTotal = 0) el umbral seria 0 y cada bloque de agua bajaria un mar que no existe
+		if( !floodFlag && waterTotal > 0 && waterFlood >= waterTotal / seaLevel ) floodFlag = true;
+	}
+
+	/** bloques de agua que faltan para la siguiente bajada (pruebas) */
+	public function floodThreshold() : Int {
+		return seaLevel <= 0 ? 0 : Math.ceil(waterTotal / seaLevel);
+	}
+
+	/**
+	 * Local.reduceWater + Game.onCommand(SReduceWater): desaparece el agua del bioma de la capa z = nivel del mar en todo el
+	 * planeta y el nivel baja 1; el contador pierde el agua que el generador puso en esa capa.
+	 * El original rehace todas las celdas (cada una recalcula su luz al rehacerse). Aqui la luz solo cambia donde la capa
+	 * quitada recibia el sol, con las mismas reglas que computeLight: el sol baja hasta el nuevo primer bloque, da luz de sol a
+	 * los lados y se reparte desde ahi (stepSeaLight, en varios fotogramas si es mucho). Luego se rehacen solo los trozos con
+	 * celdas quitadas o con otra luz y los que dan a ellos, los mas cercanos a la camara primero.
+	 */
+	public function reduceWater() {
+		floodFlag = false;
+		var z = seaLevel;
+		if( z <= 0 || seaCount == null ) return;
+		// una bajada anterior a medias se termina antes
+		while( seaJob != null ) stepSeaLight(1e9);
+		// cambio del port: Local.reduceWater cuenta Type.enumIndex(BWater), no el agua del bioma, y en los otros biomas el
+		// contador no bajaba nunca (cada bloque nuevo volvia a bajar el mar); aqui se cuenta el agua del bioma
+		waterFlood -= z < seaCount.length ? seaCount[z] : 0;
+		seaLevel--;
+		var cols = size * size;
+		var t0 = haxe.Timer.stamp();
+		var j = seaJob = new SeaLight();
+		j.z = z;
+		j.top = lightTop >= 0 ? lightTop : HEIGHT - 1;
+		j.lmax = Std.int(sunP);
+		j.chg = haxe.io.Bytes.alloc(cols);
+		j.sky = haxe.io.Bytes.alloc(cols);
+		j.sky.fill(0, cols, 255);
+		j.seen = haxe.io.Bytes.alloc((cols << ZBITS) >> 3);
+		// las celdas de esa capa cambiadas en la partida (pocas) quedan como aire en el guardado; las del generador las vuelve a
+		// quitar initSea al cargar
+		for( k in [for( k in editMap.keys() ) if( (k & (HEIGHT - 1)) == z && bytes.get(k) == seaId ) k] ) {
+			editMap.set(k, 0);
+			waterLvl.remove(k);
+		}
+		j.cand = [];
+		for( col in 0...cols ) {
+			var p = (col << ZBITS) | z;
+			var id = bytes.get(p);
+			if( id != seaId ) {
+				// agua del mar bajo un bloque en la nueva capa de arriba: con olas tiene cara de arriba (Builder.hx: anim && z == waterLevel)
+				if( id != 0 && bytes.get(p - 1) == seaId ) j.chg.set(col, 1);
+				continue;
+			}
+			bytes.set(p, 0);
+			j.removed++;
+			j.chg.set(col, 1);
+			// puede estar al sol si encima hay luz plena (la tiene todo el aire al sol); se mira en stepSeaLight
+			if( z == j.top || light.get(p + 1) >= j.lmax ) j.cand.push(col);
+		}
+		j.lsun = Std.int(sunP - sunF);
+		if( j.lsun < 0 ) j.lsun = 0;
+		j.cur = [];
+		j.lvalue = sunP - sunF * 2;
+		j.time = haxe.Timer.stamp() - t0;
+		if( FLUSH_TIME ) Sys.println("flush: capa del mar quitada " + Std.int(j.time * 1000) + " ms");
+		stepSeaLight(SEA_BUDGET);
+	}
+
+	/** primera altura desde la que la columna es aire hasta arriba (aire al sol), calculada una vez por bajada */
+	inline function skyZ( col : Int ) : Int {
+		var j = seaJob;
+		var s = j.sky.get(col);
+		if( s == 255 ) {
+			var base = col << ZBITS;
+			s = j.top + 1;
+			while( s > 0 ) {
+				var id = bytes.get(base | (s - 1));
+				if( id != 0 && idTag[id] != 0 ) break;
+				s--;
+			}
+			j.sky.set(col, s);
+		}
+		return s;
+	}
+
+	/**
+	 * Columna con la capa quitada al aire: el aire nuevo al sol tiene luz plena y da luz de sol a los lados como en
+	 * computeLight, a -x y -y (la que se cuela) y a +x y +y (bajo el primer bloque), salvo de la ultima columna o fila a la
+	 * primera, que computeLight recorre antes; el primer bloque, ahora mas abajo, tambien
+	 */
+	function seaSunColumn( col : Int ) {
+		var j = seaJob;
+		var x = col % size, y = Std.int(col / size);
+		var base = col << ZBITS;
+		var s = skyZ(col);
+		j.sunCols++;
+		for( k in s...j.z + 1 ) {
+			var p = base | k;
+			if( light.get(p) < j.lmax ) light.set(p, j.lmax);
+			sunSide(((x == 0 ? size - 1 : x - 1) + y * size) << ZBITS | k);
+			sunSide((x + (y == 0 ? size - 1 : y - 1) * size) << ZBITS | k);
+			if( x < size - 1 ) sunSide(p + (1 << ZBITS));
+			if( y < size - 1 ) sunSide(p + (size << ZBITS));
+		}
+		if( s > 0 ) sunSide(base | (s - 1));
+	}
+
+	/**
+	 * Luz de sol de computeLight en una celda junto al aire al sol (o el primer bloque): semilla del reparto, aunque ya tenga
+	 * mas luz de una lampara (en computeLight el sol va antes que las lamparas)
+	 */
+	function sunSide( q : Int ) {
+		var j = seaJob;
+		var t = idTag[bytes.get(q)];
+		if( t >= NOLIGHT || (j.seen.get(q >> 3) & (1 << (q & 7))) != 0 || (t == 0 && (q & (HEIGHT - 1)) >= skyZ(q >> ZBITS)) ) return;
+		j.seen.set(q >> 3, j.seen.get(q >> 3) | (1 << (q & 7)));
+		if( light.get(q) < j.lsun ) {
+			light.set(q, j.lsun);
+			j.chg.set(q >> ZBITS, 1);
+		}
+		j.cur.push(q);
+	}
+
+	/**
+	 * El reparto de computeLight (flood) desde las semillas nuevas, anillo a anillo, durante budget segundos. Cruza tambien las
+	 * celdas que ya tienen mas luz (de una lampara u otra semilla: en computeLight el sol se reparte antes que las lamparas) y
+	 * no cruza el aire al sol; cada celda una vez, en el anillo mas cercano. Al acabar pone a rehacer los trozos tocados.
+	 */
+	function stepSeaLight( budget : Float ) {
+		var j = seaJob;
+		var ts = haxe.Timer.stamp();
+		var sz = size, n = 0;
+		// primero las semillas: las columnas de la capa quitada que ahora estan al aire hasta arriba
+		while( j.ci < j.cand.length ) {
+			var col = j.cand[j.ci++];
+			if( skyZ(col) <= j.z ) seaSunColumn(col);
+			if( (++n & 255) == 0 && haxe.Timer.stamp() - ts > budget ) {
+				j.time += haxe.Timer.stamp() - ts;
+				j.frames++;
+				return;
+			}
+		}
+		while( true ) {
+			var l = Std.int(j.lvalue);
+			if( l > 15 ) l = 15;
+			if( l <= 0 || j.cur.length == 0 ) break;
+			if( j.i >= j.cur.length ) {
+				j.cur = j.next;
+				j.next = [];
+				j.i = 0;
+				j.lvalue -= sunF;
+				continue;
+			}
+			var p = j.cur[j.i++];
+			var pz = p & (HEIGHT - 1);
+			var col = p >> ZBITS;
+			var x = col % sz, y = Std.int(col / sz);
+			seaSpread(((x == 0 ? col + sz - 1 : col - 1) << ZBITS) | pz, l);
+			seaSpread(((x == sz - 1 ? col - (sz - 1) : col + 1) << ZBITS) | pz, l);
+			seaSpread(((y == 0 ? col + sz * (sz - 1) : col - sz) << ZBITS) | pz, l);
+			seaSpread(((y == sz - 1 ? col - sz * (sz - 1) : col + sz) << ZBITS) | pz, l);
+			if( pz > 0 ) seaSpread(p - 1, l);
+			if( pz < HEIGHT - 1 ) seaSpread(p + 1, l);
+			j.cells++;
+			if( (++n & 1023) == 0 && haxe.Timer.stamp() - ts > budget ) {
+				j.time += haxe.Timer.stamp() - ts;
+				j.frames++;
+				if( FLUSH_TIME ) Sys.println("flush: luz del mar " + Std.int((haxe.Timer.stamp() - ts) * 1000) + " ms");
+				return;
+			}
+		}
+		j.time += haxe.Timer.stamp() - ts;
+		j.frames++;
+		if( FLUSH_TIME ) Sys.println("flush: luz del mar " + Std.int((haxe.Timer.stamp() - ts) * 1000) + " ms (fin)");
+		seaJob = null;
+		// trozos que rehacer: los de las columnas tocadas y los que dan a ellas (caras y esquinas del agua en el borde)
+		var nc = size >> 4;
+		var queued = haxe.io.Bytes.alloc(nc * nc);
+		for( id in seaChunks ) queued.set(id, 1);
+		for( col in 0...size * size ) {
+			if( j.chg.get(col) == 0 ) continue;
+			var x = col % size, y = Std.int(col / size);
+			for( dy in -1...2 )
+				for( dx in -1...2 ) {
+					var id = (wrapC(x + dx) >> 4) + (wrapC(y + dy) >> 4) * nc;
+					if( queued.get(id) != 0 ) continue;
+					queued.set(id, 1);
+					seaChunks.push(id);
+				}
+		}
+		var vx = viewX / CSIZE - 0.5, vy = viewY / CSIZE - 0.5;
+		inline function dist( id : Int ) : Float {
+			var dx = Math.abs(id % nc - vx), dy = Math.abs(Std.int(id / nc) - vy);
+			if( dx > nc * 0.5 ) dx = nc - dx;
+			if( dy > nc * 0.5 ) dy = nc - dy;
+			return dx * dx + dy * dy;
+		}
+		seaChunks.sort(function(a, b) return Reflect.compare(dist(a), dist(b)));
+		if( Dev.trace || FLUSH_TIME )
+			Sys.println("mar: capa " + j.z + " quitada (" + j.removed + " celdas, " + j.sunCols + " al sol), nivel " + seaLevel + ", inundacion " + waterFlood
+				+ "; luz " + Std.int(j.time * 1000) + " ms en " + j.frames + " fotogramas (" + j.cells + " celdas), " + seaChunks.length + " trozos que rehacer");
+	}
+
+	inline function seaSpread( q : Int, l : Int ) {
+		var j = seaJob;
+		var t = idTag[bytes.get(q)];
+		if( t < NOLIGHT && (j.seen.get(q >> 3) & (1 << (q & 7))) == 0 ) {
+			var v = light.get(q);
+			if( !(t == 0 && v >= j.lmax && (q & (HEIGHT - 1)) >= skyZ(q >> ZBITS)) ) {
+				j.seen.set(q >> 3, j.seen.get(q >> 3) | (1 << (q & 7)));
+				if( v < l ) {
+					light.set(q, l);
+					j.chg.set(q >> ZBITS, 1);
+				}
+				j.next.push(q);
+			}
+		}
 	}
 
 	inline function cellKey( x : Int, y : Int, z : Int ) : Int {
@@ -846,10 +1197,26 @@ class World {
 			k++;
 		}
 		if( tm > 0 && k > 0 ) Sys.println("flush: " + k + " trozos de luz " + Std.int((haxe.Timer.stamp() - tm) * 1000) + " ms (quedan " + lightChunks.length + ")");
+		// bajada del mar: primero se acaba de repartir la luz; luego los trozos tocados, al menos uno por fotograma y los que
+		// quepan en SEA_BUDGET
+		if( seaJob != null ) stepSeaLight(SEA_BUDGET);
+		else if( seaChunks.length > 0 ) {
+			var ts = haxe.Timer.stamp();
+			k = 0;
+			do {
+				var id = seaChunks.shift();
+				buildChunk(id % n, Std.int(id / n));
+				k++;
+			} while( seaChunks.length > 0 && haxe.Timer.stamp() - ts < SEA_BUDGET );
+			if( FLUSH_TIME ) Sys.println("flush: " + k + " trozos del mar " + Std.int((haxe.Timer.stamp() - ts) * 1000) + " ms (quedan " + seaChunks.length + ")");
+		}
 	}
 
+	/** tiempo por fotograma para la luz y los trozos de una bajada del mar (s) */
+	static inline var SEA_BUDGET = 0.006;
+
 	public inline function hasPending() : Bool {
-		return immediate.length > 0 || pendingRelight.length > 0 || lightChunks.length > 0;
+		return immediate.length > 0 || pendingRelight.length > 0 || lightChunks.length > 0 || seaChunks.length > 0 || seaJob != null;
 	}
 
 	/** Recalcula la luz de una zona (radio rIn) usando las fuentes de una zona mayor, como el original pero local. */
@@ -1195,6 +1562,8 @@ class World {
 	 * mas cercana a la camara, asi no hay borde del mundo y el horizonte sigue siendo terreno.
 	 */
 	public function updateWrap( x : Float, y : Float ) {
+		viewX = x;
+		viewY = y;
 		if( !wraps || (x == wrapX && y == wrapY) ) return;
 		wrapX = x;
 		wrapY = y;

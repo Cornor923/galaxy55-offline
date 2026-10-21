@@ -33,7 +33,9 @@ game for now: any of these ideas plugs in there.
 - **Lava + water (or cascade) = basalt** (Sekhmet's memory, "infinite basalt"). The original client code doesn't do it: lava
   only replaces water and basalt only comes from the freezer. Maybe the unpublished server did it. **To be decided.**
 - **The sea level drops** when filling holes (Sekhmet's memory of the 3rd alpha version: the sea spreads and the global level
-  drops with the water/space ratio, never rises). Right now the sea fills everything up to its level, like the original code.
+  drops with the water/space ratio, never rises): it is already in the original client code, and now in the port too.
+  `net/Local.hx` counts each water block that floods a hole and, when they add up to the volume of one layer of the sea, the
+  top layer disappears on the whole planet (`SReduceWater` in `Game.hx`): the level goes down one block and never rises.
 - **A bucket to pick up water or lava:** dropped for now (Cornor923 isn't keen: the spacesuit "already does it").
 
 ## Player equipment
