@@ -98,4 +98,6 @@ A player got it running on Linux this way; we have not tested it.
   holes up to its level, like the original.
 - Plants and other models are aimed at by what you see (the pixels of their leaves), not the whole cell (the original treated them as a full block).
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
+- In the hangar, liquids (water, cascades, quicksand, lava...) and the Ancient Bomb cannot be placed: a message says they are
+  not allowed on board. The original only stopped the blocks that spread (cascade source and lava), without a message.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

@@ -207,6 +207,9 @@ class GameView {
 		hangarMsg = hangarValid ? Lang.t("hangar.ship_valid").split("%speed%").join("" + hangar.speed) : Lang.t("hangar." + hangar.error);
 	}
 	var hangarMsg = "";
+	/** aviso de un bloque que no se puede poner (Hangar.forbidden) y cuanto le queda en pantalla */
+	var hangarRefused : String;
+	var hangarRefusedTime = 0.;
 
 	function hangarUpdate( tmod : Float ) {
 		hangarTime += tmod;
@@ -218,7 +221,10 @@ class GameView {
 			hangarValid = false;
 			hangarMsg = Lang.t("hangar.no_spawn_light");
 		}
-		message = hangarTime < 400 ? Lang.t("hangar.help") : hangarMsg;
+		// lo que no se puede poner (cambio del port): se avisa en rojo un momento, como los errores del hangar del original
+		if( hangarRefusedTime > 0 ) hangarRefusedTime -= tmod;
+		messageRed = hangarRefusedTime > 0;
+		message = messageRed ? Lang.t("hangar." + hangarRefused) : (hangarTime < 400 ? Lang.t("hangar.help") : hangarMsg);
 		// salir por las casillas de teletransporte (EditShip.update)
 		if( standingBlock != null && standingBlock.k == BShipEntry ) {
 			if( enteringShip >= 0 ) {
@@ -1203,6 +1209,13 @@ class GameView {
 	/** Game.checkAction con un bloque en la mano: se coloca si algo lo sujeta (anclas e imanes). */
 	function place( hand : Block ) {
 		var s = select;
+		// hangar: ni liquidos ni la bomba exotica a bordo (cambio del port); no se pone y se dice por que
+		var refused = hangar != null ? Hangar.forbidden(hand) : null;
+		if( refused != null ) {
+			hangarRefused = refused;
+			hangarRefusedTime = 180;
+			return;
+		}
 		var put = hand.getFlip(yaw);
 		// en la nave solo se coloca dentro de las zonas de sintetizador (el casco se edita en el hangar) y alli no hace falta apoyo
 		var inShip = s.tz >= World.SHIP_Z;

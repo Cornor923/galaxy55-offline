@@ -92,4 +92,6 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   El mar llena los huecos hasta su nivel, como el original.
 - Las plantas y demás modelos se apuntan por lo que se ve (los píxeles de sus hojas), no por toda la celda (el original las trataba como un bloque entero).
 - Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
+- En el hangar no se pueden poner líquidos (agua, cascadas, arena movediza, lava...) ni la bomba exótica: un aviso dice que
+  no están permitidos a bordo. El original solo impedía poner lo que se extiende (fuente de cascada y lava), sin aviso.
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).

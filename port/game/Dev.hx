@@ -12,6 +12,7 @@ import Common;
  *   ship | planet           ir a la nave / bajar al planeta
  *   slot N                  elegir casilla (0 = excavador)
  *   give Bloque [n]         meter n bloques (50) en el inventario
+ *   hand Bloque             poner ese bloque en la casilla elegida (como la paleta creativa)
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local
  *   synth N                 usar el ordenador del sintetizador N
@@ -94,6 +95,7 @@ class Dev {
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
+				case "hand": g.setSlot(bk(a[1])); // hand Bloque: lo pone en la casilla elegida, como la paleta creativa
 				case "set", "setl":
 					var l = a[0] == "setl";
 					var x = Std.parseInt(a[1]) + (l ? sdx : 0), y = Std.parseInt(a[2]) + (l ? sdy : 0), z = Std.parseInt(a[3]) + (l ? sz : 0);
@@ -405,7 +407,7 @@ class Dev {
 			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
 		case "hit": Sys.println(g.debugPick());
 		case "drops": Sys.println("sueltos: " + g.drops.count());
-		case "msg": Sys.println("mensaje: " + g.message);
+		case "msg": Sys.println("mensaje: " + g.message + (g.messageRed ? " (rojo)" : ""));
 		case "block":
 			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));
 			Sys.println("bloque: " + (b == null ? "nada" : "" + b.k));
