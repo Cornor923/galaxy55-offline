@@ -23,7 +23,8 @@ etiqueta `flash-version` y la rama `flash` (más los SWF de `release/`). El READ
 ## Estado actual (todo funciona y está probado, salvo lo marcado)
 - Menú: Continuar, Nueva partida (nombre, semilla, bioma, tamaño), Cargar partida (miniatura), Opciones, Salir. es/en/fr.
   Ratón, teclado y mando. Fondo = el juego visto desde dentro, recorriendo varios biomas con fundido.
-- Partidas en `%APPDATA%\Galaxy55\` (miniatura incluida, autoguardado, F5). Opciones: idioma, sensibilidad, FOV, volumen,
+- Partidas en `%APPDATA%\Galaxy55\` (miniatura incluida, autoguardado, F5). Captura con F2 en `screenshots\` (`GalaxyApp.takeScreen`,
+  como `Render.takeScreenShot`: sin HUD, casco, caja de selección ni bloque en la mano). Opciones: idioma, sensibilidad, FOV, volumen,
   pantalla completa, invertir eje vertical, A/D girar (original) o desplazar.
 - Jugador: caminar, X despacio, saltar, jetpack con combustible, colisiones, casco (H), barra de combustible. Sin correr ni vuelo.
 - Biomas jugables: Otoño, Luna, Marte, Cumbres nevadas (con nieve, añadido nuestro), Bosque ácido.

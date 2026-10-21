@@ -10,7 +10,7 @@ connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine rest
 Compile-le (voir plus bas) et double-clique sur `jugar.bat`, ou télécharge le zip portable depuis la
 [release](../../../releases/tag/v0.4). Le menu de démarrage propose Continuer, Nouvelle partie, Charger une partie, Options et Quitter.
 Dans Nouvelle partie, tu choisis le nom, la graine, le biome, la taille et le mode : **Aventure** (comme dans l'original) ou **Créatif** (notre ajout).
-Les parties et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`).
+Les parties et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`), et les captures d'écran (F2) dans son dossier `screenshots`.
 Le format des sauvegardes peut changer d'une version à l'autre : ne compte pas sur le fait que les parties d'aujourd'hui fonctionnent toujours.
 
 ## Commandes
@@ -32,6 +32,7 @@ Ce sont celles du jeu original (le déplacement et la physique sont copiés de `
 | Créatif : palette de blocs | I (clic = mettre le bloc dans la case choisie, molette = page) |
 | Pause | Échap |
 | Sauvegarde rapide | F5 |
+| Capture d'écran | F2 : un PNG sans le casque ni le HUD, à la taille de la fenêtre, dans `%APPDATA%\Galaxy55\screenshots\` |
 
 Il n'y a pas de touche pour courir, comme dans l'original. Manette : stick gauche pour se déplacer, stick droit pour regarder,
 A saute et jetpack, B marche lentement, RT creuse, LT pose, RB/LB ou croix droite/gauche changent de case, Y jette, Back casque,
@@ -110,4 +111,5 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé et désactiver les vagues de l'eau.
 - Le turbo mineur fait creuser trois fois plus vite jusqu'à 15 blocs autour de lui (5 dans l'original) et se récupère quand
   on le casse (dans l'original, il était perdu).
+- La capture d'écran de F2 est enregistrée directement dans le dossier `screenshots` et un message indique où (l'original ouvrait la boîte de dialogue de Flash pour l'enregistrer).
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).

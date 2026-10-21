@@ -10,7 +10,7 @@ class Hand {
 
 	var world : World;
 	var atlas : h3d.mat.Texture;
-	var frame : h3d.scene.Object;
+	public var frame(default, null) : h3d.scene.Object;
 	var turn : h3d.scene.Object;
 	var mesh : h3d.scene.Mesh;
 	var mat : h3d.mat.Material;

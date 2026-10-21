@@ -1,0 +1,80 @@
+# F2: captura como la del original (Interface.takeScreen, Render.takeScreenShot): solo la escena, al tamano de la ventana, en la
+# carpeta screenshots de los datos (aqui port/out/testdata/Galaxy55/screenshots, vaciarla antes). Cada "captura F2" de la salida
+# es un archivo; print shots: todos con el tamano de la ventana y opacos, y el segundo de la misma vez acaba en " (2).png".
+# A ojo: cada G55-*.png sin casco, barras, inventario, ayuda, menus, paleta, caja naranja, sombra del bloque ni bloque en la mano;
+# el shot de antes (port/out/f2_*.png) es la ventana entera, con todo eso. Excavando, el rayo sale (como en el original).
+wait 3
+planet
+wait 30
+tp 64.5 64.5 top 0.8 -0.5
+slot 1
+wait 20
+shot f2_planeta
+f2
+f2
+wait 2
+# en pausa (Esc) y con un menu abierto
+pause
+wait 5
+shot f2_pausa
+f2
+wait 2
+close
+wait 5
+# el fundido rojo de un golpe si sale (en el original era parte de la escena)
+hurt 20
+f2
+wait 30
+creative
+palette
+wait 5
+shot f2_paleta
+f2
+wait 2
+close
+wait 5
+# excavando
+slot 0
+key dig
+wait 8
+shot f2_laser
+f2
+wait 2
+unkey
+wait 5
+ship
+wait 40
+shot f2_nave
+f2
+wait 2
+hangar
+wait 60
+shot f2_hangar
+f2
+wait 2
+hangarexit
+wait 60
+mothership
+wait 150
+tp 126 2 100 2.39 -0.5
+wait 30
+shot f2_nodriza
+f2
+wait 2
+print shots
+# otra ventana: la captura tiene su tamano
+winsize 1600 600
+wait 10
+f2
+wait 2
+print shots
+hangarexit
+wait 60
+# en el mapa de estrellas no hay captura (en el original era otra pagina, sin F2): no debe salir otra
+explore
+wait 200
+expinfo
+f2
+wait 2
+print shots
+quit

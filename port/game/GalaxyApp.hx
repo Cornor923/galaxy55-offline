@@ -1367,6 +1367,52 @@ class GalaxyApp extends hxd.App {
 		if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
 	}
 
+	/** Captura de pantalla (F2): Interface.takeScreen y Render.takeScreenShot del original. Solo la escena, al tamano de la ventana:
+	    sin casco, HUD, menus, caja de seleccion ni bloque en la mano; los velos de color (fades del original) y la nieve (del port) si salen.
+	    Se dibuja aparte y se vuelve a mostrar todo antes del fotograma: en pantalla no cambia nada.
+	    Cambio del port: el original abria el dialogo de Flash para guardar el PNG; aqui va a la carpeta screenshots de los datos
+	    del juego, con el nombre del original (G55-fecha.png) */
+	function takeScreen() {
+		var w = engine.width, h = engine.height;
+		var tex = new h3d.mat.Texture(w, h, [Target]);
+		tex.depthBuffer = new h3d.mat.Texture(w, h, [Target], Depth24Stencil8);
+		var scene : Array<h2d.Object> = [liquidVeil, @:privateAccess snow.batch, fadeRect, hurtRect];
+		var hidden2d = [for( o in s2d ) if( o.visible && scene.indexOf(o) < 0 ) o];
+		var hidden3d = [for( o in game.screenShotHidden() ) if( o.visible ) o];
+		for( o in hidden2d ) o.visible = false;
+		for( o in hidden3d ) o.visible = false;
+		engine.pushTarget(tex);
+		engine.clear(engine.backgroundColor, 1, 0);
+		s3d.render(engine);
+		s2d.render(engine);
+		engine.popTarget();
+		for( o in hidden2d ) o.visible = true;
+		for( o in hidden3d ) o.visible = true;
+		try {
+			var px = tex.capturePixels();
+			// opaca, como la del original (forceAlpha)
+			px.convert(BGRA);
+			for( i in 0...w * h ) px.bytes.set(px.offset + i * 4 + 3, 0xFF);
+			var data = Settings.dir();
+			var dir = data + "/screenshots";
+			if( !sys.FileSystem.exists(dir) ) sys.FileSystem.createDirectory(dir);
+			var base = "G55-" + Date.now().toString().split(":").join("_");
+			var name = base + ".png", n = 1;
+			// dos capturas en el mismo segundo: la segunda no pisa la primera (anadido del port)
+			while( sys.FileSystem.exists(dir + "/" + name) ) name = base + " (" + (++n) + ").png";
+			// compresion rapida (nivel 1): la de por defecto tarda el doble y el juego se para ese rato
+			sys.io.File.saveBytes(dir + "/" + name, px.toPNG(1));
+			if( shotPath != null ) Sys.println("captura F2: " + name + " " + w + "x" + h);
+			// aviso de donde ha ido (anadido del port)
+			var sep = Sys.systemName() == "Windows" ? "\\" : "/";
+			showToast(Lang.t("shot.saved").split("%dir%").join(haxe.io.Path.withoutDirectory(data) + sep + "screenshots"));
+		} catch( e : Dynamic ) {
+			showToast("ERROR");
+		}
+		tex.depthBuffer.dispose();
+		tex.dispose();
+	}
+
 	/** Quitar o poner el casco (tecla H), con las mismas animaciones que Game.update del original. */
 	function toggleHelmet() {
 		if( helmetSeq.length > 0 ) return;
@@ -1728,6 +1774,9 @@ class GalaxyApp extends hxd.App {
 			snow.update(dt, s3d.camera, snowWorld, (W - visW) * 0.5, (H - visH) * 0.5, visW, visH);
 		}
 
+		// F2 (Interface.hx del original): en el planeta, la nave, el hangar y la nodriza, tambien con un menu abierto; no en el mapa
+		if( game != null && (state == Playing || state == Paused) && hxd.Key.isPressed(hxd.Key.F2) ) takeScreen();
+
 		testShot();
 	}
 
@@ -2060,7 +2109,7 @@ class GalaxyApp extends hxd.App {
 			} else
 				shotFrames = frames + 6;
 		}
-		if( dev != null && shotStage == 2 && ((game != null && (state == Playing || state == Loading)) || (state == Exploring && explorer != null)) ) {
+		if( dev != null && shotStage == 2 && ((game != null && (state == Playing || state == Loading || (state == Paused && dev.inPause))) || (state == Exploring && explorer != null)) ) {
 			if( dev.tick(this, game) ) Sys.exit(0);
 			return;
 		}
