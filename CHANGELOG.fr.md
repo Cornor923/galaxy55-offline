@@ -38,6 +38,12 @@
   sous l'eau, il ne neige plus sous un toit ni dans les grottes, la glace ne laisse plus de bloc en la cassant, ombre du bloc à
   poser, nom du bloc visé, et le congélateur gèle de nouveau l'eau et la lave proches.
 - Linux : les zips utilisent `/` dans les chemins (ils extrayaient des fichiers avec `\`) ; étapes Linux de Sekhmet dans le `LEEME` du zip.
+- Corrections de Cornor923 (merci !), intégrées depuis leurs PR 17-30 (changement du port) : pas de consommation d'oxygène sous
+  l'eau en créatif ; la glace près de l'eau n'est plus découpée en triangles vue d'en dessous ; l'aide de la palette créative
+  tient dans son panneau et aucun bloc n'est marqué à l'ouverture ; plus de bande sans eau sous un bloc sur la mer avec les
+  vagues ; après la mort on reste dans le vaisseau (aussi en chargeant une partie sauvée à 0 de vie) ; pas de dégâts dans le
+  hangar ; les échanges avec le robot ne sont plus perdus en sauvegardant dans le vaisseau-mère et le temps de jeu y est compté ;
+  sur la carte, le vaisseau a les mêmes couleurs sur toutes les planètes, garde son cap à l'arrêt et est centré sur celui du hangar.
 
 ## v0.3.1 — pre-release
 - Options : synchronisation verticale (VSync) et limite d'images par seconde (30, 60, 120, 144, 240 ou illimité).

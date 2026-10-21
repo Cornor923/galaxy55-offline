@@ -63,6 +63,15 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
    - Se visita desde ordenador → "Visitar la nave nodriza (prueba)"; Mayús+K vuelve. Nada se guarda dentro.
    - `Mothership.hx` conserva el diseño generado antiguo como reserva, si no hay `mothership.bin`.
 
+## PR de Cornor923 integrados (2026-10-21, cambio del port)
+Los PR 17-30 se fusionaron en local en `port-hashlink` (sin publicar), en orden. Un solo conflicto: `Dev.hx` entre el PR 20
+(`palette`) y el 26 (`time`); se conservaron ambos comandos. Cada PR trae su guion en `port/dev/`. Compila sin errores
+(`haxe port\game.hxml`); los guiones de los PR no se han vuelto a ejecutar tras la fusión. El PR 26 incluye el 25.
+Cambios: oxígeno en creativo (17), hielo/agua con desplazamiento de profundidad (18, 22), paleta creativa (19, 20),
+`devrun.ps1` con `galaxy55.exe` (21), muerte en la nave (23), sin daño en el hangar (24), guardado y tiempo en la nodriza
+(25, 26), nave del mapa: color, rumbo y centrado (27, 28, 29), TODO sin "Shed" (30). Pendiente: comprobar cada uno contra el
+original Flash (fidelidad).
+
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

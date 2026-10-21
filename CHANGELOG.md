@@ -36,6 +36,12 @@
   bloques bajo el agua, no nieva bajo techo ni en cuevas, el hielo ya no suelta un bloque al romperlo, sombra del bloque que
   se va a poner, nombre del bloque apuntado y el congelador vuelve a congelar el agua y la lava cercanas.
 - Linux: los zips usan `/` en las rutas (antes salían archivos con `\`); pasos de Linux de Sekhmet en el `LEEME` del zip.
+- Arreglos de Cornor923 (¡gracias!), integrados desde sus PR 17-30 (cambio del port): sin gasto de oxígeno bajo el agua en
+  creativo; el hielo junto al agua ya no se corta en triángulos visto desde abajo; la ayuda de la paleta creativa cabe en su
+  panel y no hay bloque marcado al abrirla; sin banda sin agua bajo un bloque en el mar con olas; tras morir te quedas en la
+  nave (también al cargar una partida guardada con 0 de vida); sin daño en el hangar; los intercambios con el robot no se
+  pierden al guardar en la nave nodriza y se cuenta el tiempo de juego allí; en el mapa, la nave tiene los mismos colores en
+  todos los planetas, conserva su rumbo al pararse y se centra según la nave del hangar.
 
 ## v0.3.1 — pre-release
 - Opciones: sincronización vertical (VSync) y límite de FPS (30, 60, 120, 144, 240 o sin límite).

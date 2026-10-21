@@ -36,6 +36,12 @@
   no snow under a roof or in caves, ice no longer drops a block when broken, a shadow of the block about to be placed, the name
   of the targeted block, and the freezer freezes nearby water and lava again.
 - Linux: the zips use `/` in paths (they used to extract files with `\`); Linux steps from Sekhmet in the zip's `LEEME`.
+- Fixes by Cornor923 (thank you!), merged from their PRs 17-30 (port change): no oxygen use underwater in creative; ice next
+  to water is no longer cut into triangles seen from below; the creative palette help fits its panel and no block is marked
+  when it opens; no gap under a block on the sea with waves on; after dying you stay in the ship (also when loading a game saved
+  at 0 life); no damage in the hangar; trades with the robot are no longer lost when saving in the mothership and play time
+  there is counted; on the map the ship has the same colors on every planet, keeps its heading when it stops and is centered
+  on the hangar's ship.
 
 ## v0.3.1 — pre-release
 - Options: vertical sync (VSync) and FPS limit (30, 60, 120, 144, 240 or unlimited).
