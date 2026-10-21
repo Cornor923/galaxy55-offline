@@ -15,6 +15,7 @@ import Common;
  *   tele                    como si se volviera a pisar el teletransportador (enteringShip = 0): empieza a cargar
  *   slot N                  elegir casilla (0 = excavador)
  *   give Bloque [n]         meter n bloques (50) en el inventario
+ *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local
  *   synth N                 usar el ordenador del sintetizador N
@@ -29,6 +30,7 @@ import Common;
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
+ *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
  *   quit
  */
 class Dev {
@@ -50,6 +52,8 @@ class Dev {
 	var untilWhat : String;
 	var untilValue = 0.;
 	var untilLeft = 0;
+	var loadShot : String;
+	var loadShotWait = 0;
 
 	public function new( path : String ) {
 		lines = sys.io.File.getContent(path).split("\n").map(StringTools.trim).filter(function(l) return l != "" && l.charAt(0) != "#");
@@ -61,6 +65,13 @@ class Dev {
 	}
 
 	static function f( s : String ) return Std.parseFloat(s);
+
+	/** en cada imagen de la carga de un planeta (orden loadshot) */
+	public function loadingFrame( app : GalaxyApp ) {
+		if( loadShot == null || --loadShotWait > 0 ) return;
+		app.capture("port/out/" + loadShot + ".png", false);
+		loadShot = null;
+	}
 
 	/** una orden por actualizacion; devuelve true al terminar */
 	public function tick( app : GalaxyApp, g : GameView ) : Bool {
@@ -132,6 +143,11 @@ class Dev {
 				case "seadrop": w.reduceWater();
 				case "vitals":
 					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming + " ojos " + Math.round(g.viewZ * 100) / 100 + " tele " + Math.round(g.enteringShip * 100) / 100);
+				case "drop":
+					// drop x y z Bloque [vida]: un bloque suelto quieto (sin velocidad) con esa vida en segundos (180)
+					var d = g.drops.add(f(a[1]), f(a[2]), f(a[3]), bk(a[4]));
+					d.vx = d.vy = 0;
+					if( a.length > 5 ) d.time = f(a[5]);
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
@@ -380,6 +396,9 @@ class Dev {
 				case "key": g.debugKey = a[1];
 				case "unkey": g.debugKey = null;
 				case "print": print(a, g, app);
+				case "loadshot":
+					loadShot = a[1];
+					loadShotWait = a.length > 2 ? Std.parseInt(a[2]) : 5;
 				case "shot":
 					// "%b" = bioma: un mismo guion sirve para varios biomas (--bgbiome)
 					app.capture("port/out/" + (w != null ? StringTools.replace(a[1], "%b", w.biomeName) : a[1]) + ".png", false);
@@ -490,7 +509,7 @@ class Dev {
 			}
 			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
 		case "hit": Sys.println(g.debugPick());
-		case "drops": Sys.println("sueltos: " + g.drops.count());
+		case "drops": Sys.println("sueltos: " + g.drops.count() + " " + [for( d in @:privateAccess g.drops.list ) d.block.k + " z=" + Math.round(d.z * 100) / 100 + " vida=" + Math.round(d.time * 100) / 100].join("  "));
 		case "parts": Sys.println("trozos: " + @:privateAccess g.parts.list.length);
 		case "power":
 			// potencia de excavacion (turbo minero) y el icono "power" del casco

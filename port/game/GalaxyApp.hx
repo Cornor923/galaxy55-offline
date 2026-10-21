@@ -74,6 +74,8 @@ class GalaxyApp extends hxd.App {
 
 	static inline var W = Theme.W;
 	static inline var H = Theme.H;
+	/** color de fx.Load */
+	static inline var LOAD_COLOR = 0xC93814;
 	static var BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
 	/** se pueden elegir pero no salen al azar: en el original la Ciudad Muerta tenia probabilidad 0 */
 	static var EXTRA_BIOMES = ["BIDeadCity"];
@@ -114,6 +116,9 @@ class GalaxyApp extends hxd.App {
 	var versionText : h2d.Text;
 	var bar : h2d.Graphics;
 	var barText : h2d.Text;
+	/** barra de la carga de un planeta (fx.Load del original) y la posicion de su trozo (progress, de 0 a 1) */
+	var loadAnim : h2d.Graphics;
+	var loadAnimPos = 0.;
 	var hud : h2d.Text;
 	var msgText : h2d.Text;
 	var jetGlow : h2d.Bitmap;
@@ -1077,6 +1082,43 @@ class GalaxyApp extends hxd.App {
 		Theme.rect(bar, 110, 566, 700 * p, 10, Theme.ACCENT);
 	}
 
+	/**
+	 * Carga de un planeta como en el original (Game.hx: fx.Load sobre la pantalla en negro, sin texto): una barra naranja
+	 * de 300x4 centrada, con brillo (GlowFilter 8, 8), y un trozo de 40 px que la recorre sin parar (no dice cuanto falta).
+	 */
+	function showPlanetLoading() {
+		ui.removeChildren();
+		screens = new Map();
+		current = null;
+		var s = new Screen(ui);
+		var bg = new h2d.Graphics(s);
+		Theme.fullRect(bg, 0x000000, 1);
+		loadAnim = new h2d.Graphics(s);
+		// brillo suave como el de Flash (el de Heaps sin smoothColor rellena todo el borde del mismo color)
+		loadAnim.filter = new h2d.filter.Glow(LOAD_COLOR, 1, 4, 1, 1, true);
+		loadAnim.x = Std.int((W - 300) * 0.5);
+		loadAnim.y = Std.int((H - 4) * 0.5);
+		loadAnimPos = 0;
+		bar = null;
+		barText = null;
+		overlayDecor = null;
+		drawLoadAnim();
+	}
+
+	/** fx.Load.set_progress: fondo a 0.25 con borde de 1 px a 0.7, y el trozo de 40 px en progress * 260 */
+	function drawLoadAnim() {
+		var g = loadAnim;
+		g.clear();
+		g.beginFill(LOAD_COLOR, 0.25);
+		g.lineStyle(1, LOAD_COLOR, 0.7);
+		g.drawRect(0, 0, 300, 4);
+		g.endFill();
+		g.lineStyle();
+		g.beginFill(LOAD_COLOR, 1);
+		g.drawRect(loadAnimPos * 260, 0, 40, 4);
+		g.endFill();
+	}
+
 	// ---------------------------------------------------------------- flujo del juego
 
 	function startGame( info : SaveInfo ) {
@@ -1103,7 +1145,7 @@ class GalaxyApp extends hxd.App {
 			loadWorld.lightTop = Hangar.SZ; // y planet.lightHeight: el sol entra bajo el techo
 		}
 		loadWorld.root.visible = false;
-		showLoading(Lang.t("loading"));
+		showPlanetLoading();
 	}
 
 	function finishLoading() {
@@ -1132,6 +1174,7 @@ class GalaxyApp extends hxd.App {
 		}
 		ui.removeChildren();
 		bar = null;
+		loadAnim = null;
 		state = Playing;
 		hud.visible = true;
 		autosaveTimer = 0;
@@ -1554,9 +1597,12 @@ class GalaxyApp extends hxd.App {
 		}
 
 		if( state == Loading && loadWorld != null ) {
-			var p = loadWorld.step(14);
-			setProgress(p);
-			if( barText != null ) barText.text = p < 0.75 ? Lang.t("loading") : Lang.t("loading.mesh");
+			loadWorld.step(14);
+			// Game.update: el trozo avanza 0.1 en cada imagen y vuelve al principio
+			loadAnimPos += 0.1;
+			if( loadAnimPos > 1 ) loadAnimPos--;
+			drawLoadAnim();
+			if( dev != null ) dev.loadingFrame(this);
 			if( loadWorld.isReady() ) finishLoading();
 		}
 
