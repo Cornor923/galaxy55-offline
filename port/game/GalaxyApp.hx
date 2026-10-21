@@ -127,6 +127,9 @@ class GalaxyApp extends hxd.App {
 	var cross : h2d.Graphics;
 	var dot : h2d.Graphics;
 	var fadeRect : h2d.Bitmap;
+	/** temblor del HUD de este fotograma (Interface.updateShake: ui.y), en unidades de s2d: mueve el inventario, la mira,
+	    las barras y el mensaje, no el casco ni el brillo del jetpack (el original los dibuja en la escena 3D) */
+	var hudShake = 0.;
 
 	// casco (Game.hudOn, render.hud[H_HELMET]): posicion en pixeles de la imagen de 1024x1024
 	var helmet : h2d.Bitmap;
@@ -1386,13 +1389,13 @@ class GalaxyApp extends hxd.App {
 		}
 		jetBar.setScale(1 / scale);
 		jetBar.x = offX + (visW - 350 / scale) * 0.5;
-		jetBar.y = offY + visH - 25 / scale;
+		jetBar.y = offY + visH - 25 / scale + hudShake;
 		for( b in [lifeBar, oxyBar] ) {
 			b.setScale(1 / scale);
 			b.x = jetBar.x;
 		}
-		lifeBar.y = offY + visH - 20 / scale;
-		oxyBar.y = offY + visH - 35 / scale;
+		lifeBar.y = offY + visH - 20 / scale + hudShake;
+		oxyBar.y = offY + visH - 35 / scale + hudShake;
 	}
 
 	/** Barra de combustible y brillo del jetpack, como Interface.updateJetpack y el HUD del original. */
@@ -1556,13 +1559,16 @@ class GalaxyApp extends hxd.App {
 					saveGame(true);
 				}
 				var p = game;
+				// temblor del HUD (Interface.updateShake): sube o baja al azar hasta 10 px de la ventana * shake;
+				// en pausa y en los menus no se recalcula y se queda quieto
+				hudShake = p.shake <= 0 ? 0 : Math.random() * 10 * p.shake * (Std.random(2) * 2 - 1) * Theme.visibleArea().w / engine.width;
 				hud.text = Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps" + (Settings.showHelp ? "\n" + Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : "") : "");
 				msgText.visible = game.message != null;
 				if( game.message != null ) {
 					msgText.text = game.message;
 					msgText.textColor = game.messageRed ? 0xFF1C1C : 0xFFFFFF;
 					msgText.maxWidth = 600 / msgText.scaleX;
-					msgText.setPosition(s2d.width * 0.5 - 300, s2d.height * 0.72);
+					msgText.setPosition(s2d.width * 0.5 - 300, s2d.height * 0.72 + hudShake);
 				}
 				if( K.isPressed(K.H) || (pad != null && pad.isPressed(pad.config.back)) ) toggleHelmet();
 				if( !helmet.visible && helmetOn ) helmet.visible = true;
@@ -1570,6 +1576,8 @@ class GalaxyApp extends hxd.App {
 				layoutHelmet();
 				updateJetHud(p);
 					if( invBar != null ) invBar.update(dt);
+				if( invBar != null ) invBar.y = hudShake;
+				cross.y = dot.y = Std.int(H * 0.5) + hudShake;
 			}
 		} else if( state == Paused && game != null ) {
 			game.updateCamera();
