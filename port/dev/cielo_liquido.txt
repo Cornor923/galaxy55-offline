@@ -1,0 +1,54 @@
+# cielo visto desde dentro de un liquido: como la pasada de niebla del original, el color del liquido tapa todo el cielo
+# (ni degradado ni estrellas); al salir vuelven el degradado y las estrellas
+# uso: devrun.ps1 -Script port/dev/cielo_liquido.txt -Extra "--creative"   (Otono: estrellas y degradado bien visibles;
+# en creativo el acido no hace dano y no tine la pantalla de rojo)
+wait 3
+planet
+slot 0
+wait 30
+# tres pozas de 9x9 y 4 de hondo (z 91-94) muy por encima del terreno: agua, agua acida y arenas movedizas
+filla 40 40 80 52 91 115 none
+filla 40 40 80 52 90 90 BRock
+filla 41 41 51 51 91 94 BRock
+filla 42 42 50 50 91 94 BWater
+filla 55 41 65 51 91 94 BRock
+filla 56 42 64 50 91 94 BAcidWater
+filla 69 41 79 51 91 94 BRock
+filla 70 42 78 50 91 94 BMarsQuickSand
+# escalones en el agua: ojos 0.49 por debajo de la superficie (z 95) y 0.51 por encima
+filla 46 44 46 44 91 92 BRock
+filla 46 48 46 48 91 93 BRock
+# fuera, en el borde de la poza: degradado y estrellas
+tp 46.5 41.5 95.01 0 0.9
+wait 30
+print sky
+shot cielo_liq_fuera
+# en el fondo del agua, mirando arriba: la cara de abajo de la superficie y, detras, el color del agua
+tp 46.5 46.5 91.01 0 0.9
+wait 20
+print sky
+shot cielo_liq_agua
+# en la superficie: justo debajo (con las olas la camara sigue dentro) y justo encima
+tp 46.5 44.5 93.01 0 0.25
+wait 20
+print sky
+shot cielo_liq_agua_bajo
+tp 46.5 48.5 94.01 0 0.25
+wait 20
+print sky
+shot cielo_liq_agua_sobre
+# agua acida y arenas movedizas (las arenas no tienen cara de abajo: se ve el cielo directamente)
+tp 60.5 46.5 91.01 0 0.9
+wait 20
+print sky
+shot cielo_liq_acida
+tp 74.5 46.5 91.01 0 0.9
+wait 20
+print sky
+shot cielo_liq_arenas
+# otra vez fuera: el mismo cielo que al principio
+tp 46.5 41.5 95.01 0 0.9
+wait 20
+print sky
+shot cielo_liq_fuera2
+quit
