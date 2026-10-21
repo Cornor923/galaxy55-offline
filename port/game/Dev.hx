@@ -19,7 +19,8 @@ import Common;
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
- *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]
+ *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
+ *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]|power
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png
  *   quit
@@ -34,6 +35,8 @@ class Dev {
 	var lines : Array<String>;
 	var pc = 0;
 	var waiting = 0;
+	/** orden `mine` en curso: celda, bloque y cuando se empezo */
+	var mining : { x : Int, y : Int, z : Int, b : Block, t0 : Float, power : Float };
 
 	public function new( path : String ) {
 		lines = sys.io.File.getContent(path).split("\n").map(StringTools.trim).filter(function(l) return l != "" && l.charAt(0) != "#");
@@ -51,6 +54,18 @@ class Dev {
 		if( waiting > 0 ) {
 			waiting--;
 			return false;
+		}
+		if( mining != null && g != null ) {
+			// mine: se espera a que el bloque se rompa (20 s como mucho)
+			var m = mining;
+			var broken = g.world.block(m.x, m.y, m.z) != m.b;
+			if( !broken && g.playSeconds - m.t0 < 20 ) {
+				m.power = g.miningPower;
+				return false;
+			}
+			g.debugKey = null;
+			mining = null;
+			Sys.println("excavar " + m.b.k + ": " + (broken ? Math.round((g.playSeconds - m.t0) * 100) / 100 + " s" : "no se rompe") + " con potencia " + m.power);
 		}
 		while( pc < lines.length ) {
 			var l = lines[pc++];
@@ -311,6 +326,15 @@ class Dev {
 					if( w == null ) w = Market.wareOfBlock(bk(a[1]));
 					if( app.shop != null ) { if( a[0] == "buy" ) app.shop.doBuy(w, Std.parseInt(a[2])) else app.shop.doSell(w, Std.parseInt(a[2])); }
 					Sys.println(a[0] + " " + w.block.k + " x" + a[2] + " -> creditos=" + g.info.credits + " compra=" + g.market.buyPrice(w) + " venta=" + g.market.sellPrice(w));
+				case "mine":
+					// mine X Y Z: apunta al centro del bloque, excava con el excavador y dice cuanto tarda en romperse
+					var x = Std.parseInt(a[1]), y = Std.parseInt(a[2]), z = Std.parseInt(a[3]);
+					var dx = x + 0.5 - g.px, dy = y + 0.5 - g.py, dz = z + 0.5 - (g.pz + GameView.VIEW_Z);
+					g.yaw = Math.atan2(dy, dx);
+					g.pitch = Math.atan2(dz, Math.sqrt(dx * dx + dy * dy));
+					g.inv.select(0);
+					g.debugKey = "dig";
+					mining = { x : x, y : y, z : z, b : w.block(x, y, z), t0 : g.playSeconds, power : g.miningPower };
 				case "key": g.debugKey = a[1];
 				case "unkey": g.debugKey = null;
 				case "print": print(a, g, app);
@@ -405,6 +429,10 @@ class Dev {
 			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
 		case "hit": Sys.println(g.debugPick());
 		case "drops": Sys.println("sueltos: " + g.drops.count());
+		case "power":
+			// potencia de excavacion (turbo minero) y el icono "power" del casco
+			var ic = @:privateAccess app.statusIcon;
+			Sys.println("potencia " + g.miningPower + " icono " + (ic.visible ? "visible alfa " + Math.round(ic.alpha * 100) / 100 : "no"));
 		case "msg": Sys.println("mensaje: " + g.message);
 		case "block":
 			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));

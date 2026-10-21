@@ -51,7 +51,9 @@ class GameView {
 	public var laserActive = false;
 	public var canBreak = true;
 	public var laserCharge : Null<ChargeKind>;
-	public var miningPower = 1.0;
+	/** Hero.miningPower: 3 cerca de un turbo minero (WorldProcess.updateTrack), si no 1 */
+	public var miningPower(get, never) : Float;
+	inline function get_miningPower() return process.miningPower;
 	/** modo creativo (anadido nuestro): bloques sin limite, rotura instantanea y jetpack infinito */
 	public var creative(default, null) = false;
 	/** --editnodriza: la nave nodriza se puede editar (en creativo) y al salir se guarda en mothership.bin */
@@ -415,7 +417,7 @@ class GameView {
 			if( debugTele == 6 ) enteringShip = 0; // como si se hubiera apartado y vuelto a pisar la plataforma
 		}
 		updateAction(tmod, controls, pad);
-		if( hangar == null ) process.update(realDt);
+		if( hangar == null ) process.update(realDt, px, py, pz + VIEW_Z * 0.5);
 		world.flush();
 		drops.update(this, tmod);
 		fx.update(this, realDt, tmod);

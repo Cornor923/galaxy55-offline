@@ -98,4 +98,6 @@ A player got it running on Linux this way; we have not tested it.
   holes up to its level, like the original.
 - Plants and other models are aimed at by what you see (the pixels of their leaves), not the whole cell (the original treated them as a full block).
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
+- The mining turbo makes you dig three times faster up to 15 blocks around it (5 in the original) and you get it back when
+  you break it (the original lost it).
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

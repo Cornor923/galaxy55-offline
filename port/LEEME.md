@@ -92,4 +92,6 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   El mar llena los huecos hasta su nivel, como el original.
 - Las plantas y demás modelos se apuntan por lo que se ve (los píxeles de sus hojas), no por toda la celda (el original las trataba como un bloque entero).
 - Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
+- El turbo minero hace excavar tres veces más rápido hasta 15 bloques a su alrededor (5 en el original) y se recupera al
+  romperlo (en el original se perdía).
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).
