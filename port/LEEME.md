@@ -95,4 +95,6 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   comprobación hacía que nunca se disparara. La explosión deja la roca madre (capa 0) en su sitio (el original también la
   quitaba), la bomba no explota en el hangar y suelta 8 trozos por bloque en vez de 75 para que el juego no se congele.
 - Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
+- El turbo minero hace excavar tres veces más rápido hasta 15 bloques a su alrededor (5 en el original) y se recupera al
+  romperlo (en el original se perdía).
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).

@@ -101,4 +101,6 @@ A player got it running on Linux this way; we have not tested it.
   check made it never fire. The blast leaves the bedrock (layer 0) in place (the original removed it too), the bomb does not
   explode in the hangar, and it throws 8 shards per block instead of 75 so that the game does not freeze.
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
+- The mining turbo makes you dig three times faster up to 15 blocks around it (5 in the original) and you get it back when
+  you break it (the original lost it).
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

@@ -1,0 +1,101 @@
+# turbo minero (BMiningGenerator): se fabrica (receta 42), se pone en una plataforma y da potencia 3 a menos de 15 bloques
+# (el original: 5) con el icono "power" del casco. Se excava madera a 4, 10, 14 y 16 bloques. Al romperlo se recupera y la
+# potencia vuelve a 1; se vuelve a poner (no se gasta) y sigue funcionando tras recargar la partida.
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.2
+wait 5
+setl 59 62 3 BIron
+setl 60 62 3 BIron
+setl 59 63 3 BIron
+setl 60 63 3 BIron
+wait 10
+print msg
+activatel 61 62 4
+wait 90
+print inv
+# plataforma de madera en el aire (suelo en z = 99, aire de 100 a 106)
+planet
+wait 20
+filla 18 18 46 24 100 106 none
+filla 18 18 46 24 99 99 BWood
+tp 26.5 21.5 100.01 3.14 -0.5
+wait 30
+print power
+# el turbo fabricado esta en la casilla 10: se pone en el suelo, en (24, 21, 100)
+slot 10
+lookat 24.5 21.5 100.05
+wait 3
+key place
+wait 5
+unkey
+wait 10
+print block 24 21 100
+print power
+shot turbo_icono1
+wait 9
+print power
+shot turbo_icono2
+# excavar madera a 4, 10, 14 y 16 bloques del turbo (el jugador en x = 24 + d; el bloque a un lado, lejos para no recoger
+# la madera: la casilla 10 debe quedar libre para el turbo)
+tp 28.5 21.5 100.01 0 0
+set 28 18 100 BWood
+wait 10
+print power
+mine 28 18 100
+tp 34.5 21.5 100.01 0 0
+set 34 18 100 BWood
+wait 10
+print power
+mine 34 18 100
+tp 38.5 21.5 100.01 0 0
+set 38 18 100 BWood
+wait 10
+print power
+mine 38 18 100
+tp 40.5 21.5 100.01 0 0
+set 40 18 100 BWood
+wait 10
+print power
+shot turbo_lejos
+mine 40 18 100
+# romper el turbo: se suelta, se recoge y la potencia vuelve a 1
+tp 26.5 21.5 100.01 3.14 0
+wait 10
+mine 24 21 100
+print block 24 21 100
+print power
+print inv
+tp 24.5 21.5 100.01 3.14 -0.5
+wait 60
+print inv
+print power
+shot turbo_roto
+# no se gasta: se vuelve a poner en (22, 21, 100) y vuelve la potencia 3
+tp 25.5 21.5 100.01 3.14 -0.5
+slot 10
+lookat 22.5 21.5 100.05
+wait 3
+key place
+wait 5
+unkey
+wait 10
+print block 22 21 100
+print power
+# tras guardar y volver a cargar, el turbo puesto sigue contando
+reload
+wait 300
+print pos
+print block 22 21 100
+print power
+# el icono va con el casco tambien en ventanas mas anchas y mas altas que 16:9
+winsize 1600 600
+wait 10
+print power
+shot turbo_ancha
+winsize 800 900
+wait 10
+print power
+shot turbo_alta
+quit

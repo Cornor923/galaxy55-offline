@@ -121,6 +121,9 @@ class GalaxyApp extends hxd.App {
 	/** barras de vida y de oxigeno (Interface.lifeMC, oxygenMC): solo se ven si no estan llenas */
 	var lifeBar : h2d.Graphics;
 	var oxyBar : h2d.Graphics;
+	/** icono de estado "power" del turbo minero (Interface.statusMC) */
+	var statusIcon : h2d.Bitmap;
+	var statusTime = 0.;
 	/** fundido de color de los golpes, la curacion y la muerte (Game.fadeFX) */
 	var hurtRect : h2d.Bitmap;
 	var invBar : InvBar;
@@ -239,6 +242,11 @@ class GalaxyApp extends hxd.App {
 		lifeBar.filter = new h2d.filter.Glow(0xA6FF00, 0.8, 4, 1);
 		lifeBar.alpha = 0.8;
 		lifeBar.visible = false;
+		// Interface.setStatus("power"): el rayo de icons.png (casilla 1,2) a x2, en modo suma y con brillo cian
+		statusIcon = new h2d.Bitmap(hxd.res.Any.fromBytes("icons.png", Res.bytes("icons.png")).toTile().sub(16, 32, 16, 16), s2d);
+		statusIcon.blendMode = Add;
+		statusIcon.filter = new h2d.filter.Glow(0x04E9FB, 0.8, 8, 2, 1, true);
+		statusIcon.visible = false;
 		// mira cian que aparece al excavar (Interface.cross: lineas de 7 px, alfa 0.4)
 		// fundido blanco del teletransporte (Hero.enteringShip -> fades)
 		fadeRect = new h2d.Bitmap(h2d.Tile.fromColor(0xFFFFFF, W, H), s2d);
@@ -1421,6 +1429,25 @@ class GalaxyApp extends hxd.App {
 		if( jetGlow.visible ) jetGlow.alpha = 0.3 + Math.random() * 0.7;
 	}
 
+	/**
+	 * Icono "power" con un turbo minero cerca (Hero.set_miningPower -> Interface.setStatus). Como Game.updateInterface:
+	 * parpadea (|sin(t * 5)|) y va abajo a la izquierda del casco (statusMC.x = helmet.x + 100, y = helmet.y + 650 - alto, en
+	 * pixeles de la imagen del casco). Con el casco quitado o poniendose se queda donde va el casco en reposo.
+	 */
+	function updateStatus( dt : Float, p : GameView ) {
+		statusTime += dt;
+		statusIcon.visible = p.miningPower > 1;
+		if( !statusIcon.visible ) return;
+		statusIcon.alpha = Math.abs(Math.sin(statusTime * 5));
+		var a = Theme.visibleArea();
+		var scale = engine.width / a.w;
+		var hx = helmetOn ? helmetX : -20., hy = helmetOn ? helmetY : -190.;
+		// x2 en pixeles de pantalla, como las barras
+		statusIcon.setScale(2 / scale);
+		statusIcon.x = a.x + (hx + 100) * a.w / 974;
+		statusIcon.y = a.y + (hy + 650) * a.h / 624 - 32 / scale + hudShake; // tiembla con el HUD (Interface.ui)
+	}
+
 	/** Interface.updateLife / updateOxygen: fondo negro y la parte llena; oculta si esta llena */
 	static function drawBar( g : h2d.Graphics, ratio : Float, h : Int, col : Int ) {
 		g.visible = ratio < 1;
@@ -1496,6 +1523,7 @@ class GalaxyApp extends hxd.App {
 			lifeBar.visible = false;
 			oxyBar.visible = false;
 			jetGlow.visible = false;
+			statusIcon.visible = false;
 		}
 		// el casco se ve jugando y en pausa; en los menus no
 		if( game == null || (state != Playing && state != Paused) ) {
@@ -1575,6 +1603,7 @@ class GalaxyApp extends hxd.App {
 				updateHelmet(dt, p);
 				layoutHelmet();
 				updateJetHud(p);
+				updateStatus(dt, p);
 					if( invBar != null ) invBar.update(dt);
 				if( invBar != null ) invBar.y = hudShake;
 				cross.y = dot.y = Std.int(H * 0.5) + hudShake;

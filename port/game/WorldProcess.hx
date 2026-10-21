@@ -11,8 +11,9 @@ import Block;
  *   desaparecen (updatePropagate, cada 0,1 s con un retraso de 2 a 4 pasos);
  * - la hierba se cubre al quedar al aire (covered) y se descubre al taparla (uncover);
  * - al quitar un bloque se rompen los detalles de encima y lo anclado arriba o abajo;
- * - congelador (BFreezer): el agua cercana pasa a hielo y la lava a roca; BFTransform cambia el bloque al quitarlo.
- * No se porta lo del servidor: pistas de sonido (PTrack), camara compartida y la bajada del nivel del mar (SReduceWater).
+ * - congelador (BFreezer): el agua cercana pasa a hielo y la lava a roca; BFTransform cambia el bloque al quitarlo;
+ * - bloques con BFTrack (PTrack: el turbo minero): con el jugador dentro de su radio, la potencia de excavacion pasa a 3.
+ * No se porta lo del servidor: camara compartida y la bajada del nivel del mar (SReduceWater).
  */
 class WorldProcess {
 
@@ -31,6 +32,7 @@ class WorldProcess {
 		this.world = world;
 		this.waterLevel = waterLevel;
 		this.breakFn = breakFn;
+		initTrack();
 	}
 
 	inline function real( p : Int ) : Int {
@@ -49,8 +51,8 @@ class WorldProcess {
 		onSet(x, y, z, old, b);
 	}
 
-	/** Process.update: pasos de 0,1 s */
-	public function update( dt : Float ) {
+	/** Process.update: pasos de 0,1 s. (hx, hy, hz): el jugador a media altura de los ojos (hero.z + viewZ * 0.5) */
+	public function update( dt : Float, hx : Float, hy : Float, hz : Float ) {
 		time += dt;
 		var n = 0;
 		while( time >= 0.1 && n < 3 ) {
@@ -60,6 +62,7 @@ class WorldProcess {
 			if( frame % 4 == 0 ) updateFlood();
 			updateCover();
 			updatePropagate();
+			updateTrack(hx, hy, hz);
 		}
 		if( time > 0.1 ) time = 0;
 	}
@@ -194,6 +197,8 @@ class WorldProcess {
 	/** Process.onSet: se llama despues de cambiar un bloque del planeta (no de la nave) */
 	public function onSet( x : Int, y : Int, z : Int, old : Block, b : Block ) {
 		if( z >= World.SHIP_Z ) return;
+		if( (old != null && old.hasProp(PTrack)) || (b != null && b.hasProp(PTrack)) )
+			checkTrack(x, y, z);
 		var over = get(x, y, z + 1);
 		var under = get(x, y, z - 1);
 
@@ -337,5 +342,91 @@ class WorldProcess {
 		}
 	}
 
+	// ---------------------------------------------------------------- BFTrack (Process.initTrack, updateTrack, checkTrack)
+
+	/** bloques con BFTrack del planeta: celda, bloque, radio y si el jugador esta dentro */
+	var tracks : Array<TrackBlock> = [];
+	var miningSpeedCount = 0;
+	/** potencia de excavacion del jugador (Hero.miningPower): 3 en el radio de algun turbo minero, si no 1. El turbo no se
+	    gasta ni se apaga: sirve mientras siga puesto */
+	public var miningPower(default, null) = 1.;
+
+	/** radio de un bloque BFTrack (el mayor si tiene varios) */
+	static function trackDist( b : Block ) : Int {
+		var d = 0;
+		for( f in b.flags )
+			switch( f ) {
+			case BFTrack(_, r): if( r > d ) d = r;
+			default:
+			}
+		return d;
+	}
+
+	/**
+	 * Process.initTrack/onInitLevel: el original buscaba los BFTrack en las celdas de cada trozo al cargarlo. El generador no
+	 * pone ninguno, asi que basta con mirar los cambios del jugador (World.editMap) en vez de recorrer todo el planeta.
+	 */
+	function initTrack() {
+		var size = world.size;
+		for( key in world.editMap.keys() ) {
+			var gi : Int = world.editMap.get(key);
+			gi &= 0xFFFF; // sin el nivel del agua
+			if( gi == 0 ) continue;
+			var b = Block.all[gi];
+			if( b == null || !b.hasProp(PTrack) ) continue;
+			var c = key >> World.ZBITS;
+			tracks.push({ x : c % size, y : Std.int(c / size), z : key & (World.HEIGHT - 1), b : b, dist : trackDist(b), on : false });
+		}
+	}
+
+	/** Process.checkTrack: alta o baja del bloque BFTrack de una celda que acaba de cambiar */
+	function checkTrack( x : Int, y : Int, z : Int ) {
+		x = real(x);
+		y = real(y);
+		for( t in tracks )
+			if( t.x == x && t.y == y && t.z == z ) {
+				setTrack(t, false);
+				tracks.remove(t);
+				break;
+			}
+		var b = get(x, y, z);
+		if( b != null && b.hasProp(PTrack) )
+			tracks.push({ x : x, y : y, z : z, b : b, dist : trackDist(b), on : false });
+	}
+
+	/** Process.updateTrack: quita los que ya no estan y mira si el jugador esta a menos de su radio del centro del bloque */
+	function updateTrack( hx : Float, hy : Float, hz : Float ) {
+		if( tracks.length == 0 ) return;
+		for( t in tracks.copy() )
+			if( get(t.x, t.y, t.z) != t.b ) {
+				setTrack(t, false);
+				tracks.remove(t);
+			}
+		var s = world.size;
+		inline function realDist( d : Float ) return d > s * 0.5 ? d - s : (d < -s * 0.5 ? d + s : d);
+		// menos 0,5: la distancia es al centro del bloque. Cambio del port: la altura no da la vuelta (el original tambien le
+		// aplicaba realDist, y en un planeta pequeno un turbo en el fondo contaria desde la nave)
+		var x = hx - 0.5, y = hy - 0.5, z = hz - 0.5;
+		for( t in tracks ) {
+			var dx = realDist(t.x - x), dy = realDist(t.y - y), dz = t.z - z;
+			setTrack(t, dx * dx + dy * dy + dz * dz < t.dist * t.dist);
+		}
+	}
+
+	/** Process.activateTrack + trackEffect: el jugador entra en el radio de un bloque BFTrack o sale de el */
+	function setTrack( t : TrackBlock, on : Bool ) {
+		if( t.on == on ) return;
+		t.on = on;
+		for( f in t.b.flags )
+			switch( f ) {
+			case BFTrack(TMiningSpeed, _):
+				miningSpeedCount += on ? 1 : -1;
+				miningPower = miningSpeedCount <= 0 ? 1 : 3;
+			default:
+			}
+	}
+
 	static var DIRS = [[-1, 0], [1, 0], [0, 1], [0, -1]];
 }
+
+private typedef TrackBlock = { x : Int, y : Int, z : Int, b : Block, dist : Int, on : Bool };
