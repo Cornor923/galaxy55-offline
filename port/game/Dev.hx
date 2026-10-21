@@ -16,6 +16,7 @@ import Common;
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local
  *   synth N                 usar el ordenador del sintetizador N
  *   jet 1|0                 mantener Espacio (salto y jetpack)
+ *   press|release TECLA...  pulsar o soltar teclas de verdad (shift o una letra), p. ej. press shift k = Mayus+K
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
@@ -271,6 +272,13 @@ class Dev {
 					g.debugSpeed = f(a[1]) * 0.15;
 					g.debugStrafe = a.length > 2 ? f(a[2]) * 0.15 : 0;
 				case "jet": g.debugJet = a[1] == "1";
+				case "press", "release":
+					// eventos de teclado de la ventana: hxd.Key los ve como si se hubieran pulsado (isPressed en la siguiente actualizacion)
+					for( n in a.slice(1) ) {
+						var e = new hxd.Event(a[0] == "press" ? EKeyDown : EKeyUp);
+						e.keyCode = n == "shift" ? hxd.Key.SHIFT : n.toUpperCase().charCodeAt(0);
+						hxd.Window.getInstance().event(e);
+					}
 				case "trace": trace = true;
 				case "shop": app.openShop();
 				case "screen": @:privateAccess app.show(a[1]);
@@ -292,6 +300,7 @@ class Dev {
 				case "creative": @:privateAccess g.creative = true;
 				case "maxfps": Settings.maxFps = Std.parseInt(a[1]);
 				case "fps": Sys.println("fps " + Std.int(hxd.Timer.fps()));
+				case "helptext": Settings.showHelp = a[1] == "1"; // helptext 0|1: opcion de ayuda en pantalla
 				case "hangar": app.startHangar();
 				case "mothership": app.startMothership();
 				case "settop":
@@ -374,6 +383,9 @@ class Dev {
 			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
 		case "pos":
 			Sys.println("pos: " + g.px + "," + g.py + "," + g.pz + "  yaw=" + g.yaw + " pitch=" + g.pitch + "  suelo=" + (g.standingBlock == null ? "-" : "" + g.standingBlock.k));
+		case "hud":
+			// texto de arriba a la izquierda (coordenadas y fps de la tecla F, ayuda en pantalla) en una linea
+			Sys.println("hud: " + @:privateAccess app.hud.text.split("\n").join(" | "));
 		case "zones":
 			for( i in 0...g.ship.crafts.length ) {
 				var c = g.ship.crafts[i];

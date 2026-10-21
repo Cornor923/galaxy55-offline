@@ -115,6 +115,8 @@ class GalaxyApp extends hxd.App {
 	var bar : h2d.Graphics;
 	var barText : h2d.Text;
 	var hud : h2d.Text;
+	/** F: coordenadas y fps (Game.showFPS del original): ocultos al empezar y sin guardar en settings.json, como en el original */
+	var showFps = false;
 	var msgText : h2d.Text;
 	var jetGlow : h2d.Bitmap;
 	var jetBar : h2d.Graphics;
@@ -1556,7 +1558,12 @@ class GalaxyApp extends hxd.App {
 					saveGame(true);
 				}
 				var p = game;
-				hud.text = Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps" + (Settings.showHelp ? "\n" + Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : "") : "");
+				// F (Game.checkKeys) muestra u oculta solo la linea de coordenadas y fps; la ayuda en pantalla (anadido del port) va con su opcion
+				if( K.isPressed(K.F) ) showFps = !showFps;
+				var lines = [];
+				if( showFps ) lines.push(Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps");
+				if( Settings.showHelp ) lines.push(Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : ""));
+				hud.text = lines.join("\n");
 				msgText.visible = game.message != null;
 				if( game.message != null ) {
 					msgText.text = game.message;

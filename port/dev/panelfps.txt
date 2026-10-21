@@ -1,0 +1,56 @@
+# F muestra u oculta la linea de coordenadas y fps (Game.checkKeys del original: oculta al empezar).
+# La ayuda en pantalla (anadido del port) no depende de F: va con su opcion (helptext 0|1).
+# Esperado: inicio = solo la ayuda; F = "x, y, z   N fps" encima de la ayuda; sin ayuda = solo coordenadas;
+# otra F = hud vacio. Con la paleta, la tienda o el cofre abiertos F no hace nada (el original solo la lee jugando).
+wait 3
+planet
+wait 30
+print hud
+shot panelfps_inicio
+press f
+wait 2
+release f
+print hud
+shot panelfps_f
+helptext 0
+wait 2
+print hud
+shot panelfps_f_sinayuda
+press f
+wait 2
+release f
+print hud
+shot panelfps_nada
+helptext 1
+press f
+wait 2
+release f
+print hud
+creative
+set 64 64 120 BChest
+palette
+wait 3
+press f
+wait 2
+release f
+close
+wait 3
+print hud
+shop
+wait 3
+press f
+wait 2
+release f
+close
+wait 3
+print hud
+activate 64 64 120
+wait 3
+press f
+wait 2
+release f
+close
+wait 3
+print hud
+shot panelfps_final
+quit

@@ -23,6 +23,7 @@ Son los del juego original (el movimiento y la física son una copia de `ent/Her
 | Saltar y jetpack | Espacio o Ctrl; en el aire, jetpack (gasta combustible, se recarga en el suelo) |
 | Caminar despacio | X |
 | Casco | H quita o pone el casco |
+| Coordenadas y FPS | F las muestra u oculta (ocultas al empezar, como en el original) |
 | Excavar o colocar | clic izquierdo, E o Mayús (mantener). Con la mano vacía excava; con un bloque, lo coloca si algo lo sujeta |
 | Elegir casilla | 1–0 o la rueda del ratón; Tab = excavador (mano vacía) |
 | Tirar la pila elegida | R o Supr |
