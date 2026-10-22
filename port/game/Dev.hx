@@ -510,6 +510,11 @@ class Dev {
 				Sys.println((all ? b.index + " " : "") + k + (all && !b.hasProp(PCanPick) ? " (nopick)" : "") + ": " + s.join(" | "));
 			}
 			Lang.setCode(Lang.CODES[cur]);
+		case "snd":
+			// print snd NOMBRE: veces que ha sonado desde el ultimo print snd de ese sonido
+			var n = Snd.played.get(a[2]);
+			Snd.played.remove(a[2]);
+			Sys.println("sonido " + a[2] + ": " + (n == null ? 0 : n));
 		case "lightsum":
 			// suma de la luz en un cubo (x y z radio): para comprobar que tras editar y deshacer queda igual
 			var x = Std.parseInt(a[2]), y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), r = Std.parseInt(a[5]);
