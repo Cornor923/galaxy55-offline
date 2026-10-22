@@ -16,6 +16,20 @@ class WaterWave extends hxsl.Shader {
 	};
 }
 
+/**
+	Como WaterShader0..2 del original (tpos.z += 0.00002, "prevent some z-fighting with alpha blocks"): el agua queda un poco
+	mas lejos en profundidad. Sus caras contra el hielo, el cristal o las hojas estan en el mismo plano que las de esos bloques
+	y, sin esto, el redondeo decidia cual ganaba en cada triangulo (triangulos oscuros y rayado en el hielo visto desde el agua).
+**/
+class WaterDepthBias extends hxsl.Shader {
+	static var SRC = {
+		var projectedPosition : Vec4;
+		function vertex() {
+			projectedPosition.z += 0.00002;
+		}
+	};
+}
+
 /** Geometria acumulada de un chunk para un material. */
 class MeshBuf {
 	public var pts = new Array<h3d.col.Point>();
@@ -1131,6 +1145,8 @@ class World {
 			mat.mainPass.setPassName("alpha");
 			mat.mainPass.layer = LAYER_WATER;
 			if( wave != null ) mat.mainPass.addShader(wave);
+			// despues de sky.fog, que escribe projectedPosition
+			mat.mainPass.addShader(new WaterDepthBias());
 		}
 		if( kind == 3 ) {
 			// pasada opaca de los pixeles solidos (marcos del cristal, bordes del hielo): escribe profundidad, asi las caras lejanas
