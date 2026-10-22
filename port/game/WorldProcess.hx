@@ -12,7 +12,7 @@ import Block;
  * - la hierba se cubre al quedar al aire (covered) y se descubre al taparla (uncover);
  * - al quitar un bloque se rompen los detalles de encima y lo anclado arriba o abajo;
  * - congelador (BFreezer): el agua cercana pasa a hielo y la lava a roca; BFTransform cambia el bloque al quitarlo;
- * - bloques con BFTrack (PTrack: el turbo minero): con el jugador dentro de su radio, la potencia de excavacion pasa a 3.
+ * - bloques con BFTrack (PTrack: el turbo minero): con el jugador dentro de su radio, la potencia de excavacion pasa a 3;
  * - cada bloque del agua del bioma que se pone aqui cuenta para bajar el nivel del mar (api.processBlock de Process.set, que
  *   en el cliente original hace net/Local.hx); la bajada (World.reduceWater) se hace en la siguiente actualizacion.
  * En el hangar (EditShip) no hay transformaciones (allowTransforms) y los liquidos no se mueven (allowFlow).

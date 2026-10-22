@@ -28,8 +28,7 @@ They are the original game's (movement and physics are a copy of `ent/Hero.hx` a
 | Dig or place | left click, E or Shift (hold). With an empty hand you dig; with a block you place it if something supports it |
 | Choose slot | 1-0 or mouse wheel; Tab = digger (empty hand) |
 | Drop the selected stack | R or Del |
-| Activate (on-board computer, doors, canteens, ancient bomb) | aim, press and release. Holding on until the block breaks digs it out instead: that is how an ancient bomb is picked up without setting it off (it needs a pink charge, like ancient rock) |
-| Activate (on-board computer, doors) | aim, press and release |
+| Activate (on-board computer, doors, ancient bomb) | aim, press and release. Holding on until the block breaks digs it out instead: that is how an ancient bomb is picked up without setting it off (it needs a pink charge, like ancient rock) |
 | ESCorp canteen (chest) | aim, press and release. The game goes on: click takes and drops (Shift half, Ctrl one; or arrows and Enter, or d-pad and A), dragging outside the window looks around and walking away closes it (so do Esc and B) |
 | Return to the ship | Shift+K, or step into the landing light beam |
 | Creative: block palette | I (click = put the block in the selected slot, wheel = page) |
