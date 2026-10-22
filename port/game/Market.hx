@@ -110,6 +110,12 @@ class Market {
 		return { time : 0, items : [] };
 	}
 
+	/** copia aparte (la Market la cambia en su sitio) */
+	public static function copy( info : MarketInfo ) : MarketInfo {
+		if( info == null ) return null;
+		return { time : info.time, items : [for( i in info.items ) { key : i.key, bought : i.bought, sold : i.sold }] };
+	}
+
 	public var info(default, null) : MarketInfo;
 	var items = new Map<String, MarketItem>();
 

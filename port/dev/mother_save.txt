@@ -1,0 +1,49 @@
+# nave nodriza: lo vendido al robot sigue ahi si se guarda dentro (cerrar la ventana) y se vuelve con Continuar
+# 1) entrando desde el ordenador de la nave; 2) acoplado al robot desde el mapa (la partida sigue en el espacio)
+# "sell BMinIron 0" sin la tienda abierta solo muestra los creditos y los precios del mercado guardado
+wait 3
+ship
+wait 10
+print credits
+print inv
+mothership
+wait 300
+shop
+wait 5
+sell BMinIron 10
+print inv
+shopclose
+wait 5
+closewin
+reload
+wait 400
+print credits
+print inv
+sell BMinIron 0
+ship
+wait 10
+explore
+wait 200
+expgo 2400 1000
+wait 400
+exprobot
+wait 700
+expbutton
+wait 400
+print credits
+shop
+wait 5
+sell BMinIron 10
+print inv
+shopclose
+wait 5
+closewin
+reload
+wait 600
+print pos
+landhome
+wait 300
+print credits
+print inv
+sell BMinIron 0
+quit

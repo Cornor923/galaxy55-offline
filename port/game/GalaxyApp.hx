@@ -742,6 +742,7 @@ class GalaxyApp extends hxd.App {
 		hangarReturn = cur;
 		var h : SaveInfo = Reflect.copy(cur);
 		h.inv = Inv.copy(cur.inv);
+		h.market = Market.copy(cur.market);
 		h.mothership = true;
 		leaveGame();
 		startGame(h);
@@ -810,12 +811,7 @@ class GalaxyApp extends hxd.App {
 			backFromHangar();
 			return;
 		}
-		if( hangarReturn != null && game != null ) {
-			var m = game.toInfo();
-			hangarReturn.inv = Inv.copy(game.inv.inv);
-			hangarReturn.credits = m.credits;
-			hangarReturn.market = m.market;
-		}
+		syncMothership();
 		if( hangarReturn != null && hangarReturn.uni != null && hangarReturn.uni.space == true && shipFrames != null ) {
 			var info = hangarReturn;
 			hangarReturn = null;
@@ -824,6 +820,15 @@ class GalaxyApp extends hxd.App {
 			return;
 		}
 		backFromHangar();
+	}
+
+	/** lo comprado y vendido al robot pasa a la partida a la que se vuelve (al salir de la nodriza y al guardar dentro) */
+	function syncMothership() {
+		if( hangarReturn == null || game == null ) return;
+		var m = game.toInfo();
+		hangarReturn.inv = Inv.copy(game.inv.inv);
+		hangarReturn.credits = m.credits;
+		hangarReturn.market = Market.copy(m.market);
 	}
 
 	function backFromHangar() {
@@ -965,6 +970,7 @@ class GalaxyApp extends hxd.App {
 		hangarReturn = info;
 		var h : SaveInfo = Reflect.copy(info);
 		h.inv = Inv.copy(info.inv);
+		h.market = Market.copy(info.market);
 		h.mothership = true;
 		startGame(h);
 	}
@@ -1305,7 +1311,8 @@ class GalaxyApp extends hxd.App {
 			if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
 			return;
 		}
-		// en el hangar se guarda la partida tal como estaba al entrar
+		// en el hangar se guarda la partida tal como estaba al entrar; en la nodriza, con lo comprado y vendido
+		if( game.info.mothership == true && !GameView.editMother ) syncMothership();
 		var ok = SaveData.write(game.hangar != null || game.info.mothership == true ? hangarReturn : game.toInfo(), captureThumb());
 		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza
 		if( GameView.editMother && game.info.mothership == true )
