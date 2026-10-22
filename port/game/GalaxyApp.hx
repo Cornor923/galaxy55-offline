@@ -813,7 +813,7 @@ class GalaxyApp extends hxd.App {
 		}
 		syncMothership();
 		if( hangarReturn != null && hangarReturn.uni != null && hangarReturn.uni.space == true && shipFrames != null ) {
-			var info = hangarReturn;
+			var info = returnInfo();
 			hangarReturn = null;
 			leaveGame();
 			toSpace(info);
@@ -831,8 +831,14 @@ class GalaxyApp extends hxd.App {
 		hangarReturn.market = Market.copy(m.market);
 	}
 
+	/** la partida a la que se vuelve del hangar o de la nodriza (o que se guarda estando dentro): el tiempo jugado dentro tambien cuenta */
+	function returnInfo() : SaveInfo {
+		if( hangarReturn != null ) hangarReturn.playSeconds = game.playSeconds;
+		return hangarReturn;
+	}
+
 	function backFromHangar() {
-		var info = hangarReturn;
+		var info = returnInfo();
 		hangarReturn = null;
 		leaveGame();
 		info.hangar = null;
@@ -1311,9 +1317,9 @@ class GalaxyApp extends hxd.App {
 			if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
 			return;
 		}
-		// en el hangar se guarda la partida tal como estaba al entrar; en la nodriza, con lo comprado y vendido
+		// en el hangar se guarda la partida tal como estaba al entrar (con el tiempo jugado); en la nodriza, con lo comprado y vendido
 		if( game.info.mothership == true && !GameView.editMother ) syncMothership();
-		var ok = SaveData.write(game.hangar != null || game.info.mothership == true ? hangarReturn : game.toInfo(), captureThumb());
+		var ok = SaveData.write(game.hangar != null || game.info.mothership == true ? returnInfo() : game.toInfo(), captureThumb());
 		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza
 		if( GameView.editMother && game.info.mothership == true )
 			ok = (try Mothership.save(game.world) catch( e : Dynamic ) false) && ok;

@@ -375,6 +375,8 @@ class Dev {
 			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "time":
+			Sys.println("tiempo: " + Std.int(g.playSeconds));
 		case "palette":
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
 		case "hangar":
