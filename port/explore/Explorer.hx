@@ -35,8 +35,9 @@ class ExpEntity {
 			var s = d * (0.01 + 0.001 * speed);
 			if( s < -max ) s = -max;
 			if( s > max ) s = max;
-			dx += Math.cos(ang) * s;
-			dy += Math.sin(ang) * s;
+			// el original iba a 30 fps fijos (tmod 1): sin tmod, a 60 fps empuja el doble, se pasa del destino y al volver gira la nave
+			dx += Math.cos(ang) * s * tmod;
+			dy += Math.sin(ang) * s * tmod;
 		}
 		x += dx * tmod;
 		y += dy * tmod;
@@ -1740,7 +1741,14 @@ class Explorer extends h2d.Object {
 		if( winButtons.length > 0 ) winButtons[0].cb();
 	}
 
-	public function devClickPoint( x : Float, y : Float ) moveShip(null, { x : x, y : y });
+	public function devClickPoint( x : Float, y : Float, rel = false ) moveShip(null, rel ? { x : ship.x + x, y : ship.y + y } : { x : x, y : y });
+
+	/** solo pruebas: rumbo de la nave (grados), fotograma de su imagen, velocidad y distancia al destino */
+	public function devShipAngle() : String {
+		var f = shipBmp == null ? -1 : shipTiles.indexOf(shipBmp.tile);
+		return "nave=" + Std.int(ship.x) + "," + Std.int(ship.y) + " angulo=" + Math.round(ship.rotation) + " fotograma=" + f + "/" + shipTiles.length
+			+ " vel=" + Std.int(ship.getScreenSpeed() * 100) / 100 + " destino=" + (ship.target == null ? "-" : "" + Std.int(ship.getTargetDist()));
+	}
 
 	public function devInfo() : String {
 		var s = (inSolar ? "SISTEMA SOLAR " + curSystem.name : "SECTOR") + " nave=" + Std.int(ship.x) + "," + Std.int(ship.y) + " vel=" + Std.int(ship.getScreenSpeed() * 100) / 100
