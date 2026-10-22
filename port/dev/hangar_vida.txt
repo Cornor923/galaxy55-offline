@@ -1,0 +1,22 @@
+# hangar (EditShip: hero.invincible = true): ni las caidas ni el dano quitan vida, y no se muere
+wait 3
+ship
+wait 10
+hangar
+wait 60
+vitals
+print pos
+# 1) caida de 13 bloques en una esquina del cobertizo (fuera del hangar seria dano)
+tp 7.5 3.5 14 0 0
+wait 80
+vitals
+print pos
+# 2) dano de 500 (lava, ahogarse...): ni fundido rojo ni muerte, sigue en el hangar
+hurt 500
+wait 10
+vitals
+wait 200
+vitals
+print pos
+print hangar
+quit

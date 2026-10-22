@@ -12,11 +12,11 @@ expplanet 0
 wait 400
 shot lab_land
 expgo 2400 1000
-wait 400
+waitfor sector
 expinfo
 shot lab_sector
 exprobot
-wait 600
+waitfor window
 exprinfo
 shot lab_robot
 quit

@@ -52,7 +52,7 @@ wait 300
 expangle
 # salida al sector
 expgo 2400 1000
-wait 400
+waitfor sector
 expangle
 # en el sector, hacia la izquierda (rumbo 180)
 expgor -300 0

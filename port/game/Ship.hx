@@ -37,10 +37,12 @@ class Ship {
 	var beamFog : Sky.FogShader;
 	var time = 0.;
 	var needRecal = true;
+	/** la nave de la partida (la del hangar o la de serie): las imagenes del mapa se centran en ella */
+	var data : ShipData.ShipDataInfo;
 
 	public function new( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, ?edits : Array<Int>, ?shipBytes : haxe.io.Bytes ) {
 		this.planet = planet;
-		var data = ShipData.load(shipBytes != null ? shipBytes : Const.DEFAULT_SHIP);
+		data = ShipData.load(shipBytes != null ? shipBytes : Const.DEFAULT_SHIP);
 		crafts = data.crafts;
 		// el sitio de aterrizaje es fijo para cada planeta (misma semilla = mismo sitio), como en Game.placeShip
 		var p = planet.shipPlace();
@@ -312,7 +314,6 @@ class Ship {
 	 * fotograma, con el contraste y el contorno negro del original. Solo se ve la nave: el resto de la escena se oculta un momento.
 	 */
 	public function captureFrames( engine : h3d.Engine, s3d : h3d.scene.Scene, size = 192, angles = 32 ) : Array<flash.display.BitmapData> {
-		var data = ShipData.load(Const.DEFAULT_SHIP);
 		var gx = 0., gy = 0.;
 		for( c in data.cells ) {
 			gx += c.x;
@@ -338,6 +339,12 @@ class Ship {
 		fog.fogK = 0;
 		fog.curve = 0;
 		world.sky.fog.fogK = 0;
+		// la nave tiene la luz del planeta (sunPower del bioma): en la Luna salia casi negra y en Marte quemada. El original la
+		// captura siempre con la misma luz (r3d.Capture, bioma BIShed): aqui se lleva a luz plena (LBASE) mientras se captura
+		var k = World.LBASE / Data.getBiome(Type.createEnum(BiomeKind, planet.biomeName)).sunPower;
+		var mats = world.root.getMaterials();
+		var oldColors = [for( m in mats ) m.color.clone()];
+		for( m in mats ) m.color.scale3(k);
 		var cam = s3d.camera;
 		var old = { pos : cam.pos.clone(), target : cam.target.clone(), up : cam.up.clone(), fov : cam.fovY, zn : cam.zNear, zf : cam.zFar, ratio : cam.screenRatio };
 		cam.fovY = 52;
@@ -383,6 +390,7 @@ class Ship {
 		fog.fogK = oldFog;
 		fog.curve = oldCurve;
 		world.sky.fog.fogK = oldWorldFogK;
+		for( i in 0...mats.length ) mats[i].color.load(oldColors[i]);
 		for( o in hidden ) o.visible = true;
 		return frames;
 	}

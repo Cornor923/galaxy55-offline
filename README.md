@@ -73,7 +73,7 @@ The original code, graphics and data belong to **Motion Twin** and were publishe
 non-commercial, with credit to Motion Twin, share-alike. It is not affiliated with or endorsed by Motion Twin.
 Thanks to the Eternaltwin community for preserving documentation and screenshots.
 Thanks to **Sekhmet** for detailed bug reports, testing on Linux, and memories of how the original game worked (water, lava, cascades).
-Thanks to **Cornor923** for the French README and fixes (liquid veil on wide windows, ice faces, the head clipping into blocks, launcher without console, bedrock layer, main menu on wide windows).
+Thanks to **Cornor923** for the French README and fixes (liquid veil on wide windows, ice faces, the head clipping into blocks, launcher without console, bedrock layer, main menu on wide windows, creative palette and oxygen, death and damage in the ship and hangar, mothership saves and play time, the ship on the star map).
 
 ---
 
@@ -139,7 +139,7 @@ El código, los gráficos y los datos originales son de **Motion Twin**, publica
 **misma licencia**: sin uso comercial, con atribución a Motion Twin y compartiendo igual. No está afiliada ni respaldada
 por Motion Twin. Gracias a la comunidad de Eternaltwin por conservar documentación y capturas.
 Gracias a **Sekhmet** por sus reportes de errores detallados, las pruebas en Linux y sus recuerdos de cómo funcionaba el juego original (agua, lava, cascadas).
-Gracias a **Cornor923** por el README en francés y sus arreglos (velo del agua en ventanas anchas, caras del hielo, la cabeza que se metía en los bloques, lanzador sin consola, la capa de roca madre, el menú principal en ventanas anchas).
+Gracias a **Cornor923** por el README en francés y sus arreglos (velo del agua en ventanas anchas, caras del hielo, la cabeza que se metía en los bloques, lanzador sin consola, la capa de roca madre, el menú principal en ventanas anchas, la paleta y el oxígeno del creativo, la muerte y el daño en la nave y el hangar, el guardado y el tiempo de juego en la nave nodriza, la nave en el mapa de estrellas).
 
 ---
 
@@ -205,4 +205,4 @@ Le code, les graphismes et les données d'origine appartiennent à **Motion Twin
 **même licence** : pas d'utilisation commerciale, attribution à Motion Twin et partage dans les mêmes conditions. Elle n'est ni
 affiliée à Motion Twin ni approuvée par Motion Twin. Merci à la communauté Eternaltwin d'avoir préservé la documentation et les captures.
 Merci à **Sekhmet** pour ses rapports de bugs détaillés, ses tests sous Linux et ses souvenirs du fonctionnement du jeu original (eau, lave, cascades).
-Merci à **Cornor923** pour le README en français et ses corrections (voile des liquides sur les fenêtres larges, faces de la glace, tête qui rentrait dans les kubes, lanceur sans console, couche de roche mère, menu principal sur les fenêtres larges).
+Merci à **Cornor923** pour le README en français et ses corrections (voile des liquides sur les fenêtres larges, faces de la glace, tête qui rentrait dans les kubes, lanceur sans console, couche de roche mère, menu principal sur les fenêtres larges, palette et oxygène du créatif, mort et dégâts dans le vaisseau et le hangar, sauvegarde et temps de jeu dans le vaisseau-mère, vaisseau sur la carte stellaire).

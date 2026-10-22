@@ -5,7 +5,7 @@ wait 10
 explore
 wait 200
 expgo 2400 1000
-wait 400
+waitfor sector
 exprinfo
 shot rob1
 exprobot

@@ -14,7 +14,7 @@ setlang fr
 wait 2
 shot idioma_sistema_fr
 expgo 2400 1000
-wait 400
+waitfor sector
 exprobot
 wait 600
 setlang en

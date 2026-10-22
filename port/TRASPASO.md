@@ -1,6 +1,6 @@
 # Traspaso para seguir en otra PC (2026-10-16)
 
-Léelo entero antes de tocar nada. Lo escribió Claude para el Claude de la otra PC. El usuario es **Pvie** (Pv1E en GitHub): habla español,
+Léelo entero antes de tocar nada. El usuario es **Pvie** (Pv1E en GitHub): habla español,
 quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Twin, sin inventar**. Lo que añadimos nosotros se marca como
 "cambio del port" o "añadido del port".
 
@@ -11,7 +11,7 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
 - Lista de lo que falta: `PENDIENTES.md` / `TODO.md`.
 - Errores conocidos: `ERRORES.md` / `BUGS.md`.
 - Novedades: `CHANGELOG.md`.
-- El zip trae también `claude-memoria/`, la memoria de Claude de la PC anterior: preferencias del usuario y datos del entorno.
+- El zip trae también `claude-memoria/`, las notas de la PC anterior: preferencias del usuario y datos del entorno.
   Cópiala a la carpeta de memoria del proyecto en la nueva PC si quieres que se cargue sola.
 - `nave-hades-atlas-2-0.zip`: el mapa de Minecraft con la nave nodriza. La hizo un amigo de Pvie, que dio permiso y no pide créditos.
 
@@ -65,6 +65,30 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
    - Se visita desde ordenador → "Visitar la nave nodriza (prueba)"; Mayús+K vuelve. Nada se guarda dentro.
    - `Mothership.hx` conserva el diseño generado antiguo como reserva, si no hay `mothership.bin`.
 
+## PR de Cornor923 integrados (2026-10-21, cambio del port)
+Los PR 17-30 se fusionaron en local en `port-hashlink`, en orden (publicados en GitHub el 2026-10-22). Un solo conflicto: `Dev.hx` entre el PR 20
+(`palette`) y el 26 (`time`); se conservaron ambos comandos. Cada PR trae su guion en `port/dev/`. Compila sin errores
+(`haxe port\game.hxml`); los guiones de los PR no se han vuelto a ejecutar tras la fusión. El PR 26 incluye el 25.
+Cambios: oxígeno en creativo (17), hielo/agua con desplazamiento de profundidad (18, 22), paleta creativa (19, 20),
+`devrun.ps1` con `galaxy55.exe` (21), muerte en la nave (23), sin daño en el hangar (24), guardado y tiempo en la nodriza
+(25, 26), nave del mapa: color, rumbo y centrado (27, 28, 29), TODO sin "Shed" (30).
+Guiones ejecutados tras la fusión (datos en carpeta temporal): todos dan lo esperado. En `map_ship_center` la nave rehecha en el
+hangar es más lenta (0.14 en vez de 0.2) y con esperas fijas no salía del sistema antes de buscar al robot, así que `hangarexit`
+llegaba con el mapa abierto y fallaba (partida nula; la orden ya lo comprueba). Arreglado con la orden `waitfor` (sector, window,
+mother, map, planet, ready), que espera a que pase algo en vez de un número fijo de fotogramas; los guiones del mapa, del robot y
+de recargar la usan. `map_ship_center` ya llega a la nave nodriza y vuelve al mapa.
+
+Los PR 31-51 (2026-10-22) se fusionaron en local, en orden; cada uno compila. Conflictos resueltos: `Dev.hx` (cada PR añade
+órdenes: se conservan todas y se quitan las versiones viejas repetidas de `print drops`, `msg`, `ship` y `tele`); temblor (31)
+con el fundido ya movido tras el teletransportador; turbo (32) + bomba (34) en `process.update`; mar que baja (37) + turbo en la
+cabecera de `WorldProcess.hx`; altura de los ojos (39) con el temblor: `VIEW_Z` pasa a `viewZ` en el láser, el apuntado,
+`inWater` y el turbo, y el fundido de la bomba conserva el `dz` del anterior (`Process.hx:249`); F (45) y cantina no modal (47):
+con la cantina abierta F no cambia nada y no sale la ayuda; soportes en el hangar (51): `process.update` corre también allí.
+Los 20 guiones nuevos de los PR pasan (datos en carpeta temporal).
+Tambien pasan los de siempre (espacio, robot2, robot3, mapa_opciones, vida, hangar, map_ship_center, play_time, mother_save,
+muerte_nave). No lanzar dos `devrun.ps1` a la vez: los dos escriben `port/out/dev_out.txt`, las salidas se mezclan y uno
+puede quedarse colgado.
+
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
@@ -109,6 +133,8 @@ otros jugadores en VMs o por streaming.
   `--novsync` quita el VSync siempre (para diagnosticar); no resolvió los tirones.
 
 ## Avisos
+- Commits, PR, notas de publicación y `.md` van sin créditos de IA (ni `Co-Authored-By` ni "Generated with"); los commits
+  antiguos que ya los llevan se quedan como están (decisión del usuario, 2026-10-21). El Flash original ya no se usa de referencia.
 - El mensaje de validez del hangar puede ir un cambio por detrás (se comprueba cada 15 tmod).
 - Las piezas de nave están a la venta en la tienda (ya sirven para el hangar).
 - No probado con ratón real: la tienda, el cofre, el hangar y la ventana del idioma inicial (solo con el banco de pruebas).

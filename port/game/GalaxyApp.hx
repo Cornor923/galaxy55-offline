@@ -760,6 +760,7 @@ class GalaxyApp extends hxd.App {
 		hangarReturn = cur;
 		var h : SaveInfo = Reflect.copy(cur);
 		h.inv = Inv.copy(cur.inv);
+		h.market = Market.copy(cur.market);
 		h.mothership = true;
 		leaveGame();
 		startGame(h);
@@ -828,14 +829,9 @@ class GalaxyApp extends hxd.App {
 			backFromHangar();
 			return;
 		}
-		if( hangarReturn != null && game != null ) {
-			var m = game.toInfo();
-			hangarReturn.inv = Inv.copy(game.inv.inv);
-			hangarReturn.credits = m.credits;
-			hangarReturn.market = m.market;
-		}
+		syncMothership();
 		if( hangarReturn != null && hangarReturn.uni != null && hangarReturn.uni.space == true && shipFrames != null ) {
-			var info = hangarReturn;
+			var info = returnInfo();
 			hangarReturn = null;
 			leaveGame();
 			toSpace(info);
@@ -844,8 +840,23 @@ class GalaxyApp extends hxd.App {
 		backFromHangar();
 	}
 
+	/** lo comprado y vendido al robot pasa a la partida a la que se vuelve (al salir de la nodriza y al guardar dentro) */
+	function syncMothership() {
+		if( hangarReturn == null || game == null ) return;
+		var m = game.toInfo();
+		hangarReturn.inv = Inv.copy(game.inv.inv);
+		hangarReturn.credits = m.credits;
+		hangarReturn.market = Market.copy(m.market);
+	}
+
+	/** la partida a la que se vuelve del hangar o de la nodriza (o que se guarda estando dentro): el tiempo jugado dentro tambien cuenta */
+	function returnInfo() : SaveInfo {
+		if( hangarReturn != null ) hangarReturn.playSeconds = game.playSeconds;
+		return hangarReturn;
+	}
+
 	function backFromHangar() {
-		var info = hangarReturn;
+		var info = returnInfo();
 		hangarReturn = null;
 		leaveGame();
 		info.hangar = null;
@@ -983,6 +994,7 @@ class GalaxyApp extends hxd.App {
 		hangarReturn = info;
 		var h : SaveInfo = Reflect.copy(info);
 		h.inv = Inv.copy(info.inv);
+		h.market = Market.copy(info.market);
 		h.mothership = true;
 		startGame(h);
 	}
@@ -1381,8 +1393,9 @@ class GalaxyApp extends hxd.App {
 			if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
 			return;
 		}
-		// en el hangar se guarda la partida tal como estaba al entrar
-		var ok = SaveData.write(game.hangar != null || game.info.mothership == true ? hangarReturn : game.toInfo(), captureThumb());
+		// en el hangar se guarda la partida tal como estaba al entrar (con el tiempo jugado); en la nodriza, con lo comprado y vendido
+		if( game.info.mothership == true && !GameView.editMother ) syncMothership();
+		var ok = SaveData.write(game.hangar != null || game.info.mothership == true ? returnInfo() : game.toInfo(), captureThumb());
 		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza
 		if( GameView.editMother && game.info.mothership == true )
 			ok = (try Mothership.save(game.world) catch( e : Dynamic ) false) && ok;
@@ -1710,7 +1723,7 @@ class GalaxyApp extends hxd.App {
 				// en pausa y en los menus no se recalcula y se queda quieto
 				hudShake = p.shake <= 0 ? 0 : Math.random() * 10 * p.shake * (Std.random(2) * 2 - 1) * Theme.visibleArea().w / engine.width;
 				// F (Game.checkKeys) muestra u oculta solo la linea de coordenadas y fps; la ayuda en pantalla (anadido del port) va con su opcion
-				if( chest == null && K.isPressed(K.F) ) showFps = !showFps;
+				if( chest == null && K.isPressed(K.F) ) showFps = !showFps; // con la cantina abierta no (actionKeys = false)
 				var lines = [];
 				if( showFps ) lines.push(Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps");
 				// con la cantina abierta, la ayuda de las teclas del juego no (casi todas estan desactivadas; la ventana tiene la suya)

@@ -1,0 +1,28 @@
+# imagenes de la nave en el mapa: despegue, partida cargada en el espacio y vuelta de la nave nodriza (expship = 8 de los 32 fotogramas)
+# la nave debe salir con el mismo color en todos los biomas: probar con -Extra "--bgbiome=BIMoon" (salia casi negra) y "--bgbiome=BIMars"
+wait 3
+ship
+wait 10
+explore
+wait 200
+expship map_ship_takeoff_frames
+shot map_ship_takeoff
+expgo 2400 1000
+waitfor sector
+closewin
+reload
+waitfor ready
+expinfo
+expship map_ship_reload_frames
+shot map_ship_reload
+exprobot
+waitfor window
+expbutton
+waitfor mother
+print pos
+hangarexit
+waitfor map
+exprinfo
+expship map_ship_mother_frames
+shot map_ship_mother
+quit

@@ -1,0 +1,47 @@
+# el tiempo jugado en el hangar y en la nave nodriza cuenta en la partida: al salir y al guardar dentro (cerrar la ventana)
+# (en el mapa de estrellas el tiempo no corre: al aterrizar sigue el de la salida de la nodriza)
+wait 3
+ship
+wait 10
+print time
+hangar
+wait 600
+print time
+hangarexit
+waitfor planet
+print time
+hangar
+wait 600
+print time
+closewin
+reload
+waitfor ready
+print time
+mothership
+wait 600
+print time
+hangarexit
+waitfor planet
+print time
+mothership
+wait 600
+print time
+closewin
+reload
+waitfor ready
+print time
+explore
+wait 200
+expgo 2400 1000
+waitfor sector
+exprobot
+waitfor window
+expbutton
+waitfor mother
+print time
+hangarexit
+waitfor map
+landhome
+wait 300
+print time
+quit

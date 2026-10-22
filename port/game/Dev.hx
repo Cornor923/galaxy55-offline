@@ -27,9 +27,13 @@ import Common;
  *   press|release TECLA...  pulsar o soltar teclas de verdad (shift o una letra), p. ej. press shift k = Mayus+K
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
+ *   waitfor COSA [max]      esperar (como mucho max fotogramas, 2000 por defecto) a: map (mapa abierto), sector (la nave fuera
+ *                           de los sistemas), window (ventana del mapa
+ *                           abierta), planet (jugando en un planeta), mother (jugando en la nave nodriza), ready (cargado: jugando
+ *                           o en el mapa); si no llega, lo dice
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|around x y z r|select|ship|map [z]|power|life|fov|sky
+ *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
@@ -54,6 +58,8 @@ class Dev {
 	var lines : Array<String>;
 	var pc = 0;
 	var waiting = 0;
+	var waitCond : String = null;
+	var waitMax = 0;
 	/** orden `mine` en curso: celda, bloque y cuando se empezo */
 	var mining : { x : Int, y : Int, z : Int, b : Block, t0 : Float, power : Float };
 	/** orden `until`: "fade" o "tele", el valor que se espera y las actualizaciones que quedan como mucho */
@@ -74,6 +80,20 @@ class Dev {
 
 	static function f( s : String ) return Std.parseFloat(s);
 
+	/** condiciones de waitfor: los tiempos de carga y de viaje cambian mucho de un PC a otro */
+	static function reached( app : GalaxyApp, g : GameView, what : String ) : Bool {
+		var playing = Type.enumConstructor(@:privateAccess app.state) == "Playing";
+		return switch( what ) {
+			case "map": g == null && app.explorer != null;
+			// en el sector y con la animacion de salida del sistema ya terminada (mientras dura, el mapa no hace caso)
+			case "sector": app.explorer != null && app.explorer.shipPos() != null && !@:privateAccess app.explorer.locked && !@:privateAccess app.explorer.serverLock;
+			case "window": app.explorer != null && app.explorer.devWindowOpen();
+			case "planet": playing && g != null && g.info.mothership != true && g.hangar == null;
+			case "mother": playing && g != null && g.info.mothership == true;
+			case "ready": playing || (g == null && app.explorer != null);
+			default: true;
+		}
+	}
 	/** en cada imagen de la carga de un planeta (orden loadshot) */
 	public function loadingFrame( app : GalaxyApp ) {
 		if( loadShot == null || --loadShotWait > 0 ) return;
@@ -86,6 +106,13 @@ class Dev {
 		if( waiting > 0 ) {
 			waiting--;
 			return false;
+		}
+		if( waitCond != null ) {
+			if( reached(app, g, waitCond) ) waitCond = null;
+			else if( --waitMax <= 0 ) {
+				Sys.println("waitfor " + waitCond + ": no llego");
+				waitCond = null;
+			} else return false;
 		}
 		if( mining != null && g != null ) {
 			// mine: se espera a que el bloque se rompa (20 s como mucho)
@@ -113,6 +140,9 @@ class Dev {
 				case "wait":
 					waiting = Std.parseInt(a[1]);
 					return false;
+				case "waitfor":
+					waitCond = a[1];
+					waitMax = a.length > 2 ? Std.parseInt(a[2]) : 2000;
 				case "until":
 					untilWhat = a[1];
 					untilValue = f(a[2]);
@@ -416,7 +446,7 @@ class Dev {
 					while( z > 0 && w.block(x, y, z) == null ) z--;
 					w.setBlock(x, y, z + 1, bk(a[3]));
 					Sys.println("settop " + x + "," + y + "," + (z + 1));
-				case "hangarexit": if( g.onHangarExit != null ) g.onHangarExit();
+				case "hangarexit": if( g != null && g.onHangarExit != null ) g.onHangarExit(); // sin partida (en el mapa) no hace nada
 				case "chestclick": if( app.chest != null ) app.chest.click(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "chestfocus": if( app.chest != null ) app.chest.devFocus(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "shopclose": if( app.shop != null ) @:privateAccess app.closeShop();
@@ -523,6 +553,8 @@ class Dev {
 			Sys.println("creditos: " + g.info.credits);
 		case "palette":
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
+		case "time":
+			Sys.println("tiempo: " + Std.int(g.playSeconds));
 		case "life":
 			// vida, tiempo de juego y ritmo desde el ultimo `print life` (vida por segundo)
 			var t = g.playSeconds;
