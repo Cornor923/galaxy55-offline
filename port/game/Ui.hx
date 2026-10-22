@@ -161,6 +161,11 @@ class Selector extends Widget {
 		onLeft = function() step(-1);
 		onRight = function() step(1);
 		onActivate = function() step(1);
+		// un clic en la flecha "<" va a la opcion anterior (antes iba a la siguiente, como un clic en el resto de la fila)
+		inter.onClick = function(e : hxd.Event) if( enabled ) {
+			if( onPress != null ) onPress(this);
+			if( e.relX >= value.x - 20 && e.relX < value.x + value.calcTextWidth("<  ") * value.scaleX ) step(-1) else activate();
+		}
 		refresh();
 	}
 

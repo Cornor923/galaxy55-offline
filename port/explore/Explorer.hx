@@ -1757,7 +1757,7 @@ class Explorer extends h2d.Object {
 			+ " camara=" + Std.int(current.viewX) + "," + Std.int(current.viewY) + " bloqueado=" + locked + " ventana=" + (win != null);
 		var list = inSolar ? solarSpots : sectorSpots;
 		for( sp in list )
-			s += "\n  " + (sp.system != null ? "sistema " + sp.system.id + " " + sp.system.name : "planeta " + sp.planet.id + " " + sp.planet.name + " " + sp.planet.biome + " tam=" + sp.planet.size) + " en " + Std.int(sp.e.x) + "," + Std.int(sp.e.y);
+			s += "\n  " + (sp.system != null ? "sistema " + sp.system.id + " " + sp.system.name : "planeta " + sp.planet.id + " " + sp.planet.name + " " + sp.planet.biome + " (" + ExpOffline.biomeName(sp.planet.biome) + ") tam=" + sp.planet.size) + " en " + Std.int(sp.e.x) + "," + Std.int(sp.e.y);
 		return s;
 	}
 
