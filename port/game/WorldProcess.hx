@@ -15,6 +15,7 @@ import Block;
  * - bloques con BFTrack (PTrack: el turbo minero): con el jugador dentro de su radio, la potencia de excavacion pasa a 3.
  * - cada bloque del agua del bioma que se pone aqui cuenta para bajar el nivel del mar (api.processBlock de Process.set, que
  *   en el cliente original hace net/Local.hx); la bajada (World.reduceWater) se hace en la siguiente actualizacion.
+ * En el hangar (EditShip) no hay transformaciones (allowTransforms) y los liquidos no se mueven (allowFlow).
  * No se porta lo del servidor: camara compartida.
  */
 class WorldProcess {
@@ -28,6 +29,9 @@ class WorldProcess {
 	var time = 0.;
 	var frame = 0;
 	public var allowTransforms = true;
+	/** cambio del port: en el hangar los liquidos no se mueven (en el original no podia entrar ninguno: ni el agua, que no
+	    se recoge, ni lo que se propaga, EditShip.checkSelect); los de una nave antigua se quedan quietos */
+	public var allowFlow = true;
 
 	public function new( world : World, breakFn ) {
 		this.world = world;
@@ -198,7 +202,7 @@ class WorldProcess {
 		return bt == null || (!bt.collide && !b.hasProp(PLiquid)) || (switch( bt.type ) { case BTModel, BTModel2Side, BTReduced: true; default: false; }) || (b.hasProp(PLava) && (bt.hasProp(PLiquid) && !bt.hasProp(PLava)));
 	}
 
-	/** Process.onSet: se llama despues de cambiar un bloque del planeta (no de la nave) */
+	/** Process.onSet: se llama despues de cambiar un bloque del planeta o del hangar (no de la nave) */
 	public function onSet( x : Int, y : Int, z : Int, old : Block, b : Block ) {
 		if( z >= World.SHIP_Z ) return;
 		if( (old != null && old.hasProp(PTrack)) || (b != null && b.hasProp(PTrack)) )
@@ -234,10 +238,10 @@ class WorldProcess {
 			// descubrir el bloque de abajo
 			if( under != null && under.uncover != null && !b.isTransparent() )
 				set(x, y, z - 1, under, under.uncover);
-			if( b.type == BTWater ) {
+			if( allowFlow && b.type == BTWater ) {
 				if( world.waterLevelAt(x, y, z) != 0 ) pushPlaced(x, y, z, b) else pushFlood(x, y, z);
 			}
-			else if( b.propagate != null )
+			else if( allowFlow && b.propagate != null )
 				propagate.push({ x : real(x), y : real(y), z : z, b : b, t : 2 + Std.random(3) });
 			switch( b.k ) {
 			case BFreezer:
@@ -276,7 +280,7 @@ class WorldProcess {
 
 	function checkBroken( x : Int, y : Int, z : Int ) {
 		var b = get(x, y, z);
-		if( b == null ) return;
+		if( b == null || !allowFlow ) return;
 		if( b.type == BTWater )
 			pushFlood(x, y, z);
 		else if( b.propagate != null )
