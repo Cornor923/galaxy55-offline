@@ -1,0 +1,37 @@
+# a bordo: una puerta abierta vuelve cerrada al rehacer la nave (Ship.new), como en el original
+# (la puerta de fuera de la nave de serie: BShipDoorY de 2 de alto en x 60 y 65 z 3-4 de la nave)
+wait 3
+ship
+wait 10
+# 1) abierta y guardada: al cargar la partida sale cerrada; los demas cambios de a bordo (un cofre) se quedan
+activatel 60 65 3
+setl 62 61 3 BChest
+wait 5
+print blockl 60 65 3
+print blockl 60 65 4
+reload
+waitfor ready
+wait 10
+print blockl 60 65 3
+print blockl 60 65 4
+print blockl 62 61 3
+# 2) abierta otra vez: ida y vuelta al hangar sin cambios (se quedan los cambios de a bordo), sale cerrada
+activatel 60 65 3
+wait 5
+print blockl 60 65 3
+hangar
+waitfor ready
+wait 20
+hangarexit
+waitfor planet
+wait 10
+print blockl 60 65 3
+print blockl 60 65 4
+# 3) se sigue abriendo y cerrando a bordo
+activatel 60 65 3
+wait 5
+print blockl 60 65 3
+activatel 60 65 3
+wait 5
+print blockl 60 65 3
+quit

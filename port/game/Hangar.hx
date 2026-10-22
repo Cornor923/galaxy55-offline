@@ -110,7 +110,19 @@ class Hangar {
 		return { sx : Const.SIZE, sy : Const.SIZE, sz : size.z, cells : out, entry : null, crafts : [] };
 	}
 
-	/** la nave de la zona construible (net/EditShip.getShipData) */
+	/**
+	 * Indice del bloque para guardar y comprobar la nave (0 = nada). Cambio del port: una puerta abierta cuenta como cerrada; el
+	 * original la guardaba abierta y, sin colision, la tomaba por un agujero del casco. Tambien en Ship.new (cambios de a bordo).
+	 */
+	public static function shipId( b : Block ) : Int {
+		if( b == null ) return 0;
+		return switch( b.k ) {
+			case BShipDoorOpen, BShipDoorYOpen: b.toggle.index;
+			default: b.index;
+		}
+	}
+
+	/** la nave de la zona construible (net/EditShip.getShipData), con las puertas cerradas */
 	public static function shipBytes( w : World ) : haxe.io.Bytes {
 		var data = haxe.io.Bytes.alloc(SX * SY * SZ * 2 + 3);
 		data.set(0, SX);
@@ -120,8 +132,7 @@ class Hangar {
 		for( y in 0...SY )
 			for( x in 0...SX )
 				for( z in 0...SZ ) {
-					var b = w.block(2 + x + OX, 2 + y, 1 + z);
-					var id = b == null ? 0 : b.index;
+					var id = shipId(w.block(2 + x + OX, 2 + y, 1 + z));
 					data.set(pos, id & 0xFF);
 					data.set(pos + 1, id >> 8);
 					pos += 2;
@@ -187,11 +198,11 @@ class Hangar {
 		error = null;
 		t = [];
 		blocks = [];
+		// la nave como se guarda (puertas cerradas): una puerta abierta no es un agujero del casco
 		for( z in 0...WZ )
 			for( y in 0...WY )
 				for( x in 0...WX ) {
-					var b = w.block(x + OX, y, z);
-					var id = b == null ? 0 : b.index;
+					var id = shipId(w.block(x + OX, y, z));
 					t.push(id);
 					blocks.push(id);
 				}
