@@ -1,0 +1,83 @@
+# hangar sin liquidos ni bomba exotica (cambio del port): agua, lava, fuente de cascada, arena movediza, agua acida y bomba
+# no se ponen (aviso en rojo, la celda sigue vacia: "bloque: nada", y el bloque sigue en el inventario); un bloque normal si
+# se pone en la misma celda. Tras cada intento se vacia la celda para que cada prueba no dependa de la anterior.
+# (60 FPS: el aviso dura 180 tmod, unas 180 actualizaciones)
+maxfps 60
+wait 3
+ship
+wait 10
+hangar
+wait 60
+print hangar
+# en el suelo del cobertizo, dentro de la zona construible, delante de la nave
+tp 5.5 3.5 1 0 0
+lookat 7.5 3.5 1
+wait 5
+print block 7 3 1
+# agua (casilla 10, la unica libre del inventario inicial)
+slot 10
+give BWater 5
+print inv
+key place
+wait 30
+unkey
+print msg
+print block 7 3 1
+print inv
+set 7 3 1 none
+# lava
+hand BLava
+key place
+wait 30
+unkey
+print msg
+print block 7 3 1
+set 7 3 1 none
+# fuente de cascada (casilla 7 del inventario inicial)
+slot 7
+key place
+wait 30
+unkey
+print msg
+print block 7 3 1
+print inv
+set 7 3 1 none
+# arena movediza y agua acida (la vende el robot)
+slot 10
+hand BMarsQuickSand
+key place
+wait 30
+unkey
+print msg
+print block 7 3 1
+set 7 3 1 none
+hand BAcidWater
+key place
+wait 30
+unkey
+print msg
+print block 7 3 1
+set 7 3 1 none
+# bomba exotica: su propio aviso
+hand BArtiBomb
+key place
+wait 30
+unkey
+print msg
+print block 7 3 1
+set 7 3 1 none
+shot hangar_liquids
+# el aviso se va solo y vuelve el de la nave
+wait 200
+print msg
+# un bloque normal si se pone (uno solo: se suelta antes de que pueda poner otro)
+hand BShipHull
+key place
+wait 10
+unkey
+print block 7 3 1
+print inv
+print msg
+# nombres del juego de lo que se prueba (el de la bomba es el que usa su aviso en cada idioma)
+print names BWater BLava BCascadeSource BMarsQuickSand BAcidWater BArtiBomb
+quit
