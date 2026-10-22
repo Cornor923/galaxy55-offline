@@ -85,6 +85,9 @@ cabecera de `WorldProcess.hx`; altura de los ojos (39) con el temblor: `VIEW_Z` 
 `inWater` y el turbo, y el fundido de la bomba conserva el `dz` del anterior (`Process.hx:249`); F (45) y cantina no modal (47):
 con la cantina abierta F no cambia nada y no sale la ayuda; soportes en el hangar (51): `process.update` corre también allí.
 Los 20 guiones nuevos de los PR pasan (datos en carpeta temporal).
+Tambien pasan los de siempre (espacio, robot2, robot3, mapa_opciones, vida, hangar, map_ship_center, play_time, mother_save,
+muerte_nave). No lanzar dos `devrun.ps1` a la vez: los dos escriben `port/out/dev_out.txt`, las salidas se mezclan y uno
+puede quedarse colgado.
 
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
