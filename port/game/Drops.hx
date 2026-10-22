@@ -146,7 +146,7 @@ class Drops {
 
 			// recogida (Dummy.update)
 			var dx = dist(g.px, d.x), dy = dist(g.py, d.y);
-			var h = GameView.VIEW_Z * 0.5;
+			var h = g.viewZ * 0.5;
 			var dz = (g.pz + h) - d.z;
 			if( Math.abs(dz) > h ) {
 				if( dz < 0 ) dz += h else dz -= h;

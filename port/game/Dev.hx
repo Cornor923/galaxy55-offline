@@ -5,11 +5,14 @@ import Common;
  *   hl galaxy55.hl --script=guion.txt [--bgbiome=BIAutumn] [--creative]
  * Una orden por linea, "#" = comentario. Las coordenadas son del planeta salvo las de `tpl`, `setl` y `lookl` (locales a la nave).
  *   wait N                  esperar N actualizaciones
+ *   until fade|tele X       esperar (600 actualizaciones como mucho) a que la opacidad del fundido o la carga del
+ *                           teletransportador llegue a X
  *   tp x y z [yaw pitch]    colocar al jugador (z = "top" pone sobre el suelo)
  *   tpl x y z [yaw pitch]   igual, con coordenadas locales de la nave
  *   look yaw pitch          orientar la camara
  *   lookat x y z            mirar a ese punto (planeta)    lookl x y z   (nave)
  *   ship | planet           ir a la nave / bajar al planeta
+ *   tele                    como si se volviera a pisar el teletransportador (enteringShip = 0): empieza a cargar
  *   slot N                  elegir casilla (0 = excavador)
  *   give Bloque [n]         meter n bloques (50) en el inventario
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
@@ -49,6 +52,10 @@ class Dev {
 	var waitMax = 0;
 	/** orden `mine` en curso: celda, bloque y cuando se empezo */
 	var mining : { x : Int, y : Int, z : Int, b : Block, t0 : Float, power : Float };
+	/** orden `until`: "fade" o "tele", el valor que se espera y las actualizaciones que quedan como mucho */
+	var untilWhat : String;
+	var untilValue = 0.;
+	var untilLeft = 0;
 
 	public function new( path : String ) {
 		lines = sys.io.File.getContent(path).split("\n").map(StringTools.trim).filter(function(l) return l != "" && l.charAt(0) != "#");
@@ -101,6 +108,9 @@ class Dev {
 			mining = null;
 			Sys.println("excavar " + m.b.k + ": " + (broken ? Math.round((g.playSeconds - m.t0) * 100) / 100 + " s" : "no se rompe") + " con potencia " + m.power);
 		}
+		if( untilWhat != null && g != null && --untilLeft > 0 && (untilWhat == "tele" ? g.enteringShip : g.fadeAlpha()) < untilValue )
+			return false;
+		untilWhat = null;
 		while( pc < lines.length ) {
 			var l = lines[pc++];
 			var a = l.split(" ").filter(function(s) return s != "");
@@ -115,6 +125,10 @@ class Dev {
 				case "waitfor":
 					waitCond = a[1];
 					waitMax = a.length > 2 ? Std.parseInt(a[2]) : 2000;
+				case "until":
+					untilWhat = a[1];
+					untilValue = f(a[2]);
+					untilLeft = 600;
 					return false;
 				case "tp", "tpl":
 					var l = a[0] == "tpl";
@@ -130,10 +144,11 @@ class Dev {
 					g.pitch = f(a[2]);
 				case "lookat", "lookl":
 					var l = a[0] == "lookl";
-					var dx = f(a[1]) + (l ? sdx : 0) - g.px, dy = f(a[2]) + (l ? sdy : 0) - g.py, dz = f(a[3]) + (l ? sz : 0) - (g.pz + GameView.VIEW_Z);
+					var dx = f(a[1]) + (l ? sdx : 0) - g.px, dy = f(a[2]) + (l ? sdy : 0) - g.py, dz = f(a[3]) + (l ? sz : 0) - (g.pz + g.viewZ);
 					g.yaw = Math.atan2(dy, dx);
 					g.pitch = Math.atan2(dz, Math.sqrt(dx * dx + dy * dy));
 				case "ship": g.gotoShip(true);
+				case "tele": g.enteringShip = 0;
 				case "planet": g.gotoShip(false);
 				case "slot": g.inv.select(Std.parseInt(a[1]));
 				case "life":
@@ -147,7 +162,7 @@ class Dev {
 				case "seaflood": w.waterFlood = w.floodThreshold() - (a.length > 1 ? Std.parseInt(a[1]) : 1);
 				case "seadrop": w.reduceWater();
 				case "vitals":
-					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming);
+					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming + " ojos " + Math.round(g.viewZ * 100) / 100 + " tele " + Math.round(g.enteringShip * 100) / 100);
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
