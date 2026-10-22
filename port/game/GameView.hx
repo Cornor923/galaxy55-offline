@@ -482,6 +482,11 @@ class GameView {
 		laserActive = false;
 	}
 
+	/** lo que no sale en la captura de F2 (Render.render(screenShot) del original): la caja de seleccion y el bloque de la mano */
+	public function screenShotHidden() : Array<h3d.scene.Object> {
+		return fx.screenShotHidden().concat([hand.frame]);
+	}
+
 	/** corta los sonidos en bucle (menus abiertos, pausa, salir) */
 	public function stopSounds() {
 		if( jetSound != null ) jetSound.stop();

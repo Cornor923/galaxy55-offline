@@ -10,7 +10,7 @@ bugs, see `BUGS.md` in the repository root); the original Flash game remains unt
 Build it (see below) and double-click `jugar.bat`, or download the portable zip from the
 [release](../../../releases/tag/v0.4). The start menu offers Continue, New game, Load game, Options and Quit.
 In New game you choose name, seed, biome, size and mode: **Adventure** (as in the original) or **Creative** (our addition).
-Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable).
+Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable), and screenshots (F2) to its `screenshots` folder.
 The save format may change between versions: do not count on today's saves working forever.
 
 ## Controls
@@ -32,6 +32,7 @@ They are the original game's (movement and physics are a copy of `ent/Hero.hx` a
 | Creative: block palette | I (click = put the block in the selected slot, wheel = page) |
 | Pause | Esc |
 | Quick save | F5 |
+| Screenshot | F2: a PNG without the helmet or the HUD, at the window size, in `%APPDATA%\Galaxy55\screenshots\` |
 
 There is no run button, as in the original. Gamepad: left stick moves, right stick looks, A jumps and jetpack, B walks slowly,
 RT digs, LT places, RB/LB or d-pad right/left change slot, Y drops, Back helmet, Start pause. Menus: arrows/Enter/Esc, mouse or gamepad.
@@ -105,4 +106,5 @@ A player got it running on Linux this way; we have not tested it.
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
 - The mining turbo makes you dig three times faster up to 15 blocks around it (5 in the original) and you get it back when
   you break it (the original lost it).
+- The F2 screenshot is saved straight to the `screenshots` folder and a message says where (the original opened Flash's save dialog).
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

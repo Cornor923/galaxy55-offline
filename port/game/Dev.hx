@@ -36,6 +36,8 @@ import Common;
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
  *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power|life|fade|around x y z r|fov|sky
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
+ *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
+ *   pause                   menu de pausa como Esc (el guion sigue; close lo cierra)
  *   quit
  */
 class Dev {
@@ -48,6 +50,8 @@ class Dev {
 
 	/** mensajes de seguimiento del juego (orden `trace`) */
 	public static var trace = false;
+	/** el guion abrio la pausa (orden `pause`): sigue ejecutandose en pausa */
+	public var inPause = false;
 	var lines : Array<String>;
 	var pc = 0;
 	var waiting = 0;
@@ -394,6 +398,18 @@ class Dev {
 						if( app.explorer != null ) app.devLandHome(); // del mapa se sale aterrizando
 						if( app.current != null ) app.resume();
 					}
+					inPause = false;
+				case "pause":
+					@:privateAccess app.pause();
+					inPause = true;
+				case "f2":
+					// como la tecla: soltar y pulsar F2; la captura se hace en la siguiente actualizacion
+					var win = hxd.Window.getInstance();
+					for( k in [hxd.Event.EventKind.EKeyUp, hxd.Event.EventKind.EKeyDown] ) {
+						var e = new hxd.Event(k);
+						e.keyCode = hxd.Key.F2;
+						win.event(e);
+					}
 				case "creative": @:privateAccess g.creative = true;
 				case "maxfps": Settings.maxFps = Std.parseInt(a[1]);
 				case "fps": Sys.println("fps " + Std.int(hxd.Timer.fps()));
@@ -451,6 +467,27 @@ class Dev {
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
 		if( a[1] == "screen" ) {
 			Sys.println("pantalla " + @:privateAccess app.currentName);
+			return;
+		}
+		if( a[1] == "shots" ) {
+			// capturas de F2: tamano del PNG, si es el de la ventana y si es opaca
+			var dir = Settings.dir() + "/screenshots";
+			var files = sys.FileSystem.exists(dir) ? sys.FileSystem.readDirectory(dir) : [];
+			files.sort(Reflect.compare);
+			var eng = h3d.Engine.getCurrent();
+			Sys.println("capturas F2: " + files.length + " (ventana " + eng.width + "x" + eng.height + ")");
+			for( f in files ) {
+				var d = new format.png.Reader(new haxe.io.BytesInput(sys.io.File.getBytes(dir + "/" + f))).read();
+				var hd = format.png.Tools.getHeader(d);
+				var px = format.png.Tools.extract32(d);
+				var opaque = true;
+				for( i in 0...hd.width * hd.height )
+					if( px.get(i * 4 + 3) != 0xFF ) {
+						opaque = false;
+						break;
+					}
+				Sys.println("  " + f + " " + hd.width + "x" + hd.height + (hd.width == eng.width && hd.height == eng.height ? " = ventana" : " DISTINTO DE LA VENTANA") + (opaque ? ", opaca" : ", CON TRANSPARENCIA"));
+			}
 			return;
 		}
 		if( g == null ) {
