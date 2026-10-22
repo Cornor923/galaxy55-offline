@@ -55,6 +55,8 @@ typedef SaveInfo = {
 	@:optional var shipEdits : Array<Int>;
 	/** modo creativo: bloques sin limite, rotura instantanea y jetpack infinito (no existe en el original) */
 	@:optional var creative : Bool;
+	/** aventura: se eligio jugar el tutorial al crear la partida (null en las partidas antiguas) */
+	@:optional var tutorial : Null<Bool>;
 	/** universo (mapa de estrellas); las partidas antiguas no lo tienen y se crea al abrir el mapa */
 	@:optional var uni : UniInfo;
 	/** creditos (tienda del robot comerciante) */
@@ -88,11 +90,12 @@ class SaveData {
 		return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "_" + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()) + "_" + Std.random(1000);
 	}
 
-	public static function create( name : String, seed : Int, biome : String, sizeChunks : Int ) : SaveInfo {
+	/** partida nueva: en creativo con el inventario inicial del original; en aventura con el inventario vacio */
+	public static function create( name : String, seed : Int, biome : String, sizeChunks : Int, creative = false ) : SaveInfo {
 		var now = Date.now().getTime();
 		return {
 			version : VERSION, id : newId(), name : name, seed : seed, biome : biome, sizeChunks : sizeChunks,
-			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : Inv.defaults(), edits : [], shipEdits : [], creative : false, credits : Market.START_CREDITS,
+			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : creative ? Inv.defaults() : Inv.empty(), edits : [], shipEdits : [], creative : creative, credits : Market.START_CREDITS,
 		};
 	}
 
@@ -172,7 +175,7 @@ class SaveData {
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
-					creative : o.creative == true, inv : readInv(o.inv), uni : readUni(o.uni), credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), chests : readChests(o.chests), shipData : o.shipData,
+					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : readUni(o.uni), credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 			};
 		} catch( e : Dynamic ) {
@@ -180,10 +183,11 @@ class SaveData {
 		}
 	}
 
-	/** Escribe la partida; se guarda primero a un archivo temporal para no corromperla si falla a medias. */
-	public static function write( info : SaveInfo, thumbPng : haxe.io.Bytes ) : Bool {
+	/** Escribe la partida; se guarda primero a un archivo temporal para no corromperla si falla a medias.
+	    touch = false deja la fecha de guardado como estaba (renombrar no cambia el orden de la lista). */
+	public static function write( info : SaveInfo, thumbPng : haxe.io.Bytes, touch = true ) : Bool {
 		try {
-			info.saved = Date.now().getTime();
+			if( touch ) info.saved = Date.now().getTime();
 			var path = jsonPath(info.id);
 			sys.io.File.saveContent(path + ".tmp", haxe.Json.stringify(info, null, "  "));
 			if( sys.FileSystem.exists(path) ) sys.FileSystem.deleteFile(path);
@@ -193,6 +197,14 @@ class SaveData {
 		} catch( e : Dynamic ) {
 			return false;
 		}
+	}
+
+	/** cambia solo el nombre de la partida: la fecha de guardado y la miniatura no se tocan */
+	public static function rename( id : String, name : String ) : Bool {
+		var info = read(id);
+		if( info == null ) return false;
+		info.name = name;
+		return write(info, null, false);
 	}
 
 	public static function delete( id : String ) {

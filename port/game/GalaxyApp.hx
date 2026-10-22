@@ -2112,6 +2112,8 @@ class GalaxyApp extends hxd.App {
 					Sys.println("no se encontro la partida; hay: " + [for( i in SaveData.list() ) i.id].join(", ") + "  carpeta=" + SaveData.dir());
 					Sys.exit(1);
 				}
+				// la partida de prueba nueva es de aventura pero con el inventario inicial del original: los guiones usan sus casillas
+				if( shotLoad == null && !shotCont ) info.inv = Inv.defaults();
 				startGame(info);
 				return;
 			}
