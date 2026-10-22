@@ -16,6 +16,6 @@ técnicos de cada punto están en [`port/RESUMEN.md`](port/RESUMEN.md).
 4. **Arreglar los errores** de [`ERRORES.md`](ERRORES.md).
 5. **Agua:** por decidir lava + agua = basalto (ver [`IDEAS.md`](IDEAS.md)). Ya están el agua que fluye y las olas del original.
 6. Opción de calidad para PC lentas (ya se pueden quitar las olas del agua).
-7. Más bloques activables (p. ej. la bomba antigua, que en el original también hace daño); Ciudad Muerta.
+7. Más bloques activables (la bomba antigua ya explota, PR 34); Ciudad Muerta.
 8. Empaquetado: instalador, y evaluar SDL/DirectX.
 9. A evaluar: **versión web** (Heaps → JS/WebGL) para Eternaltwin, multijugador y Steam (ver [`IDEAS.md`](IDEAS.md)).

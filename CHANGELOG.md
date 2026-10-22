@@ -2,6 +2,33 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## Próxima versión
+- Arreglos de Cornor923 (¡gracias!), integrados desde sus PR 17-30 (cambio del port): sin gasto de oxígeno bajo el agua en
+  creativo; el hielo junto al agua ya no se corta en triángulos visto desde abajo; la ayuda de la paleta creativa cabe en su
+  panel y no hay bloque marcado al abrirla; sin banda sin agua bajo un bloque en el mar con olas; tras morir te quedas en la
+  nave (también al cargar una partida guardada con 0 de vida); sin daño en el hangar; los intercambios con el robot no se
+  pierden al guardar en la nave nodriza y se cuenta el tiempo de juego allí; en el mapa, la nave tiene los mismos colores en
+  todos los planetas, conserva su rumbo al pararse y se centra según la nave del hangar.
+- Del original, traído por **Cornor923** (¡gracias!, PR 31-51):
+  - la cámara y el HUD tiemblan al romper bloques y al aterrizar;
+  - el turbo minero funciona (potencia 3 a menos de 15 bloques, con su icono en el HUD);
+  - en tu nave recuperas vida poco a poco;
+  - la bomba exótica explota al activarla (y hace estallar las bombas que alcanza);
+  - Mayús+K funde a blanco unos 3 segundos y te deja en la nave con la vida y el oxígeno llenos;
+  - la vista baja al morir, sube con Mayús+K y el teletransportador, y se agacha un poco al recibir un golpe;
+  - bajo el agua el campo de visión se estrecha y el cielo toma el color del líquido, sin estrellas;
+  - el nivel del mar baja un bloque cuando el agua que inunda huecos llena una capa del mar;
+  - salen trozos del bloque en el punto donde da el láser;
+  - el cielo estrellado del original en los planetas, que gira al andar;
+  - texturas con mipmaps: el paisaje lejano ya no parpadea (cambio del port: las plantas no se borran de lejos);
+  - marco de selección visible, bloques soltados del tamaño del original, iconos y barra de carga del planeta como el original;
+  - F2 guarda una captura sin el HUD y F muestra u oculta las coordenadas y los FPS (ocultos al empezar);
+  - el sonido de rotura suena una vez por cada bloque soltado, también en las cadenas;
+  - la ventana de la cantina ya no para el juego y se cierra al alejarte;
+  - el rayo de aterrizaje sigue el suelo bajo la nave (cavar o poner bloques debajo ya no lo deja flotando);
+  - en el hangar: sin líquidos ni bomba, los soportes funcionan (una puerta o un neón sin apoyo se caen) y se excava más rápido
+    y sin cargas (cambio del port).
+
 ## v0.4 — pre-release
 - **Vida y oxígeno**, como el original: las caídas fuertes, la lava, el agua ácida, el carbón ardiente y las hierbas ácidas
   hacen daño; bajo el agua se gasta el oxígeno y, sin él, te ahogas; las arenas movedizas también te ahogan; la planta y la
@@ -36,13 +63,6 @@
   bloques bajo el agua, no nieva bajo techo ni en cuevas, el hielo ya no suelta un bloque al romperlo, sombra del bloque que
   se va a poner, nombre del bloque apuntado y el congelador vuelve a congelar el agua y la lava cercanas.
 - Linux: los zips usan `/` en las rutas (antes salían archivos con `\`); pasos de Linux de Sekhmet en el `LEEME` del zip.
-- Arreglos de Cornor923 (¡gracias!), integrados desde sus PR 17-30 (cambio del port): sin gasto de oxígeno bajo el agua en
-  creativo; el hielo junto al agua ya no se corta en triángulos visto desde abajo; la ayuda de la paleta creativa cabe en su
-  panel y no hay bloque marcado al abrirla; sin banda sin agua bajo un bloque en el mar con olas; tras morir te quedas en la
-  nave (también al cargar una partida guardada con 0 de vida); sin daño en el hangar; los intercambios con el robot no se
-  pierden al guardar en la nave nodriza y se cuenta el tiempo de juego allí; en el mapa, la nave tiene los mismos colores en
-  todos los planetas, conserva su rumbo al pararse y se centra según la nave del hangar.
-
 ## v0.3.1 — pre-release
 - Opciones: sincronización vertical (VSync) y límite de FPS (30, 60, 120, 144, 240 o sin límite).
 - Arreglos de **Cornor923** (¡gracias!): el velo del agua y los fondos de los menús cubren ventanas más anchas que 16:9,

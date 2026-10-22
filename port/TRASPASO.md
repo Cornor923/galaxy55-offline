@@ -66,7 +66,7 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
    - `Mothership.hx` conserva el diseño generado antiguo como reserva, si no hay `mothership.bin`.
 
 ## PR de Cornor923 integrados (2026-10-21, cambio del port)
-Los PR 17-30 se fusionaron en local en `port-hashlink` (sin publicar), en orden. Un solo conflicto: `Dev.hx` entre el PR 20
+Los PR 17-30 se fusionaron en local en `port-hashlink`, en orden (publicados en GitHub el 2026-10-22). Un solo conflicto: `Dev.hx` entre el PR 20
 (`palette`) y el 26 (`time`); se conservaron ambos comandos. Cada PR trae su guion en `port/dev/`. Compila sin errores
 (`haxe port\game.hxml`); los guiones de los PR no se han vuelto a ejecutar tras la fusión. El PR 26 incluye el 25.
 Cambios: oxígeno en creativo (17), hielo/agua con desplazamiento de profundidad (18, 22), paleta creativa (19, 20),
@@ -77,6 +77,14 @@ hangar es más lenta (0.14 en vez de 0.2) y con esperas fijas no salía del sist
 llegaba con el mapa abierto y fallaba (partida nula; la orden ya lo comprueba). Arreglado con la orden `waitfor` (sector, window,
 mother, map, planet, ready), que espera a que pase algo en vez de un número fijo de fotogramas; los guiones del mapa, del robot y
 de recargar la usan. `map_ship_center` ya llega a la nave nodriza y vuelve al mapa.
+
+Los PR 31-51 (2026-10-22) se fusionaron en local, en orden; cada uno compila. Conflictos resueltos: `Dev.hx` (cada PR añade
+órdenes: se conservan todas y se quitan las versiones viejas repetidas de `print drops`, `msg`, `ship` y `tele`); temblor (31)
+con el fundido ya movido tras el teletransportador; turbo (32) + bomba (34) en `process.update`; mar que baja (37) + turbo en la
+cabecera de `WorldProcess.hx`; altura de los ojos (39) con el temblor: `VIEW_Z` pasa a `viewZ` en el láser, el apuntado,
+`inWater` y el turbo, y el fundido de la bomba conserva el `dz` del anterior (`Process.hx:249`); F (45) y cantina no modal (47):
+con la cantina abierta F no cambia nada y no sale la ayuda; soportes en el hangar (51): `process.update` corre también allí.
+Los 20 guiones nuevos de los PR pasan (datos en carpeta temporal).
 
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**

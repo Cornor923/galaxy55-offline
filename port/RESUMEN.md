@@ -94,6 +94,10 @@ la lista esta en la cabecera de `Dev.hx`). `port/dev/devrun.ps1 -Script port/dev
 Desde los PR 17-30 de Cornor923 (cambio del port), `devrun.ps1` lanza `galaxy55.exe` (con `hl` de reserva), hay `print palette` y `print time`, y cada arreglo trae su guion (`creative_oxygen`, `hielo_bajo_agua`, `palette_hint`, `palette_focus`, `olas_bloque`, `muerte_nave`, `hangar_vida`, `mother_save`, `play_time`, `map_ship_color`, `map_ship_angle`, `map_ship_center`).
 Los guiones esperan con `waitfor sector|window|mother|map|planet|ready [max]` cuando el tiempo depende del PC (viajes, cargas,
 acoplarse al robot); `wait N` solo para tiempos fijos.
+PR 31-51 de Cornor923 (2026-10-22, del original salvo lo marcado como cambio del port): temblor, turbo minero, vida en la
+nave, bomba exotica, Mayus+K con fundido blanco, altura de los ojos (`GameView.viewZ`), FOV y cielo bajo el agua, bajada del nivel
+del mar (`World.reduceWater`), trozos del laser, cielo estrellado, mipmaps, detalles (marco, bloques soltados, iconos, barra), F2,
+F, sonido de rotura, cantina no modal, rayo de aterrizaje, hangar sin liquidos, con soportes y excavacion rapida. Detalle en TRASPASO.
 Los ganchos antiguos `--screen=... --craft --at=...` siguen funcionando, pero para pruebas nuevas se usa Dev.
 
 ## Siguiente paso acordado (mañana): paquete de prueba

@@ -2,6 +2,33 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## Next version
+- Fixes by Cornor923 (thank you!), merged from their PRs 17-30 (port change): no oxygen use underwater in creative; ice next
+  to water is no longer cut into triangles seen from below; the creative palette help fits its panel and no block is marked
+  when it opens; no gap under a block on the sea with waves on; after dying you stay in the ship (also when loading a game saved
+  at 0 life); no damage in the hangar; trades with the robot are no longer lost when saving in the mothership and play time
+  there is counted; on the map the ship has the same colors on every planet, keeps its heading when it stops and is centered
+  on the hangar's ship.
+- From the original, brought in by **Cornor923** (thank you!, PRs 31-51):
+  - the camera and the HUD shake when blocks break and when you land;
+  - the mining turbo works (power 3 within 15 blocks, with its HUD icon);
+  - you slowly regain life in your ship;
+  - the ancient bomb explodes when activated (and sets off the bombs it reaches);
+  - Shift+K fades to white for about 3 seconds and puts you in the ship with full life and oxygen;
+  - the view sinks when dying, rises with Shift+K and the teleporter, and dips a little when you get hit;
+  - under water the field of view narrows and the sky takes the liquid's colour, with no stars;
+  - the sea level drops by one block when the water flooding holes fills one layer of the sea;
+  - fragments of the block fly off where the laser hits;
+  - the original's starry sky on planets, turning as you walk;
+  - mipmapped textures: the far landscape no longer flickers (port change: plants do not fade away with distance);
+  - a visible selection frame, dropped blocks the original's size, icons and the planet loading bar like the original;
+  - F2 saves a screenshot without the HUD and F shows or hides the coordinates and FPS (hidden at the start);
+  - the break sound plays once per dropped block, chains included;
+  - the canteen window no longer pauses the game and closes when you walk away;
+  - the landing beam follows the ground under the ship (digging or building under it no longer leaves it floating);
+  - in the hangar: no liquids or bomb, supports work (a door or a neon with nothing holding it falls) and digging is faster
+    and needs no charges (port change).
+
 ## v0.4 — pre-release
 - **Health and oxygen**, like the original: hard falls, lava, acid water, burning coal and acid herbs hurt; under water
   your oxygen runs out and then you drown; quicksand drowns you too; the healing plant and box heal. Health and oxygen bars
@@ -36,13 +63,6 @@
   no snow under a roof or in caves, ice no longer drops a block when broken, a shadow of the block about to be placed, the name
   of the targeted block, and the freezer freezes nearby water and lava again.
 - Linux: the zips use `/` in paths (they used to extract files with `\`); Linux steps from Sekhmet in the zip's `LEEME`.
-- Fixes by Cornor923 (thank you!), merged from their PRs 17-30 (port change): no oxygen use underwater in creative; ice next
-  to water is no longer cut into triangles seen from below; the creative palette help fits its panel and no block is marked
-  when it opens; no gap under a block on the sea with waves on; after dying you stay in the ship (also when loading a game saved
-  at 0 life); no damage in the hangar; trades with the robot are no longer lost when saving in the mothership and play time
-  there is counted; on the map the ship has the same colors on every planet, keeps its heading when it stops and is centered
-  on the hangar's ship.
-
 ## v0.3.1 — pre-release
 - Options: vertical sync (VSync) and FPS limit (30, 60, 120, 144, 240 or unlimited).
 - Fixes by **Cornor923** (thank you!): the liquid veil and menu backgrounds cover windows wider than 16:9, no dark

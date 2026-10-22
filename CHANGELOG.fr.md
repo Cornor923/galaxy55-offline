@@ -2,6 +2,33 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## Prochaine version
+- Corrections de Cornor923 (merci !), intégrées depuis leurs PR 17-30 (changement du port) : pas de consommation d'oxygène sous
+  l'eau en créatif ; la glace près de l'eau n'est plus découpée en triangles vue d'en dessous ; l'aide de la palette créative
+  tient dans son panneau et aucun bloc n'est marqué à l'ouverture ; plus de bande sans eau sous un bloc sur la mer avec les
+  vagues ; après la mort on reste dans le vaisseau (aussi en chargeant une partie sauvée à 0 de vie) ; pas de dégâts dans le
+  hangar ; les échanges avec le robot ne sont plus perdus en sauvegardant dans le vaisseau-mère et le temps de jeu y est compté ;
+  sur la carte, le vaisseau a les mêmes couleurs sur toutes les planètes, garde son cap à l'arrêt et est centré sur celui du hangar.
+- De l'original, apporté par **Cornor923** (merci !, PR 31-51) :
+  - la caméra et le HUD tremblent quand un bloc casse et à l'atterrissage ;
+  - le turbo minier fonctionne (puissance 3 à moins de 15 blocs, avec son icône dans le HUD) ;
+  - dans ton vaisseau, tu récupères de la vie peu à peu ;
+  - la bombe antique explose quand on l'active (et fait sauter les bombes qu'elle atteint) ;
+  - Maj+K fait un fondu blanc d'environ 3 secondes et te remet au vaisseau avec la vie et l'oxygène pleins ;
+  - la vue baisse quand tu meurs, remonte avec Maj+K et le téléporteur, et plonge un peu quand tu prends un coup ;
+  - sous l'eau, le champ de vision se resserre et le ciel prend la couleur du liquide, sans étoiles ;
+  - le niveau de la mer baisse d'un bloc quand l'eau qui inonde les trous remplit une couche de la mer ;
+  - des éclats du bloc jaillissent là où frappe le laser ;
+  - le ciel étoilé de l'original sur les planètes, qui tourne quand tu marches ;
+  - textures avec mipmaps : le paysage lointain ne scintille plus (changement du port : les plantes ne s'effacent pas au loin) ;
+  - cadre de sélection visible, blocs lâchés à la taille de l'original, icônes et barre de chargement de la planète comme l'original ;
+  - F2 enregistre une capture sans le HUD et F affiche ou cache les coordonnées et les FPS (cachés au départ) ;
+  - le son de casse joue une fois par bloc lâché, chaînes comprises ;
+  - la fenêtre de la cantine ne met plus le jeu en pause et se ferme quand tu t'éloignes ;
+  - le rayon d'atterrissage suit le sol sous le vaisseau (creuser ou poser des blocs dessous ne le laisse plus flotter) ;
+  - dans le hangar : pas de liquides ni de bombe, les supports fonctionnent (une porte ou un néon sans appui tombe) et on
+    creuse plus vite, sans charges (changement du port).
+
 ## v0.4 — pre-release
 - **Vie et oxygène**, comme l'original : les grosses chutes, la lave, l'eau acide, le charbon ardent et les herbes acides
   blessent ; sous l'eau l'oxygène s'épuise, puis tu te noies ; les sables mouvants noient aussi ; la plante et la boîte de
@@ -38,13 +65,6 @@
   sous l'eau, il ne neige plus sous un toit ni dans les grottes, la glace ne laisse plus de bloc en la cassant, ombre du bloc à
   poser, nom du bloc visé, et le congélateur gèle de nouveau l'eau et la lave proches.
 - Linux : les zips utilisent `/` dans les chemins (ils extrayaient des fichiers avec `\`) ; étapes Linux de Sekhmet dans le `LEEME` du zip.
-- Corrections de Cornor923 (merci !), intégrées depuis leurs PR 17-30 (changement du port) : pas de consommation d'oxygène sous
-  l'eau en créatif ; la glace près de l'eau n'est plus découpée en triangles vue d'en dessous ; l'aide de la palette créative
-  tient dans son panneau et aucun bloc n'est marqué à l'ouverture ; plus de bande sans eau sous un bloc sur la mer avec les
-  vagues ; après la mort on reste dans le vaisseau (aussi en chargeant une partie sauvée à 0 de vie) ; pas de dégâts dans le
-  hangar ; les échanges avec le robot ne sont plus perdus en sauvegardant dans le vaisseau-mère et le temps de jeu y est compté ;
-  sur la carte, le vaisseau a les mêmes couleurs sur toutes les planètes, garde son cap à l'arrêt et est centré sur celui du hangar.
-
 ## v0.3.1 — pre-release
 - Options : synchronisation verticale (VSync) et limite d'images par seconde (30, 60, 120, 144, 240 ou illimité).
 - Corrections de **Cornor923** (merci !) : le voile des liquides et les fonds des menus couvrent les fenêtres plus larges
