@@ -133,7 +133,7 @@ class GameView {
 				while( inv.inv.t.length < 10 ) inv.inv.t.push(null);
 			}
 		drops = new Drops(world, atlas);
-		process = new WorldProcess(world, world.waterLevel(), (x, y, z, b) -> breakBlock(x, y, z, b, true));
+		process = new WorldProcess(world, (x, y, z, b) -> breakBlock(x, y, z, b, true));
 		fx = new Fx(world, atlas);
 		parts = new Parts(world, atlas);
 		hand = new Hand(world, atlas);

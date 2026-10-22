@@ -39,8 +39,10 @@ Pour l'instant il ne change rien au jeu : chacune de ces idées s'y branche.
   la lave remplace seulement l'eau et le basalte ne vient que du congélateur. Le serveur, jamais publié, le faisait
   peut-être. **À décider.**
 - **Le niveau de la mer baisse** en remplissant les trous (souvenir de Sekhmet de la 3e version des alphas : la mer s'étend
-  et le niveau global baisse selon la proportion eau/espace, sans jamais monter). Pour l'instant, la mer remplit tout jusqu'à
-  son niveau, comme le code d'origine.
+  et le niveau global baisse selon la proportion eau/espace, sans jamais monter) : c'est déjà dans le code du client d'origine,
+  et maintenant aussi dans le port. `net/Local.hx` compte chaque bloc d'eau qui inonde un trou et, quand ils font le volume
+  d'une couche de la mer, la couche du dessus disparaît sur toute la planète (`SReduceWater` dans `Game.hx`) : le niveau baisse
+  d'un bloc et ne remonte jamais.
 - **Un seau pour prendre de l'eau ou de la lave :** écarté pour l'instant (Cornor923 n'est pas convaincu : la combinaison
   « le fait déjà »).
 

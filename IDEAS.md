@@ -35,7 +35,9 @@ cambia nada del juego: cualquiera de estas ideas se engancha ahí.
   la lava solo reemplaza el agua y el basalto solo sale del congelador. Quizá lo hacía el servidor, que no se publicó.
   **Pendiente de decidir.**
 - **El nivel del mar baja** al llenar huecos (recuerdo de Sekhmet de la 3.ª versión de las alfas: el mar se extiende y el
-  nivel global baja según la proporción agua/espacio, nunca sube). Ahora el mar llena todo hasta su nivel, como el código original.
+  nivel global baja según la proporción agua/espacio, nunca sube): ya existe en el código del cliente original y ahora también
+  en el port. `net/Local.hx` cuenta cada bloque de agua que inunda un hueco y, cuando suman el volumen de una capa del mar, la
+  capa de arriba desaparece en todo el planeta (`SReduceWater` en `Game.hx`): el nivel baja un bloque y nunca sube.
 - **Cubo para coger agua o lava:** descartado por ahora (a Cornor923 no le convence: el traje "ya lo hace").
 
 ## Equipo del personaje

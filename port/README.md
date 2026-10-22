@@ -95,7 +95,8 @@ A player got it running on Linux this way; we have not tested it.
 - The merchant robot's shop (the original was a web panel), its ship on the star map and the orange GPS arrow pointing to it
   are additions of this port.
 - Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
-  holes up to its level, like the original.
+  holes up to its level and, when the water that flows in adds up to the volume of one layer of the sea, the level goes down
+  one block on the whole planet, like the original.
 - Plants and other models are aimed at by what you see (the pixels of their leaves), not the whole cell (the original treated them as a full block).
 - The ancient bomb also sets off the other bombs caught in its blast, one per frame: the original had the code for it, but a
   check made it never fire. The blast leaves the bedrock (layer 0) in place (the original removed it too), the bomb does not

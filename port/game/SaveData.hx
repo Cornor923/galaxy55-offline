@@ -49,7 +49,7 @@ typedef SaveInfo = {
 	@:optional var life : Float;
 	/** inventario (null = el inicial del original) */
 	@:optional var inv : Protocol.InventoryInfos;
-	/** cambios del terreno: pares [celda, bloque global] */
+	/** cambios del terreno: pares [celda, bloque global]; con clave negativa, el nivel del mar y su contador (World.SEA_LEVEL) */
 	@:optional var edits : Array<Int>;
 	/** cambios en la nave (bloques puestos en las zonas de sintetizador, puertas abiertas): igual que edits pero en el volumen de la nave */
 	@:optional var shipEdits : Array<Int>;

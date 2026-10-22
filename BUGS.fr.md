@@ -12,7 +12,7 @@ Les bugs corrigés sont déplacés à la fin. Les détails techniques sont dans 
 | 4 | Éclairage | **À vérifier en jouant :** les blocs partiels (plaques, fer, coffres…) prennent maintenant la lumière de chaque coin dans les cellules voisines, comme l'original (`Builder.addCustomQuad`) ; avant, toute la face avait une seule lumière. Les modèles utilisaient déjà la lumière de l'original. |
 | 8 | Hiver | Les **feuilles d'épicéa** donnent du matériau ; dans l'original, peut-être pas. |
 | 10 | Rendu | Les **cristaux** tombés (charges) paraissent trop larges. |
-| 14 | Eau | **(À corriger ?)** Quand on ouvre une grotte à côté de la mer, l'eau entre et la remplit d'un coup à la même hauteur que la mer, sans baisser en avançant. |
+| 14 | Eau | **(À corriger ?)** Quand on ouvre une grotte à côté de la mer, l'eau entre et la remplit d'un coup à la même hauteur que la mer, sans baisser en avançant. Désormais, comme dans l'original (`net/Local.hx` et `SReduceWater`), l'eau qui entre est comptée et, chaque fois qu'elle atteint le volume d'une couche de la mer (des centaines ou des milliers de blocs, selon la planète), la couche du dessus disparaît sur toute la planète : la mer baisse d'un bloc. Une petite grotte n'y arrive pas et se remplit toujours d'un coup jusqu'au niveau de la mer, comme dans l'original. |
 
 ## Corrigés
 
