@@ -40,7 +40,7 @@ import Common;
  *   shot nombre             captura en port/out/nombre.png
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
- *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power|life|fade|around x y z r|fov|sky
+ *   print inv|pos|zones|drops|msg|shake|block x y z|blockl x y z|select|ship|map [z]|palette|time|power|life|fade|around x y z r|fov|sky
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
  *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
  *   pause                   menu de pausa como Esc (el guion sigue; close lo cierra)
@@ -642,8 +642,10 @@ class Dev {
 			var b = w.block(Math.floor(g.px), Math.floor(g.py), Std.int(g.pz + GameView.VIEW_Z));
 			Sys.println("fov " + Math.round(@:privateAccess g.s3d.camera.fovY * 100) / 100 + " opcion=" + Settings.fov + " ojos=" + (b == null ? "aire" : "" + b.k));
 		case "msg": Sys.println("mensaje: " + g.message + (g.messageRed ? " (rojo)" : ""));
-		case "block":
-			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));
+		case "block", "blockl":
+			// blockl: coordenadas locales de la nave
+			var l = a[1] == "blockl";
+			var b = w.block(Std.parseInt(a[2]) + (l ? w.shipDX : 0), Std.parseInt(a[3]) + (l ? w.shipDY : 0), Std.parseInt(a[4]) + (l ? World.SHIP_Z : 0));
 			Sys.println("bloque: " + (b == null ? "nada" : "" + b.k));
 		case "around":
 			// print around X Y Z R: bloques en el cubo de lado 2R+1 (planeta, nave y roca madre) y bombas por explotar
