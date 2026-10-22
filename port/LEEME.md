@@ -7,8 +7,8 @@ conocidos, ver `ERRORES.md` en la raíz); el juego original en Flash sigue intac
 
 ## Jugar
 
-Compila (ver abajo) y haz doble clic en `jugar.bat`. Abre el menú de inicio: Continuar, Nueva partida, Cargar partida, Opciones y Salir.
-En Nueva partida eliges nombre, semilla, bioma, tamaño y modo: **Aventura** (como el original) o **Creativo** (añadido nuestro).
+Compila (ver abajo) y haz doble clic en `jugar.bat`. Abre el menú de inicio: Continuar (la lista de partidas: jugar, renombrar o borrar), Nueva partida, Opciones y Salir.
+En Nueva partida eliges nombre, semilla y modo: **Aventura** (como el original, con el inventario vacío) o **Creativo** (añadido nuestro, con bioma y tamaño).
 Las partidas y los ajustes se guardan en `%APPDATA%\Galaxy55\` (se puede cambiar con la variable `GALAXY55_DATA`), y las capturas (F2) en su carpeta `screenshots`.
 El formato de las partidas puede cambiar entre versiones: no cuentes con que las de hoy sirvan siempre.
 

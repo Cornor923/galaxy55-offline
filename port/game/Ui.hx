@@ -305,8 +305,12 @@ class TextField extends Widget {
 	public var maxLen = 24;
 	public var numeric = false;
 	public var onType : String -> Void;
+	/** Intro mientras se escribe (p. ej. aceptar el nombre en la ventana de renombrar) */
+	public var onEnter : Void -> Void;
+	/** fotograma en el que se dejo de escribir: h2d.TextInput recibe Intro y Esc antes que Screen.update, que no debe volver a usarlos */
+	public var stoppedFrame(default, null) = -1;
 
-	public function new( parent : h2d.Object, title : String, text : String, w = 560, h = 54 ) {
+	public function new( parent : h2d.Object, title : String, text : String, w = 560, h = 54, inputW = 250 ) {
 		super(parent, w, h);
 		this.title = title;
 		label.text = title;
@@ -314,11 +318,14 @@ class TextField extends Widget {
 		input.setScale(2.2);
 		input.text = text;
 		input.textColor = Theme.CYAN;
-		input.x = w - 22 - 250;
+		input.x = w - 22 - inputW;
 		input.y = (h - Theme.font.lineHeight * 2.2) * 0.5;
-		input.inputWidth = Std.int(250 / 2.2);
+		input.inputWidth = Std.int(inputW / 2.2);
 		input.backgroundColor = 0x33000000;		input.onFocus = function(_) { typing = true; focused = true; }
-		input.onFocusLost = function(_) { typing = false; }
+		input.onFocusLost = function(_) {
+			typing = false;
+			stoppedFrame = hxd.Timer.frameCount;
+		}
 		input.onChange = function() {
 			if( numeric ) {
 				var s = "";
@@ -345,6 +352,13 @@ class TextField extends Widget {
 			input.blur();
 			typing = false;
 		}
+	}
+
+	/** empezar a escribir con todo el texto elegido (lo que se teclee lo sustituye) */
+	public function startTyping() {
+		input.focus();
+		input.cursorIndex = input.text.length;
+		input.selectionRange = input.text.length > 0 ? { start : 0, length : input.text.length } : null;
 	}
 
 	public var text(get, set) : String;
@@ -398,10 +412,14 @@ class Screen extends h2d.Object {
 		setFocus(i);
 	}
 
-	function typingNow() : Bool {
+	/** el campo en el que se esta escribiendo o en el que se acaba de dejar de escribir en este fotograma (con Intro o Esc) */
+	function typingField() : TextField {
 		for( w in widgets )
-			if( Std.isOfType(w, TextField) && cast(w, TextField).typing ) return true;
-		return false;
+			if( Std.isOfType(w, TextField) ) {
+				var t = cast(w, TextField);
+				if( t.typing || t.stoppedFrame == hxd.Timer.frameCount ) return t;
+			}
+		return null;
 	}
 
 	public function update( dt : Float, pad : hxd.Pad ) {
@@ -428,12 +446,16 @@ class Screen extends h2d.Object {
 			}
 		}
 
-		if( typingNow() ) {
-			// mientras se escribe solo Intro/Esc/flechas verticales salen del campo
-			if( K.isPressed(K.ESCAPE) || K.isPressed(K.ENTER) || K.isPressed(K.UP) || K.isPressed(K.DOWN) || K.isPressed(K.TAB) ) {
+		var field = typingField();
+		if( field != null ) {
+			// mientras se escribe solo Intro/Esc/flechas verticales (o A/B y la cruceta del mando) salen del campo; Esc no cierra la pantalla
+			var enter = K.isPressed(K.ENTER) || K.isPressed(K.NUMPAD_ENTER);
+			var padExit = pad != null && (pad.isPressed(pad.config.A) || pad.isPressed(pad.config.B) || pad.isPressed(pad.config.dpadUp) || pad.isPressed(pad.config.dpadDown));
+			if( enter || padExit || K.isPressed(K.ESCAPE) || K.isPressed(K.UP) || K.isPressed(K.DOWN) || K.isPressed(K.TAB) ) {
 				for( w in widgets ) if( Std.isOfType(w, TextField) ) cast(w, TextField).stopTyping();
-				if( K.isPressed(K.DOWN) ) moveFocus(1);
-				if( K.isPressed(K.UP) ) moveFocus(-1);
+				if( K.isPressed(K.DOWN) || (pad != null && pad.isPressed(pad.config.dpadDown)) ) moveFocus(1);
+				if( K.isPressed(K.UP) || (pad != null && pad.isPressed(pad.config.dpadUp)) ) moveFocus(-1);
+				if( enter && field.onEnter != null ) field.onEnter();
 			}
 			return;
 		}

@@ -10,12 +10,25 @@ enum State {
 	Exploring;
 }
 
-/** Fila de la lista de partidas guardadas: miniatura, nombre y datos. */
+/**
+ * Fila de la lista de partidas guardadas: miniatura, nombre y datos. Con el foco muestra sus acciones (jugar, renombrar, borrar):
+ * izquierda/derecha eligen una e Intro (o A) la hace; un clic en un boton hace lo suyo y uno en el resto de la fila juega.
+ */
 class SaveRow extends Widget {
+	public static var ACTIONS = ["play", "rename", "delete"];
+	public static inline var W = 1000;
+	static inline var BW = 132;
+	static inline var BH = 36;
 	public var info(default, null) : SaveInfo;
+	/** accion elegida (indice de ACTIONS); vuelve a Jugar cuando la fila pierde el foco */
+	public var action(default, set) = 0;
+	public var onAction : Int -> Void;
+	var acts : h2d.Object;
+	var actBg : Array<h2d.Graphics>;
+	var actText : Array<h2d.Text>;
 
 	public function new( parent : h2d.Object, info : SaveInfo ) {
-		super(parent, 960, 104);
+		super(parent, W, 104);
 		this.info = info;
 		label.visible = false;
 		var tb = SaveData.thumb(info.id);
@@ -38,34 +51,129 @@ class SaveRow extends Widget {
 		var where = info.uni != null && info.uni.space == true ? Lang.t("save.space") : Lang.t("biome." + info.biome) + "  ·  " + size + "x" + size;
 		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t("mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
 		Theme.text(this, Lang.t("played") + " " + Lang.duration(info.playSeconds) + "   " + Lang.t("saved") + " " + Lang.date(info.saved), 1.5, Theme.DIM, 190, 74);
+		// botones de las acciones, arriba a la derecha (el nombre tiene 24 letras como mucho y no llega a ellos)
+		acts = new h2d.Object(this);
+		actBg = [];
+		actText = [];
+		var x0 = w - 14 - ACTIONS.length * (BW + 8) + 8;
+		for( i in 0...ACTIONS.length ) {
+			var b = new h2d.Object(acts);
+			b.x = x0 + i * (BW + 8);
+			b.y = 10;
+			actBg.push(new h2d.Graphics(b));
+			var t = Theme.text(b, Lang.t(ACTIONS[i]), 1.8, Theme.TEXT);
+			Theme.center(t, BW, BH);
+			actText.push(t);
+			var it = new h2d.Interactive(BW, BH, b);
+			it.onOver = function(_) if( enabled ) {
+				if( onHover != null ) onHover(this);
+				action = i;
+			};
+			it.onClick = function(_) if( enabled ) {
+				if( onPress != null ) onPress(this);
+				action = i;
+				activate();
+			};
+		}
+		acts.visible = false;
+		onLeft = function() if( action > 0 ) action--;
+		onRight = function() if( action < ACTIONS.length - 1 ) action++;
+		onActivate = function() if( onAction != null ) onAction(action);
+		inter.onClick = function(_) if( enabled ) {
+			if( onPress != null ) onPress(this);
+			action = 0;
+			activate();
+		};
+		drawActions();
+	}
+
+	function set_action( v : Int ) {
+		action = v;
+		drawActions();
+		return v;
+	}
+
+	override function set_focused( v : Bool ) {
+		if( !v ) action = 0;
+		super.set_focused(v);
+		if( acts != null ) acts.visible = v;
+		return v;
+	}
+
+	function drawActions() {
+		if( actBg == null ) return;
+		for( i in 0...actBg.length ) {
+			var g = actBg[i], on = i == action;
+			g.clear();
+			if( on ) Theme.rect(g, 0, 0, BW, BH, ACTIONS[i] == "delete" ? Theme.DANGER : Theme.ACCENT, 0.9);
+			else Theme.rect(g, 0, 0, BW, BH, 0xFFFFFF, 0.08);
+			actText[i].textColor = on ? Theme.BG : Theme.TEXT;
+		}
 	}
 }
 
-/** Pantalla de partidas guardadas con desplazamiento. */
+/**
+ * Pantalla de partidas guardadas: se ven VISIBLE filas y la lista se desplaza con la rueda, las flechas, el mando y Re Pag / Av Pag.
+ * El foco siempre queda en una fila a la vista.
+ */
 class LoadScreen extends Screen {
 	public var rows = new Array<SaveRow>();
 	public var top = 0;
-	/** ultima partida elegida (el foco pasa al boton Borrar al pulsarlo) */
-	public var selected = 0;
 	public static inline var VISIBLE = 4;
-	var baseY = 150.;
+	static inline var STEP = 112;
+	public var listX = 130.;
+	public var listY = 140.;
+	var bar : h2d.Graphics;
 
 	override function setFocus( i : Int ) {
 		super.setFocus(i);
 		if( i >= 0 && i < rows.length ) {
-			selected = i;
 			if( i < top ) top = i;
 			if( i >= top + VISIBLE ) top = i - VISIBLE + 1;
 			layout();
 		}
 	}
 
+	/** rueda del raton: desplaza la lista una fila; si la fila con el foco sale de la vista, el foco pasa a la mas cercana */
+	public function scroll( d : Int ) {
+		var t = top + d, max = rows.length - VISIBLE;
+		if( t > max ) t = max;
+		if( t < 0 ) t = 0;
+		if( t == top ) return;
+		top = t;
+		if( focus < rows.length ) {
+			if( focus < top ) setFocus(top);
+			else if( focus >= top + VISIBLE ) setFocus(top + VISIBLE - 1);
+		}
+		layout();
+	}
+
+	override function update( dt : Float, pad : hxd.Pad ) {
+		// Re Pag / Av Pag: una pagina de filas (con el foco en Volver no hacen nada)
+		var K = hxd.Key;
+		var page = K.isPressed(K.PGDOWN) ? 1 : K.isPressed(K.PGUP) ? -1 : 0;
+		if( active && page != 0 && focus < rows.length ) {
+			var i = focus + page * VISIBLE;
+			setFocus(i < 0 ? 0 : i >= rows.length ? rows.length - 1 : i);
+		}
+		super.update(dt, pad);
+	}
+
 	public function layout() {
 		for( i in 0...rows.length ) {
 			var r = rows[i];
-			var vis = i >= top && i < top + VISIBLE;
-			r.visible = vis;
-			r.y = baseY + (i - top) * 112;
+			r.visible = i >= top && i < top + VISIBLE;
+			r.x = listX;
+			r.y = listY + (i - top) * STEP;
+		}
+		// barra de desplazamiento a la derecha de las filas, solo si no caben todas
+		if( bar == null ) bar = new h2d.Graphics(this);
+		bar.clear();
+		if( rows.length > VISIBLE ) {
+			var x = listX + SaveRow.W + 12, h = VISIBLE * STEP - 8;
+			var th = h * VISIBLE / rows.length;
+			Theme.rect(bar, x, listY, 6, h, 0xFFFFFF, 0.08);
+			Theme.rect(bar, x, listY + (h - th) * top / (rows.length - VISIBLE), 6, th, Theme.ACCENT, 0.8);
 		}
 	}
 }
@@ -177,6 +285,7 @@ class GalaxyApp extends hxd.App {
 	var nBiome : Selector;
 	var nSize : Selector;
 	var nMode : Selector;
+	var nTutorial : Selector;
 	public var palette : Palette;
 	var paletteOpen = false;
 
@@ -345,21 +454,23 @@ class GalaxyApp extends hxd.App {
 		Theme.text(parent, Lang.t("subtitle"), scale * 0.2, Theme.DIM, x + 6, y + 13 * scale + 8);
 	}
 
-	function hint( parent : h2d.Object, x : Float, y : Float ) {
-		Theme.text(parent, Lang.t("hint.menu"), 1.5, Theme.DIM, x, y);
-	}
-
 	function panelFor( w : Int, h : Int, title : String ) : Screen {
 		var s = new Screen(ui);
 		var bg = new h2d.Graphics(s);
+		drawPanel(bg, Theme.text(s, title, 3.2, Theme.TEXT), w, h);
+		return s;
+	}
+
+	/** fondo y titulo de un panel centrado de w x h (se vuelve a llamar si cambia su alto, como en Nueva partida) */
+	function drawPanel( bg : h2d.Graphics, title : h2d.Text, w : Int, h : Int ) {
 		var x = (W - w) * 0.5, y = (H - h) * 0.5;
+		bg.clear();
 		Theme.fullRect(bg, 0x000000, 0.35);
 		Theme.rect(bg, x, y, w, h, Theme.PANEL, 0.94);
 		Theme.rect(bg, x, y, w, 4, Theme.ACCENT);
 		Theme.rect(bg, x, y + h - 1, w, 1, 0xFFFFFF, 0.1);
-		var t = Theme.text(s, title, 3.2, Theme.TEXT, 0, y + 28);
-		t.x = (W - t.textWidth * t.scaleX) * 0.5;
-		return s;
+		title.x = (W - title.textWidth * title.scaleX) * 0.5;
+		title.y = y + 28;
 	}
 
 	function show( name : String ) {
@@ -405,28 +516,24 @@ class GalaxyApp extends hxd.App {
 		titleBlock(s, 110, 80, 7.5);
 		var saves = SaveData.list();
 		var y = 300.;
+		// Continuar abre la lista de partidas, con la mas reciente elegida
 		var cont = new Button(s, Lang.t("continue"));
 		cont.enabled = saves.length > 0;
-		cont.onActivate = function() if( saves.length > 0 ) startGame(saves[0]);
+		cont.onActivate = function() if( saves.length > 0 ) show("load");
 		s.add(cont, 110, y);
 		var nw = new Button(s, Lang.t("new"));
 		nw.onActivate = function() show("new");
 		s.add(nw, 110, y + 64);
-		var ld = new Button(s, Lang.t("load"));
-		ld.enabled = saves.length > 0;
-		ld.onActivate = function() { show("load"); }
-		s.add(ld, 110, y + 128);
 		var op = new Button(s, Lang.t("options"));
 		op.onActivate = function() show("options");
-		s.add(op, 110, y + 192);
+		s.add(op, 110, y + 128);
 		var q = new Button(s, Lang.t("quit"));
 		q.onActivate = function() quit();
-		s.add(q, 110, y + 256);
+		s.add(q, 110, y + 192);
 		if( saves.length > 0 ) {
 			var l = saves[0];
-			Theme.text(s, Lang.t("continue") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 330);
+			Theme.text(s, Lang.t("lastgame") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 266);
 		}
-		hint(s, 110, 676);
 		versionText = Theme.text(s, "v0.4 · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
 		anchorToWindow();
 		s.onBack = null;
@@ -435,98 +542,171 @@ class GalaxyApp extends hxd.App {
 
 	function randomSeed() : Int return 1 + Std.random(999999);
 
+	/** nombre por defecto de una partida nueva: "Partida N" con N = partidas + 1, o el siguiente que no tenga ya otra partida */
+	function defaultGameName() : String {
+		var names = [for( i in SaveData.list() ) i.name];
+		var n = names.length + 1;
+		inline function name( n : Int ) return StringTools.replace(Lang.t("newgame.name"), "%n%", "" + n);
+		while( names.indexOf(name(n)) >= 0 ) n++;
+		return name(n);
+	}
+
+	/** Nueva partida: nombre, semilla y modo; en creativo tambien bioma y tamano, en aventura si se juega el tutorial.
+	    Las filas del otro modo se ocultan y se desactivan (el foco las salta) y el panel cambia de alto. */
 	function buildNew() : Screen {
-		var s = panelFor(760, 640, Lang.t("newgame.title"));
+		var s = new Screen(ui);
+		var bg = new h2d.Graphics(s);
+		var title = Theme.text(s, Lang.t("newgame.title"), 3.2, Theme.TEXT);
 		var x = (W - 560) * 0.5;
-		nName = new TextField(s, Lang.t("name"), "Planeta " + (1 + SaveData.list().length));
-		nSeed = new TextField(s, Lang.t("seed"), "" + randomSeed());
+		var defName = defaultGameName();
+		nName = new TextField(s, Lang.t("name"), defName, 560, 54, 340);
+		nSeed = new TextField(s, Lang.t("seed"), "" + randomSeed(), 560, 54, 340);
 		nSeed.numeric = true;
 		nSeed.maxLen = 9;
+		nMode = new Selector(s, Lang.t("mode"), [Lang.t("mode.adventure"), Lang.t("mode.creative")]);
 		var names = [Lang.t("biome.random")];
 		for( b in BIOMES.concat(EXTRA_BIOMES) ) names.push(Lang.t("biome." + b));
 		nBiome = new Selector(s, Lang.t("biome"), names);
 		nSize = new Selector(s, Lang.t("size"), [Lang.t("size.small"), Lang.t("size.normal"), Lang.t("size.large")]);
 		nSize.index = 0;
-		nMode = new Selector(s, Lang.t("mode"), [Lang.t("mode.adventure"), Lang.t("mode.creative")]);
+		nTutorial = new Selector(s, Lang.t("tutorial"), [Lang.t("yes"), Lang.t("no")]);
 		var create = new Button(s, Lang.t("create"), 560);
 		var back = new Button(s, Lang.t("back"), 560);
-		var y = 190.;
-		s.add(nName, x, y);
-		s.add(nSeed, x, y + 66);
-		s.add(nBiome, x, y + 132);
-		s.add(nSize, x, y + 198);
-		s.add(nMode, x, y + 264);
-		s.add(create, x, y + 346);
-		s.add(back, x, y + 412);
+		var all : Array<Widget> = [nName, nSeed, nMode, nBiome, nSize, nTutorial, create, back];
+		for( w in all ) s.add(w, x, 0);
+		var layout = function() {
+			var creative = nMode.index == 1;
+			for( w in [nBiome, nSize] ) w.visible = w.enabled = creative;
+			nTutorial.visible = nTutorial.enabled = !creative;
+			var rows : Array<Widget> = creative ? [nName, nSeed, nMode, nBiome, nSize] : [nName, nSeed, nMode, nTutorial];
+			var h = 290 + rows.length * 66;
+			drawPanel(bg, title, 760, h);
+			var y = (H - h) * 0.5 + 120;
+			for( i in 0...rows.length ) rows[i].y = y + i * 66;
+			create.y = y + rows.length * 66 + 16;
+			back.y = create.y + 66;
+		};
+		nMode.onChange = function(_) layout();
+		layout();
 		create.onActivate = function() {
 			var seed = Std.parseInt(nSeed.text);
 			if( seed == null || seed <= 0 ) seed = randomSeed();
 			var biome = nBiome.index == 0 ? BIOMES[seed % BIOMES.length] : BIOMES.concat(EXTRA_BIOMES)[nBiome.index - 1];
 			var name = StringTools.trim(nName.text);
-			if( name == "" ) name = "Planeta";
-			// aventura: en el espacio, con el tutorial (su planeta es Terres Rouges pequeno)
-			if( nMode.index == 0 ) {
-				startAdventure(name, seed, true);
-				return;
-			}
-			var info = SaveData.create(name, seed, biome, nSize.index + 1);
-			info.creative = nMode.index == 1;
-			startGame(info);
+			if( name == "" ) name = defName;
+			var creative = nMode.index == 1;
+			startNewGame(name, seed, creative, !creative && nTutorial.index == 0, biome, nSize.index + 1);
 		};
 		back.onActivate = function() show("main");
 		s.onBack = function() show("main");
-		hint(s, (W - 600) * 0.5 + 50, 692);
 		return s;
 	}
 
+	/**
+	 * Empieza una partida nueva (formulario de Nueva partida). Creativo: en la nave, sobre el planeta del bioma y tamano elegidos.
+	 * Aventura: en el espacio, en el sistema 0, con o sin el tutorial (TutoSetup.newGame: con el, su planeta es Terres Rouges
+	 * pequeno). La eleccion del tutorial queda en la partida (SaveInfo.tutorial).
+	 */
+	public function startNewGame( name : String, seed : Int, creative : Bool, tutorial : Bool, biome : String, size : Int ) {
+		if( !creative ) {
+			startAdventure(name, seed, tutorial);
+			return;
+		}
+		startGame(SaveData.create(name, seed, biome, size, true));
+	}
+
+	/** Partidas guardadas (Continuar): jugar, renombrar o borrar cada una */
 	function buildLoad() : Screen {
 		var s = new LoadScreen(ui);
 		var bg = new h2d.Graphics(s);
 		Theme.fullRect(bg, 0x000000, 0.4);
-		Theme.rect(bg, 150, 60, 980, 600, Theme.PANEL, 0.94);
-		Theme.rect(bg, 150, 60, 980, 4, Theme.ACCENT);
-		var t = Theme.text(s, Lang.t("load.title"), 3.2, Theme.TEXT, 0, 82);
+		Theme.rect(bg, 110, 50, 1060, 620, Theme.PANEL, 0.94);
+		Theme.rect(bg, 110, 50, 1060, 4, Theme.ACCENT);
+		var t = Theme.text(s, Lang.t("load.title"), 3.2, Theme.TEXT, 0, 72);
 		t.x = (W - t.textWidth * t.scaleX) * 0.5;
 		var saves = SaveData.list();
-		// "Borrar" activa un modo en el que la siguiente partida que se elige es la que se borra
-		var deleting = false;
-		var hint = Theme.text(s, Lang.t("delete.pick"), 1.8, Theme.DANGER, 0, 130);
-		hint.x = (W - hint.textWidth * hint.scaleX) * 0.5;
-		hint.visible = false;
-		var del : Button = null;
-		var setDeleting = function( b : Bool ) {
-			deleting = b;
-			hint.visible = b;
-			del.setLabel(Lang.t(b ? "delete.cancel" : "delete"));
-			if( b && s.rows.length > 0 ) s.setFocus(0);
-		};
 		for( info in saves ) {
 			var row = new SaveRow(s, info);
 			s.rows.push(row);
-			s.add(row, 160, 150);
+			s.add(row, s.listX, s.listY);
 			var inf = info;
-			row.onActivate = function() {
-				if( deleting ) {
-					setDeleting(false);
-					askDelete(s, inf);
-				} else
-					startGame(inf);
+			row.onAction = function( a ) switch( SaveRow.ACTIONS[a] ) {
+				case "rename": askRename(s, inf);
+				case "delete": askDelete(s, inf);
+				default: startGame(inf);
 			};
 		}
 		s.layout();
-		del = new Button(s, Lang.t("delete"), 300, 48);
 		var back = new Button(s, Lang.t("back"), 300, 48);
-		s.add(del, 640 - 310, 598);
-		s.add(back, 640 + 10, 598);
-		del.onActivate = function() setDeleting(!deleting);
-		back.onActivate = function() { show("main"); }
-		s.onBack = function() if( deleting ) setDeleting(false) else show("main");
+		s.add(back, (W - 300) * 0.5, 604);
+		back.onActivate = function() show("main");
+		s.onBack = function() show("main");
 		if( saves.length == 0 ) {
 			var n = Theme.text(s, Lang.t("nosaves"), 2.2, Theme.DIM, 0, 320);
 			n.x = (W - n.textWidth * n.scaleX) * 0.5;
-			del.enabled = false;
 		}
 		return s;
+	}
+
+	/** vuelve a hacer la lista de partidas (tras renombrar o borrar) desplazada como estaba y con el foco en la fila `at` (o en la
+	    ultima que quede) */
+	function reopenLoad( at : Int ) {
+		var old = screens.get("load");
+		var top = old != null ? cast(old, LoadScreen).top : 0;
+		screens.remove("load");
+		screens.remove("main");
+		if( old != null ) old.remove();
+		if( SaveData.list().length == 0 ) {
+			show("main");
+			return;
+		}
+		show("load");
+		var s = cast(current, LoadScreen);
+		var max = s.rows.length - LoadScreen.VISIBLE;
+		s.top = top < max ? top : max < 0 ? 0 : max;
+		s.setFocus(at < s.rows.length ? at : s.rows.length - 1);
+	}
+
+	/** ventana para cambiar el nombre de una partida (solo el nombre: SaveData.rename); Intro en el campo acepta */
+	function askRename( parent : LoadScreen, info : SaveInfo ) {
+		if( modal != null && modal.parent != null ) return;
+		parent.active = false;
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.fullRect(bg, 0x000000, 0.55);
+		Theme.rect(bg, 290, 220, 700, 270, Theme.PANEL, 1);
+		Theme.rect(bg, 290, 220, 700, 4, Theme.ACCENT);
+		var t = Theme.text(m, Lang.t("rename.title"), 2.4, Theme.TEXT, 0, 248);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var field = new TextField(m, Lang.t("name"), info.name, 620, 54, 380);
+		var cancel = new Button(m, Lang.t("cancel"), 250, 52);
+		var ok = new Button(m, Lang.t("accept"), 250, 52);
+		m.add(field, 330, 310);
+		m.add(cancel, 380, 400);
+		m.add(ok, 650, 400);
+		var close = function() {
+			m.remove();
+			parent.active = true;
+		};
+		var accept = function() {
+			var name = StringTools.trim(field.text);
+			if( name == "" || name == info.name ) {
+				close();
+				return;
+			}
+			var at = parent.focus;
+			SaveData.rename(info.id, name);
+			m.remove();
+			reopenLoad(at);
+		};
+		field.onEnter = accept;
+		ok.onActivate = accept;
+		cancel.onActivate = close;
+		m.onBack = close;
+		m.setFocus(0);
+		field.startTyping();
+		// el modal se actualiza desde update()
+		modal = m;
 	}
 
 	/** ventana de confirmacion para borrar una partida */
@@ -554,12 +734,10 @@ class GalaxyApp extends hxd.App {
 		no.onActivate = close;
 		m.onBack = close;
 		yes.onActivate = function() {
+			var at = parent.focus;
 			SaveData.delete(info.id);
 			m.remove();
-			screens.remove("load");
-			screens.remove("main");
-			parent.remove();
-			if( SaveData.list().length == 0 ) show("main") else show("load");
+			reopenLoad(at);
 		};
 		// el modal se actualiza desde update()
 		modal = m;
@@ -790,7 +968,7 @@ class GalaxyApp extends hxd.App {
 		};
 		if( Tutorial.active(game.info) ) {
 			var skip = new Button(s, TutoText.get("skip"));
-			s.add(skip, x, y + 324);
+			s.add(skip, x, close.y + 62);
 			skip.onActivate = function() askSkip(s);
 		}
 		edit.onActivate = startHangar;
@@ -1376,9 +1554,15 @@ class GalaxyApp extends hxd.App {
 		hxd.Window.getInstance().mouseMode = on ? Relative(onMouse, true) : Absolute;
 	}
 
-	/** rueda del raton: cambia de casilla (en el original, bajar la rueda pasa a la siguiente); con la paleta abierta, de pagina */
+	/** rueda del raton: cambia de casilla (en el original, bajar la rueda pasa a la siguiente); con la paleta abierta, de pagina;
+	    en la lista de partidas la desplaza */
 	function onWindowEvent( e : hxd.Event ) {
-		if( e.kind != EWheel || game == null || state != Playing ) return;
+		if( e.kind != EWheel ) return;
+		if( state == Menu && current != null && current.active && Std.isOfType(current, LoadScreen) ) {
+			cast(current, LoadScreen).scroll(e.wheelDelta > 0 ? 1 : -1);
+			return;
+		}
+		if( game == null || state != Playing ) return;
 		if( shop != null ) shop.scroll(e.wheelDelta);
 		else if( paletteOpen && palette != null ) palette.scroll(e.wheelDelta);
 		else game.scrollInventory(e.wheelDelta > 0 ? -1 : 1);
@@ -1729,17 +1913,76 @@ class GalaxyApp extends hxd.App {
 		toastTime = 2.2;
 	}
 
-	function makeDemoSaves() {
-		var names = ["Base Alfa", "Cráter del Norte", "Mundo helado"];
-		var biomes = ["BIAutumn", "BIMoon", "BIWinterPeaks"];
-		for( i in 0...3 ) {
-			var info = SaveData.create(names[i], 1000 + i * 77, biomes[i], 1 + (i % 2));
+	/** partidas de ejemplo para las capturas (--demo-saves: las 3 primeras) y para probar la lista (devsaves N); de la cuarta en
+	    adelante, una de cada cuatro es creativa */
+	function makeDemoSaves( n = 3 ) {
+		var names = ["Base Alfa", "Cráter del Norte", "Mundo helado", "Colonia Beta", "Dunas rojas", "Bosque de ácido", "Mina lunar", "Ciudad perdida", "Puesto Gamma", "Valle oculto"];
+		var biomes = ["BIAutumn", "BIMoon", "BIWinterPeaks", "BIMars", "BIMars", "BIAcidForest", "BIMoon", "BIDeadCity", "BIAutumn", "BIWinterPeaks"];
+		for( i in 0...n ) {
+			var k = i % names.length;
+			var info = SaveData.create(names[k] + (i < names.length ? "" : " " + (1 + Std.int(i / names.length))), 1000 + i * 77, biomes[k], 1 + (i % 2), i % 4 == 3);
 			info.playSeconds = 900 + i * 4100;
 			info.saved = Date.now().getTime() - i * 86400000.0 * 1.3;
-			SaveData.write(info, null);
-			info.saved = Date.now().getTime() - i * 86400000.0 * 1.3;
-			sys.io.File.saveContent(SaveData.jsonPath(info.id), haxe.Json.stringify(info, null, "  "));
+			SaveData.write(info, null, false);
 		}
+	}
+
+	/** pruebas (devsaves N): borra las partidas de la carpeta de datos y crea N de ejemplo. Solo con GALAXY55_DATA (devrun.ps1),
+	    para no tocar nunca las partidas de verdad */
+	public function devSaves( n : Int ) {
+		var data = Sys.getEnv("GALAXY55_DATA");
+		if( data == null || data == "" ) {
+			Sys.println("devsaves: solo con GALAXY55_DATA (devrun.ps1)");
+			return;
+		}
+		var d = SaveData.dir();
+		for( f in sys.FileSystem.readDirectory(d) )
+			if( StringTools.endsWith(f, ".json") || StringTools.endsWith(f, ".png") ) sys.FileSystem.deleteFile(d + "/" + f);
+		makeDemoSaves(n);
+		Sys.println("devsaves: " + n + " partidas de ejemplo en " + d);
+	}
+
+	/** pruebas (print saves): las partidas en el orden de la lista, con su modo, tutorial, inventario y miniatura */
+	public function devSavesInfo() : String {
+		var out = [];
+		for( i in SaveData.list() ) {
+			var blocks = 0, charges = 0;
+			for( s in i.inv.t ) if( s != null ) blocks += s.n;
+			for( c in i.inv.charges ) charges += c.n;
+			out.push("'" + i.name + "' " + (i.creative == true ? "creativo" : "aventura") + " tutorial=" + i.tutorial + " " + i.biome + "/" + i.sizeChunks
+				+ " bloques=" + blocks + " cargas=" + charges + " miniatura=" + (SaveData.thumb(i.id) != null ? "si" : "no") + " guardado=" + DateTools.format(Date.fromTime(i.saved), "%d/%m %H:%M:%S"));
+		}
+		return out.length + " partidas:\n  " + out.join("\n  ");
+	}
+
+	/** pruebas (print menu): la pantalla abierta (o la ventana encima), el control con el foco y, en la lista de partidas o en Nueva
+	    partida, lo que se ve */
+	public function devMenuInfo() : String {
+		var s = modal != null && modal.parent != null ? modal : current;
+		if( s == null ) return curInfo() != null ? "jugando '" + curInfo().name + "'" : "ninguna";
+		function desc( w : Widget ) : String {
+			if( Std.isOfType(w, SaveRow) ) {
+				var r = cast(w, SaveRow);
+				return "fila '" + r.info.name + "' (" + SaveRow.ACTIONS[r.action] + ")";
+			}
+			if( Std.isOfType(w, Selector) ) {
+				var c = cast(w, Selector);
+				return c.title + " = " + c.choices[c.index];
+			}
+			if( Std.isOfType(w, TextField) ) {
+				var t = cast(w, TextField);
+				return t.title + " = '" + t.text + "'" + (t.typing ? " (escribiendo)" : "");
+			}
+			return "'" + @:privateAccess w.label.text + "'";
+		}
+		var out = "pantalla " + currentName + (s == modal ? " + ventana" : "") + ", foco " + desc(s.widgets[s.focus]);
+		if( s == current && Std.isOfType(s, LoadScreen) ) {
+			var l = cast(s, LoadScreen);
+			out += "; filas " + l.rows.length + ", a la vista " + [for( r in l.rows ) if( r.visible ) r.info.name].join(" | ");
+		} else if( s == current && currentName == "new" ) {
+			out += "; filas " + [for( w in s.widgets ) if( w.visible ) desc(w)].join(" | ") + "; panel " + Std.int(s.widgets[0].y - 120) + ".." + Std.int(s.widgets[s.widgets.length - 1].y + 88);
+		}
+		return out;
 	}
 
 	// ---------------------------------------------------------------- bucle principal
@@ -2250,6 +2493,8 @@ class GalaxyApp extends hxd.App {
 					Sys.println("no se encontro la partida; hay: " + [for( i in SaveData.list() ) i.id].join(", ") + "  carpeta=" + SaveData.dir());
 					Sys.exit(1);
 				}
+				// la partida de prueba nueva es de aventura pero con el inventario inicial del original: los guiones usan sus casillas
+				if( shotLoad == null && !shotCont ) info.inv = Inv.defaults();
 				startGame(info);
 				return;
 			}
@@ -2293,7 +2538,7 @@ class GalaxyApp extends hxd.App {
 			} else
 				shotFrames = frames + 6;
 		}
-		if( dev != null && shotStage == 2 && ((game != null && (state == Playing || state == Loading || (state == Paused && dev.inPause))) || (state == Exploring && explorer != null)) ) {
+		if( dev != null && shotStage == 2 && ((game != null && (state == Playing || state == Loading || (state == Paused && dev.inPause))) || (state == Exploring && explorer != null) || (state == Menu && dev.inMenu)) ) {
 			if( dev.tick(this, game) ) Sys.exit(0);
 			return;
 		}

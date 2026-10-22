@@ -3,7 +3,8 @@ import Common;
 /** Prueba del guardado: escribe una partida con inventario y cambios de terreno y la vuelve a leer. */
 class SaveTest {
 	static function main() {
-		var info = SaveData.create("Prueba guardado", 42, "BIMoon", 2);
+		// creativo: empieza con el inventario inicial del original (en aventura estaria vacio)
+		var info = SaveData.create("Prueba guardado", 42, "BIMoon", 2, true);
 		info.inv.t[0].n = 7;
 		info.inv.t[9] = { k : Type.enumIndex(BWood), n : 3 };
 		info.inv.charges[1].n = 12;

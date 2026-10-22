@@ -3,7 +3,7 @@ import SaveData.SaveInfo;
 
 /**
  * Partida nueva de aventura y preparacion del tutorial (anadido del port; el original empezaba en el espacio, sin tutorial):
- * - newGame: la partida empieza en el espacio, en el sistema 0, con el inventario vacio. Con tutorial, el planeta 0 del
+ * - newGame: la partida empieza en el espacio, en el sistema 0, con el inventario vacio (SaveData.create en aventura). Con tutorial, el planeta 0 del
  *   sistema es Terres Rouges pequeno; sin el, el sistema es el aleatorio de ExpOffline y la ESCorp envia las cargas.
  * - la nave del tutorial tiene dos agujeros en el techo, encima de las losas del sintetizador (HOLES). Se quitan con shipEdits
  *   y no en el plano: la zona del sintetizador se mide en el plano y llegaria hasta el agujero (se taparia desde dentro).
@@ -19,16 +19,11 @@ class TutoSetup {
 	/** cargas azules y amarillas que envia la ESCorp al acabar o pasar el tutorial */
 	public static inline var GIFT = 30;
 
-	/** inventario de una partida de aventura nueva: 10 casillas vacias y ninguna carga */
-	public static function emptyInv() : Protocol.InventoryInfos {
-		return { maxWeight : 64, t : [for( i in 0...10 ) null], charges : [] };
-	}
-
 	public static function newGame( name : String, seed : Int, tutorial : Bool ) : SaveInfo {
 		var start = tutorial ? { seed : seed, biome : "BIAutumn", size : 1 } : null;
 		var p = ExpData.ExpOffline.make(seed, start).systems[0].planets[PLANET];
 		var info = SaveData.create(name, p.seed, p.biome, p.size);
-		info.inv = emptyInv();
+		info.tutorial = tutorial;
 		info.uni = { seed : seed, planetId : PLANET, pos : [1, 0], start : { seed : p.seed, biome : p.biome, size : p.size }, planets : [], space : true };
 		if( tutorial ) {
 			info.tuto = { step : 0 };
@@ -49,7 +44,7 @@ class TutoSetup {
 	public static function skip( info : SaveInfo ) {
 		var uni = info.uni;
 		info.tuto = null;
-		info.inv = emptyInv();
+		info.inv = Inv.empty();
 		grant(info.inv);
 		info.shipData = null;
 		info.shipEdits = [];
