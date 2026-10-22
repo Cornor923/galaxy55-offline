@@ -88,7 +88,6 @@ A player got it running on Linux this way; we have not tested it.
 
 ## Differences from the original
 
-- Sky, gradient and fog use the original colours of each biome. The stars are this port's.
 - Snow in the winter biome is an addition of this port: the original does not have it.
 - Creative mode and its palette are an addition of this port.
 - The on-board computer menu has its own look, as in the Flash version (the original was a web page).

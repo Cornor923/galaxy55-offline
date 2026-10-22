@@ -192,7 +192,7 @@ class World {
 			sky = sharedSky;
 			ownSky = false;
 		} else {
-			sky = new Sky(root, biome, menuFog);
+			sky = new Sky(root, biome, menuFog, size);
 			sky.fog.curve = curve(size);
 		}
 		// animWater = { width : 0.5, scale : 0.3, speed : 0.5 }; Render.init ajusta width para que las olas cierren la vuelta
@@ -1472,9 +1472,11 @@ class World {
 	 * todos los chunks estan en la misma posicion (sus vertices son absolutos; solo las copias de la vuelta al planeta se
 	 * mueven), asi que la distancia no los ordenaba y el agua y el hielo de chunks distintos salian en un orden que cambiaba
 	 * con la camara (cortes rectos en el borde de un chunk, hielo sumergido visible a ratos). Como en Render.hx del original:
-	 * primero el agua de todos los chunks, luego la profundidad y el color del hielo; el resto de la pasada (capa 0) despues.
+	 * primero el agua de todos los chunks, luego las estrellas (Sky), la profundidad y el color del hielo; el resto de la
+	 * pasada (capa 0) despues.
 	 */
-	static inline var LAYER_WATER = -3;
+	static inline var LAYER_WATER = -4;
+	public static inline var LAYER_SKY = -3;
 	static inline var LAYER_ALPHA_DEPTH = -2;
 	static inline var LAYER_ALPHA = -1;
 
