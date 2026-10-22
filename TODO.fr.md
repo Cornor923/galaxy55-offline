@@ -16,6 +16,6 @@ Ordre approximatif. Ce qui est déjà fait se trouve dans [`CHANGELOG.fr.md`](CH
 4. **Corriger les bugs** de [`BUGS.fr.md`](BUGS.fr.md).
 5. **Eau :** à décider : lave + eau = basalte (voir [`IDEAS.fr.md`](IDEAS.fr.md)). L'eau qui s'écoule et les vagues de l'original sont faites.
 6. Option de qualité pour les PC lents (on peut déjà désactiver les vagues de l'eau).
-7. Plus de blocs activables (p. ex. la bombe antique, qui blesse aussi dans l'original) ; Cité morte et Shed.
+7. Plus de blocs activables (p. ex. la bombe antique, qui blesse aussi dans l'original) ; Cité morte.
 8. Distribution : installateur, et évaluer SDL/DirectX.
 9. À évaluer : **version web** (Heaps → JS/WebGL) pour Eternaltwin, multijoueur et Steam (voir [`IDEAS.fr.md`](IDEAS.fr.md)).

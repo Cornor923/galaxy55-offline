@@ -96,7 +96,7 @@ class GameView {
 	var oldSpeedY = 0.;
 	var stun = 0.;
 
-	// vida y oxigeno (Hero.life, Hero.oxygen): de 0 a 100. En creativo no se recibe dano
+	// vida y oxigeno (Hero.life, Hero.oxygen): de 0 a 100. En creativo no se recibe dano ni se gasta oxigeno
 	public var life = 100.;
 	public var oxygen = 100.;
 	var damageRecover = 0.;
@@ -172,6 +172,9 @@ class GameView {
 			// partida nueva: se empieza dentro de la nave, encima del teletransportador
 			gotoShip(true);
 			pitch = -0.25;
+		} else if( info.life != null && info.life <= 0 ) {
+			// guardada con la vida a 0 (durante el fundido de la muerte): de vuelta en la nave, como hero.hit(0) en Game.init
+			gotoShip(true);
 		} else {
 			px = info.px;
 			py = info.py;
@@ -371,7 +374,6 @@ class GameView {
 		}
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateLife(tmod);
-		updateFade(tmod);
 		// olas: fx.time * animWater.speed (tiempo en segundos * 0.5)
 		if( world.wave != null ) {
 			world.wave.time += realDt * 0.5;
@@ -383,6 +385,9 @@ class GameView {
 			ship.update(this, tmod);
 			message = ship.message(this);
 		}
+		// despues del teletransportador (el original sale de Game.update al acabar el fundido): la muerte lleva a la nave y
+		// ship.update, con el standingBlock del suelo, pondria enteringShip a 0 y el teletransportador lo bajaria
+		updateFade(tmod);
 		if( debugDoorFrames > 0 && ++debugDoorFrames == 12 ) {
 			// solo pruebas: abre la puerta de la nave que hay cerca del teletransportador
 			if( Sys.args().indexOf("--computer") >= 0 ) onComputer();
@@ -544,7 +549,8 @@ class GameView {
 
 	/** Hero.hit: quita vida y aturde; a 0, fundido rojo y vuelta a la nave con la vida y el oxigeno llenos (Game.returnToShip, modo local) */
 	public function hit( dmg : Float ) {
-		if( creative || (fadeFX != null && fadeFX.lock) ) return;
+		// en el hangar no se recibe dano (EditShip.init: hero.invincible = true)
+		if( creative || hangar != null || (fadeFX != null && fadeFX.lock) ) return;
 		life -= dmg;
 		stun = 10;
 		if( life <= 0 ) {
@@ -640,7 +646,9 @@ class GameView {
 		}
 
 		swimming = inWater();
-		if( swimming ) {
+		if( creative ) {
+			oxygen = 100;
+		} else if( swimming ) {
 			if( oxygen > 0 ) oxygen -= dt * 0.1;
 			if( oxygen < 0 ) oxygen = 0;
 		} else {

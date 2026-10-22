@@ -1,0 +1,44 @@
+# hielo junto al agua: visto desde dentro del agua no debe salir cortado en triangulos oscuros ni rayado (las caras del
+# agua contra el hielo estan en su mismo plano), con olas y sin ellas; tambien desde fuera del agua y con una cascada
+wait 3
+planet
+wait 30
+filla 40 40 88 88 58 95 none
+filla 40 40 88 88 58 70 BRock
+filla 41 41 87 87 61 70 BWater
+filla 62 62 65 65 61 64 BIce
+filla 70 62 72 64 61 73 BIce
+wait 5
+# desde dentro del agua: hielo sumergido
+tp 57.5 61.5 61.5 0.35 0.05
+wait 2
+shot hba_uw
+waves 0
+wait 5
+tp 57.5 61.5 61.5 0.35 0.05
+wait 2
+shot hba_uw0
+waves 1
+# desde dentro del agua: columna de hielo que atraviesa la superficie
+tp 66.5 58.5 63 0 0
+lookat 71 63 70
+wait 2
+shot hba_up
+# desde fuera del agua: superficie con olas, hielo sumergido y columna
+filla 55 55 55 55 61 72 BRock
+tp 55.5 55.5 73.01 0 0
+lookat 66 64 66
+wait 2
+shot hba_above
+# cascada junto al hielo, en la orilla
+filla 76 50 80 54 71 71 BRock
+setp 78 52 72 BCascadeSource
+set 79 52 72 BIce
+set 77 52 72 BIce
+filla 78 47 78 47 71 73 BRock
+wait 300
+tp 78.5 47.5 74.01 0 0
+lookat 78.5 52.5 71.5
+wait 2
+shot hba_cascade
+quit

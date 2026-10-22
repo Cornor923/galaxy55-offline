@@ -191,6 +191,13 @@ class Dev {
 				case "palette":
 					@:privateAccess app.openPalette();
 					if( a.length > 1 && app.palette != null ) for( i in 0...Std.parseInt(a[1]) ) app.palette.scroll(1);
+				case "palnav":
+					// palnav left|right|up|down|lb|rb|a: como la cruceta, LB/RB o A del mando con la paleta abierta
+					var k = a[1];
+					if( app.palette != null ) app.palette.nav(k == "left" ? -1 : k == "right" ? 1 : 0, k == "up" ? -1 : k == "down" ? 1 : 0, k == "lb" ? -1 : k == "rb" ? 1 : 0, k == "a");
+				case "palhover":
+					// palhover N [out]: el raton entra en la casilla N de la pagina de la paleta (out: sale de ella)
+					if( app.palette != null ) app.palette.devHover(Std.parseInt(a[1]), a[2] != "out");
 				case "row":
 					// row X1 X2 Y Z: nivel del agua en una fila (m = mar, p = puesta, 1..4 = pasos, . = sin agua)
 					var y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), out = [];
@@ -245,6 +252,8 @@ class Dev {
 				case "expplanet": app.explorer.devClickPlanet(Std.parseInt(a[1]));
 				case "expbutton": app.explorer.devPressButton();
 				case "expgo": app.explorer.devClickPoint(f(a[1]), f(a[2]));
+				case "expgor": app.explorer.devClickPoint(f(a[1]), f(a[2]), true); // expgor DX DY: punto relativo a la nave
+				case "expangle": Sys.println(app.explorer.devShipAngle());
 				case "expship": app.explorer.devDumpShip("port/out/" + a[1] + ".png");
 				case "expinfo": Sys.println(app.explorer.devInfo());
 				case "exprobot": app.explorer.devClickRobot();
@@ -368,6 +377,8 @@ class Dev {
 			Sys.println("creditos: " + g.info.credits);
 		case "time":
 			Sys.println("tiempo: " + Std.int(g.playSeconds));
+		case "palette":
+			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
 		case "hangar":
 			Sys.println("hangar: " + (g.hangar == null ? "no" : "valida=" + g.hangarValid + " error=" + g.hangar.error + " velocidad=" + g.hangar.speed) + " mensaje=" + g.message);
 		case "wares":

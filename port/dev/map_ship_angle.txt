@@ -1,0 +1,90 @@
+# rumbo de la nave en el mapa: al pararse debe conservar el de su llegada, en el sistema y en el sector
+# (Manager.main: la nave solo gira con velocidad > 0.3). Lanzar con -Extra "--novsync" para ir a 60 fps:
+# con vsync la ventana minimizada va a unos 20 fps y no se ve el fallo.
+wait 3
+ship
+wait 10
+explore
+wait 200
+maxfps 60
+wait 60
+fps
+expangle
+# en el sistema, hacia la izquierda (rumbo 180)
+expgor -150 0
+wait 20
+expangle
+wait 20
+expangle
+wait 20
+expangle
+wait 300
+expangle
+# hacia abajo (rumbo 90)
+expgor 0 150
+wait 20
+expangle
+wait 20
+expangle
+wait 20
+expangle
+wait 300
+expangle
+# hacia arriba a la derecha (rumbo -45)
+expgor 110 -110
+wait 20
+expangle
+wait 20
+expangle
+wait 20
+expangle
+wait 300
+expangle
+# hacia la derecha (rumbo 0)
+expgor 150 0
+wait 20
+expangle
+wait 20
+expangle
+wait 20
+expangle
+wait 300
+expangle
+# salida al sector
+expgo 2400 1000
+wait 400
+expangle
+# en el sector, hacia la izquierda (rumbo 180)
+expgor -300 0
+wait 30
+expangle
+wait 30
+expangle
+wait 400
+expangle
+# hacia abajo (rumbo 90)
+expgor 0 300
+wait 30
+expangle
+wait 30
+expangle
+wait 400
+expangle
+# hacia arriba (rumbo -90)
+expgor 0 -300
+wait 30
+expangle
+wait 30
+expangle
+wait 400
+expangle
+# hacia abajo a la derecha (rumbo 45)
+expgor 200 200
+wait 30
+expangle
+wait 30
+expangle
+wait 400
+expangle
+shot map_ship_angle
+quit
