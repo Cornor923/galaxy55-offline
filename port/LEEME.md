@@ -109,4 +109,6 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - La captura de F2 se guarda directamente en la carpeta `screenshots` y un mensaje dice dónde (el original abría el diálogo de Flash para guardarla).
 - En el hangar no se pueden poner líquidos (agua, cascadas, arena movediza, lava...) ni la bomba exótica: un aviso dice que
   no están permitidos a bordo. El original solo impedía poner lo que se extiende (fuente de cascada y lava), sin aviso.
+- En el hangar se excava cuatro veces más rápido y sin cargas, como en las zonas de sintetizador de la nave: cambio de este port,
+  para editar la nave con comodidad. En el original se excavaba como en el planeta, con las cargas.
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).

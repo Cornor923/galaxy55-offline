@@ -120,4 +120,6 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - La capture d'écran de F2 est enregistrée directement dans le dossier `screenshots` et un message indique où (l'original ouvrait la boîte de dialogue de Flash pour l'enregistrer).
 - Dans le hangar, on ne peut poser ni liquides (eau, cascades, sable mouvant, lave...) ni la bombe antique : un message dit
   qu'ils ne sont pas autorisés à bord. L'original n'empêchait de poser que ce qui se propage (source de cascade et lave), sans message.
+- Dans le hangar, on creuse quatre fois plus vite et sans charges, comme dans les zones de synthétiseur du vaisseau : changement
+  du port, pour modifier le vaisseau confortablement. Dans l'original, on y creusait comme sur une planète, avec les charges.
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).
