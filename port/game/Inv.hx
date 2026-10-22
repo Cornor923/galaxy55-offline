@@ -48,6 +48,11 @@ class Inv extends Inventory {
 		return inv;
 	}
 
+	/** Inventario inicial del modo aventura del port: las mismas 10 casillas y peso maximo, sin bloques ni cargas. */
+	public static function empty() : InventoryInfos {
+		return { maxWeight : 64, t : [for( i in 0...10 ) null], charges : [] };
+	}
+
 	/** copia profunda (el guardado y el juego no comparten estructuras) */
 	public static function copy( i : InventoryInfos ) : InventoryInfos {
 		return {
