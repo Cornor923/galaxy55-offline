@@ -44,16 +44,33 @@ class Palette extends h2d.Object {
 		var px = (PX - w) * 0.5, py = (PY - h) * 0.5;
 		x0 = px + 20;
 		y0 = py + 70;
+		// la ayuda no cabia en una linea (en frances se salia del panel): se parte entre sus partes y el panel crece hacia abajo
+		// lo que ocupen las lineas de mas (hacia arriba taparia los numeros de la barra del inventario)
+		var hint = Theme.text(null, "", 1.5, Theme.DIM, px + 24, py + h - 34);
+		var lines = hintLines(hint, Lang.t("palette.hint"), w - 48);
+		hint.text = lines.join("\n");
+		var more = (lines.length - 1) * (hint.font.lineHeight + hint.lineSpacing) * hint.scaleY;
 		var bg = new h2d.Graphics(this);
 		Theme.fullRect(bg, 0x000000, 0.5);
-		Theme.rect(bg, px, py, w, h, Theme.PANEL, 0.96);
+		Theme.rect(bg, px, py, w, h + more, Theme.PANEL, 0.96);
 		Theme.rect(bg, px, py, w, 4, Theme.ACCENT);
 		var t = Theme.text(this, Lang.t("palette.title"), 2.6, Theme.TEXT, px + 24, py + 22);
 		pageText = Theme.text(this, "", 1.8, Theme.DIM, px + w - 150, py + 30);
 		info = Theme.text(this, "", 2.0, Theme.CYAN, px + 24, py + h - 66);
-		Theme.text(this, Lang.t("palette.hint"), 1.5, Theme.DIM, px + 24, py + h - 34);
+		addChild(hint);
 		grid = new h2d.Object(this);
 		show();
+	}
+
+	/** parte la ayuda entre sus partes (separadas por 3 espacios) para que ninguna linea pase de maxW */
+	static function hintLines( t : h2d.Text, s : String, maxW : Float ) {
+		var lines : Array<String> = [];
+		for( part in s.split("   ") ) {
+			var n = lines.length;
+			if( n > 0 && t.calcTextWidth(lines[n - 1] + "   " + part) * t.scaleX <= maxW ) lines[n - 1] += "   " + part;
+			else lines.push(part);
+		}
+		return lines;
 	}
 
 	function pages() return Std.int((blocks.length + COLS * ROWS - 1) / (COLS * ROWS));
