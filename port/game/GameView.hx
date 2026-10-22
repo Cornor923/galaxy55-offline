@@ -853,8 +853,13 @@ class GameView {
 					if( dmg > life ) dmg = life;
 					hit(dmg);
 					fallBob = dmg + 20;
-				} else
+				} else {
+					// cambio del port: en creativo una caida fuerte tiembla como la caida suave mas fuerte (g = 0.4: 0.112). Si no,
+					// 0.7 * g^2 llegaba a 0.7, mas que el temblor de una caida con dano (0.4 como mucho) y parecia un golpe. El
+					// original solo se saltaba el dano con cheating (vuelo de depuracion)
+					if( hitPow > threshold ) hitPow = threshold;
 					shake += 0.7 * hitPow * hitPow;
+				}
 			}
 			if( speed > 0 && footCD <= 0 && !swimming ) {
 				footCD = 9;

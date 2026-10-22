@@ -31,6 +31,8 @@ import Common;
  *                           de los sistemas), window (ventana del mapa
  *                           abierta), planet (jugando en un planeta), mother (jugando en la nave nodriza), ready (cargado: jugando
  *                           o en el mapa); si no llega, lo dice
+ *   waitfor ground          esperar a estar de pie en el suelo (el fotograma del aterrizaje tras una caida)
+ *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
  *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky
@@ -135,6 +137,7 @@ class Dev {
 			case "mother": playing && g != null && g.info.mothership == true;
 			case "ready": playing || (g == null && app.explorer != null);
 			case "menu": Type.enumConstructor(@:privateAccess app.state) == "Menu" && @:privateAccess app.bgWorlds.length > 0;
+			case "ground": g != null && g.onGround();
 			default: true;
 		}
 	}
@@ -817,6 +820,11 @@ class Dev {
 		case "fade":
 			var f = g.fadeFX;
 			Sys.println(f == null ? "fundido: ninguno" : "fundido: color " + StringTools.hex(f.col, 6) + " t=" + Math.round(f.t * 100) / 100 + " opacidad " + Math.round(g.fadeAlpha() * 100) / 100 + " bloqueo " + f.lock);
+		case "land":
+			// lo que deja un aterrizaje: aturdido > 0 impide saltar (Hero.hit: stun = 10), el casco baja con bobY
+			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
+			Sys.println("aterrizaje: suelo " + (g.standingBlock == null ? "-" : "" + g.standingBlock.k) + " gravedad " + r(g.gravity) + " aturdido " + r(@:privateAccess g.stun)
+				+ " casco " + r(g.bobY) + " temblor " + r(g.shake) + " fundido " + r(g.fadeAlpha()) + " vida " + r(g.life) + " creativo " + g.creative);
 		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poder=" + g.select.power));
 		case "ship":
 			var beam = @:privateAccess g.ship.beam;

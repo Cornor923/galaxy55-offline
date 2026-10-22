@@ -1,0 +1,79 @@
+# caida en creativo: sin dano ni nada de un golpe (Hero.hit: aturdido 10 = no se puede saltar, fundido rojo, sonido de golpe)
+# y el temblor no pasa del de la caida suave mas fuerte (0.7 * 0.4^2 = 0.112, una caida de unos 6 bloques en aventura).
+# La misma caida en aventura para comparar: con g = gravedad / 0.9, a partir de g = 0.4 (unos 5 bloques) hay dano y temblor
+# 0.4 * golpe; de unos 19 bloques en adelante se muere y de unos 29 se llega a la gravedad maxima (g = 1). Suelo de roca en z=56
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 110 none
+filla 54 54 76 76 56 56 BRock
+tp 64.5 64.5 57.01 0 0
+waitfor ground
+wait 30
+# 1) aventura, caida de 12 bloques: dano, aturdido 10 (el salto no sale), fundido rojo, temblor 0.4 * golpe
+tp 64.5 64.5 69 0 0
+waitfor ground
+print land
+print fade
+jet 1
+print land
+jet 0
+print shake
+print shake
+print shake
+print shake
+wait 20
+print land
+vitals
+wait 60
+# 2) aventura, caida de 40 bloques (gravedad maxima): muerte, temblor 0.4 y vuelta a la nave
+life 100
+tp 64.5 64.5 97 0 0
+waitfor ground
+print land
+print fade
+print shake
+print shake
+until fade 0.99
+wait 20
+vitals
+# 3) creativo, la misma caida de 40 bloques: vida intacta, ni aturdido ni fundido, temblor 0.112 como mucho
+planet
+wait 30
+creative
+life 100
+tp 64.5 64.5 57.01 0 0
+waitfor ground
+wait 60
+tp 64.5 64.5 97 0 0
+waitfor ground
+print land
+print fade
+jet 1
+print land
+jet 0
+waitfor ground
+print shake
+print shake
+print shake
+print shake
+wait 20
+print land
+vitals
+wait 60
+# 4) creativo, caida de 12 bloques: igual
+tp 64.5 64.5 69 0 0
+waitfor ground
+print land
+print fade
+print shake
+print shake
+wait 20
+print land
+# 5) creativo, caida suave de 4 bloques: como en aventura (0.7 * g^2)
+tp 64.5 64.5 61 0 0
+waitfor ground
+print land
+print shake
+vitals
+quit
