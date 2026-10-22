@@ -1,0 +1,41 @@
+# terreno del tutorial visto de lejos: el hueco del risco con el etherium y el filon de bauxita (semillas 4242 y 777)
+wait 3
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+planet
+wait 10
+tuto step 4
+wait 3
+tuto view
+wait 20
+shot tuto_terreno_etherium
+tuto step 5
+wait 3
+tuto view
+wait 20
+shot tuto_terreno_bauxita
+tuto new 777
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+planet
+wait 10
+tuto step 4
+wait 3
+tuto view
+wait 20
+shot tuto_terreno_etherium2
+tuto step 5
+wait 3
+tuto view
+wait 20
+shot tuto_terreno_bauxita2
+quit

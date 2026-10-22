@@ -98,70 +98,27 @@ class TutoSetup {
 	// ---------------------------------------------------------------- bloques del tutorial en el planeta
 
 	/**
-	 * Al primer aterrizaje: 4 citronox viejos a 9-15 bloques de la nave, 3 fragmentos de etherium azul a 19-23 y una veta de
-	 * bauxita de 2x2 a unos 30. Se ponen con setBlock (son cambios del planeta: pasar el tutorial los quita) y se guardan en
-	 * tuto.spots para seguirlos.
+	 * Al primer aterrizaje: 4 citronox viejos a 9-15 bloques de la nave, fragmentos de etherium en un hueco de un risco (o de un
+	 * penasco) a 14-31 y un filon de bauxita del generador a unos 28 (TutoTerrain). Se ponen con setBlock (son cambios del
+	 * planeta: pasar el tutorial los quita) y los que hay que recoger se guardan en tuto.spots para seguirlos.
 	 */
 	public static function seedPlanet( g : GameView ) {
 		var t = g.info.tuto;
 		if( t == null || t.spots != null || g.ship == null ) return;
 		var w = g.world, sx = g.ship.x, sy = g.ship.y, gz = Std.int(g.ship.z) - 1;
 		var spots = [];
-		inline function put( x : Int, y : Int, z : Int, k : BlockKind ) {
-			x = wrap(w, x);
-			y = wrap(w, y);
+		function put( x : Int, y : Int, z : Int, k : BlockKind ) {
+			x = TutoTerrain.wrap(w, x);
+			y = TutoTerrain.wrap(w, y);
 			w.setBlock(x, y, z, Block.get(k));
 			for( v in [x, y, z, Type.enumIndex(k)] ) spots.push(v);
 		}
 		for( i in 0...4 ) {
-			var s = ground(w, sx, sy, gz, i * Math.PI / 2 + 0.4, 9 + i * 2);
+			var s = TutoTerrain.ground(w, sx, sy, gz, i * Math.PI / 2 + 0.4, 9 + i * 2);
 			put(s.x, s.y, s.z + 1, BYellowCrystalLight);
 		}
-		for( i in 0...3 ) {
-			var s = ground(w, sx, sy, gz, i * 2.1 + 1.2, 19 + i * 2);
-			put(s.x, s.y, s.z + 1, BBlueCrystalLight);
-		}
-		var s = ground(w, sx, sy, gz, 2.6, 30);
-		for( dx in 0...2 )
-			for( dy in 0...2 ) {
-				var z = top(w, s.x + dx, s.y + dy);
-				if( z > 0 ) put(s.x + dx, s.y + dy, z, BMinAluminium);
-			}
+		TutoTerrain.etheriumCave(w, sx, sy, gz, put);
+		TutoTerrain.bauxiteVein(w, sx, sy, gz, put);
 		t.spots = spots;
-	}
-
-	static inline function wrap( w : World, v : Int ) return ((v % w.size) + w.size) % w.size;
-
-	/** el bloque macizo mas alto de la columna (-1 si hay liquido encima o un tronco) */
-	static function top( w : World, x : Int, y : Int ) : Int {
-		var z = World.HEIGHT - 2;
-		while( z > 0 ) {
-			var b = w.block(wrap(w, x), wrap(w, y), z);
-			if( b != null ) {
-				if( b.hasProp(PLiquid) || b.k == BWood ) return -1;
-				if( b.type == BTFull ) return z;
-			}
-			z--;
-		}
-		return -1;
-	}
-
-	/** suelo seco y despejado cerca del punto (angulo a, distancia d) de la nave, a una altura parecida a la suya */
-	static function ground( w : World, sx : Int, sy : Int, gz : Int, a : Float, d : Float ) : { x : Int, y : Int, z : Int } {
-		var x0 = sx + Math.round(Math.cos(a) * d), y0 = sy + Math.round(Math.sin(a) * d);
-		inline function free( x : Int, y : Int, z : Int ) {
-			var b = w.block(wrap(w, x), wrap(w, y), z);
-			return b == null || b.hasFlag(BFDetail);
-		}
-		for( r in 0...10 )
-			for( dx in -r...r + 1 )
-				for( dy in -r...r + 1 ) {
-					if( Math.abs(dx) != r && Math.abs(dy) != r ) continue;
-					var x = x0 + dx, y = y0 + dy;
-					var z = top(w, x, y);
-					if( z > 0 && Math.abs(z - gz) <= 8 && free(x, y, z + 1) && free(x, y, z + 2) ) return { x : x, y : y, z : z };
-				}
-		var z = top(w, x0, y0);
-		return { x : x0, y : y0, z : z > 0 ? z : gz };
 	}
 }
