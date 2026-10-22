@@ -10,11 +10,11 @@ wait 200
 print pos
 expinfo
 expgo 2400 1000
-wait 400
+waitfor sector
 expinfo
 closewin
 reload
-wait 600
+waitfor ready
 print pos
 expinfo
 shot espacio_cargado

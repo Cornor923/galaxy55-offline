@@ -70,9 +70,11 @@ Los PR 17-30 se fusionaron en local en `port-hashlink` (sin publicar), en orden.
 Cambios: oxígeno en creativo (17), hielo/agua con desplazamiento de profundidad (18, 22), paleta creativa (19, 20),
 `devrun.ps1` con `galaxy55.exe` (21), muerte en la nave (23), sin daño en el hangar (24), guardado y tiempo en la nodriza
 (25, 26), nave del mapa: color, rumbo y centrado (27, 28, 29), TODO sin "Shed" (30).
-Guiones ejecutados tras la fusión (datos en carpeta temporal): todos dan lo esperado. En `map_ship_center`, tras recargar, el
-robot no llegó a acoplarse a tiempo y `hangarexit` falló con la partida nula: la orden de `Dev.hx` ya lo comprueba; el caso
-"vuelta de la nave nodriza" de ese guion queda sin ver (sí se vio en `map_ship_color`).
+Guiones ejecutados tras la fusión (datos en carpeta temporal): todos dan lo esperado. En `map_ship_center` la nave rehecha en el
+hangar es más lenta (0.14 en vez de 0.2) y con esperas fijas no salía del sistema antes de buscar al robot, así que `hangarexit`
+llegaba con el mapa abierto y fallaba (partida nula; la orden ya lo comprueba). Arreglado con la orden `waitfor` (sector, window,
+mother, map, planet, ready), que espera a que pase algo en vez de un número fijo de fotogramas; los guiones del mapa, del robot y
+de recargar la usan. `map_ship_center` ya llega a la nave nodriza y vuelve al mapa.
 
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**

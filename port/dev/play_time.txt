@@ -8,39 +8,39 @@ hangar
 wait 600
 print time
 hangarexit
-wait 100
+waitfor planet
 print time
 hangar
 wait 600
 print time
 closewin
 reload
-wait 400
+waitfor ready
 print time
 mothership
 wait 600
 print time
 hangarexit
-wait 200
+waitfor planet
 print time
 mothership
 wait 600
 print time
 closewin
 reload
-wait 400
+waitfor ready
 print time
 explore
 wait 200
 expgo 2400 1000
-wait 400
+waitfor sector
 exprobot
-wait 700
+waitfor window
 expbutton
-wait 1000
+waitfor mother
 print time
 hangarexit
-wait 600
+waitfor map
 landhome
 wait 300
 print time

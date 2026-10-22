@@ -5,16 +5,16 @@ wait 10
 explore
 wait 200
 expgo 2400 1000
-wait 400
+waitfor sector
 exprinfo
 exprobot
-wait 700
+waitfor window
 exprinfo
 expbutton
-wait 400
+waitfor mother
 print pos
 hangarexit
-wait 1200
+waitfor map
 print pos
 wait 400
 exprinfo

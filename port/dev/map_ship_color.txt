@@ -8,20 +8,20 @@ wait 200
 expship map_ship_takeoff_frames
 shot map_ship_takeoff
 expgo 2400 1000
-wait 400
+waitfor sector
 closewin
 reload
-wait 600
+waitfor ready
 expinfo
 expship map_ship_reload_frames
 shot map_ship_reload
 exprobot
-wait 700
+waitfor window
 expbutton
-wait 400
+waitfor mother
 print pos
 hangarexit
-wait 1200
+waitfor map
 exprinfo
 expship map_ship_mother_frames
 shot map_ship_mother

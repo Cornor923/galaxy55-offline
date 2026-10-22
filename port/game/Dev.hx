@@ -18,6 +18,10 @@ import Common;
  *   jet 1|0                 mantener Espacio (salto y jetpack)
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
+ *   waitfor COSA [max]      esperar (como mucho max fotogramas, 2000 por defecto) a: map (mapa abierto), sector (la nave fuera
+ *                           de los sistemas), window (ventana del mapa
+ *                           abierta), planet (jugando en un planeta), mother (jugando en la nave nodriza), ready (cargado: jugando
+ *                           o en el mapa); si no llega, lo dice
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   print inv|pos|zones|drops|msg|block x y z|select|ship|map [z]|palette|time
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
@@ -34,6 +38,8 @@ class Dev {
 	var lines : Array<String>;
 	var pc = 0;
 	var waiting = 0;
+	var waitCond : String = null;
+	var waitMax = 0;
 
 	public function new( path : String ) {
 		lines = sys.io.File.getContent(path).split("\n").map(StringTools.trim).filter(function(l) return l != "" && l.charAt(0) != "#");
@@ -46,11 +52,32 @@ class Dev {
 
 	static function f( s : String ) return Std.parseFloat(s);
 
+	/** condiciones de waitfor: los tiempos de carga y de viaje cambian mucho de un PC a otro */
+	static function reached( app : GalaxyApp, g : GameView, what : String ) : Bool {
+		var playing = Type.enumConstructor(@:privateAccess app.state) == "Playing";
+		return switch( what ) {
+			case "map": g == null && app.explorer != null;
+			case "sector": app.explorer != null && app.explorer.shipPos() != null;
+			case "window": app.explorer != null && app.explorer.devWindowOpen();
+			case "planet": playing && g != null && g.info.mothership != true && g.hangar == null;
+			case "mother": playing && g != null && g.info.mothership == true;
+			case "ready": playing || (g == null && app.explorer != null);
+			default: true;
+		}
+	}
+
 	/** una orden por actualizacion; devuelve true al terminar */
 	public function tick( app : GalaxyApp, g : GameView ) : Bool {
 		if( waiting > 0 ) {
 			waiting--;
 			return false;
+		}
+		if( waitCond != null ) {
+			if( reached(app, g, waitCond) ) waitCond = null;
+			else if( --waitMax <= 0 ) {
+				Sys.println("waitfor " + waitCond + ": no llego");
+				waitCond = null;
+			} else return false;
 		}
 		while( pc < lines.length ) {
 			var l = lines[pc++];
@@ -62,6 +89,10 @@ class Dev {
 				switch( a[0] ) {
 				case "wait":
 					waiting = Std.parseInt(a[1]);
+					return false;
+				case "waitfor":
+					waitCond = a[1];
+					waitMax = a.length > 2 ? Std.parseInt(a[2]) : 2000;
 					return false;
 				case "tp", "tpl":
 					var l = a[0] == "tpl";

@@ -6,7 +6,7 @@ explore
 wait 200
 expinfo
 expgo 2400 1000
-wait 400
+waitfor sector
 expinfo
 exppause
 wait 30

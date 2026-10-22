@@ -16,7 +16,7 @@ shopclose
 wait 5
 closewin
 reload
-wait 400
+waitfor ready
 print credits
 print inv
 sell BMinIron 0
@@ -25,11 +25,11 @@ wait 10
 explore
 wait 200
 expgo 2400 1000
-wait 400
+waitfor sector
 exprobot
-wait 700
+waitfor window
 expbutton
-wait 400
+waitfor mother
 print credits
 shop
 wait 5
@@ -39,7 +39,7 @@ shopclose
 wait 5
 closewin
 reload
-wait 600
+waitfor ready
 print pos
 landhome
 wait 300

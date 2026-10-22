@@ -43,26 +43,26 @@ set 22 13 3 BShipHull
 wait 20
 print hangar
 hangarexit
-wait 80
+waitfor planet
 print hangar
 explore
 wait 200
 expship map_ship_center_takeoff_frames
 shot map_ship_center_takeoff
 expgo 2400 1000
-wait 400
+waitfor sector
 closewin
 reload
-wait 600
+waitfor ready
 expinfo
 expship map_ship_center_reload_frames
 exprobot
-wait 700
+waitfor window
 expbutton
-wait 400
+waitfor mother
 print pos
 hangarexit
-wait 1200
+waitfor map
 exprinfo
 expship map_ship_center_mother_frames
 shot map_ship_center_mother

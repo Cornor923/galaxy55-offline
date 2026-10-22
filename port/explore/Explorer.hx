@@ -624,6 +624,8 @@ class Explorer extends h2d.Object {
 
 	/** pruebas: pulsar el robot y saber donde esta */
 	public function devClickRobot() if( robot != null && !inSolar ) moveShip(robot);
+	public function devWindowOpen() return win != null;
+
 	public function devRobotInfo() return robot == null ? "sin robot" : "robot en " + Std.int(robot.e.x) + "," + Std.int(robot.e.y) + " parado=" + robotStopped + " nave=" + Std.int(ship.x) + "," + Std.int(ship.y) + " ventana=" + (win != null);
 
 	/** boton Acoplarse de la ventana del robot */

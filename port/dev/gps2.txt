@@ -5,7 +5,7 @@ wait 10
 explore
 wait 200
 expgo 2400 1000
-wait 400
+waitfor sector
 expinfo
 expgo 1600 1600
 wait 150

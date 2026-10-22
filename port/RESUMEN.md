@@ -91,6 +91,8 @@ El explorador original arranca en modo depuracion dentro de un sistema solar (`P
 Solo para desarrollo: `hl galaxy55.hl --script=guion.txt` arranca una partida nueva y ejecuta ordenes (tp, tpl, lookat, set, activate, synth, give, print, map, shot...;
 la lista esta en la cabecera de `Dev.hx`). `port/dev/devrun.ps1 -Script port/dev/synth.txt` lo lanza y muestra la salida. Ejemplos: `zones.txt`, `map.txt`, `synth.txt`.
 Desde los PR 17-30 de Cornor923 (cambio del port), `devrun.ps1` lanza `galaxy55.exe` (con `hl` de reserva), hay `print palette` y `print time`, y cada arreglo trae su guion (`creative_oxygen`, `hielo_bajo_agua`, `palette_hint`, `palette_focus`, `olas_bloque`, `muerte_nave`, `hangar_vida`, `mother_save`, `play_time`, `map_ship_color`, `map_ship_angle`, `map_ship_center`).
+Los guiones esperan con `waitfor sector|window|mother|map|planet|ready [max]` cuando el tiempo depende del PC (viajes, cargas,
+acoplarse al robot); `wait N` solo para tiempos fijos.
 Los ganchos antiguos `--screen=... --craft --at=...` siguen funcionando, pero para pruebas nuevas se usa Dev.
 
 ## Siguiente paso acordado (mañana): paquete de prueba
