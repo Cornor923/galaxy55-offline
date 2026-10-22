@@ -101,4 +101,6 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   les trous jusqu'à son niveau, comme l'original.
 - Les plantes et autres modèles se visent par ce qu'on voit (les pixels de leurs feuilles), pas par toute la case (l'original les traitait comme un bloc entier).
 - Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé et désactiver les vagues de l'eau.
+- Le turbo mineur fait creuser trois fois plus vite jusqu'à 15 blocs autour de lui (5 dans l'original) et se récupère quand
+  on le casse (dans l'original, il était perdu).
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).

@@ -34,6 +34,9 @@ class PortRules {
 		{ k : BBonusMediumRemain, drop : null, chance : 0 },
 	];
 
+	/** radio del turbo minero (BFTrack): cambio del port, 5 en el original */
+	static inline var TURBO_RADIUS = 15;
+
 	static var done = false;
 
 	public static function apply() {
@@ -54,6 +57,13 @@ class PortRules {
 			b.drop = b;
 			b.dropCount = 1;
 		}
+		// cambio del port: el turbo minero da potencia 3 a menos de 15 bloques (en el original, BFTrack(TMiningSpeed, 5))
+		var turbo = Block.get(BMiningGenerator);
+		for( i in 0...turbo.flags.length )
+			switch( turbo.flags[i] ) {
+			case BFTrack(t, _): turbo.flags[i] = BFTrack(t, TURBO_RADIUS);
+			default:
+			}
 		for( r in BREAKABLE ) {
 			var b = Block.get(r.k);
 			b.props.set(PCanPick);
