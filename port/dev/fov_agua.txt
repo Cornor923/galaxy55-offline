@@ -1,0 +1,79 @@
+# campo de vision bajo el agua (Game.hx: hero.inWater(true) -> fov * 0.8): solo con los ojos en agua (BTWater),
+# no en arena movediza ni en cascada; mismo sitio y misma vista en aire y en agua para comparar el tamano
+wait 3
+planet
+wait 30
+filla 44 44 68 68 58 72 BRock
+filla 44 44 68 68 73 90 none
+filla 52 52 58 58 64 72 none
+set 59 54 65 BWoodPlank
+set 59 56 65 BLamp
+set 59 55 66 BWoodPlank
+slot 1
+# en el pozo vacio: bloque en la mano y laser
+tp 55.5 55.5 64.01 0 0
+wait 10
+print fov
+look 0 0
+shot fov_aire
+slot 0
+key dig
+wait 8
+look 0 0
+shot fov_laser_aire
+unkey
+slot 1
+# el pozo lleno de agua: misma vista, mas cerrada (la mano y el laser tambien)
+filla 52 52 58 58 64 72 BWater
+tp 55.5 55.5 64.01 0 0
+wait 10
+print fov
+look 0 0
+shot fov_agua
+slot 0
+key dig
+wait 8
+look 0 0
+shot fov_laser_agua
+unkey
+slot 1
+# de pie en el agua con la cabeza fuera (olas): sin cambio
+set 55 55 71 BRock
+tp 55.5 55.5 72.01 0 -0.6
+wait 5
+print fov
+print pos
+look 0 -0.6
+shot fov_superficie
+# otra opcion de campo de vision: el factor va sobre ella
+fov 90
+wait 3
+print fov
+tp 53.5 53.5 64.01 0 0
+wait 5
+print fov
+fov 70
+# agua acida (tambien BTWater): se cierra
+life 10 10
+filla 52 52 58 58 64 72 BAcidWater
+tp 55.5 55.5 64.01 0 0
+wait 5
+print fov
+# arena movediza (liquido BTAlpha): velo naranja, sin cambio de campo de vision
+filla 52 52 58 58 64 72 BMarsQuickSand
+tp 55.5 55.5 64.01 0 0
+wait 5
+print fov
+look 0 0
+shot fov_arena
+# cascada (liquido BTAlpha): sin cambio
+filla 52 52 58 58 64 72 BCascadeFall4
+tp 55.5 55.5 64.01 0 0
+wait 5
+print fov
+# vuelta al aire
+filla 52 52 58 58 64 72 none
+tp 55.5 55.5 64.01 0 0
+wait 5
+print fov
+quit
