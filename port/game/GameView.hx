@@ -89,6 +89,11 @@ class GameView {
 	public var bobX = 0.;
 	public var bobY = 0.;
 	public var turnSpeed = 0.;
+	/** temblor de la camara y del HUD (Game.shake): sube al romper un bloque y al caer, baja 0.01 por tmod, maximo 1.5.
+	    La bomba antigua lo pone a 1 (Process.onActivate: game.shake = 1) */
+	public var shake = 0.;
+	/** subida o bajada de la camara de este fotograma por el temblor */
+	public var shakeZ(default, null) = 0.;
 
 	var pushPower = 0.;
 	var walkingSlow = false;
@@ -374,6 +379,13 @@ class GameView {
 		}
 		stepPhysics(tmod, speed, strafe, useJetpack);
 		updateLife(tmod);
+		// temblor (Game.update): baja con el tiempo y la camara sube o baja al azar hasta 0.4 * shake
+		if( shake > 0 ) {
+			shake -= 0.01 * tmod;
+			if( shake > 1.5 ) shake = 1.5;
+			if( shake < 0 ) shake = 0;
+		}
+		shakeZ = Math.random() * 0.4 * shake * (Std.random(2) * 2 - 1);
 		// olas: fx.time * animWater.speed (tiempo en segundos * 0.5)
 		if( world.wave != null ) {
 			world.wave.time += realDt * 0.5;
@@ -758,18 +770,20 @@ class GameView {
 					}
 			if( feet != standingBlock ) {
 				standingBlock = feet;
-				// caida fuerte: dano segun la velocidad (Hero.doMove)
+				// caida fuerte: dano y temblor segun la velocidad; caida suave: solo temblor (Hero.doMove)
 				var threshold = 0.4;
 				var hitPow = gravity / maxGravity;
 				if( hitPow > threshold && !creative ) {
 					Snd.play("landHard", 1.5);
 					Snd.play("hit", 0.7);
 					hitPow = (hitPow - threshold) / (1 - threshold);
+					shake += 0.4 * hitPow;
 					var dmg = 1 + Math.pow(hitPow * 15, 2);
 					if( dmg > life ) dmg = life;
 					hit(dmg);
 					fallBob = dmg + 20;
-				}
+				} else
+					shake += 0.7 * hitPow * hitPow;
 			}
 			if( speed > 0 && footCD <= 0 && !swimming ) {
 				footCD = 9;
@@ -1038,7 +1052,8 @@ class GameView {
 	function pick( hand : Block ) : Select {
 		var cp = Math.cos(pitch);
 		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
-		var ex = px, ey = py, ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05;
+		// con el temblor de la camara: el original apunta desde ella (Render.pick)
+		var ex = px, ey = py, ez = pz + VIEW_Z + Math.sin(walkBobbing) * 0.05 + shakeZ;
 		var curve = hangar != null ? 0. : World.curve(world.size);
 		var lx = 0, ly = 0, lz = 0, have = false;
 		var t = 0.;
@@ -1283,6 +1298,7 @@ class GameView {
 	public var onChest : Protocol.BlockInventory -> Void;
 
 	public function breakBlock( x : Int, y : Int, z : Int, b : Block, isProcess = false ) {
+		shake += 0.05 * Math.random(); // temblor (Game.blockBreak)
 		if( b.hasProp(PContainer) ) breakChest(x, y, z);
 		var get = b.getDrop();
 		if( get != null && !creative ) {
@@ -1388,8 +1404,9 @@ class GameView {
 		c.fovY = Settings.fov;
 		c.zNear = 0.1;
 		c.zFar = 1500;
-		c.pos.set(px, py, ez);
-		c.target.set(px + Math.cos(yaw) * cp, py + Math.sin(yaw) * cp, ez + Math.sin(pitch));
+		// temblor (Game.update: pz + random * 0.4 * shake); en pausa y en los menus se queda como estaba
+		c.pos.set(px, py, ez + shakeZ);
+		c.target.set(px + Math.cos(yaw) * cp, py + Math.sin(yaw) * cp, ez + shakeZ + Math.sin(pitch));
 		c.up.set(0, 0, 1);
 		world.sky.follow(px, py, ez);
 		world.sky.update(1 / 60);
