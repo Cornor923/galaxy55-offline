@@ -62,7 +62,11 @@ class ExpOffline {
 	static var NAMES = ["Aldebar", "Brume", "Cyrene", "Dorian", "Eskel", "Fenris", "Galata", "Hespera", "Ikaros", "Jovan", "Kestrel", "Lumen"];
 	static var BIOMES = ["BIAutumn", "BIWinterPeaks", "BIMars", "BIMoon", "BIAcidForest"];
 	static var BWEIGHTS = [100, 100, 80, 80, 50];
-	public static function biomeName( biome : String ) : String return Lang.t("biome." + BIOMES[biomeIndex(biome)]);
+	/** nombre del bioma en el idioma actual; tambien los que no salen al azar (la Ciudad muerta puede ser el planeta de salida) */
+	public static function biomeName( biome : String ) : String {
+		var n = Lang.t("biome." + biome);
+		return n != "biome." + biome ? n : Lang.t("biome." + BIOMES[biomeIndex(biome)]);
+	}
 
 	public static function biomeIndex( biome : String ) : Int {
 		var i = BIOMES.indexOf(biome);
