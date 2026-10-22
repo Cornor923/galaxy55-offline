@@ -114,6 +114,9 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - Les textures lointaines utilisent des mipmaps comme l'original, mais les plantes ne s'effacent pas avec la distance et chaque
   bloc lointain garde sa couleur (dans l'original, les plantes fines disparaissaient de loin et, plus loin encore, les textures
   voisines se mélangeaient).
+- Le rayon de lumière d'atterrissage suit tout changement dans la colonne sous le vaisseau et part du dessus des blocs bas comme
+  les plaques (l'original ne le bougeait qu'en cassant un bloc à cet endroit) ; on ne retourne au vaisseau que debout sur sa
+  base, pas de plus haut.
 - Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé et désactiver les vagues de l'eau.
 - Le turbo mineur fait creuser trois fois plus vite jusqu'à 15 blocs autour de lui (5 dans l'original) et se récupère quand
   on le casse (dans l'original, il était perdu).

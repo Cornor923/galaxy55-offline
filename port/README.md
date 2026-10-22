@@ -109,6 +109,8 @@ A player got it running on Linux this way; we have not tested it.
   explode in the hangar, and it throws 8 shards per block instead of 75 so that the game does not freeze.
 - Distant textures use mipmaps like the original, but far plants do not fade away and each far block keeps its own colour
   (in the original, thin plants disappeared with distance and, further away, neighbouring textures got mixed).
+- The landing light beam follows any change in the column under the ship and starts on top of low blocks such as plates (the
+  original only moved it when a block was broken there); you return to the ship only standing at its base, not from higher up.
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
 - The mining turbo makes you dig three times faster up to 15 blocks around it (5 in the original) and you get it back when
   you break it (the original lost it).

@@ -1,0 +1,122 @@
+# rayo de la nave: sigue la columna del suelo bajo la nave (cavar, poner, agua, vaciar, placa, guardar y cargar).
+# En cada caso: altura del rayo (print ship, un fotograma despues del cambio), bajar por el teletransportador (tele desde la
+# plataforma) y volver entrando en el rayo (tpdock 0 0 tras apartarse), con la posicion tras cada viaje.
+# z > 128 = en la nave.
+wait 3
+ship
+wait 10
+print ship
+tele
+wait 90
+print pos
+tpdock -3 0 0
+look 0 -0.35
+wait 10
+shot dock0
+tpdock 0 0
+wait 90
+print pos
+
+# cavar 3 bloques bajo el rayo: el rayo baja al fondo del hoyo, se aparece alli y se vuelve desde alli
+dockp 0 none
+dockp 0 none
+dockp 0 none
+print ship
+tele
+wait 90
+print pos
+tpdock -3 0 3
+look 0 -0.6
+wait 10
+shot dock_dig
+# en el borde del hoyo, a 0.55 del centro y 3 mas arriba: no se sube (el original si subia)
+tpdock 0.55 0 3
+wait 90
+print pos
+tpdock 0 0
+wait 90
+print pos
+
+# poner un bloque en el fondo del hoyo
+dockp 1 BRock
+print ship
+tele
+wait 90
+print pos
+tpdock -3 0 2
+wait 10
+tpdock 0 0
+wait 90
+print pos
+
+# un bloque suelto 3 por encima: el rayo se para en el y desde debajo no se sube (como el original)
+dockp 3 BRock
+print ship
+tpdock 0 0 -3
+wait 90
+print pos
+dockp 0 none
+print ship
+ship
+wait 10
+
+# agua en el hoyo (2 bloques): la base sigue en el fondo; se baja al fondo y se vuelve desde dentro del agua
+dockp 1 BWater
+dockp 2 BWater
+wait 10
+print ship
+tele
+wait 90
+print pos
+vitals
+tpdock -3 0 2
+look 0 -0.6
+wait 10
+shot dock_water
+tpdock 0 0
+wait 90
+print pos
+
+# vaciar el agua
+dockp 2 none
+dockp 1 none
+wait 30
+print ship
+tele
+wait 90
+print pos
+tpdock -3 0 2
+wait 10
+tpdock 0 0
+wait 90
+print pos
+
+# placa de madera (media altura) en el fondo: la base es su cara de arriba
+dockp 1 BWoodPlate
+print ship
+tele
+wait 90
+print pos
+tpdock -3 0 1.5
+wait 10
+tpdock 0 0
+wait 90
+print pos
+
+# guardar y cargar: la nave sigue en su sitio y el rayo sale con el suelo cambiado
+reload
+wait 600
+ship
+wait 10
+print ship
+tele
+wait 90
+print pos
+tpdock -3 0 1.5
+look 0 -0.6
+wait 10
+shot dock_load
+tpdock 0 0
+wait 90
+print pos
+quit
