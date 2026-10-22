@@ -108,8 +108,8 @@ class GameView {
 	public var oxygen = 100.;
 	var damageRecover = 0.;
 	var healRecover = 0.;
-	/** fundido de color de pantalla (Game.fadeFX): golpe en rojo, curacion en azul, muerte en rojo hasta volver a la nave.
-	    t va de 0 a 1 (+ tmod * speed / 200); alpha(t) da la opacidad (null = t); lock: sin controles mientras dura */
+	/** fundido de color de pantalla (Game.fadeFX): golpe en rojo, curacion en azul, muerte en rojo y Mayus+K en blanco hasta
+	    volver a la nave. t va de 0 a 1 (+ tmod * speed / 200); alpha(t) da la opacidad (null = t); lock: sin controles mientras dura */
 	public var fadeFX : { t : Float, col : Int, speed : Float, alpha : Null<Float -> Float>, done : Void -> Void, lock : Bool };
 
 	public inline function onGround() return standingBlock != null;
@@ -573,16 +573,23 @@ class GameView {
 		stun = 10;
 		if( life <= 0 ) {
 			life = 0;
-			fadeFX = { t : 0., col : 0xFF0000, speed : 2., alpha : null, lock : true, done : function() {
-				life = 100;
-				oxygen = 100;
-				gravity = 0;
-				gotoShip(true);
-			} };
+			returnToShip(false);
 		} else if( fadeFX == null ) {
 			var pow = dmg / 100;
 			fadeFX = { t : 0., col : 0xFF0000, speed : 3 + 10 * (1 - pow), alpha : t -> (1 - t) * (0.5 + pow * 0.5), lock : false, done : function() {} };
 		}
+	}
+
+	/** Game.returnToShip (modo local): fundido sin controles, rojo al morir y blanco con Mayus+K; al acabar, de vuelta en la
+	    nave con la vida y el oxigeno llenos. Sustituye a un fundido de golpe o de curacion */
+	public function returnToShip( manual : Bool ) {
+		if( fadeFX != null && fadeFX.lock ) return; // hero.lock: ya se esta volviendo
+		fadeFX = { t : 0., col : manual ? 0xFFFFFF : 0xFF0000, speed : 2., alpha : null, lock : true, done : function() {
+			life = 100;
+			oxygen = 100;
+			gravity = 0;
+			gotoShip(true);
+		} };
 	}
 
 	/** Hero.heal */
@@ -1179,8 +1186,11 @@ class GameView {
 			for( i in 1...11 )
 				if( K.isPressed(K.NUMBER_0 + (i % 10)) && inv.inv.t.length >= i ) inv.select(i);
 			if( K.isPressed(K.TAB) ) inv.select(0);
-			// Mayus + K: volver a la nave (Game.checkKeys)
-			if( K.isDown(K.SHIFT) && K.isPressed(K.K) ) gotoShip(true);
+			// Mayus + K: volver a la nave (Game.checkKeys); sin nave (nave nodriza) gotoShip sale de ella al momento
+			if( K.isDown(K.SHIFT) && K.isPressed(K.K) ) {
+				if( ship != null ) returnToShip(true);
+				else gotoShip(true);
+			}
 			if( (K.isPressed(K.R) || K.isPressed(K.DELETE)) && inv.getCurrentBlock() != null ) dropCurrent();
 		}
 		if( debugAction || debugKey != null ) {

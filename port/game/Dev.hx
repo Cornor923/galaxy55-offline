@@ -16,6 +16,7 @@ import Common;
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local
  *   synth N                 usar el ordenador del sintetizador N
  *   jet 1|0                 mantener Espacio (salto y jetpack)
+ *   press|release TECLA...  pulsar o soltar teclas de verdad (shift o una letra), p. ej. press shift k = Mayus+K
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   waitfor COSA [max]      esperar (como mucho max fotogramas, 2000 por defecto) a: map (mapa abierto), sector (la nave fuera
@@ -331,6 +332,13 @@ class Dev {
 					g.debugSpeed = f(a[1]) * 0.15;
 					g.debugStrafe = a.length > 2 ? f(a[2]) * 0.15 : 0;
 				case "jet": g.debugJet = a[1] == "1";
+				case "press", "release":
+					// eventos de teclado de la ventana: hxd.Key los ve como si se hubieran pulsado (isPressed en la siguiente actualizacion)
+					for( n in a.slice(1) ) {
+						var e = new hxd.Event(a[0] == "press" ? EKeyDown : EKeyUp);
+						e.keyCode = n == "shift" ? hxd.Key.SHIFT : n.toUpperCase().charCodeAt(0);
+						hxd.Window.getInstance().event(e);
+					}
 				case "trace": trace = true;
 				case "shop": app.openShop();
 				case "screen": @:privateAccess app.show(a[1]);
