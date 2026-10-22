@@ -24,7 +24,7 @@ import Common;
  *                           o en el mapa); si no llega, lo dice
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power|life
+ *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power|life|fade|around x y z r
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png
  *   quit
@@ -489,6 +489,7 @@ class Dev {
 			// potencia de excavacion (turbo minero) y el icono "power" del casco
 			var ic = @:privateAccess app.statusIcon;
 			Sys.println("potencia " + g.miningPower + " icono " + (ic.visible ? "visible alfa " + Math.round(ic.alpha * 100) / 100 : "no"));
+		case "parts": Sys.println("trozos: " + @:privateAccess g.parts.list.length);
 		case "msg": Sys.println("mensaje: " + g.message);
 		case "shake":
 			// temblor, subida de la camara y del HUD (en pixeles de la ventana) de este fotograma, y segundos de juego
@@ -498,6 +499,21 @@ class Dev {
 		case "block":
 			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));
 			Sys.println("bloque: " + (b == null ? "nada" : "" + b.k));
+		case "around":
+			// print around X Y Z R: bloques en el cubo de lado 2R+1 (planeta, nave y roca madre) y bombas por explotar
+			var x = Std.parseInt(a[2]), y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), r = Std.parseInt(a[5]);
+			var n = 0, s = 0, bed = 0;
+			for( dz in -r...r + 1 ) for( dy in -r...r + 1 ) for( dx in -r...r + 1 ) {
+				var zz = z + dz;
+				if( zz < 0 ) continue;
+				var b = w.block(x + dx, y + dy, zz);
+				if( b == null ) continue;
+				if( zz >= World.SHIP_Z ) s++ else if( b.k == BBedrock ) bed++ else n++;
+			}
+			Sys.println("alrededor " + x + "," + y + "," + z + " r" + r + ": planeta " + n + " roca madre " + bed + " nave " + s + "  bombas en cola " + @:privateAccess g.bombQueue.length);
+		case "fade":
+			var f = g.fadeFX;
+			Sys.println(f == null ? "fundido: ninguno" : "fundido: color " + StringTools.hex(f.col, 6) + " t=" + Math.round(f.t * 100) / 100 + " opacidad " + Math.round(g.fadeAlpha() * 100) / 100 + " bloqueo " + f.lock);
 		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poder=" + g.select.power));
 		case "ship": Sys.println("nave en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z);
 		default: Sys.println("print desconocido: " + a[1]);

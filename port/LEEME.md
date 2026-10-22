@@ -26,7 +26,7 @@ Son los del juego original (el movimiento y la física son una copia de `ent/Her
 | Excavar o colocar | clic izquierdo, E o Mayús (mantener). Con la mano vacía excava; con un bloque, lo coloca si algo lo sujeta |
 | Elegir casilla | 1–0 o la rueda del ratón; Tab = excavador (mano vacía) |
 | Tirar la pila elegida | R o Supr |
-| Activar (ordenador de a bordo, puertas) | apuntar y pulsar y soltar |
+| Activar (ordenador de a bordo, puertas, cantinas, bomba exótica) | apuntar y pulsar y soltar. Si se mantiene hasta que el bloque se rompe, se excava: así se recoge la bomba exótica sin que explote (hace falta la carga rosa, como para la roca exótica) |
 | Volver a la nave | Mayús+K, o entrar en el haz de luz del aterrizaje |
 | Creativo: paleta de bloques | I (clic = poner el bloque en la casilla elegida, rueda = página) |
 | Pausa | Esc |
@@ -91,6 +91,9 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - La cascada y el agua que pone el jugador bajan de altura en cada paso, con la superficie inclinada: añadido de este port.
   El mar llena los huecos hasta su nivel, como el original.
 - Las plantas y demás modelos se apuntan por lo que se ve (los píxeles de sus hojas), no por toda la celda (el original las trataba como un bloque entero).
+- La bomba exótica hace explotar también las bombas que alcanza, una por fotograma: el original tenía el código, pero una
+  comprobación hacía que nunca se disparara. La explosión deja la roca madre (capa 0) en su sitio (el original también la
+  quitaba), la bomba no explota en el hangar y suelta 8 trozos por bloque en vez de 75 para que el juego no se congele.
 - Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
 - El turbo minero hace excavar tres veces más rápido hasta 15 bloques a su alrededor (5 en el original) y se recupera al
   romperlo (en el original se perdía).

@@ -27,7 +27,7 @@ Ce sont celles du jeu original (le déplacement et la physique sont copiés de `
 | Creuser ou poser | clic gauche, E ou Maj (maintenir). Main vide : tu creuses ; avec un bloc, tu le poses si quelque chose le soutient |
 | Choisir une case | 1–0 ou molette de la souris ; Tab = laser de minage (main vide) |
 | Jeter la pile choisie | R ou Suppr |
-| Activer (ordinateur de bord, portes) | viser, appuyer et relâcher |
+| Activer (ordinateur de bord, portes, conteneurs, bombe antique) | viser, appuyer et relâcher. En maintenant jusqu'à ce que le bloc casse, on le creuse : c'est ainsi qu'on ramasse une bombe antique sans la faire exploser (il faut la charge rose, comme pour la roche antique) |
 | Retourner au vaisseau | Maj+K, ou entrer dans le rayon de lumière d'atterrissage |
 | Créatif : palette de blocs | I (clic = mettre le bloc dans la case choisie, molette = page) |
 | Pause | Échap |
@@ -100,6 +100,10 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - Les cascades et l'eau posée par le joueur baissent à chaque pas, avec une surface inclinée : ajout du port. La mer remplit
   les trous jusqu'à son niveau, comme l'original.
 - Les plantes et autres modèles se visent par ce qu'on voit (les pixels de leurs feuilles), pas par toute la case (l'original les traitait comme un bloc entier).
+- La bombe antique fait aussi exploser les bombes prises dans son explosion, une par image : l'original avait le code, mais
+  une vérification l'empêchait de se déclencher. L'explosion laisse la roche mère (couche 0) en place (l'original l'enlevait
+  aussi), la bombe n'explose pas dans le hangar et elle projette 8 éclats par bloc au lieu de 75 pour que le jeu ne se
+  fige pas.
 - Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé et désactiver les vagues de l'eau.
 - Le turbo mineur fait creuser trois fois plus vite jusqu'à 15 blocs autour de lui (5 dans l'original) et se récupère quand
   on le casse (dans l'original, il était perdu).
