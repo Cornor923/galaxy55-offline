@@ -120,6 +120,8 @@ class GalaxyApp extends hxd.App {
 	var loadAnim : h2d.Graphics;
 	var loadAnimPos = 0.;
 	var hud : h2d.Text;
+	/** F: coordenadas y fps (Game.showFPS del original): ocultos al empezar y sin guardar en settings.json, como en el original */
+	var showFps = false;
 	var msgText : h2d.Text;
 	var jetGlow : h2d.Bitmap;
 	var jetBar : h2d.Graphics;
@@ -1695,7 +1697,12 @@ class GalaxyApp extends hxd.App {
 				// temblor del HUD (Interface.updateShake): sube o baja al azar hasta 10 px de la ventana * shake;
 				// en pausa y en los menus no se recalcula y se queda quieto
 				hudShake = p.shake <= 0 ? 0 : Math.random() * 10 * p.shake * (Std.random(2) * 2 - 1) * Theme.visibleArea().w / engine.width;
-				hud.text = Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps" + (Settings.showHelp ? "\n" + Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : "") : "");
+				// F (Game.checkKeys) muestra u oculta solo la linea de coordenadas y fps; la ayuda en pantalla (anadido del port) va con su opcion
+				if( K.isPressed(K.F) ) showFps = !showFps;
+				var lines = [];
+				if( showFps ) lines.push(Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps");
+				if( Settings.showHelp ) lines.push(Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : ""));
+				hud.text = lines.join("\n");
 				msgText.visible = game.message != null;
 				if( game.message != null ) {
 					msgText.text = game.message;

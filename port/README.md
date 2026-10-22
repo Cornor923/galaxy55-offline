@@ -24,6 +24,7 @@ They are the original game's (movement and physics are a copy of `ent/Hero.hx` a
 | Jump and jetpack | Space or Ctrl; in the air, jetpack (uses fuel, recharges on the ground) |
 | Walk slowly | X |
 | Helmet | H takes it off or puts it on |
+| Coordinates and FPS | F shows or hides them (hidden at the start, as in the original) |
 | Dig or place | left click, E or Shift (hold). With an empty hand you dig; with a block you place it if something supports it |
 | Choose slot | 1-0 or mouse wheel; Tab = digger (empty hand) |
 | Drop the selected stack | R or Del |

@@ -24,6 +24,7 @@ Ce sont celles du jeu original (le déplacement et la physique sont copiés de `
 | Sauter et jetpack | Espace ou Ctrl ; en l'air, jetpack (consomme du carburant, se recharge au sol) |
 | Marcher lentement | X |
 | Casque | H l'enlève ou le remet |
+| Coordonnées et FPS | F les affiche ou les masque (masquées au départ, comme dans l'original) |
 | Creuser ou poser | clic gauche, E ou Maj (maintenir). Main vide : tu creuses ; avec un bloc, tu le poses si quelque chose le soutient |
 | Choisir une case | 1–0 ou molette de la souris ; Tab = laser de minage (main vide) |
 | Jeter la pile choisie | R ou Suppr |
