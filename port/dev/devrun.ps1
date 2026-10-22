@@ -19,6 +19,9 @@ $run = if (Test-Path $exe) { $exe } else { "hl" }
 # la activan salvo con estas pistas de SDL3 (se leen del entorno)
 $env:SDL_WINDOW_ACTIVATE_WHEN_SHOWN = "0"
 $env:SDL_WINDOW_ACTIVATE_WHEN_RAISED = "0"
+# y el mando: hlsdl deja que llegue sin el foco (init_once: SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS = 1), asi que un mando usado
+# en otro sitio tambien manejaba el juego de prueba; la variable de entorno puede mas que SDL_SetHint
+$env:SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS = "0"
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
