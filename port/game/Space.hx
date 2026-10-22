@@ -12,10 +12,21 @@ import ExpData;
 class Space {
 
 	public var uni(default, null) : UniInfo;
+	/** tutorial en curso: la nave esta averiada, solo se aterriza en el planeta del tutorial y no se sale del sistema */
+	public var tutorial = false;
+	/** aviso de lo que no se puede hacer (GalaxyApp.showToast) */
+	public var onRefuse : String -> Void = function(_) {};
 
 	public function new( uni : UniInfo ) {
 		this.uni = uni;
 		if( uni.traveled == null ) uni.traveled = 0;
+	}
+
+	/** antes de salir del sistema solar al sector: false = la nave se para en el borde */
+	public function canLeave() : Bool {
+		if( !tutorial ) return true;
+		onRefuse(TutoText.get("noleave"));
+		return false;
 	}
 
 	/** al despegar, con el planeta ya descargado (no al abrir el mapa desde una partida guardada en el espacio) */
@@ -31,7 +42,9 @@ class Space {
 
 	/** antes de aterrizar en un planeta (al pulsar Aterrizar o Escanear): false = no se puede */
 	public function canLand( p : ExpPlanet ) : Bool {
-		return true;
+		if( !tutorial || p.id == TutoSetup.PLANET ) return true;
+		onRefuse(TutoText.get("badplanet"));
+		return false;
 	}
 
 	/** al aterrizar, antes de cargar el planeta */

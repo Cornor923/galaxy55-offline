@@ -25,6 +25,11 @@ class Hangar {
 	/** posicion de aparicion (EditShip.getPosition: x = -0.5, sobre las casillas de salida) */
 	public static function spawn() return { x : OX - 0.5, y : SY * 0.5 + 2.5, z : 1. };
 
+	/** celda del hangar de un bloque (x, y, z) del plano de una nave de sx x sy (shedData: centrada en la zona construible) */
+	public static function shipCell( x : Int, y : Int, z : Int, sx : Int, sy : Int ) {
+		return { x : (2 + ((SX - sx) >> 1) + x + OX) & Const.MASK, y : 2 + ((SY - sy) >> 1) + y, z : 1 + z };
+	}
+
 	/** dentro de la zona construible (EditShip.checkSelect) */
 	public static function inZone( x : Int, y : Int, z : Int ) {
 		x -= OX;

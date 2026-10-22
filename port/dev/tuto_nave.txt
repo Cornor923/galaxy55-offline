@@ -1,0 +1,71 @@
+# tutorial en la nave: sintetizador (bauxita -> aluminio -> blindaje), ordenador de a bordo (no despega), hangar (solo
+# blindaje en los dos agujeros del techo, nada se rompe), salida con la nave estanca, fin (cargas de la ESCorp) y despegue
+wait 3
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+print block 95 71 135
+print block 96 71 135
+shot tuto_techo
+tuto step 7
+give BMinAluminium 2
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+print tuto
+shot tuto_zona
+setl 59 62 3 BMinAluminium
+wait 5
+print tuto
+activatel 61 62 4
+wait 45
+activatel 61 62 4
+wait 45
+print inv
+print tuto
+setl 59 62 3 BAluminium
+activatel 61 62 4
+wait 45
+activatel 61 62 4
+wait 45
+print inv
+print tuto
+shot tuto_ordenador
+# despegar: la nave esta averiada
+computer
+wait 5
+print screen
+shot tuto_ordenador_menu
+close
+wait 5
+hangar
+waitfor ready
+wait 30
+print tuto
+print hangar
+shot tuto_hangar
+tuto rule place 10 9 5 BShipHull
+tuto rule place 10 9 5 BWood
+tuto rule place 12 9 5 BShipHull
+tuto rule break 10 8 5 BShipHull
+set 10 9 5 BShipHull
+set 11 9 5 BShipHull
+wait 40
+print hangar
+print tuto
+hangarexit
+waitfor planet
+wait 30
+print tuto
+print block 95 71 135
+wait 30
+shot tuto_fin
+explore
+waitfor map
+expgo 0 0
+waitfor sector 3000
+expinfo
+quit
