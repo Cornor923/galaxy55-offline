@@ -153,6 +153,14 @@ class Icons {
 		if( t != null ) return t;
 		// los bloques translucidos dibujan sus 6 caras: se ve a traves el cubo entero
 		var poly = IconMesh.polygon(b, b.type == BTAlpha);
+		// IconShader del original: tshade = shade < 1 ? shade * shade : shade (las caras de los lados, mas oscuras que en el mundo)
+		if( poly != null )
+			for( c in poly.colors )
+				if( c.x < 1 ) {
+					c.x *= c.x;
+					c.y *= c.y;
+					c.z *= c.z;
+				}
 		var tex = new h3d.mat.Texture(SIZE, SIZE, [Target]);
 		tex.filter = Linear;
 		if( poly != null ) {
@@ -185,6 +193,16 @@ class Icons {
 			engine.clear(0x00000000, 1, 0);
 			scene.render(engine);
 			engine.popTarget();
+			// Render.renderBlock: contorno negro, GlowFilter(0x0, 1, 2, 2, 1) sobre el icono de 45 px; aqui es de 90 px:
+			// 5 en lugar de 4 porque la caja del shim solo esta centrada con un tamano impar
+			var px = tex.capturePixels();
+			px.convert(BGRA);
+			var bd = new flash.display.BitmapData(SIZE, SIZE, true, 0);
+			for( k in 0...SIZE * SIZE ) bd.px[k] = px.bytes.getInt32(k * 4);
+			bd.applyFilter(bd, bd.rect, new flash.geom.Point(0, 0), new flash.filters.GlowFilter(0x0, 1, 5, 5, 1));
+			for( k in 0...SIZE * SIZE ) px.bytes.setInt32(k * 4, bd.px[k]);
+			tex.uploadPixels(px);
+			px.dispose();
 			if( Sys.args().indexOf("--dumpicons") >= 0 )
 				sys.io.File.saveBytes("port/out/icon_" + b.k + ".png", tex.capturePixels().toPNG());
 			mesh.remove();
