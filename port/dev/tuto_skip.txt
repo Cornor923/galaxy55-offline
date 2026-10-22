@@ -35,7 +35,7 @@ wait 30
 print tuto
 print inv
 print block 95 71 135
-print block 106 89 36
-print block 73 86 34
+print block 109 90 36
+print block 76 83 34
 print block 107 75 36
 quit

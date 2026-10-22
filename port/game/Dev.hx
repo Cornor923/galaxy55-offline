@@ -527,18 +527,32 @@ class Dev {
 						// tuto rule place|break x y z Bloque: lo que dicen las reglas del hangar del tutorial (null = se puede)
 						var r = g.hangarRule;
 						Sys.println("regla " + a[2] + " " + a[3] + "," + a[4] + "," + a[5] + " " + a[6] + ": " + (r == null ? "sin reglas" : "" + r(a[2] == "place", Std.parseInt(a[3]), Std.parseInt(a[4]), Std.parseInt(a[5]), bk(a[6]))));
+					case "view":
+						// de pie a 6 bloques del primer objetivo, por su lado libre, mirandolo (para las capturas)
+						var t = @:privateAccess app.tutorial.targets(g)[0];
+						if( t != null ) {
+							var d = [1, 0];
+							for( o in [[-1, 0], [1, 0], [0, -1], [0, 1]] ) if( w.block(t.x + o[0], t.y + o[1], t.z) == null ) d = o;
+							lines.insert(pc, "lookat " + (t.x + 0.5) + " " + (t.y + 0.5) + " " + (t.z + 0.5));
+							lines.insert(pc, "tp " + (t.x + 0.5 + d[0] * 6) + " " + (t.y + 0.5 + d[1] * 6) + " top");
+						}
 					case "goto", "mine", "activate":
 						// sobre el primer objetivo marcado: goto = de pie a 1,5 bloques mirandolo; mine y activate como esas ordenes
 						var t = @:privateAccess app.tutorial.targets(g)[0];
 						if( t == null ) Sys.println("tuto " + a[1] + ": sin objetivo");
 						else if( a[1] == "goto" ) {
+							// en una celda libre junto a el (con sitio para la cabeza): el hueco del risco, el lado del filon
+							var at = null;
+							for( o in [[-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0], [0, 0, 1]] )
+								if( at == null && w.block(t.x + o[0], t.y + o[1], t.z + o[2]) == null && w.block(t.x + o[0], t.y + o[1], t.z + o[2] + 1) == null )
+									at = { x : t.x + o[0], y : t.y + o[1], z : t.z + o[2] };
 							lines.insert(pc, "lookat " + (t.x + 0.5) + " " + (t.y + 0.5) + " " + (t.z + 0.5));
-							lines.insert(pc, "tp " + (t.x - 1.5) + " " + (t.y + 0.5) + " top");
+							lines.insert(pc, at == null ? "tp " + (t.x - 1.5) + " " + (t.y + 0.5) + " top" : "tp " + (at.x + 0.5) + " " + (at.y + 0.5) + " " + at.z);
 						} else {
-							// mine: despues se pone encima para recoger lo que suelta
+							// mine: despues se pone en la celda que queda libre para recoger lo que suelta
 							if( a[1] == "mine" ) {
 								lines.insert(pc, "wait 40");
-								lines.insert(pc, "tp " + (t.x + 0.5) + " " + (t.y + 0.5) + " top");
+								lines.insert(pc, "tp " + (t.x + 0.5) + " " + (t.y + 0.5) + " " + t.z);
 							}
 							lines.insert(pc, a[1] + " " + t.x + " " + t.y + " " + t.z);
 						}
