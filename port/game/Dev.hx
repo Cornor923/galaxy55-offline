@@ -602,6 +602,9 @@ class Dev {
 		if( app.game != null || app.explorer != null ) app.toMainMenu();
 		app.show("new");
 		var biome : Ui.Selector = null, seed : Ui.TextField = null, create : Ui.Widget = null;
+		// el bioma solo se elige en creativo (en aventura se empieza en el espacio): se pasa a creativo como el jugador
+		for( w in app.current.widgets )
+			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("mode") && cast(w, Ui.Selector).index == 0 ) w.onRight();
 		for( w in app.current.widgets ) {
 			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("biome") ) biome = cast w;
 			else if( Std.isOfType(w, Ui.TextField) && cast(w, Ui.TextField).title == Lang.t("seed") ) seed = cast w;
