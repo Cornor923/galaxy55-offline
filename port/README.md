@@ -29,6 +29,8 @@ They are the original game's (movement and physics are a copy of `ent/Hero.hx` a
 | Choose slot | 1-0 or mouse wheel; Tab = digger (empty hand) |
 | Drop the selected stack | R or Del |
 | Activate (on-board computer, doors, canteens, ancient bomb) | aim, press and release. Holding on until the block breaks digs it out instead: that is how an ancient bomb is picked up without setting it off (it needs a pink charge, like ancient rock) |
+| Activate (on-board computer, doors) | aim, press and release |
+| ESCorp canteen (chest) | aim, press and release. The game goes on: click takes and drops (Shift half, Ctrl one; or arrows and Enter, or d-pad and A), dragging outside the window looks around and walking away closes it (so do Esc and B) |
 | Return to the ship | Shift+K, or step into the landing light beam |
 | Creative: block palette | I (click = put the block in the selected slot, wheel = page) |
 | Pause | Esc |
@@ -93,6 +95,9 @@ A player got it running on Linux this way; we have not tested it.
 - Snow in the winter biome is an addition of this port: the original does not have it.
 - Creative mode and its palette are an addition of this port.
 - The on-board computer menu has its own look, as in the Flash version (the original was a web page).
+- The ESCorp canteen window also shows your inventory, also closes with Esc, B or Close, and works with the keyboard and the
+  gamepad (while it is open the arrow keys move its cursor, not the player). Its contents are kept in the save (the original
+  kept them on the server) and fall to the ground when it is broken.
 - The merchant robot's shop (the original was a web panel), its ship on the star map and the orange GPS arrow pointing to it
   are additions of this port.
 - Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
