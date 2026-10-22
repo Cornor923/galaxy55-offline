@@ -1901,7 +1901,10 @@ class GalaxyApp extends hxd.App {
 		var onMap = state == Exploring && explorer != null && !explorer.paused && current == null;
 		var info = playing ? game.info : onMap ? spaceInfo : null;
 		var g = playing ? game : null;
-		var top = hud.visible && hud.text != "" ? hud.y + hud.textHeight * hud.scaleY + 8 : 0.;
+		// bajo la barra del inventario (con el nombre del bloque elegido debajo, InvBar.showName: unos 70 px, fijo para que el
+		// recuadro no se mueva cuando ese nombre aparece y se va) y, si se ve, bajo la ayuda de las teclas
+		var top = invBar != null && invBar.visible ? 72. : 0.;
+		if( hud.visible && hud.text != "" ) top = Math.max(top, hud.y + hud.textHeight * hud.scaleY + 8);
 		guide.update(dt, info == null ? null : tutorial.text(info, g), g, tutorial.targets(g), s3d.camera, top);
 	}
 

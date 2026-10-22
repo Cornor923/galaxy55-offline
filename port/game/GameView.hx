@@ -234,6 +234,8 @@ class GameView {
 	/** reglas del hangar durante el tutorial (Tutorial.hangarRule): (poner, x, y, z, bloque) -> aviso, o null si se puede */
 	public var hangarRule : Bool -> Int -> Int -> Int -> Block -> String;
 	var hangarRefusedTime = 0.;
+	/** se acaba de poner un bloque y el boton sigue pulsado: lo siguiente que se apunte no avisa (la celda de al lado no es un error) */
+	var placedHold = false;
 
 	function hangarUpdate( tmod : Float ) {
 		hangarTime += tmod;
@@ -1264,6 +1266,7 @@ class GameView {
 		if( !held ) {
 			armed = true;
 			actionWait = false;
+			placedHold = false;
 		}
 		laserActive = controls && held && armed && !actionWait;
 		if( actionPause > 0 ) actionPause -= tmod;
@@ -1404,8 +1407,10 @@ class GameView {
 		var refused = hangar != null ? Hangar.forbidden(hand) : null;
 		var why = refused != null ? Lang.t("hangar." + refused) : (hangar != null && hangarRule != null ? hangarRule(true, s.tx, s.ty, s.tz, hand) : null);
 		if( why != null ) {
-			hangarRefused = why;
-			hangarRefusedTime = 180;
+			if( !placedHold ) {
+				hangarRefused = why;
+				hangarRefusedTime = 180;
+			}
 			return;
 		}
 		var put = hand.getFlip(yaw);
@@ -1431,6 +1436,9 @@ class GameView {
 		if( !ok || actionPause > 0 ) return;
 		actionPause = creative ? 6 : 15;
 		if( !creative && !inv.useCurrentBlock() ) return;
+		// bien puesto: se quita el aviso que hubiera y no se avisa de nada hasta soltar el boton
+		placedHold = true;
+		hangarRefusedTime = 0;
 		// si era el ultimo bloque, hay que soltar el boton antes de seguir (evita excavar sin querer)
 		if( inv.getCurrentBlock() == null ) actionWait = true;
 		if( Dev.trace ) Sys.println("place en " + x + "," + y + "," + z + " sobre " + s.b.k + "@" + s.x + "," + s.y + "," + s.z + " antes=" + world.block(x, y, z));

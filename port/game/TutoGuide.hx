@@ -50,7 +50,7 @@ class TutoGuide {
 
 	/**
 	 * msg: texto del objetivo (null = nada); g: la partida (null en el espacio, en pausa o en los menus);
-	 * top: por debajo de esta altura (la ayuda de las teclas, arriba a la izquierda, ocupa todo el ancho)
+	 * top: por debajo de esta altura (la barra del inventario y la ayuda de las teclas, arriba, ocupan todo el ancho)
 	 */
 	public function update( dt : Float, msg : String, g : GameView, targets : Array<TutoTarget>, cam : h3d.Camera, top : Float ) {
 		time += dt;
