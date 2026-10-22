@@ -320,6 +320,12 @@ class Ship {
 		fog.fogK = 0;
 		fog.curve = 0;
 		world.sky.fog.fogK = 0;
+		// la nave tiene la luz del planeta (sunPower del bioma): en la Luna salia casi negra y en Marte quemada. El original la
+		// captura siempre con la misma luz (r3d.Capture, bioma BIShed): aqui se lleva a luz plena (LBASE) mientras se captura
+		var k = World.LBASE / Data.getBiome(Type.createEnum(BiomeKind, planet.biomeName)).sunPower;
+		var mats = world.root.getMaterials();
+		var oldColors = [for( m in mats ) m.color.clone()];
+		for( m in mats ) m.color.scale3(k);
 		var cam = s3d.camera;
 		var old = { pos : cam.pos.clone(), target : cam.target.clone(), up : cam.up.clone(), fov : cam.fovY, zn : cam.zNear, zf : cam.zFar, ratio : cam.screenRatio };
 		cam.fovY = 52;
@@ -365,6 +371,7 @@ class Ship {
 		fog.fogK = oldFog;
 		fog.curve = oldCurve;
 		world.sky.fog.fogK = oldWorldFogK;
+		for( i in 0...mats.length ) mats[i].color.load(oldColors[i]);
 		for( o in hidden ) o.visible = true;
 		return frames;
 	}
