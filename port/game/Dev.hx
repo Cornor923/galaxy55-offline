@@ -22,7 +22,7 @@ import Common;
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
  *   hand Bloque             poner ese bloque en la casilla elegida (como la paleta creativa)
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
- *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local
+ *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local; si abre un menu, el guion sigue en el
  *   synth N                 usar el ordenador del sintetizador N
  *   jet 1|0                 mantener Espacio (salto y jetpack)
  *   press|release TECLA...  pulsar o soltar teclas de verdad (shift o una letra), p. ej. press shift k = Mayus+K
@@ -40,7 +40,7 @@ import Common;
  *   shot nombre             captura en port/out/nombre.png
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
- *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power|life|fade|around x y z r|fov|sky
+ *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power|life|fade|around x y z r|fov|sky|menu
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
  *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
  *   pause                   menu de pausa como Esc (el guion sigue; close lo cierra)
@@ -365,6 +365,7 @@ class Dev {
 					var b = w.block(x, y, z);
 					Sys.println("activar " + x + "," + y + "," + z + ": " + (b == null ? "nada" : "" + b.k));
 					if( b != null ) g.activateBlock(x, y, z, b);
+					if( @:privateAccess app.current != null ) inPause = true; // el ordenador de a bordo abre un menu: el guion sigue en el (close lo cierra)
 				case "synth":
 					var c = g.ship.crafts[Std.parseInt(a[1])];
 					g.ship.activateCraft(c.out.x + sdx, c.out.y + sdy, c.out.z + sz, g);
@@ -555,6 +556,9 @@ class Dev {
 			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "menu":
+			// botones del menu abierto (etiqueta y y), de arriba abajo
+			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));
 		case "palette":
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
 		case "time":
