@@ -1,0 +1,53 @@
+# tutorial en el planeta: bajar por el teletransportador, citronox viejos (cargas amarillas), etherium (cargas azules),
+# bauxita y vuelta a la nave por el rayo. Los pasos avanzan solos (print tuto)
+wait 3
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+print tuto
+planet
+wait 20
+print tuto
+tuto step 3
+wait 3
+tuto goto
+wait 10
+shot tuto_citronox
+tuto mine
+print inv
+tuto goto
+tuto mine
+tuto goto
+tuto mine
+wait 5
+print inv
+print tuto
+tuto goto
+wait 10
+shot tuto_etherium
+tuto mine
+tuto goto
+tuto mine
+wait 5
+print inv
+print tuto
+tuto goto
+tuto mine
+tuto goto
+tuto mine
+wait 10
+print inv
+print tuto
+wait 5
+shot tuto_volver
+tuto goto
+wait 5
+tele
+wait 60
+print pos
+print tuto
+quit

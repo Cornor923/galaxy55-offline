@@ -1,0 +1,41 @@
+# pasar el tutorial desde la pausa: el planeta vuelve a su estado (sin los bloques del tutorial ni lo excavado), el inventario
+# queda vacio con las cargas de la ESCorp, la nave reparada, y se vuelve al espacio sin cierres
+wait 3
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+planet
+wait 10
+tuto step 3
+tuto goto
+tuto mine
+print block 107 75 36
+pause
+wait 5
+shot tuto_pausa
+close
+wait 5
+tuto skip
+waitfor map
+wait 60
+print tuto
+print pos
+shot tuto_saltado
+expplanet 1
+waitfor window
+print map
+expinfo
+landhome
+waitfor planet
+wait 30
+print tuto
+print inv
+print block 95 71 135
+print block 106 89 36
+print block 73 86 34
+print block 107 75 36
+quit

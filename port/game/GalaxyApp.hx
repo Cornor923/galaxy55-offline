@@ -289,6 +289,13 @@ class GalaxyApp extends hxd.App {
 	public var palette : Palette;
 	var paletteOpen = false;
 
+	/** tutorial de la partida de aventura y lo que se ve de el (objetivo, flecha y aura) */
+	var tutorial = new Tutorial();
+	var guide : TutoGuide;
+	/** guardar en cuanto se abre el mapa (partida nueva o tutorial pasado: empiezan en el espacio) y aviso que se muestra entonces */
+	var saveOnMap = false;
+	var mapToast : String;
+
 	override function init() {
 		PortRules.apply();
 		for( a in Sys.args() ) {
@@ -405,6 +412,8 @@ class GalaxyApp extends hxd.App {
 		targetName.visible = false;
 		toast.dropShadow = { dx : 2, dy : 2, color : 0, alpha : 0.9 };
 		toast.visible = false;
+		guide = new TutoGuide(s2d);
+		tutorial.onDone = function() saveGame(false);
 
 		if( demoSaves ) makeDemoSaves();
 
@@ -594,18 +603,16 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/**
-	 * Empieza una partida nueva (formulario de Nueva partida). Por ahora como siempre: se crea la partida y se empieza en la nave,
-	 * sobre el planeta. biome y size solo cuentan en creativo; en aventura el planeta es Otono, de 1 trozo. La eleccion del tutorial
-	 * se guarda en la partida (SaveInfo.tutorial). La rama del tutorial cambiara este cuerpo.
+	 * Empieza una partida nueva (formulario de Nueva partida). Creativo: en la nave, sobre el planeta del bioma y tamano elegidos.
+	 * Aventura: en el espacio, en el sistema 0, con o sin el tutorial (TutoSetup.newGame: con el, su planeta es Terres Rouges
+	 * pequeno). La eleccion del tutorial queda en la partida (SaveInfo.tutorial).
 	 */
 	public function startNewGame( name : String, seed : Int, creative : Bool, tutorial : Bool, biome : String, size : Int ) {
 		if( !creative ) {
-			biome = "BIAutumn";
-			size = 1;
+			startAdventure(name, seed, tutorial);
+			return;
 		}
-		var info = SaveData.create(name, seed, biome, size, creative);
-		info.tutorial = tutorial;
-		startGame(info);
+		startGame(SaveData.create(name, seed, biome, size, true));
 	}
 
 	/** Partidas guardadas (Continuar): jugar, renombrar o borrar cada una */
@@ -736,6 +743,77 @@ class GalaxyApp extends hxd.App {
 		modal = m;
 	}
 	var modal : Screen;
+
+	/** confirmacion para pasar el tutorial: avisa de que el inventario, la nave y el planeta vuelven a empezar */
+	function askSkip( parent : Screen ) {
+		if( modal != null && modal.parent != null ) return;
+		parent.active = false;
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.fullRect(bg, 0x000000, 0.55);
+		Theme.rect(bg, 340, 240, 600, 240, Theme.PANEL, 1);
+		Theme.rect(bg, 340, 240, 600, 4, Theme.DANGER);
+		var t = Theme.text(m, TutoText.get("skip.ask"), 2.4, Theme.TEXT, 0, 266);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var n = Theme.text(m, TutoText.get("skip.warn"), 1.8, Theme.DANGER, 360, 316);
+		n.maxWidth = 560 / n.scaleX;
+		n.textAlign = Center;
+		var no = new Button(m, Lang.t("no"), 210, 52);
+		var yes = new Button(m, Lang.t("yes"), 210, 52);
+		m.add(no, 410, 400);
+		m.add(yes, 640 + 10, 400);
+		m.setFocus(0);
+		var close = function() {
+			m.remove();
+			parent.active = true;
+		};
+		no.onActivate = close;
+		m.onBack = close;
+		yes.onActivate = function() {
+			m.remove();
+			skipTutorial();
+		};
+		modal = m;
+	}
+
+	/** pasar el tutorial: la partida vuelve al espacio como si hubiera empezado sin el (TutoSetup.skip) */
+	public function skipTutorial() {
+		var info = game != null ? game.toInfo() : spaceInfo;
+		if( !Tutorial.active(info) ) return;
+		TutoSetup.skip(info);
+		if( explorer != null ) {
+			explorer.dispose();
+			explorer = null;
+			dim.visible = true;
+		}
+		spaceInfo = null;
+		space = null;
+		takeoffSave = 0;
+		if( game != null ) leaveGame();
+		saveOnMap = true;
+		mapToast = TutoText.get("skipped");
+		startGame(info);
+	}
+
+	/** partida de aventura nueva: empieza en el espacio, con o sin tutorial (TutoSetup.newGame) */
+	function startAdventure( name : String, seed : Int, tutorial : Bool ) {
+		saveOnMap = true;
+		startGame(TutoSetup.newGame(name, seed, tutorial));
+	}
+
+	/** pruebas: partida de aventura nueva desde un guion (deja la que haya) */
+	public function devNewGame( tutorial : Bool, seed : Int ) {
+		if( explorer != null ) {
+			explorer.dispose();
+			explorer = null;
+			dim.visible = true;
+		}
+		spaceInfo = null;
+		space = null;
+		takeoffSave = 0;
+		if( game != null ) leaveGame();
+		startAdventure("Prueba", seed, tutorial);
+	}
 
 	/** primera vez: elegir el idioma (cada boton en su propio idioma) */
 	function buildFirstLang() : Screen {
@@ -885,7 +963,20 @@ class GalaxyApp extends hxd.App {
 			resume();
 			showToast(Lang.t("computer.soon"));
 		};
-		takeoff.onActivate = startExplorer;
+		// tutorial: la nave esta averiada y no despega hasta tapar los agujeros
+		takeoff.onActivate = function() {
+			if( !Tutorial.active(game.info) ) {
+				startExplorer();
+				return;
+			}
+			resume();
+			showToast(TutoText.get("notakeoff"));
+		};
+		if( Tutorial.active(game.info) ) {
+			var skip = new Button(s, TutoText.get("skip"));
+			s.add(skip, x, close.y + 62);
+			skip.onActivate = function() askSkip(s);
+		}
 		edit.onActivate = startHangar;
 		trade.onActivate = openShop;
 		close.onActivate = function() resume();
@@ -979,6 +1070,7 @@ class GalaxyApp extends hxd.App {
 			hangarReturn.inv = Inv.copy(game.inv.inv);
 			hangarReturn.shipEdits = [];
 			hangarReturn.px = hangarReturn.py = hangarReturn.pz = -1;
+			Tutorial.repaired(hangarReturn);
 			backFromHangar();
 			return;
 		}
@@ -1048,6 +1140,7 @@ class GalaxyApp extends hxd.App {
 	function backFromHangar() {
 		var info = returnInfo();
 		hangarReturn = null;
+		Tutorial.leftHangar(info);
 		leaveGame();
 		info.hangar = null;
 		startGame(info);
@@ -1076,8 +1169,12 @@ class GalaxyApp extends hxd.App {
 		explorer = new Explorer(s2d, infos, shipFrames);
 		s2d.under(explorer);
 		space = new Space(uni);
+		space.tutorial = Tutorial.active(spaceInfo);
+		space.onRefuse = showToast;
 		explorer.onTravel = space.travel;
 		explorer.canLand = space.canLand;
+		explorer.canLeave = space.canLeave;
+		explorer.tutoTarget = space.tutorial ? TutoSetup.PLANET : -1;
 		explorer.onUnlock = space.unlock;
 		explorer.onPause = openMapPause;
 		explorer.onLand = landOnPlanet;
@@ -1093,6 +1190,14 @@ class GalaxyApp extends hxd.App {
 			space.takeoff();
 			// se guarda en cuanto el mapa se ha dibujado (para la miniatura); si antes se cierra la ventana, se guarda igual
 			takeoffSave = 1.0;
+		}
+		if( saveOnMap ) {
+			saveOnMap = false;
+			takeoffSave = 1.0;
+		}
+		if( mapToast != null ) {
+			showToast(mapToast);
+			mapToast = null;
 		}
 	}
 	var takeoffSave = 0.;
@@ -1220,15 +1325,22 @@ class GalaxyApp extends hxd.App {
 
 	/** para volver al planeta se aterriza en el; Menu principal guarda la partida en el espacio */
 	function buildMapPause() : Screen {
-		var s = panelFor(560, 308, Lang.t("pause.title"));
+		var tuto = Tutorial.active(spaceInfo);
+		var h = tuto ? 370 : 308;
+		var s = panelFor(560, h, Lang.t("pause.title"));
 		var x = (W - 460) * 0.5;
-		var y = (H - 308) * 0.5 + 92;
+		var y = (H - h) * 0.5 + 92;
 		var res = new Button(s, Lang.t("resume"));
 		var op = new Button(s, Lang.t("options"));
 		var mm = new Button(s, Lang.t("mainmenu"));
 		s.add(res, x, y);
 		s.add(op, x, y + 62);
 		s.add(mm, x, y + 124);
+		if( tuto ) {
+			var skip = new Button(s, TutoText.get("skip"));
+			s.add(skip, x, y + 186);
+			skip.onActivate = function() askSkip(s);
+		}
 		res.onActivate = closeMapPause;
 		op.onActivate = function() show("options");
 		mm.onActivate = toMainMenu;
@@ -1250,6 +1362,12 @@ class GalaxyApp extends hxd.App {
 		s.add(op, x, y + 124);
 		s.add(mm, x, y + 186);
 		s.add(q, x, y + 248);
+		// tutorial: se puede pasar desde el planeta (en el hangar y en la nodriza no)
+		if( game != null && game.hangar == null && game.info.mothership != true && Tutorial.active(game.info) ) {
+			var skip = new Button(s, TutoText.get("skip"));
+			s.add(skip, x, y + 310);
+			skip.onActivate = function() askSkip(s);
+		}
 		res.onActivate = function() resume();
 		sv.onActivate = function() saveGame(true);
 		op.onActivate = function() show("options");
@@ -1333,7 +1451,7 @@ class GalaxyApp extends hxd.App {
 		loadWorld = info.mothership == true
 			? new World(info.seed, "BIMoon", (Mothership.data() != null ? Mothership.sizeChunks : 1), s3d, atlas, false, null, Mothership.withShip(Hangar.currentShip(info)))
 			: info.hangar == true
-			? new World(info.seed, "BIShed", 1, s3d, atlas, false, null, Hangar.shedData(Hangar.currentShip(info)))
+			? new World(info.seed, "BIShed", 1, s3d, atlas, false, null, TutoSetup.holed(info, Hangar.shedData(Hangar.currentShip(info))))
 			: new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits);
 		if( info.mothership == true ) {
 			loadWorld.sky.fog.curve = 0.00001;
@@ -1375,6 +1493,7 @@ class GalaxyApp extends hxd.App {
 		if( game.info.mothership == true ) game.onHangarExit = backFromMothership;
 		if( game.hangar != null ) {
 			game.onHangarExit = exitHangar;
+			game.hangarRule = Tutorial.hangarRule(game.info);
 			hangarOrig = haxe.crypto.Base64.encode(game.hangarShip());
 		}
 		ui.removeChildren();
@@ -1781,6 +1900,16 @@ class GalaxyApp extends hxd.App {
 		g.endFill();
 	}
 
+	/** tutorial: objetivo, flecha y aura jugando y en el mapa (no en pausa, en los menus ni con la tienda o la paleta abiertas) */
+	function updateTutorial( dt : Float ) {
+		var playing = state == Playing && game != null && !paletteOpen;
+		var onMap = state == Exploring && explorer != null && !explorer.paused && current == null;
+		var info = playing ? game.info : onMap ? spaceInfo : null;
+		var g = playing ? game : null;
+		var top = hud.visible && hud.text != "" ? hud.y + hud.textHeight * hud.scaleY + 8 : 0.;
+		guide.update(dt, info == null ? null : tutorial.text(info, g), g, tutorial.targets(g), s3d.camera, top);
+	}
+
 	function showToast( msg : String ) {
 		toast.text = msg;
 		toast.x = (W - toast.textWidth * toast.scaleX) * 0.5;
@@ -1964,6 +2093,7 @@ class GalaxyApp extends hxd.App {
 				game.update(dt, true, pad);
 				// salir de la nodriza o del hangar (ordenador, teletransporte) cambia de mundo dentro de update
 				if( game == null || state != Playing ) return;
+				tutorial.update(dt, game);
 				// Process.update del original: la cantina se cierra si el jugador se ha alejado
 				if( chest != null && chest.far(game) ) closeChest();
 				game.updateCamera();
@@ -2036,6 +2166,7 @@ class GalaxyApp extends hxd.App {
 			if( toastTime < 0.6 ) toast.alpha = Math.max(0, toastTime / 0.6);
 			if( toastTime <= 0 ) toast.visible = false;
 		}
+		updateTutorial(dt);
 
 		// nombre del bloque apuntado
 		var tn = "";

@@ -1,0 +1,35 @@
+# tutorial guardado a medias: al volver a cargar la partida sigue en el mismo paso, con sus bloques; y partida de aventura
+# sin tutorial: sistema aleatorio, sin cierres, inventario vacio con las cargas de la ESCorp
+wait 3
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+planet
+wait 10
+tuto step 3
+tuto goto
+tuto mine
+print tuto
+reload
+waitfor planet
+wait 30
+print tuto
+print pos
+tuto notuto 777
+waitfor map
+wait 30
+print tuto
+expinfo
+print pos
+expplanet 1
+waitfor window
+expbutton
+waitfor planet
+wait 30
+print tuto
+print inv
+quit

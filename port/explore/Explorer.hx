@@ -108,6 +108,10 @@ class Explorer extends h2d.Object {
 	public dynamic function onTravel( dist : Float, inSystem : Bool ) {}
 	/** antes de aterrizar o escanear: false = no se puede (Space) */
 	public dynamic function canLand( p : ExpPlanet ) : Bool return true;
+	/** antes de salir del sistema solar: false = la nave se para en el borde (Space; el tutorial no deja salir) */
+	public dynamic function canLeave() : Bool return true;
+	/** planeta al que lleva el tutorial (flecha del GPS aunque no se haya visitado); -1 = ninguno */
+	public var tutoTarget = -1;
 	/** boton del candado de un sistema cerrado (el original lo abria pagando la licencia): para Space */
 	public dynamic function onUnlock( s : ExpSystem ) {}
 	/** posicion guardada del robot comerciante (la pone el juego antes de abrir el mapa; null = en un sistema al azar) */
@@ -1553,7 +1557,7 @@ class Explorer extends h2d.Object {
 		var list = inSolar ? solarSpots : sectorSpots;
 		for( sp in list ) {
 			var on = false;
-			if( inSolar ) on = sp.planet != null && isActive(sp.planet);
+			if( inSolar ) on = sp.planet != null && (isActive(sp.planet) || sp.planet.id == tutoTarget);
 			else on = sp.system != null && sp.system.status == SOpen && Lambda.exists(sp.system.planets, isActive);
 			if( on ) gps.push({ arrow : gpsArrow(), target : sp.e });
 		}
@@ -1618,7 +1622,8 @@ class Explorer extends h2d.Object {
 				var td = Math.sqrt((ship.target.x - room.center.x) * (ship.target.x - room.center.x) + (ship.target.y - room.center.y) * (ship.target.y - room.center.y));
 				if( d >= room.exitDist - 30 && td >= room.exitDist ) {
 					var from = curSystem;
-					sendAction(function() gotoSector(from));
+					if( canLeave() ) sendAction(function() gotoSector(from));
+					else stopShip(true);
 				}
 			}
 			if( d >= room.exitDist ) stopShip();

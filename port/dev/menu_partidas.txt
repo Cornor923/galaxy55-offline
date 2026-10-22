@@ -181,9 +181,9 @@ tap down
 wait 2
 print menu
 tap enter
-waitfor planet
+waitfor map
 wait 30
-print inv
+print tuto
 print saves
 # otra partida, creativa en Otono: Modo -> Creativo, Bioma -> Otono, Tamano, Crear
 menu
