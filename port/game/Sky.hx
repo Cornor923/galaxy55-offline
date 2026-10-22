@@ -128,6 +128,8 @@ class Sky {
 
 	var liquidCol : Null<Int> = null;
 	var dryK = 0.;
+	/** color plano que tapa el degradado dentro de un liquido */
+	var flatSky = new h3d.shader.FixedColor();
 
 	/** como Game.getEffects del original: con la camara dentro de un liquido con BFColor, la niebla toma su color y se espesa (col null = fuera) */
 	public function setLiquid( col : Null<Int>, power : Float ) {
@@ -138,15 +140,37 @@ class Sky {
 				fog.c2 = rgb(cols[2]);
 				fog.fogK = dryK;
 				liquidCol = null;
+				liquidSky(null);
 			}
 			return;
 		}
 		if( liquidCol == null ) dryK = fog.fogK;
+		if( col != liquidCol ) liquidSky(col);
 		liquidCol = col;
 		fog.c0 = rgb(col);
 		fog.c1 = rgb(col);
 		fog.c2 = rgb(col);
 		fog.fogK = 0.01 * power;
+	}
+
+	/**
+		Como la pasada de niebla del original (Render.hx): dentro de un liquido los colores de la niebla son todos el del liquido y
+		tapan el cielo entero, y skyBoxAlpha = 1 - (fogPower - 1)^2 / 10 queda muy por debajo de 0 (fogPower de unos 29 a 64): sin
+		estrellas. Solo al entrar, al salir o al pasar a otro liquido; el degradado no se rehace.
+	**/
+	function liquidSky( col : Null<Int> ) {
+		var p = dome.material.mainPass;
+		p.removeShader(flatSky);
+		if( col != null ) {
+			flatSky.color.setColor(0xFF000000 | col);
+			p.addShader(flatSky);
+		}
+		if( stars != null ) stars.visible = col == null && space == null;
+		// nave nodriza (anadido del port): su cielo de espacio tambien queda tapado
+		if( space != null ) {
+			space.visible = col == null;
+			dome.visible = col != null;
+		}
 	}
 
 	public function setVisible( v : Bool ) {
