@@ -10,9 +10,9 @@ class TutoText {
 	static var T : Map<String, Array<String>> = [
 		"title" => ["TUTORIAL", "TUTORIAL", "TUTORIEL"],
 		"space" => [
-			"¡Avería! El casco de la nave está perforado. Aterriza de emergencia en el planeta que indica la flecha verde.",
-			"Damage! The ship's hull is breached. Make an emergency landing on the planet shown by the green arrow.",
-			"Avarie ! La coque du vaisseau est percée. Pose-toi en urgence sur la planète indiquée par la flèche verte."],
+			"¡Alerta! El casco de la nave está perforado. Aterriza de emergencia en el planeta que indica la flecha verde.",
+			"Alert! The ship's hull is breached. Make an emergency landing on the planet shown by the green arrow.",
+			"Alerte ! La coque du vaisseau est percée. Pose-toi en urgence sur la planète indiquée par la flèche verte."],
 		"badplanet" => [
 			"Este planeta no sirve para nuestro aterrizaje de emergencia.",
 			"This planet is not suitable for our emergency landing.",
@@ -62,9 +62,9 @@ class TutoText {
 			"Activate the on-board computer (in green) and choose \"Modify the ship (hangar)\".",
 			"Active l'ordinateur de bord (en vert) et choisis \"Modifier le vaisseau (hangar)\"."],
 		"hangar" => [
-			"Tapa los agujeros del techo (en verde) con tu %hull%. La nave tiene que ser estanca.",
-			"Fill the holes in the roof (in green) with your %hull%. The ship must be airtight.",
-			"Bouche les trous du toit (en vert) avec ton %hull%. Le vaisseau doit être étanche."],
+			"Apunta a la puerta de la nave y haz clic una vez para abrirla. Luego tapa los agujeros del techo (en verde) con tu %hull%: la nave tiene que ser estanca.",
+			"Aim at the ship's door and click once to open it. Then fill the holes in the roof (in green) with your %hull%: the ship must be airtight.",
+			"Vise la porte du vaisseau et clique une fois pour l'ouvrir. Bouche ensuite les trous du toit (en vert) avec ton %hull% : le vaisseau doit être étanche."],
 		"hangarearly" => [
 			"Primero necesitas %hull%: sal del hangar y usa el sintetizador.",
 			"You need %hull% first: leave the hangar and use the synthesizer.",
@@ -74,21 +74,21 @@ class TutoText {
 			"The ship is airtight! Leave the hangar through the big exit or the ship's teleporter.",
 			"Le vaisseau est étanche ! Sors du hangar par la grande sortie ou par le téléporteur du vaisseau."],
 		"done" => [
-			"¡Bien hecho, tutorial terminado! La ESCorp te envía %gift% cargas azules y %gift% cargas amarillas. Ya puedes salir del sistema y explorar otros planetas, vender tus recursos al robot comerciante y, pronto, hacer misiones de recolección desde el ordenador de a bordo.",
-			"Well done, tutorial complete! ESCorp sends you %gift% blue charges and %gift% yellow charges. You can now leave the system and explore other planets, sell your resources to the merchant robot, and soon take on harvesting missions from the on-board computer.",
-			"Bravo, tutoriel terminé ! L'ESCorp t'envoie %gift% charges bleues et %gift% charges jaunes. Tu peux maintenant quitter le système et explorer d'autres planètes, vendre tes ressources au robot marchand, et bientôt faire des missions de récolte depuis l'ordinateur de bord."],
+			"¡Bien hecho! La ESCorp te envía %gift% cargas azules y %gift% cargas amarillas. Ya puedes salir del sistema y explorar otros planetas, vender tus recursos al robot comerciante y, pronto, hacer misiones de recolección desde el ordenador de a bordo.",
+			"Well done! ESCorp sends you %gift% blue charges and %gift% yellow charges. You can now leave the system and explore other planets, sell your resources to the merchant robot, and soon take on harvesting missions from the on-board computer.",
+			"Bravo ! L'ESCorp t'envoie %gift% charges bleues et %gift% charges jaunes. Tu peux maintenant quitter le système et explorer d'autres planètes, vendre tes ressources au robot marchand, et bientôt faire des missions de récolte depuis l'ordinateur de bord."],
 		"nobreak" => [
-			"Durante el tutorial no rompas nada en el hangar: solo tapa los agujeros.",
-			"During the tutorial, don't break anything in the hangar: just fill the holes.",
-			"Pendant le tutoriel, ne casse rien dans le hangar : bouche seulement les trous."],
+			"No rompas nada en el hangar: solo tapa los agujeros.",
+			"Don't break anything in the hangar: just fill the holes.",
+			"Ne casse rien dans le hangar : bouche seulement les trous."],
 		"onlyhull" => [
 			"Este agujero se tapa con %hull%.",
 			"This hole is filled with %hull%.",
 			"Ce trou se bouche avec du %hull%."],
 		"onlyholes" => [
-			"Durante el tutorial, pon el %hull% solo en los agujeros del techo (en verde).",
-			"During the tutorial, only put %hull% in the holes in the roof (in green).",
-			"Pendant le tutoriel, pose le %hull% seulement dans les trous du toit (en vert)."],
+			"Pon el %hull% solo en los agujeros del techo (en verde).",
+			"Only put %hull% in the holes in the roof (in green).",
+			"Pose le %hull% seulement dans les trous du toit (en vert)."],
 		"skip" => ["Saltar el tutorial", "Skip the tutorial", "Passer le tutoriel"],
 		"skip.ask" => ["¿Saltar el tutorial?", "Skip the tutorial?", "Passer le tutoriel ?"],
 		"skip.warn" => [
