@@ -24,7 +24,7 @@ import Common;
  *                           o en el mapa); si no llega, lo dice
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power
+ *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power|life
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   shot nombre             captura en port/out/nombre.png
  *   quit
@@ -33,6 +33,9 @@ class Dev {
 
 	static var shoreX = 0;
 	static var shoreY = 0;
+	/** vida y tiempo de juego del ultimo `print life` (para el ritmo de curacion) */
+	static var lifeV = 0.;
+	static var lifeT = -1.;
 
 	/** mensajes de seguimiento del juego (orden `trace`) */
 	public static var trace = false;
@@ -436,6 +439,13 @@ class Dev {
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
 		case "time":
 			Sys.println("tiempo: " + Std.int(g.playSeconds));
+		case "life":
+			// vida, tiempo de juego y ritmo desde el ultimo `print life` (vida por segundo)
+			var t = g.playSeconds;
+			var rate = lifeT < 0 || t <= lifeT ? "" : " ritmo " + Math.round((g.life - lifeV) / (t - lifeT) * 100) / 100 + "/s en " + Math.round((t - lifeT) * 10) / 10 + " s";
+			Sys.println("vida " + Math.round(g.life * 100) / 100 + " t " + Math.round(t * 100) / 100 + rate + " z " + Math.round(g.pz * 100) / 100 + " suelo " + (g.standingBlock == null ? "-" : "" + g.standingBlock.k));
+			lifeV = g.life;
+			lifeT = t;
 		case "hangar":
 			Sys.println("hangar: " + (g.hangar == null ? "no" : "valida=" + g.hangarValid + " error=" + g.hangar.error + " velocidad=" + g.hangar.speed) + " mensaje=" + g.message);
 		case "wares":
