@@ -57,7 +57,8 @@ class Dev {
 		var playing = Type.enumConstructor(@:privateAccess app.state) == "Playing";
 		return switch( what ) {
 			case "map": g == null && app.explorer != null;
-			case "sector": app.explorer != null && app.explorer.shipPos() != null;
+			// en el sector y con la animacion de salida del sistema ya terminada (mientras dura, el mapa no hace caso)
+			case "sector": app.explorer != null && app.explorer.shipPos() != null && !@:privateAccess app.explorer.locked && !@:privateAccess app.explorer.serverLock;
 			case "window": app.explorer != null && app.explorer.devWindowOpen();
 			case "planet": playing && g != null && g.info.mothership != true && g.hangar == null;
 			case "mother": playing && g != null && g.info.mothership == true;
