@@ -1,0 +1,30 @@
+# tutorial: partida de aventura nueva en el espacio (sistema 0), planeta del tutorial senalado, los demas planetas y la
+# salida del sistema cerrados, aterrizaje en el planeta del tutorial y bloques puestos cerca de la nave
+wait 3
+tuto new 4242
+waitfor map
+wait 90
+print tuto
+expinfo
+shot tuto_espacio
+# otro planeta: no se aterriza
+expplanet 1
+waitfor window
+expbutton
+wait 30
+expinfo
+shot tuto_otro_planeta
+# salir del sistema: la nave se para en el borde
+expgo 0 0
+wait 400
+expinfo
+# el planeta del tutorial
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 60
+print tuto
+print pos
+shot tuto_nave
+quit

@@ -1,0 +1,20 @@
+# ventana de confirmacion de "Pasar el tutorial" (pausa del planeta y del mapa) y textos en el idioma elegido (--lang=fr)
+wait 3
+tuto new 4242
+waitfor map
+wait 60
+shot tuto_mapa
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+planet
+wait 30
+shot tuto_bajar
+pause
+wait 5
+tuto ask
+wait 5
+shot tuto_pregunta
+quit

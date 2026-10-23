@@ -1,0 +1,32 @@
+# hangar del tutorial: poner el blindaje en un agujero del techo desde dentro de la nave, manteniendo el boton. Al quedar
+# puesto no debe salir el aviso rojo de "solo en los agujeros" (la celda que se apunta despues no es un error)
+wait 3
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+tuto step 9
+give BShipHull 3
+hangar
+waitfor ready
+wait 30
+print tuto
+tp 10.5 10.5 3
+wait 5
+slot 1
+lookat 10.5 8.98 5.5
+wait 3
+print select
+key place
+wait 40
+print msg
+print block 10 9 5
+unkey
+wait 5
+print msg
+print tuto
+shot tuto_hangar_pose
+quit

@@ -229,9 +229,13 @@ class GameView {
 		hangarMsg = hangarValid ? Lang.t("hangar.ship_valid").split("%speed%").join("" + hangar.speed) : Lang.t("hangar." + hangar.error);
 	}
 	var hangarMsg = "";
-	/** aviso de un bloque que no se puede poner (Hangar.forbidden) y cuanto le queda en pantalla */
+	/** aviso (ya traducido) de un bloque que no se puede poner (Hangar.forbidden, hangarRule) y cuanto le queda en pantalla */
 	var hangarRefused : String;
+	/** reglas del hangar durante el tutorial (Tutorial.hangarRule): (poner, x, y, z, bloque) -> aviso, o null si se puede */
+	public var hangarRule : Bool -> Int -> Int -> Int -> Block -> String;
 	var hangarRefusedTime = 0.;
+	/** se acaba de poner un bloque y el boton sigue pulsado: lo siguiente que se apunte no avisa (la celda de al lado no es un error) */
+	var placedHold = false;
 
 	function hangarUpdate( tmod : Float ) {
 		hangarTime += tmod;
@@ -246,7 +250,7 @@ class GameView {
 		// lo que no se puede poner (cambio del port): se avisa en rojo un momento, como los errores del hangar del original
 		if( hangarRefusedTime > 0 ) hangarRefusedTime -= tmod;
 		messageRed = hangarRefusedTime > 0;
-		message = messageRed ? Lang.t("hangar." + hangarRefused) : (hangarTime < 400 ? Lang.t("hangar.help") : hangarMsg);
+		message = messageRed ? hangarRefused : (hangarTime < 400 ? Lang.t("hangar.help") : hangarMsg);
 		// salir por las casillas de teletransporte (EditShip.update)
 		if( standingBlock != null && standingBlock.k == BShipEntry ) {
 			if( enteringShip >= 0 ) {
@@ -1267,6 +1271,7 @@ class GameView {
 		if( !held ) {
 			armed = true;
 			actionWait = false;
+			placedHold = false;
 		}
 		laserActive = controls && held && armed && !actionWait;
 		if( actionPause > 0 ) actionPause -= tmod;
@@ -1348,6 +1353,17 @@ class GameView {
 		if( debugDeny || (info.mothership == true && !editMother) ) canBreak = false;
 		// en tu nave, ordenador y puertas solo se usan, no se rompen (ShipLogic.checkSelect: allowBreak = false)
 		if( s.z >= World.SHIP_Z && !inCraft && (b.activable != null || b.toggle != null) ) canBreak = false; // la nave nodriza no se rompe
+		// tutorial: en el hangar no se rompe nada; lo que se activa (puertas, ordenador) se sigue usando, sin aviso
+		if( canBreak && hangar != null && hangarRule != null ) {
+			var why = hangarRule(false, s.x, s.y, s.z, b);
+			if( why != null ) {
+				canBreak = false;
+				if( b.activable == null && b.toggle == null ) {
+					hangarRefused = why;
+					hangarRefusedTime = 90;
+				}
+			}
+		}
 		actionPause = 1;
 		if( s.power < 1 || !canBreak ) return;
 		if( laserCharge != null ) inv.useCharge(laserCharge);
@@ -1394,9 +1410,12 @@ class GameView {
 		var s = select;
 		// hangar: ni liquidos ni la bomba exotica a bordo (cambio del port); no se pone y se dice por que
 		var refused = hangar != null ? Hangar.forbidden(hand) : null;
-		if( refused != null ) {
-			hangarRefused = refused;
-			hangarRefusedTime = 180;
+		var why = refused != null ? Lang.t("hangar." + refused) : (hangar != null && hangarRule != null ? hangarRule(true, s.tx, s.ty, s.tz, hand) : null);
+		if( why != null ) {
+			if( !placedHold ) {
+				hangarRefused = why;
+				hangarRefusedTime = 180;
+			}
 			return;
 		}
 		var put = hand.getFlip(yaw);
@@ -1422,6 +1441,9 @@ class GameView {
 		if( !ok || actionPause > 0 ) return;
 		actionPause = creative ? 6 : 15;
 		if( !creative && !inv.useCurrentBlock() ) return;
+		// bien puesto: se quita el aviso que hubiera y no se avisa de nada hasta soltar el boton
+		placedHold = true;
+		hangarRefusedTime = 0;
 		// si era el ultimo bloque, hay que soltar el boton antes de seguir (evita excavar sin querer)
 		if( inv.getCurrentBlock() == null ) actionWait = true;
 		if( Dev.trace ) Sys.println("place en " + x + "," + y + "," + z + " sobre " + s.b.k + "@" + s.x + "," + s.y + "," + s.z + " antes=" + world.block(x, y, z));

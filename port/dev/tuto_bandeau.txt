@@ -1,0 +1,19 @@
+# recuadro del objetivo del tutorial bajo la barra del inventario (con la ayuda de las teclas oculta) y texto del espacio.
+# Lanzarlo con un settings.json de los datos de prueba con "showHelp" : false (la ayuda de las teclas oculta).
+wait 3
+tuto new 4242
+waitfor map
+wait 60
+shot tuto_bandeau_espacio
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+planet
+wait 10
+tuto step 3
+give BMinAluminium 2
+wait 10
+shot tuto_bandeau_planeta
+quit

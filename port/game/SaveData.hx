@@ -28,6 +28,13 @@ typedef UniInfo = {
 	@:optional var traveled : Float;
 }
 
+/** Tutorial en curso (Tutorial, anadido del port): el paso y los bloques puestos para el en el planeta. */
+typedef TutoInfo = {
+	var step : Int;
+	/** x, y, z y bloque de cada uno, de 4 en 4 (null hasta el primer aterrizaje: TutoSetup.seedPlanet) */
+	@:optional var spots : Array<Int>;
+}
+
 /** Datos de una partida guardada. Los cambios de terreno, inventario y creditos se anadiran aqui. */
 typedef SaveInfo = {
 	var version : Int;
@@ -71,6 +78,8 @@ typedef SaveInfo = {
 	@:optional var mothership : Bool;
 	/** contenido de las cantinas (cofres): clave "s:x,y,z" en la nave o "p<planeta>:x,y,z" en un planeta */
 	@:optional var chests : Array<{ key : String, t : Protocol.BlockInventory }>;
+	/** tutorial en curso (null: sin tutorial, terminado o pasado) */
+	@:optional var tuto : TutoInfo;
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
@@ -134,6 +143,15 @@ class SaveData {
 		}
 	}
 
+	static function readTuto( o : Dynamic ) : TutoInfo {
+		try {
+			if( o == null || o.step == null ) return null;
+			return { step : Std.int(o.step), spots : o.spots != null ? [for( v in (o.spots : Array<Dynamic>) ) Std.int(v)] : null };
+		} catch( e : Dynamic ) {
+			return null;
+		}
+	}
+
 	/** inventario guardado; si falta o esta mal formado se usa el inicial */
 	static function readInv( o : Dynamic ) : Protocol.InventoryInfos {
 		try {
@@ -177,6 +195,7 @@ class SaveData {
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
 					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : readUni(o.uni), credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
+					tuto : readTuto(o.tuto),
 			};
 		} catch( e : Dynamic ) {
 			return null;

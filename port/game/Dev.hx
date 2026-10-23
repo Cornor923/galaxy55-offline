@@ -46,6 +46,8 @@ import Common;
  *   newgame SEMILLA [acc..] Menu principal > Nueva partida como el jugador: escribe la semilla, maneja la fila del bioma con
  *                           las acciones (izq / der = flechas, ok = Intro, clic< / clic> = clic en esas flechas, clicfila =
  *                           clic en el titulo de la fila) y pulsa Crear; seguir con waitfor planet y print biome
+ *   tuto new|notuto [semilla] partida de aventura nueva en el espacio, con o sin tutorial; tuto step N; tuto skip (sin preguntar)
+ *   print tuto              paso del tutorial, objetivos marcados, sus bloques en el planeta y el texto (tambien en el mapa)
  *   menu                    Menu principal (guarda la partida, como desde la pausa); el guion sigue en los menus de inicio
  *   devsaves N              borra las partidas de la carpeta de datos de prueba y crea N de ejemplo (solo con GALAXY55_DATA)
  *   tap TECLA               pulsar y soltar una tecla: up down left right enter esc tab space pgup pgdown o una letra
@@ -514,6 +516,51 @@ class Dev {
 				case "fps": Sys.println("fps " + Std.int(hxd.Timer.fps()));
 				case "helptext": Settings.showHelp = a[1] == "1"; // helptext 0|1: opcion de ayuda en pantalla
 				case "hangar": app.startHangar();
+				case "computer":
+					// el menu del ordenador de a bordo, como al activarlo (el guion sigue; close lo cierra)
+					@:privateAccess app.openComputer();
+					inPause = true;
+				case "tuto":
+					// tuto new|notuto [semilla]: partida de aventura nueva, en el espacio (con o sin tutorial); tuto step N; tuto skip
+					switch( a[1] ) {
+					case "new", "notuto": app.devNewGame(a[1] == "new", a.length > 2 ? Std.parseInt(a[2]) : 1234);
+					case "step": if( app.curInfo().tuto != null ) app.curInfo().tuto.step = Std.parseInt(a[2]);
+					case "skip": app.skipTutorial();
+					case "ask": @:privateAccess app.askSkip(app.current); // la ventana de confirmacion (con la pausa abierta)
+					case "rule":
+						// tuto rule place|break x y z Bloque: lo que dicen las reglas del hangar del tutorial (null = se puede)
+						var r = g.hangarRule;
+						Sys.println("regla " + a[2] + " " + a[3] + "," + a[4] + "," + a[5] + " " + a[6] + ": " + (r == null ? "sin reglas" : "" + r(a[2] == "place", Std.parseInt(a[3]), Std.parseInt(a[4]), Std.parseInt(a[5]), bk(a[6]))));
+					case "view":
+						// de pie a 6 bloques del primer objetivo, por su lado libre, mirandolo (para las capturas)
+						var t = @:privateAccess app.tutorial.targets(g)[0];
+						if( t != null ) {
+							var d = [1, 0];
+							for( o in [[-1, 0], [1, 0], [0, -1], [0, 1]] ) if( w.block(t.x + o[0], t.y + o[1], t.z) == null ) d = o;
+							lines.insert(pc, "lookat " + (t.x + 0.5) + " " + (t.y + 0.5) + " " + (t.z + 0.5));
+							lines.insert(pc, "tp " + (t.x + 0.5 + d[0] * 6) + " " + (t.y + 0.5 + d[1] * 6) + " top");
+						}
+					case "goto", "mine", "activate":
+						// sobre el primer objetivo marcado: goto = de pie a 1,5 bloques mirandolo; mine y activate como esas ordenes
+						var t = @:privateAccess app.tutorial.targets(g)[0];
+						if( t == null ) Sys.println("tuto " + a[1] + ": sin objetivo");
+						else if( a[1] == "goto" ) {
+							// en una celda libre junto a el (con sitio para la cabeza): el hueco del risco, el lado del filon
+							var at = null;
+							for( o in [[-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0], [0, 0, 1]] )
+								if( at == null && w.block(t.x + o[0], t.y + o[1], t.z + o[2]) == null && w.block(t.x + o[0], t.y + o[1], t.z + o[2] + 1) == null )
+									at = { x : t.x + o[0], y : t.y + o[1], z : t.z + o[2] };
+							lines.insert(pc, "lookat " + (t.x + 0.5) + " " + (t.y + 0.5) + " " + (t.z + 0.5));
+							lines.insert(pc, at == null ? "tp " + (t.x - 1.5) + " " + (t.y + 0.5) + " top" : "tp " + (at.x + 0.5) + " " + (at.y + 0.5) + " " + at.z);
+						} else {
+							// mine: despues se pone en la celda que queda libre para recoger lo que suelta
+							if( a[1] == "mine" ) {
+								lines.insert(pc, "wait 40");
+								lines.insert(pc, "tp " + (t.x + 0.5) + " " + (t.y + 0.5) + " " + t.z);
+							}
+							lines.insert(pc, a[1] + " " + t.x + " " + t.y + " " + t.z);
+						}
+					}
 				case "mothership": app.startMothership();
 				case "settop":
 					// pone un bloque encima del primero que haya en la columna (para probar el hangar)
@@ -631,6 +678,17 @@ class Dev {
 					}
 				Sys.println("  " + f + " " + hd.width + "x" + hd.height + (hd.width == eng.width && hd.height == eng.height ? " = ventana" : " DISTINTO DE LA VENTANA") + (opaque ? ", opaca" : ", CON TRANSPARENCIA"));
 			}
+			return;
+		}
+		if( a[1] == "tuto" ) {
+			// paso, bloques del tutorial, objetivos marcados y texto (tambien en el mapa)
+			var info = app.curInfo(), t = @:privateAccess app.tutorial;
+			var sp = info.tuto == null || info.tuto.spots == null ? [] : info.tuto.spots;
+			var spots = [for( i in 0...Std.int(sp.length / 4) ) Block.all[sp[i * 4 + 3]].k + "@" + sp[i * 4] + "," + sp[i * 4 + 1] + "," + sp[i * 4 + 2]
+				+ (g != null && g.world.block(sp[i * 4], sp[i * 4 + 1], sp[i * 4 + 2]) == Block.all[sp[i * 4 + 3]] ? "" : "(recogido)")];
+			Sys.println("tuto: " + (info.tuto == null ? "no" : "paso " + info.tuto.step) + " objetivos " + [for( o in t.targets(g) ) o.x + "," + o.y + "," + o.z].join(" ")
+				+ "\n  bloques: " + spots.join(" ") + "\n  cargas: " + [for( c in (g != null ? g.inv.inv : info.inv).charges )Type.createEnumIndex(ChargeKind, c.c) + "x" + c.n].join(" ")
+				+ "\n  texto: " + t.text(info, g));
 			return;
 		}
 		if( g == null ) {
