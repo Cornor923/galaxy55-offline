@@ -21,7 +21,7 @@ import Common;
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
  *   hand Bloque             poner ese bloque en la casilla elegida (como la paleta creativa)
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
- *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local
+ *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local; si abre un menu, el guion sigue en el
  *   synth N                 usar el ordenador del sintetizador N
  *   jet 1|0                 mantener Espacio (salto y jetpack)
  *   press|release TECLA...  pulsar o soltar teclas de verdad (shift o una letra), p. ej. press shift k = Mayus+K
@@ -31,6 +31,8 @@ import Common;
  *                           de los sistemas), window (ventana del mapa
  *                           abierta), planet (jugando en un planeta), mother (jugando en la nave nodriza), ready (cargado: jugando
  *                           o en el mapa); si no llega, lo dice
+ *   waitfor ground          esperar a estar de pie en el suelo (el fotograma del aterrizaje tras una caida)
+ *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
  *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky
@@ -38,9 +40,13 @@ import Common;
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
+ *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power|life|fade|around x y z r|fov|sky|menu
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
  *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
  *   pause                   menu de pausa como Esc (el guion sigue; close lo cierra)
+ *   newgame SEMILLA [acc..] Menu principal > Nueva partida como el jugador: escribe la semilla, maneja la fila del bioma con
+ *                           las acciones (izq / der = flechas, ok = Intro, clic< / clic> = clic en esas flechas, clicfila =
+ *                           clic en el titulo de la fila) y pulsa Crear; seguir con waitfor planet y print biome
  *   quit
  */
 class Dev {
@@ -91,6 +97,7 @@ class Dev {
 			case "planet": playing && g != null && g.info.mothership != true && g.hangar == null;
 			case "mother": playing && g != null && g.info.mothership == true;
 			case "ready": playing || (g == null && app.explorer != null);
+			case "ground": g != null && g.onGround();
 			default: true;
 		}
 	}
@@ -361,6 +368,7 @@ class Dev {
 					var b = w.block(x, y, z);
 					Sys.println("activar " + x + "," + y + "," + z + ": " + (b == null ? "nada" : "" + b.k));
 					if( b != null ) g.activateBlock(x, y, z, b);
+					if( @:privateAccess app.current != null ) inPause = true; // el ordenador de a bordo abre un menu: el guion sigue en el (close lo cierra)
 				case "synth":
 					var c = g.ship.crafts[Std.parseInt(a[1])];
 					g.ship.activateCraft(c.out.x + sdx, c.out.y + sdy, c.out.z + sz, g);
@@ -378,6 +386,7 @@ class Dev {
 				case "exppause": @:privateAccess app.openMapPause(); // Esc en el mapa
 				case "landhome": app.devLandHome(); // aterrizar en el planeta del que despegaste
 				case "reload": app.devReload(); // Menu principal y Continuar con esta partida
+				case "newgame": newGame(app, a.slice(1));
 				case "expesc": app.explorer.escape(); // Esc o Start del mando en el mapa
 				case "screen2": @:privateAccess app.show(a[1]); // abre una pantalla de menu sin cambiar de estado
 				case "setlang":
@@ -489,6 +498,41 @@ class Dev {
 		return true;
 	}
 
+	/** orden newgame: el formulario de Nueva partida, buscando sus filas por el titulo (como las ve el jugador) */
+	function newGame( app : GalaxyApp, args : Array<String> ) @:privateAccess {
+		if( app.game != null || app.explorer != null ) app.toMainMenu();
+		app.show("new");
+		var biome : Ui.Selector = null, seed : Ui.TextField = null, create : Ui.Widget = null;
+		for( w in app.current.widgets ) {
+			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("biome") ) biome = cast w;
+			else if( Std.isOfType(w, Ui.TextField) && cast(w, Ui.TextField).title == Lang.t("seed") ) seed = cast w;
+			else if( w.label.text == Lang.t("create") ) create = w;
+		}
+		seed.input.text = args[0];
+		// un clic del raton en la fila del bioma a la altura x (h2d.Interactive.onClick con relX)
+		function click( x : Float ) {
+			app.current.setFocus(app.current.widgets.indexOf(biome));
+			biome.inter.onClick(new hxd.Event(ERelease, x, biome.h * 0.5));
+		}
+		var v = biome.value;
+		for( act in args.slice(1) ) {
+			var before = biome.choices[biome.index];
+			switch( act ) {
+			case "izq": biome.onLeft();
+			case "der": biome.onRight();
+			case "ok": biome.activate();
+			case "clic<": click(v.x + 6);
+			case "clic>": click(v.x + v.textWidth * v.scaleX - 6);
+			case "clicfila": click(40);
+			default: Sys.println("newgame: accion desconocida " + act);
+			}
+			Sys.println("newgame " + act + ": " + before + " -> " + biome.choices[biome.index]);
+		}
+		Sys.println("formulario: bioma " + biome.choices[biome.index] + " (" + biome.index + "), semilla " + seed.input.text);
+		create.activate();
+		Sys.println("partida creada: " + app.loadInfo.name + " bioma " + app.loadInfo.biome + " semilla " + app.loadInfo.seed);
+	}
+
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
 		if( a[1] == "screen" ) {
 			Sys.println("pantalla " + @:privateAccess app.currentName);
@@ -551,6 +595,9 @@ class Dev {
 			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "menu":
+			// botones del menu abierto (etiqueta y y), de arriba abajo
+			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));
 		case "palette":
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
 		case "time":
@@ -656,6 +703,11 @@ class Dev {
 		case "fade":
 			var f = g.fadeFX;
 			Sys.println(f == null ? "fundido: ninguno" : "fundido: color " + StringTools.hex(f.col, 6) + " t=" + Math.round(f.t * 100) / 100 + " opacidad " + Math.round(g.fadeAlpha() * 100) / 100 + " bloqueo " + f.lock);
+		case "land":
+			// lo que deja un aterrizaje: aturdido > 0 impide saltar (Hero.hit: stun = 10), el casco baja con bobY
+			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
+			Sys.println("aterrizaje: suelo " + (g.standingBlock == null ? "-" : "" + g.standingBlock.k) + " gravedad " + r(g.gravity) + " aturdido " + r(@:privateAccess g.stun)
+				+ " casco " + r(g.bobY) + " temblor " + r(g.shake) + " fundido " + r(g.fadeAlpha()) + " vida " + r(g.life) + " creativo " + g.creative);
 		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poder=" + g.select.power));
 		case "sky":
 			// giro de las estrellas (Sky.follow): a donde apuntan los ejes x y z del cubo de estrellas
@@ -670,6 +722,27 @@ class Dev {
 				Sys.println("cielo: " + (flat == null ? "degradado" : "color " + StringTools.hex(flat.color.toColor() & 0xFFFFFF, 6))
 					+ ", estrellas " + (st != null && st.visible ? "si" : "no"));
 			}
+		case "biome":
+			// bioma del mundo cargado, el de la partida y el de salida del universo; y el suelo que mas se ve (una columna de cada 8x8)
+			var u = g.info.uni;
+			var count = new Map<String, Int>();
+			var y = 0;
+			while( y < w.size ) {
+				var x = 0;
+				while( x < w.size ) {
+					var z = World.HEIGHT - 1;
+					while( z > 0 && (w.block(x, y, z) == null || w.block(x, y, z).type != BTFull) ) z--;
+					var b = w.block(x, y, z);
+					var k = b == null ? "-" : "" + b.k;
+					count.set(k, (count.exists(k) ? count.get(k) : 0) + 1);
+					x += 8;
+				}
+				y += 8;
+			}
+			var top = [for( k in count.keys() ) k];
+			top.sort(function(a, b) return count.get(b) - count.get(a));
+			Sys.println("bioma: mundo " + w.biomeName + ", partida " + g.info.biome + ", salida " + (u == null ? "-" : u.start.biome) + ", semilla " + g.info.seed
+				+ ", suelo " + [for( k in top.slice(0, 3) ) k + "x" + count.get(k)].join(" "));
 		case "ship":
 			var beam = @:privateAccess g.ship.beam;
 			Sys.println("nave en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z + (beam == null ? "" : " rayo z=" + beam.z + " alto=" + Math.round(beam.scaleZ * 100) / 100));

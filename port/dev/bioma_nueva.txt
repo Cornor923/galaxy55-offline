@@ -1,0 +1,64 @@
+# Nueva partida: el planeta creado es el del bioma elegido en el formulario (y el mapa de estrellas lo nombra igual)
+#   powershell -File port/dev/devrun.ps1 -Script port/dev/bioma_nueva.txt -Timeout 400
+# opciones del bioma: 0 Aleatorio, 1 Otono, 2 Luna, 3 Marte, 4 Cumbres nevadas, 5 Bosque acido, 6 Ciudad muerta
+# en cada "bioma:" el mundo y la partida deben ser los de la linea "formulario:" anterior, con su suelo (BSoilCover, BMoonSoilCover...)
+wait 3
+# con las flechas, uno por uno
+newgame 777 der
+waitfor planet
+print biome
+newgame 777 der der
+waitfor planet
+print biome
+newgame 777 der der der
+waitfor planet
+print biome
+newgame 777 der der der der
+waitfor planet
+print biome
+newgame 777 der der der der der
+waitfor planet
+print biome
+newgame 777 izq
+waitfor planet
+print biome
+# aleatorio: BIOMES[semilla % 5] de GalaxyApp (778 % 5 = 3, Cumbres nevadas); la Ciudad muerta no sale al azar, como en el original
+newgame 778
+waitfor planet
+print biome
+# Intro sobre la fila pasa a la siguiente (Luna -> Marte), como el clic en el titulo
+newgame 777 der der ok
+waitfor planet
+print biome
+# raton: clic en "<" va a la anterior (Aleatorio -> Ciudad muerta, Marte -> Luna; antes iba a la siguiente), en ">" y en el
+# titulo de la fila a la siguiente
+newgame 777 clic<
+waitfor planet
+print biome
+newgame 777 der der der clic<
+waitfor planet
+print biome
+newgame 777 clic>
+waitfor planet
+print biome
+newgame 777 clicfila
+waitfor planet
+print biome
+# Ciudad muerta en el mapa: "planeta 0 ... BIDeadCity (Ciudad muerta)" (salia Otono) y en la captura el planeta gris (salia negro)
+newgame 777 izq
+waitfor planet
+explore
+waitfor map
+wait 200
+expinfo
+expplanet 0
+waitfor window 600
+wait 30
+shot bioma_mapa_ciudad
+# aterrizar en otro planeta: la partida pasa a su bioma (lo que muestra la lista de partidas); la salida sigue siendo la Ciudad muerta
+expplanet 1
+waitfor window 600
+expbutton
+waitfor planet 3000
+print biome
+quit

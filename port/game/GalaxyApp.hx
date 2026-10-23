@@ -677,19 +677,25 @@ class GalaxyApp extends hxd.App {
 
 	/** Ordenador de a bordo (Game.openComputerMenu): despegar, modificar la nave, comerciar. Por ahora solo se puede cerrar. */
 	function buildComputer() : Screen {
-		var s = panelFor(640, 560, Lang.t("computer.title"));
+		// visitar la nave nodriza solo se ofrece al editarla (editar_nodriza.bat); jugando se llega acoplandose al robot en el mapa
+		var mother = GameView.editMother;
+		var h = mother ? 560 : 498;
+		var s = panelFor(640, h, Lang.t("computer.title"));
 		var x = (W - 540) * 0.5;
-		var y = 215.;
+		var y = (H - h) * 0.5 + 135;
 		var takeoff = new Button(s, Lang.t("computer.takeoff"));
 		var edit = new Button(s, Lang.t("computer.edit"));
 		var trade = new Button(s, Lang.t("computer.trade"));
-		var visit = new Button(s, Lang.t("computer.mothership"));
 		var close = new Button(s, Lang.t("computer.close"));
 		s.add(takeoff, x, y);
 		s.add(edit, x, y + 62);
 		s.add(trade, x, y + 124);
-		s.add(visit, x, y + 186);
-		s.add(close, x, y + 262);
+		if( mother ) {
+			var visit = new Button(s, Lang.t("computer.mothership"));
+			s.add(visit, x, y + 186);
+			visit.onActivate = startMothership;
+		}
+		s.add(close, x, y + (mother ? 262 : 200));
 		var soon = function() {
 			resume();
 			showToast(Lang.t("computer.soon"));
@@ -697,7 +703,6 @@ class GalaxyApp extends hxd.App {
 		takeoff.onActivate = startExplorer;
 		edit.onActivate = startHangar;
 		trade.onActivate = openShop;
-		visit.onActivate = startMothership;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
 		return s;
