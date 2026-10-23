@@ -40,7 +40,7 @@ import Common;
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
- *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power|life|fade|around x y z r|fov|sky|menu
+ *   print inv|pos|zones|drops|msg|shake|block x y z|blockl x y z|select|ship|map [z]|palette|time|power|life|fade|around x y z r|fov|sky|menu
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
  *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
  *   pause                   menu de pausa como Esc (el guion sigue; close lo cierra)
@@ -67,7 +67,8 @@ class Dev {
 	var waitCond : String = null;
 	var waitMax = 0;
 	/** orden `mine` en curso: celda, bloque y cuando se empezo */
-	var mining : { x : Int, y : Int, z : Int, b : Block, t0 : Float, power : Float };
+	var mining : { x : Int, y : Int, z : Int, b : Block, t0 : Float, 
+                : Float };
 	/** orden `until`: "fade" o "tele", el valor que se espera y las actualizaciones que quedan como mucho */
 	var untilWhat : String;
 	var untilValue = 0.;
@@ -685,8 +686,10 @@ class Dev {
 			var b = w.block(Math.floor(g.px), Math.floor(g.py), Std.int(g.pz + g.viewZ));
 			Sys.println("fov " + Math.round(@:privateAccess g.s3d.camera.fovY * 100) / 100 + " opcion=" + Settings.fov + " ojos=" + (b == null ? "aire" : "" + b.k));
 		case "msg": Sys.println("mensaje: " + g.message + (g.messageRed ? " (rojo)" : ""));
-		case "block":
-			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));
+		case "block", "blockl":
+			// blockl: coordenadas locales de la nave
+			var l = a[1] == "blockl";
+			var b = w.block(Std.parseInt(a[2]) + (l ? w.shipDX : 0), Std.parseInt(a[3]) + (l ? w.shipDY : 0), Std.parseInt(a[4]) + (l ? World.SHIP_Z : 0));
 			Sys.println("bloque: " + (b == null ? "nada" : "" + b.k));
 		case "around":
 			// print around X Y Z R: bloques en el cubo de lado 2R+1 (planeta, nave y roca madre) y bombas por explotar

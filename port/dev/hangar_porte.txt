@@ -1,0 +1,30 @@
+# hangar: una puerta abierta no es un agujero del casco y la nave se guarda con las puertas cerradas
+# (la puerta de fuera de la nave de serie: BShipDoorY de 2 de alto en x 11 y 12 z 3-4 del cobertizo)
+wait 3
+ship
+wait 10
+hangar
+waitfor ready
+wait 20
+print hangar
+activate 11 12 3
+wait 20
+print block 11 12 3
+print block 11 12 4
+# con la puerta abierta la nave sigue valida (sin hull_hole)
+print hangar
+# un cambio valido (casco junto al morro) para que al salir se guarde la nave, con la puerta todavia abierta
+set 18 10 3 BShipHull
+wait 20
+print hangar
+hangarexit
+waitfor planet
+# la nave guardada, de vuelta en el hangar: la puerta sale cerrada (BShipDoorY) y el casco nuevo sigue
+hangar
+waitfor ready
+wait 20
+print block 11 12 3
+print block 11 12 4
+print block 18 10 3
+print hangar
+quit
