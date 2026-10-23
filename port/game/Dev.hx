@@ -46,6 +46,13 @@ import Common;
  *   newgame SEMILLA [acc..] Menu principal > Nueva partida como el jugador: escribe la semilla, maneja la fila del bioma con
  *                           las acciones (izq / der = flechas, ok = Intro, clic< / clic> = clic en esas flechas, clicfila =
  *                           clic en el titulo de la fila) y pulsa Crear; seguir con waitfor planet y print biome
+ *   menu                    Menu principal (guarda la partida, como desde la pausa); el guion sigue en los menus de inicio
+ *   devsaves N              borra las partidas de la carpeta de datos de prueba y crea N de ejemplo (solo con GALAXY55_DATA)
+ *   tap TECLA               pulsar y soltar una tecla: up down left right enter esc tab space pgup pgdown o una letra
+ *   type TEXTO              escribir el resto de la linea en el campo de texto en el que se esta escribiendo
+ *   wheel N                 rueda del raton (N > 0 = hacia abajo)
+ *   mouse X Y [click]       llevar el raton a ese punto de la zona 1280x720 (y hacer clic)
+ *   print menu|saves        pantalla de menu abierta y su foco / partidas guardadas (waitfor menu: el menu y su fondo listos)
  *   quit
  */
 class Dev {
@@ -60,6 +67,10 @@ class Dev {
 	public static var trace = false;
 	/** el guion abrio la pausa (orden `pause`): sigue ejecutandose en pausa */
 	public var inPause = false;
+	/** el guion volvio al menu principal (orden `menu`): sigue ejecutandose en los menus de inicio */
+	public var inMenu = false;
+	/** tecla de la orden `tap`, que se suelta en la siguiente actualizacion */
+	var tapKey = -1;
 	var lines : Array<String>;
 	var pc = 0;
 	var waiting = 0;
@@ -85,6 +96,33 @@ class Dev {
 
 	static function f( s : String ) return Std.parseFloat(s);
 
+	/** codigo de una tecla de press, release y tap: un nombre o una letra */
+	static function keyCode( n : String ) : Int {
+		var K = hxd.Key;
+		return switch( n ) {
+			case "shift": K.SHIFT;
+			case "ctrl": K.CTRL;
+			case "backspace": K.BACKSPACE;
+			case "up": K.UP;
+			case "down": K.DOWN;
+			case "left": K.LEFT;
+			case "right": K.RIGHT;
+			case "enter": K.ENTER;
+			case "esc": K.ESCAPE;
+			case "tab": K.TAB;
+			case "space": K.SPACE;
+			case "pgup": K.PGUP;
+			case "pgdown": K.PGDOWN;
+			default: n.toUpperCase().charCodeAt(0);
+		}
+	}
+
+	static function keyEvent( down : Bool, code : Int ) {
+		var e = new hxd.Event(down ? EKeyDown : EKeyUp);
+		e.keyCode = code;
+		hxd.Window.getInstance().event(e);
+	}
+
 	/** condiciones de waitfor: los tiempos de carga y de viaje cambian mucho de un PC a otro */
 	static function reached( app : GalaxyApp, g : GameView, what : String ) : Bool {
 		var playing = Type.enumConstructor(@:privateAccess app.state) == "Playing";
@@ -97,6 +135,7 @@ class Dev {
 			case "mother": playing && g != null && g.info.mothership == true;
 			case "ready": playing || (g == null && app.explorer != null);
 			case "ground": g != null && g.onGround();
+			case "menu": Type.enumConstructor(@:privateAccess app.state) == "Menu" && @:privateAccess app.bgWorlds.length > 0;
 			default: true;
 		}
 	}
@@ -109,6 +148,10 @@ class Dev {
 
 	/** una orden por actualizacion; devuelve true al terminar */
 	public function tick( app : GalaxyApp, g : GameView ) : Bool {
+		if( tapKey >= 0 ) {
+			keyEvent(false, tapKey);
+			tapKey = -1;
+		}
 		if( waiting > 0 ) {
 			waiting--;
 			return false;
@@ -407,11 +450,35 @@ class Dev {
 				case "jet": g.debugJet = a[1] == "1";
 				case "press", "release":
 					// eventos de teclado de la ventana: hxd.Key los ve como si se hubieran pulsado (isPressed en la siguiente actualizacion)
-					for( n in a.slice(1) ) {
-						var e = new hxd.Event(a[0] == "press" ? EKeyDown : EKeyUp);
-						e.keyCode = n == "shift" ? hxd.Key.SHIFT : n.toUpperCase().charCodeAt(0);
+					for( n in a.slice(1) ) keyEvent(a[0] == "press", keyCode(n));
+				case "tap":
+					keyEvent(true, keyCode(a[1]));
+					tapKey = keyCode(a[1]);
+				case "type":
+					var text = l.substr(l.indexOf(" ") + 1);
+					for( i in 0...text.length ) {
+						var e = new hxd.Event(ETextInput);
+						e.charCode = text.charCodeAt(i);
 						hxd.Window.getInstance().event(e);
 					}
+				case "wheel":
+					var e = new hxd.Event(EWheel);
+					e.wheelDelta = f(a[1]);
+					hxd.Window.getInstance().event(e);
+				case "mouse":
+					// de la zona W x H a pixeles de la ventana (LetterBox)
+					var area = Ui.Theme.visibleArea(), eng = h3d.Engine.getCurrent();
+					var mx = (f(a[1]) - area.x) * eng.width / area.w, my = (f(a[2]) - area.y) * eng.height / area.h;
+					var win = hxd.Window.getInstance();
+					win.event(new hxd.Event(EMove, mx, my));
+					if( a[3] == "click" ) {
+						win.event(new hxd.Event(EPush, mx, my));
+						win.event(new hxd.Event(ERelease, mx, my));
+					}
+				case "menu":
+					@:privateAccess app.toMainMenu();
+					inMenu = true;
+				case "devsaves": app.devSaves(Std.parseInt(a[1]));
 				case "trace": trace = true;
 				case "shop": app.openShop();
 				case "screen": @:privateAccess app.show(a[1]);
@@ -535,6 +602,14 @@ class Dev {
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
 		if( a[1] == "screen" ) {
 			Sys.println("pantalla " + @:privateAccess app.currentName);
+			return;
+		}
+		if( a[1] == "menu" ) {
+			Sys.println(app.devMenuInfo());
+			return;
+		}
+		if( a[1] == "saves" ) {
+			Sys.println(app.devSavesInfo());
 			return;
 		}
 		if( a[1] == "shots" ) {

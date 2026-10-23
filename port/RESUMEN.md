@@ -21,7 +21,8 @@ etiqueta `flash-version` y la rama `flash` (más los SWF de `release/`). El READ
   o números sin molestar (ventana fuera de pantalla); se leen los PNG para comprobar la interfaz.
 
 ## Estado actual (todo funciona y está probado, salvo lo marcado)
-- Menú: Continuar, Nueva partida (nombre, semilla, bioma, tamaño), Cargar partida (miniatura), Opciones, Salir. es/en/fr.
+- Menú: Continuar (lista de partidas con miniatura que se desplaza: jugar, renombrar, borrar), Nueva partida (nombre, semilla, modo; en
+  creativo bioma y tamaño, en aventura tutorial sí/no), Opciones, Salir. es/en/fr.
   Ratón, teclado y mando. Fondo = el juego visto desde dentro, recorriendo varios biomas con fundido.
 - Partidas en `%APPDATA%\Galaxy55\` (miniatura incluida, autoguardado, F5). Captura con F2 en `screenshots\` (`GalaxyApp.takeScreen`,
   como `Render.takeScreenShot`: sin HUD, casco, caja de selección ni bloque en la mano). Opciones: idioma, sensibilidad, FOV, volumen,
