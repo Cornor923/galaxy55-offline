@@ -2,7 +2,7 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Próxima versión
+## v0.5 — pre-release
 - Arreglos de Cornor923 (¡gracias!), integrados desde sus PR 17-30 (cambio del port): sin gasto de oxígeno bajo el agua en
   creativo; el hielo junto al agua ya no se corta en triángulos visto desde abajo; la ayuda de la paleta creativa cabe en su
   panel y no hay bloque marcado al abrirla; sin banda sin agua bajo un bloque en el mar con olas; tras morir te quedas en la
@@ -28,6 +28,16 @@
   - el rayo de aterrizaje sigue el suelo bajo la nave (cavar o poner bloques debajo ya no lo deja flotando);
   - en el hangar: sin líquidos ni bomba, los soportes funcionan (una puerta o un neón sin apoyo se caen) y se excava más rápido
     y sin cargas (cambio del port).
+- Más de **Cornor923** (¡gracias!, PR 52-59, cambio del port salvo lo marcado):
+  - **menú de inicio nuevo**: Continuar abre la lista de partidas (jugar, renombrar, borrar); Nueva partida pide nombre,
+    semilla y modo (Creativo: bioma y tamaño; Aventura: tutorial sí/no);
+  - **tutorial guiado** (añadido del port) para las partidas de aventura nuevas, que empiezan en el espacio con el inventario
+    vacío, como el original; se puede saltar desde la pausa o el ordenador de a bordo;
+  - el ordenador de a bordo ya no tiene el atajo de prueba a la nave nodriza;
+  - la flecha «<» de los selectores va a la opción anterior; la Ciudad muerta sale con su nombre y color en el mapa;
+  - en creativo, una caída fuerte ya no hace temblar la pantalla como un golpe;
+  - una puerta abierta de la nave ya no cuenta como agujero en el hangar y las puertas se guardan cerradas, como el original;
+  - arreglos perdidos al integrar los PR 31-51 (icono del turbo con el temblor, ayuda de las órdenes de prueba, READMEs).
 
 ## v0.4 — pre-release
 - **Vida y oxígeno**, como el original: las caídas fuertes, la lava, el agua ácida, el carbón ardiente y las hierbas ácidas

@@ -1,19 +1,19 @@
-## Galaxy 55 (offline) v0.4 — port nativo para Windows (y Linux/macOS con HashLink)
+## Galaxy 55 (offline) v0.5 — port nativo para Windows (y Linux/macOS con HashLink)
 
 Port **no oficial** de Galaxy 55 (Motion Twin, 2012) a una aplicación nativa (Haxe + Heaps + HashLink). Sin Flash, sin navegador y sin servidor.
 
 **Cómo jugar (Windows):** descomprime la carpeta entera y haz doble clic en `jugar.bat`. Si no abre (equipos sin OpenGL 3.2 o máquinas virtuales), usa `jugar_dx.bat`, la versión DirectX. No hay que instalar nada. Las partidas se guardan en `%APPDATA%\Galaxy55\`.
 **Linux y macOS:** zip aparte; necesita HashLink 1.16 instalado (ver su `LEEME.txt`).
 
-### Novedades de la v0.4
-- **Agua que fluye**, la del original: el mar llena lo que cavas a su lado; la cascada y el agua que pones bajan en escalones. **Olas del agua** del original (se pueden quitar).
-- **Vida y oxígeno**, como el original: caídas, lava, agua ácida, ahogarse bajo el agua, plantas y cajas de curación. Al morir vuelves a la nave.
-- **Robot comerciante en el mapa de estrellas:** viaja entre los sistemas; lo sigues, te acoplas y comercias en su nave nodriza. **Flechas GPS** del original.
-- **Despegar es salir del planeta**, como en el original: el planeta se descarga y para volver aterrizas. Puedes guardar en el espacio y "Continuar" te devuelve al mapa. Menú de pausa en el mapa (Esc).
-- **Opciones** por secciones, sombra del bloque que vas a poner y nombre del bloque apuntado.
-- Las plantas se apuntan por lo que se ve: con varias juntas, rompes la que miras.
-- Arreglos de **Cornor923** (¡gracias!): sintetizador como el original, `galaxy55.exe` con icono (Discord ya no dice "Half-Life"), roca madre, agua y hielo, nombres de bloques y más.
-- Arreglos reportados por **Sekhmet** (¡gracias!): bloques bajo el agua, nieve bajo techo, hielo, atajos de teclado y pasos para Linux.
+### Novedades de la v0.5
+- **Menú de inicio nuevo**: Continuar abre la lista de partidas (jugar, renombrar, borrar); Nueva partida pide nombre, semilla y modo (Creativo: bioma y tamaño; Aventura: tutorial sí/no).
+- **Tutorial guiado** (añadido del port): las partidas de aventura nuevas empiezan en el espacio con el inventario vacío, como el original. Se puede saltar.
+- Más del original: la cámara y el HUD tiemblan al romper bloques y al aterrizar; el **turbo minero** funciona; recuperas vida en tu nave; la **bomba exótica** explota; Mayús+K funde a blanco y te devuelve a la nave.
+- Bajo el agua: campo de visión más estrecho y cielo del color del líquido; el nivel del mar baja al inundar huecos.
+- Gráficos como el original: cielo estrellado en los planetas, mipmaps (el paisaje lejano ya no parpadea), marco de selección, bloques soltados, iconos y barra de carga.
+- F2 guarda una captura sin el HUD; F muestra u oculta las coordenadas y los FPS.
+- Hangar: soportes que funcionan, sin líquidos ni bomba, sin daño, puertas abiertas que ya no cuentan como agujero.
+- Arreglos de **Cornor923** (¡gracias!, PR 17-59, también autor de casi todo lo anterior): oxígeno en creativo, hielo junto al agua, paleta creativa, tras morir te quedas en la nave, intercambios guardados en la nave nodriza, nave del mapa y más.
 
 Todo en el [CHANGELOG](../CHANGELOG.md).
 
@@ -24,22 +24,22 @@ Todo en el [CHANGELOG](../CHANGELOG.md).
 
 ---
 
-## Galaxy 55 (offline) v0.4 — native port for Windows (and Linux/macOS with HashLink)
+## Galaxy 55 (offline) v0.5 — native port for Windows (and Linux/macOS with HashLink)
 
 **Unofficial** port of Galaxy 55 (Motion Twin, 2012) to a native application (Haxe + Heaps + HashLink). No Flash, no browser and no server.
 
 **How to play (Windows):** unzip the whole folder and double-click `jugar.bat`. If it doesn't open (PCs without OpenGL 3.2 or virtual machines), use `jugar_dx.bat`, the DirectX build. Nothing to install. Saves go to `%APPDATA%\Galaxy55\`.
 **Linux and macOS:** separate zip; it needs HashLink 1.16 installed (see its `LEEME.txt`).
 
-### New in v0.4
-- **Flowing water**, the original's: the sea fills what you dig next to it; cascades and placed water go down in steps. The original's **water waves** (can be turned off).
-- **Health and oxygen**, like the original: falls, lava, acid water, drowning, healing plants and boxes. When you die you go back to the ship.
-- **Merchant robot on the star map:** it travels between systems; follow it, dock and trade in its mothership. The original's **GPS arrows**.
-- **Taking off is leaving the planet**, like the original: the planet is unloaded and you land to go back. You can save in space and "Continue" brings you back to the map. A pause menu on the map (Esc).
-- **Options** split into sections, a shadow of the block you are about to place and the name of the targeted block.
-- Plants are aimed at by what you see: with several together, you break the one you look at.
-- Fixes by **Cornor923** (thank you!): synthesizer like the original, `galaxy55.exe` with an icon (Discord no longer says "Half-Life"), bedrock, water and ice, block names and more.
-- Fixes reported by **Sekhmet** (thank you!): blocks under water, snow under roofs, ice, key shortcuts and Linux steps.
+### New in v0.5
+- **New start menu**: Continue opens the saved games list (play, rename, delete); New game asks for name, seed and mode (Creative: biome and size; Adventure: tutorial yes/no).
+- **Guided tutorial** (port addition): new adventure games start in space with an empty inventory, like the original. It can be skipped.
+- More from the original: the camera and the HUD shake when blocks break and when you land; the **mining turbo** works; you regain life in your ship; the **ancient bomb** explodes; Shift+K fades to white and takes you back to the ship.
+- Under water: a narrower field of view and a sky the colour of the liquid; the sea level drops when flooding holes.
+- Graphics like the original: starry sky on planets, mipmaps (the far landscape no longer flickers), selection frame, dropped blocks, icons and loading bar.
+- F2 saves a screenshot without the HUD; F shows or hides the coordinates and FPS.
+- Hangar: working supports, no liquids or bomb, no damage, open doors no longer count as holes.
+- Fixes by **Cornor923** (thank you!, PRs 17-59, who also made almost everything above): oxygen in creative, ice next to water, creative palette, you stay in the ship after dying, trades saved in the mothership, the map's ship and more.
 
 Everything in the [CHANGELOG](../CHANGELOG.en.md).
 
@@ -50,22 +50,22 @@ Everything in the [CHANGELOG](../CHANGELOG.en.md).
 
 ---
 
-## Galaxy 55 (offline) v0.4 — portage natif pour Windows (et Linux/macOS avec HashLink)
+## Galaxy 55 (offline) v0.5 — portage natif pour Windows (et Linux/macOS avec HashLink)
 
 Portage **non officiel** de Galaxy 55 (Motion Twin, 2012) en application native (Haxe + Heaps + HashLink). Sans Flash, sans navigateur et sans serveur.
 
 **Comment jouer (Windows) :** décompresse tout le dossier et double-clique sur `jugar.bat`. S'il ne s'ouvre pas (PC sans OpenGL 3.2 ou machines virtuelles), utilise `jugar_dx.bat`, la version DirectX. Rien à installer. Les parties sont enregistrées dans `%APPDATA%\Galaxy55\`.
 **Linux et macOS :** zip séparé ; il faut HashLink 1.16 installé (voir son `LEEME.txt`).
 
-### Nouveautés de la v0.4
-- **L'eau s'écoule**, comme dans l'original : la mer remplit ce que tu creuses à côté d'elle ; les cascades et l'eau posée descendent par paliers. Les **vagues** de l'original (désactivables).
-- **Vie et oxygène**, comme dans l'original : chutes, lave, eau acide, noyade, plantes et boîtes de soin. Quand tu meurs, tu reviens au vaisseau.
-- **Robot marchand sur la carte stellaire :** il voyage entre les systèmes ; suis-le, amarre-toi et fais du commerce dans son vaisseau mère. Les **flèches GPS** de l'original.
-- **Décoller, c'est quitter la planète**, comme dans l'original : la planète est déchargée et tu atterris pour revenir. Tu peux sauvegarder dans l'espace et « Continuer » te ramène sur la carte. Un menu de pause sur la carte (Échap).
-- **Options** par sections, ombre du bloc que tu vas poser et nom du bloc visé.
-- On vise les plantes par ce qu'on voit : avec plusieurs plantes ensemble, tu casses celle que tu regardes.
-- Corrections de **Cornor923** (merci !) : synthétiseur comme l'original, `galaxy55.exe` avec icône (Discord n'affiche plus « Half-Life »), roche mère, eau et glace, noms des blocs et plus encore.
-- Corrections signalées par **Sekhmet** (merci !) : blocs sous l'eau, neige sous les toits, glace, raccourcis clavier et étapes pour Linux.
+### Nouveautés de la v0.5
+- **Nouveau menu de démarrage** : Continuer ouvre la liste des parties (jouer, renommer, supprimer) ; Nouvelle partie demande le nom, la graine et le mode (Créatif : biome et taille ; Aventure : tutoriel oui/non).
+- **Tutoriel guidé** (ajout du port) : les nouvelles parties aventure commencent dans l'espace avec l'inventaire vide, comme l'original. On peut le passer.
+- Encore de l'original : la caméra et le HUD tremblent quand un bloc casse et à l'atterrissage ; le **turbo minier** fonctionne ; tu récupères de la vie dans ton vaisseau ; la **bombe antique** explose ; Maj+K fait un fondu blanc et te ramène au vaisseau.
+- Sous l'eau : champ de vision plus étroit et ciel de la couleur du liquide ; le niveau de la mer baisse en inondant les trous.
+- Graphismes comme l'original : ciel étoilé sur les planètes, mipmaps (le paysage lointain ne scintille plus), cadre de sélection, blocs lâchés, icônes et barre de chargement.
+- F2 enregistre une capture sans le HUD ; F affiche ou cache les coordonnées et les FPS.
+- Hangar : supports qui fonctionnent, sans liquides ni bombe, sans dégâts, les portes ouvertes ne comptent plus comme des trous.
+- Corrections de **Cornor923** (merci !, PR 17-59, auteur aussi de presque tout ce qui précède) : oxygène en créatif, glace près de l'eau, palette créative, on reste dans le vaisseau après la mort, échanges sauvés dans le vaisseau-mère, vaisseau de la carte et plus encore.
 
 Tout est dans le [CHANGELOG](../CHANGELOG.fr.md).
 

@@ -2,7 +2,7 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
-## Prochaine version
+## v0.5 — pre-release
 - Corrections de Cornor923 (merci !), intégrées depuis leurs PR 17-30 (changement du port) : pas de consommation d'oxygène sous
   l'eau en créatif ; la glace près de l'eau n'est plus découpée en triangles vue d'en dessous ; l'aide de la palette créative
   tient dans son panneau et aucun bloc n'est marqué à l'ouverture ; plus de bande sans eau sous un bloc sur la mer avec les
@@ -28,6 +28,16 @@
   - le rayon d'atterrissage suit le sol sous le vaisseau (creuser ou poser des blocs dessous ne le laisse plus flotter) ;
   - dans le hangar : pas de liquides ni de bombe, les supports fonctionnent (une porte ou un néon sans appui tombe) et on
     creuse plus vite, sans charges (changement du port).
+- Encore de **Cornor923** (merci !, PR 52-59, changement du port sauf mention) :
+  - **nouveau menu de démarrage** : Continuer ouvre la liste des parties (jouer, renommer, supprimer) ; Nouvelle partie demande
+    le nom, la graine et le mode (Créatif : biome et taille ; Aventure : tutoriel oui/non) ;
+  - **tutoriel guidé** (ajout du port) pour les nouvelles parties aventure, qui commencent dans l'espace avec l'inventaire vide,
+    comme l'original ; on peut le passer depuis la pause ou l'ordinateur de bord ;
+  - l'ordinateur de bord n'a plus le raccourci de test vers le vaisseau-mère ;
+  - la flèche « < » des sélecteurs va au choix précédent ; la Cité morte a son nom et sa couleur sur la carte ;
+  - en créatif, une forte chute ne secoue plus l'écran comme un coup ;
+  - une porte ouverte du vaisseau ne compte plus comme un trou dans le hangar et les portes sont sauvées fermées, comme l'original ;
+  - corrections perdues lors de l'intégration des PR 31-51 (icône du turbo avec le tremblement, aide des commandes de test, README).
 
 ## v0.4 — pre-release
 - **Vie et oxygène**, comme l'original : les grosses chutes, la lave, l'eau acide, le charbon ardent et les herbes acides

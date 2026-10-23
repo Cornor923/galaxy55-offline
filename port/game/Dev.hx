@@ -35,7 +35,7 @@ import Common;
  *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky
+ *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
@@ -43,7 +43,7 @@ import Common;
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
  *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
  *   pause                   menu de pausa como Esc (el guion sigue; close lo cierra)
- *   newgame SEMILLA [acc..] Menu principal > Nueva partida como el jugador: escribe la semilla, maneja la fila del bioma con
+ *   newgame SEMILLA [acc..] Menu principal > Nueva partida como el jugador: pasa a Creativo, escribe la semilla, maneja la fila del bioma con
  *                           las acciones (izq / der = flechas, ok = Intro, clic< / clic> = clic en esas flechas, clicfila =
  *                           clic en el titulo de la fila) y pulsa Crear; seguir con waitfor planet y print biome
  *   tuto new|notuto [semilla] partida de aventura nueva en el espacio, con o sin tutorial; tuto step N; tuto skip (sin preguntar)
@@ -136,8 +136,8 @@ class Dev {
 			case "planet": playing && g != null && g.info.mothership != true && g.hangar == null;
 			case "mother": playing && g != null && g.info.mothership == true;
 			case "ready": playing || (g == null && app.explorer != null);
-			case "menu": Type.enumConstructor(@:privateAccess app.state) == "Menu" && @:privateAccess app.bgWorlds.length > 0;
 			case "ground": g != null && g.onGround();
+			case "menu": Type.enumConstructor(@:privateAccess app.state) == "Menu" && @:privateAccess app.bgWorlds.length > 0;
 			default: true;
 		}
 	}
@@ -222,8 +222,8 @@ class Dev {
 					g.yaw = Math.atan2(dy, dx);
 					g.pitch = Math.atan2(dz, Math.sqrt(dx * dx + dy * dy));
 				case "ship": g.gotoShip(true);
-				case "tele": g.enteringShip = 0; // como si se hubiera apartado y vuelto a pisar el teletransporte (o el rayo)
 				case "planet": g.gotoShip(false);
+				case "tele": g.enteringShip = 0; // como si se hubiera apartado y vuelto a pisar
 				case "tpdock":
 					g.px = g.ship.x + 0.5 + f(a[1]);
 					g.py = g.ship.y + 0.5 + f(a[2]);
@@ -616,10 +616,13 @@ class Dev {
 		if( app.game != null || app.explorer != null ) app.toMainMenu();
 		app.show("new");
 		var biome : Ui.Selector = null, seed : Ui.TextField = null, create : Ui.Widget = null;
-		// el bioma solo se elige en creativo (en aventura se empieza en el espacio): se pasa a creativo como el jugador
-		for( w in app.current.widgets )
-			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("mode") && cast(w, Ui.Selector).index == 0 ) w.onRight();
 		for( w in app.current.widgets ) {
+			// el bioma solo se elige en creativo (PR 54): se pasa el modo a Creativo antes
+			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("mode") ) {
+				var m : Ui.Selector = cast w;
+				m.index = 1;
+				m.onChange(1);
+			}
 			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("biome") ) biome = cast w;
 			else if( Std.isOfType(w, Ui.TextField) && cast(w, Ui.TextField).title == Lang.t("seed") ) seed = cast w;
 			else if( w.label.text == Lang.t("create") ) create = w;
@@ -730,6 +733,9 @@ class Dev {
 			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "menu":
+			// botones del menu abierto (etiqueta y y), de arriba abajo
+			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));
 		case "palette":
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
 		case "time":
@@ -792,13 +798,13 @@ class Dev {
 			}
 			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
 		case "hit": Sys.println(g.debugPick());
-		case "drops": Sys.println("sueltos: " + g.drops.count() + " " + [for( d in @:privateAccess g.drops.list ) d.block.k + " z=" + Math.round(d.z * 100) / 100 + " vida=" + Math.round(d.time * 100) / 100].join("  "));
-		case "parts": Sys.println("trozos: " + @:privateAccess g.parts.list.length);
 		case "power":
 			// potencia de excavacion (turbo minero) y el icono "power" del casco
 			var ic = @:privateAccess app.statusIcon;
 			Sys.println("potencia " + g.miningPower + " icono " + (ic.visible ? "visible alfa " + Math.round(ic.alpha * 100) / 100 : "no"));
+		case "parts": Sys.println("trozos: " + @:privateAccess g.parts.list.length);
 		case "mips": Sys.println("mipmaps del atlas: " + Math.round(Atlas.mipTime * 1000) + " ms");
+		case "drops": Sys.println("sueltos: " + g.drops.count() + " " + [for( d in @:privateAccess g.drops.list ) d.block.k + " z=" + Math.round(d.z * 100) / 100 + " vida=" + Math.round(d.time * 100) / 100].join("  "));
 		case "loose":
 			// sueltos con su bloque y cantidad
 			Sys.println("sueltos: " + [for( d in @:privateAccess g.drops.list ) d.block.k + "x" + d.n].join(" "));
@@ -807,7 +813,6 @@ class Dev {
 			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ");
 			var c = app.chest;
 			Sys.println("cantina: " + (c == null ? "cerrada" : "abierta [" + items(c.box) + "]") + "  guardadas: " + (g.info.chests == null ? "" : [for( e in g.info.chests ) e.key + " [" + items(e.t) + "]"].join(", ")));
-		case "msg": Sys.println("mensaje: " + g.message + (g.messageRed ? " (rojo)" : ""));
 		case "shake":
 			// temblor, subida de la camara y del HUD (en pixeles de la ventana) de este fotograma, y segundos de juego
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
@@ -817,6 +822,7 @@ class Dev {
 			// campo de vision de la camara y bloque en los ojos (en el agua: opcion * 0.8)
 			var b = w.block(Math.floor(g.px), Math.floor(g.py), Std.int(g.pz + g.viewZ));
 			Sys.println("fov " + Math.round(@:privateAccess g.s3d.camera.fovY * 100) / 100 + " opcion=" + Settings.fov + " ojos=" + (b == null ? "aire" : "" + b.k));
+		case "msg": Sys.println("mensaje: " + g.message + (g.messageRed ? " (rojo)" : ""));
 		case "block", "blockl":
 			// blockl: coordenadas locales de la nave
 			var l = a[1] == "blockl";
@@ -843,9 +849,6 @@ class Dev {
 			Sys.println("aterrizaje: suelo " + (g.standingBlock == null ? "-" : "" + g.standingBlock.k) + " gravedad " + r(g.gravity) + " aturdido " + r(@:privateAccess g.stun)
 				+ " casco " + r(g.bobY) + " temblor " + r(g.shake) + " fundido " + r(g.fadeAlpha()) + " vida " + r(g.life) + " creativo " + g.creative);
 		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poder=" + g.select.power));
-		case "ship":
-			var beam = @:privateAccess g.ship.beam;
-			Sys.println("nave en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z + (beam == null ? "" : " rayo z=" + beam.z + " alto=" + Math.round(beam.scaleZ * 100) / 100));
 		case "sky":
 			// giro de las estrellas (Sky.follow): a donde apuntan los ejes x y z del cubo de estrellas
 			var m = @:privateAccess w.sky.starRot;
@@ -880,6 +883,9 @@ class Dev {
 			top.sort(function(a, b) return count.get(b) - count.get(a));
 			Sys.println("bioma: mundo " + w.biomeName + ", partida " + g.info.biome + ", salida " + (u == null ? "-" : u.start.biome) + ", semilla " + g.info.seed
 				+ ", suelo " + [for( k in top.slice(0, 3) ) k + "x" + count.get(k)].join(" "));
+		case "ship":
+			var beam = @:privateAccess g.ship.beam;
+			Sys.println("nave en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z + (beam == null ? "" : " rayo z=" + beam.z + " alto=" + Math.round(beam.scaleZ * 100) / 100));
 		default: Sys.println("print desconocido: " + a[1]);
 		}
 	}
