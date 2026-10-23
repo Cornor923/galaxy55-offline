@@ -27,8 +27,7 @@ Son los del juego original (el movimiento y la física son una copia de `ent/Her
 | Excavar o colocar | clic izquierdo, E o Mayús (mantener). Con la mano vacía excava; con un bloque, lo coloca si algo lo sujeta |
 | Elegir casilla | 1–0 o la rueda del ratón; Tab = excavador (mano vacía) |
 | Tirar la pila elegida | R o Supr |
-| Activar (ordenador de a bordo, puertas, cantinas, bomba exótica) | apuntar y pulsar y soltar. Si se mantiene hasta que el bloque se rompe, se excava: así se recoge la bomba exótica sin que explote (hace falta la carga rosa, como para la roca exótica) |
-| Activar (ordenador de a bordo, puertas) | apuntar y pulsar y soltar |
+| Activar (ordenador de a bordo, puertas, bomba exótica) | apuntar y pulsar y soltar. Si se mantiene hasta que el bloque se rompe, se excava: así se recoge la bomba exótica sin que explote (hace falta la carga rosa, como para la roca exótica) |
 | Cantina de ESCorp (cofre) | apuntar y pulsar y soltar. El juego no se para: clic coge y deja (Mayús la mitad, Ctrl una; o flechas e Intro, o cruceta y A), arrastrar fuera de la ventana mira y alejarse la cierra (Esc y B también) |
 | Volver a la nave | Mayús+K, o entrar en el haz de luz del aterrizaje |
 | Creativo: paleta de bloques | I (clic = poner el bloque en la casilla elegida, rueda = página) |
