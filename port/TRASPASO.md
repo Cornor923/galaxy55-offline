@@ -94,6 +94,13 @@ orden (el 58 lleva dentro el 54). Conflictos solo en la cabecera y en `waitfor` 
 (`menu`, `ground`, `blockl`, `newgame`, `tuto`...). La orden `newgame` (PR 53) pasa ahora el formulario a Creativo antes de
 tocar el bioma, porque desde el PR 54 el bioma solo se elige en creativo (cambio del port, aviso de Cornor en el PR 54).
 Compilan SDL y DX.
+Comprobado que no se pierde nada: por cada PR, cada línea que añade está en el resultado (salvo las que otro PR cambia a
+propósito: el 58 reescribe `startNewGame` del 54, y las líneas de ayuda de `print` se juntan en una). Pasan los 20 guiones de
+los PR y los de siempre (turbo, espacio, hangar, vida). El botón "Saltar el tutorial" (58) cabe en el ordenador de a bordo ya
+reducido por el 52. Por qué `Dev.hx` choca siempre: todos los PR salen de la misma base y añaden su orden en las mismas líneas
+de la cabecera (lista de ayuda tras `pause`) y del `switch` de `waitfor`; git no sabe qué orden poner y para. Se resuelve
+dejando todas. En los PR 31-51 se perdieron arreglos al resolver así (los recuperó el 56); por eso ahora se comprueba línea
+por línea con un script.
 
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
