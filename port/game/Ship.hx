@@ -50,6 +50,10 @@ class Ship {
 		y = p != null ? p.y : 12;
 		start = { x : data.entry.x, y : data.entry.y, z : data.entry.z + 1 + World.SHIP_Z };
 		var dx = x - start.x, dy = y - start.y;
+		// cambio del port: una puerta abierta a bordo vuelve cerrada al rehacer la nave (cargar, viajar, volver del hangar), como en
+		// el original, que no guardaba los cambios de la nave (ShipLogic.init). Las claves negativas son del mar, no bloques
+		if( edits != null )
+			edits = [for( i in 0...edits.length ) i & 1 == 1 && edits[i - 1] >= 0 ? Hangar.shipId(Block.all[edits[i] & 0xFFFF]) | (edits[i] & ~0xFFFF) : edits[i]];
 		world = new World(planet.seed, planet.biomeName, 1, parent, atlas, false, edits, data, planet.sky);
 		var guard = 0;
 		while( !world.isReady() && guard++ < 1000 ) world.step(1000);

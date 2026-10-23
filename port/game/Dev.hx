@@ -35,7 +35,7 @@ import Common;
  *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
+ *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
@@ -684,8 +684,10 @@ class Dev {
 			var b = w.block(Math.floor(g.px), Math.floor(g.py), Std.int(g.pz + g.viewZ));
 			Sys.println("fov " + Math.round(@:privateAccess g.s3d.camera.fovY * 100) / 100 + " opcion=" + Settings.fov + " ojos=" + (b == null ? "aire" : "" + b.k));
 		case "msg": Sys.println("mensaje: " + g.message + (g.messageRed ? " (rojo)" : ""));
-		case "block":
-			var b = w.block(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]));
+		case "block", "blockl":
+			// blockl: coordenadas locales de la nave
+			var l = a[1] == "blockl";
+			var b = w.block(Std.parseInt(a[2]) + (l ? w.shipDX : 0), Std.parseInt(a[3]) + (l ? w.shipDY : 0), Std.parseInt(a[4]) + (l ? World.SHIP_Z : 0));
 			Sys.println("bloque: " + (b == null ? "nada" : "" + b.k));
 		case "around":
 			// print around X Y Z R: bloques en el cubo de lado 2R+1 (planeta, nave y roca madre) y bombas por explotar
