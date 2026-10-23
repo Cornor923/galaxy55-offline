@@ -131,7 +131,7 @@ shot shake_rayo1
 shot shake_rayo2
 unkey
 wait 150
-# 6) creativo: sin dano; una caida fuerte cuenta como suave (el original igual con cheating)
+# 6) creativo: sin dano; una caida fuerte tiembla como la caida suave mas fuerte (0.7 * 0.4^2 = 0.112)
 creative
 life 100
 tp 64.5 64.5 69 0 0
