@@ -1,0 +1,13 @@
+# menu del ordenador de a bordo: sin "Visitar la nave nodriza (prueba)" jugando (solo con --editnodriza, ver editar_nodriza.bat);
+# los botones salen sin hueco y el menu se cierra. Con --editnodriza debe salir ademas "Visit the mothership (test)".
+wait 3
+ship
+wait 10
+activatel 64 63 3
+wait 5
+print menu
+shot computer_menu
+close
+wait 5
+print menu
+quit

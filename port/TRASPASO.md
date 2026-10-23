@@ -62,7 +62,7 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
    - Bloques nuevos del port, añadidos AL FINAL de `BlockKind` (en `Common.hx` y `DataGen.hx`): `BMotherHull`, `BMotherPanel`,
      `BMotherDark`. Sus texturas grises se generan en `Atlas.motherTiles`.
    - Cielo de espacio con nebulosas, galaxias que giran, estrellas de colores y estrellas fugaces (`Sky.makeSpace`).
-   - Se visita desde ordenador → "Visitar la nave nodriza (prueba)"; Mayús+K vuelve. Nada se guarda dentro.
+   - Se visita acoplándose al robot en el mapa; el atajo del ordenador "Visitar la nave nodriza (prueba)" solo sale con `editar_nodriza.bat`. Mayús+K vuelve. Nada se guarda dentro.
    - `Mothership.hx` conserva el diseño generado antiguo como reserva, si no hay `mothership.bin`.
 
 ## PR de Cornor923 integrados (2026-10-21, cambio del port)

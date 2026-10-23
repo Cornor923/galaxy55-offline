@@ -535,9 +535,12 @@ class ExpRoom {
 		var bd = frameBmp(frame * 64, 5 * 32, 64, 64, 16);
 		var scale = size + 0.5;
 		var biome = Common.Data.getBiome(Type.createEnum(Common.BiomeKind, infos.biome));
-		var c0 = biome.exploreColors.length >= 1 ? biome.exploreColors[0] : 0x0;
-		var c1 = biome.exploreColors.length >= 2 ? biome.exploreColors[1] : c0;
-		var c2 = biome.exploreColors.length >= 3 ? biome.exploreColors[2] : c1;
+		// la Ciudad muerta no salia en el mapa del original y no tiene exploreColors: como planeta de salida (Nueva partida) se
+		// pinta con los colores de su niebla en vez de negro
+		var cols = biome.exploreColors.length > 0 ? biome.exploreColors : biome.fog.slice(1);
+		var c0 = cols.length >= 1 ? cols[0] : 0x0;
+		var c1 = cols.length >= 2 ? cols[1] : c0;
+		var c2 = cols.length >= 3 ? cols[2] : c1;
 		ExpColor.paintBitmap(bd, ExpColor.makeNicePalette(c0), ExpColor.makeNicePalette(c1), ExpColor.makeNicePalette(c2));
 		bd.applyFilter(bd, bd.rect, pt0, new flash.filters.DropShadowFilter(5, -45, 0x0, 0.4, 4, 4, 1, 1, true));
 		var pv : ExpPlanetView = {
