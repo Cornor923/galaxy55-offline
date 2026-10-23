@@ -99,6 +99,10 @@ PR 31-51 de Cornor923 (2026-10-22, del original salvo lo marcado como cambio del
 nave, bomba exotica, Mayus+K con fundido blanco, altura de los ojos (`GameView.viewZ`), FOV y cielo bajo el agua, bajada del nivel
 del mar (`World.reduceWater`), trozos del laser, cielo estrellado, mipmaps, detalles (marco, bloques soltados, iconos, barra), F2,
 F, sonido de rotura, cantina no modal, rayo de aterrizaje, hangar sin liquidos, con soportes y excavacion rapida. Detalle en TRASPASO.
+PR 52-59 de Cornor923 (2026-10-22/23, cambio del port): menu de inicio con lista de partidas y formulario por modo (54),
+tutorial de aventura en el espacio (58: `Tutorial.hx`, `TutoGuide.hx`, `TutoText.hx`, `SaveInfo.tuto`, anadido del port),
+sin atajo a la nodriza en el ordenador (52), flecha '<' y Ciudad muerta en el mapa (53), sin temblor en caidas en creativo (55),
+puertas abiertas en el hangar (57), arreglos perdidos de los PR 31-51 (56), `devrun.ps1` sin robar teclado ni mando (59).
 Los ganchos antiguos `--screen=... --craft --at=...` siguen funcionando, pero para pruebas nuevas se usa Dev.
 
 ## Siguiente paso acordado (mañana): paquete de prueba

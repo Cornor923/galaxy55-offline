@@ -43,7 +43,7 @@ import Common;
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
  *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
  *   pause                   menu de pausa como Esc (el guion sigue; close lo cierra)
- *   newgame SEMILLA [acc..] Menu principal > Nueva partida como el jugador: escribe la semilla, maneja la fila del bioma con
+ *   newgame SEMILLA [acc..] Menu principal > Nueva partida como el jugador: pasa a Creativo, escribe la semilla, maneja la fila del bioma con
  *                           las acciones (izq / der = flechas, ok = Intro, clic< / clic> = clic en esas flechas, clicfila =
  *                           clic en el titulo de la fila) y pulsa Crear; seguir con waitfor planet y print biome
  *   tuto new|notuto [semilla] partida de aventura nueva en el espacio, con o sin tutorial; tuto step N; tuto skip (sin preguntar)
@@ -617,6 +617,12 @@ class Dev {
 		app.show("new");
 		var biome : Ui.Selector = null, seed : Ui.TextField = null, create : Ui.Widget = null;
 		for( w in app.current.widgets ) {
+			// el bioma solo se elige en creativo (PR 54): se pasa el modo a Creativo antes
+			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("mode") ) {
+				var m : Ui.Selector = cast w;
+				m.index = 1;
+				m.onChange(1);
+			}
 			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("biome") ) biome = cast w;
 			else if( Std.isOfType(w, Ui.TextField) && cast(w, Ui.TextField).title == Lang.t("seed") ) seed = cast w;
 			else if( w.label.text == Lang.t("create") ) create = w;

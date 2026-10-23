@@ -89,6 +89,12 @@ Tambien pasan los de siempre (espacio, robot2, robot3, mapa_opciones, vida, hang
 muerte_nave). No lanzar dos `devrun.ps1` a la vez: los dos escriben `port/out/dev_out.txt`, las salidas se mezclan y uno
 puede quedarse colgado.
 
+PR 52, 53 y 55 se fusionaron en GitHub (2026-10-22). Los PR 54, 56, 57, 59 y 58 (2026-10-23) se fusionaron en local en ese
+orden (el 58 lleva dentro el 54). Conflictos solo en la cabecera y en `waitfor` de `Dev.hx`: se conservan todas las órdenes
+(`menu`, `ground`, `blockl`, `newgame`, `tuto`...). La orden `newgame` (PR 53) pasa ahora el formulario a Creativo antes de
+tocar el bioma, porque desde el PR 54 el bioma solo se elige en creativo (cambio del port, aviso de Cornor en el PR 54).
+Compilan SDL y DX.
+
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

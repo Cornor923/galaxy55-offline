@@ -28,6 +28,16 @@
   - the landing beam follows the ground under the ship (digging or building under it no longer leaves it floating);
   - in the hangar: no liquids or bomb, supports work (a door or a neon with nothing holding it falls) and digging is faster
     and needs no charges (port change).
+- More from **Cornor923** (thank you!, PRs 52-59, port change unless noted):
+  - **new start menu**: Continue opens the saved games list (play, rename, delete); New game asks for name, seed and mode
+    (Creative: biome and size; Adventure: tutorial yes/no);
+  - **guided tutorial** (port addition) for new adventure games, which start in space with an empty inventory, like the
+    original; it can be skipped from the pause menu or the on-board computer;
+  - the on-board computer no longer has the test shortcut to the mothership;
+  - the selectors' "<" arrow goes to the previous choice; the Dead city shows its name and colour on the map;
+  - in creative, a hard fall no longer shakes the screen like a hit;
+  - an open ship door no longer counts as a hole in the hangar and doors are saved closed, like the original;
+  - fixes lost when merging PRs 31-51 (turbo icon shaking with the HUD, test command help, READMEs).
 
 ## v0.4 — pre-release
 - **Health and oxygen**, like the original: hard falls, lava, acid water, burning coal and acid herbs hurt; under water
