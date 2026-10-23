@@ -101,6 +101,9 @@ reducido por el 52. Por qué `Dev.hx` choca siempre: todos los PR salen de la mi
 de la cabecera (lista de ayuda tras `pause`) y del `switch` de `waitfor`; git no sabe qué orden poner y para. Se resuelve
 dejando todas. En los PR 31-51 se perdieron arreglos al resolver así (los recuperó el 56); por eso ahora se comprueba línea
 por línea con un script.
+Mientras tanto Cornor fusionó él mismo en GitHub los PR 59, 56 y 57 (2026-10-23). Su fusión `01fbe7c` dejó rota una línea
+de `Dev.hx` (`var mining`, se perdió `power`) y volvió a repetir la ayuda de `print`: `main` no compilaba. Arreglado al juntar
+`origin/main` con lo local; compilan SDL y DX y pasan `hangar_porte`, `nave_porte`, `fov_agua`, `tuto_espacio`.
 
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
