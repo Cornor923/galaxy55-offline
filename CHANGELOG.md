@@ -2,7 +2,7 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Próxima versión
+## v0.5 — pre-release
 - Arreglos de Cornor923 (¡gracias!), integrados desde sus PR 17-30 (cambio del port): sin gasto de oxígeno bajo el agua en
   creativo; el hielo junto al agua ya no se corta en triángulos visto desde abajo; la ayuda de la paleta creativa cabe en su
   panel y no hay bloque marcado al abrirla; sin banda sin agua bajo un bloque en el mar con olas; tras morir te quedas en la

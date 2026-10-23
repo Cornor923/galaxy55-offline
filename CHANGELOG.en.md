@@ -2,7 +2,7 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Next version
+## v0.5 — pre-release
 - Fixes by Cornor923 (thank you!), merged from their PRs 17-30 (port change): no oxygen use underwater in creative; ice next
   to water is no longer cut into triangles seen from below; the creative palette help fits its panel and no block is marked
   when it opens; no gap under a block on the sea with waves on; after dying you stay in the ship (also when loading a game saved

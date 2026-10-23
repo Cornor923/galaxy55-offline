@@ -2,7 +2,7 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
-## Prochaine version
+## v0.5 — pre-release
 - Corrections de Cornor923 (merci !), intégrées depuis leurs PR 17-30 (changement du port) : pas de consommation d'oxygène sous
   l'eau en créatif ; la glace près de l'eau n'est plus découpée en triangles vue d'en dessous ; l'aide de la palette créative
   tient dans son panneau et aucun bloc n'est marqué à l'ouverture ; plus de bande sans eau sous un bloc sur la mer avec les
