@@ -28,8 +28,7 @@ Ce sont celles du jeu original (le déplacement et la physique sont copiés de `
 | Creuser ou poser | clic gauche, E ou Maj (maintenir). Main vide : tu creuses ; avec un bloc, tu le poses si quelque chose le soutient |
 | Choisir une case | 1–0 ou molette de la souris ; Tab = laser de minage (main vide) |
 | Jeter la pile choisie | R ou Suppr |
-| Activer (ordinateur de bord, portes, conteneurs, bombe antique) | viser, appuyer et relâcher. En maintenant jusqu'à ce que le bloc casse, on le creuse : c'est ainsi qu'on ramasse une bombe antique sans la faire exploser (il faut la charge rose, comme pour la roche antique) |
-| Activer (ordinateur de bord, portes) | viser, appuyer et relâcher |
+| Activer (ordinateur de bord, portes, bombe antique) | viser, appuyer et relâcher. En maintenant jusqu'à ce que le bloc casse, on le creuse : c'est ainsi qu'on ramasse une bombe antique sans la faire exploser (il faut la charge rose, comme pour la roche antique) |
 | Conteneur EScorp (coffre) | viser, appuyer et relâcher. Le jeu continue : clic prend et pose (Maj la moitié, Ctrl un ; ou flèches et Entrée, ou croix et A), glisser hors de la fenêtre fait regarder et s'éloigner le ferme (Échap et B aussi) |
 | Retourner au vaisseau | Maj+K, ou entrer dans le rayon de lumière d'atterrissage |
 | Créatif : palette de blocs | I (clic = mettre le bloc dans la case choisie, molette = page) |

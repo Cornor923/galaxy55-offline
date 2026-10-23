@@ -1574,7 +1574,7 @@ class GalaxyApp extends hxd.App {
 		// x2 en pixeles de pantalla, como las barras
 		statusIcon.setScale(2 / scale);
 		statusIcon.x = a.x + (hx + 100) * a.w / 974;
-		statusIcon.y = a.y + (hy + 650) * a.h / 624 - 32 / scale;
+		statusIcon.y = a.y + (hy + 650) * a.h / 624 - 32 / scale + hudShake; // tiembla con el HUD (Interface.ui)
 	}
 
 	/** Interface.updateLife / updateOxygen: fondo negro y la parte llena; oculta si esta llena */

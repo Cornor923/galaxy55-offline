@@ -13,7 +13,6 @@ import Common;
  *   nudge dx dy [dz]        mover al jugador desde donde esta
  *   lookat x y z            mirar a ese punto (planeta)    lookl x y z   (nave)
  *   ship | planet           ir a la nave / bajar al planeta
- *   tele                    como si se volviera a pisar el teletransportador (enteringShip = 0): empieza a cargar
  *   tele                    pisar de nuevo el teletransporte (o el rayo): si se cumplen las condiciones, transporta al rato
  *   tpdock dx dy [dz]       colocar al jugador respecto al centro y la base del rayo de la nave
  *   dockp dz Bloque|none    poner o romper (como al jugar) en la columna del rayo; dz = 0 es su bloque de arriba
@@ -36,11 +35,10 @@ import Common;
  *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|loose|chest|msg|block x y z|select|ship|map [z]
+ *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
- *   shot nombre             captura en port/out/nombre.png
- *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
+ *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
  *   print inv|pos|zones|drops|msg|shake|block x y z|select|ship|map [z]|palette|time|power|life|fade|around x y z r|fov|sky|menu
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
@@ -211,7 +209,6 @@ class Dev {
 				case "seadrop": w.reduceWater();
 				case "vitals":
 					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming + " ojos " + Math.round(g.viewZ * 100) / 100 + " tele " + Math.round(g.enteringShip * 100) / 100);
-					Sys.println("vida " + Math.round(g.life * 10) / 10 + " oxigeno " + Math.round(g.oxygen * 10) / 10 + " fundido " + Math.round(g.fadeAlpha() * 100) / 100 + " pos " + Math.round(g.px * 10) / 10 + "," + Math.round(g.py * 10) / 10 + "," + Math.round(g.pz * 10) / 10 + " nadando " + g.swimming);
 				case "drop":
 					// drop x y z Bloque [vida]: un bloque suelto quieto (sin velocidad) con esa vida en segundos (180)
 					var d = g.drops.add(f(a[1]), f(a[2]), f(a[3]), bk(a[4]));
@@ -685,7 +682,7 @@ class Dev {
 			Sys.println("temblor " + r(g.shake) + " camara " + r(g.shakeZ) + " hud " + r(hudPx) + " px  t=" + r(g.playSeconds));
 		case "fov":
 			// campo de vision de la camara y bloque en los ojos (en el agua: opcion * 0.8)
-			var b = w.block(Math.floor(g.px), Math.floor(g.py), Std.int(g.pz + GameView.VIEW_Z));
+			var b = w.block(Math.floor(g.px), Math.floor(g.py), Std.int(g.pz + g.viewZ));
 			Sys.println("fov " + Math.round(@:privateAccess g.s3d.camera.fovY * 100) / 100 + " opcion=" + Settings.fov + " ojos=" + (b == null ? "aire" : "" + b.k));
 		case "msg": Sys.println("mensaje: " + g.message + (g.messageRed ? " (rojo)" : ""));
 		case "block":
