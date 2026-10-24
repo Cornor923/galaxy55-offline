@@ -40,7 +40,8 @@ import Common;
  *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   contracts [close]       abrir y cerrar los contratos de la ESCorp; contracts slot N impone el periodo (-1 = la hora real);
- *                           contracts fill i da los bloques del contrato i; deliver i lo entrega; print contracts
+ *                           contracts fill i da los bloques del contrato i; deliver i lo entrega; print contracts;
+ *                           contracts load RUTA lee otro contracts.json
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
@@ -599,6 +600,7 @@ class Dev {
 					case "fill":
 						var c = Contracts.board(Contracts.slot())[Std.parseInt(a[2])];
 						g.inv.addBlocks(c.block, c.n);
+					case "load": @:privateAccess Contracts.config = Contracts.load(a[2]);
 					default:
 					}
 				case "deliver":

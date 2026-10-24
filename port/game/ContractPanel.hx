@@ -13,7 +13,6 @@ class ContractPanel extends h2d.Object {
 	public var onClose : Void -> Void;
 
 	static inline var PW = 800;
-	static inline var PH = 470;
 	static inline var ROW = 92;
 	static inline var BTN_W = 170;
 	static inline var BTN_H = 44;
@@ -22,6 +21,8 @@ class ContractPanel extends h2d.Object {
 	var info : SaveInfo;
 	var inv : Inv;
 	var slot : Int;
+	/** contratos del tablero (contracts.json: count, o menos si no hay bastantes) */
+	var count = 0;
 	var px : Float;
 	var py : Float;
 	var rows : h2d.Object;
@@ -38,6 +39,8 @@ class ContractPanel extends h2d.Object {
 		this.inv = inv;
 
 		px = (Theme.W - PW) * 0.5;
+		// alto segun el numero de contratos (470 con 3)
+		var PH = 194 + Std.int(Math.max(1, Contracts.config.count)) * ROW;
 		py = (Theme.H - PH) * 0.5;
 		var bg = new h2d.Graphics(this);
 		Theme.fullRect(bg, 0x000000, 0.55);
@@ -65,7 +68,9 @@ class ContractPanel extends h2d.Object {
 		creditsText.text = Lang.t("shop.credits") + " " + (info.credits == null ? Market.START_CREDITS : info.credits);
 		rows.removeChildren();
 		var board = Contracts.board(slot);
-		for( i in 0...board.length ) row(i, board[i]);
+		count = board.length;
+		if( focus >= count ) focus = count - 1;
+		for( i in 0...count ) row(i, board[i]);
 		updateTimer();
 		drawFocus();
 	}
@@ -138,8 +143,8 @@ class ContractPanel extends h2d.Object {
 			if( onClose != null ) onClose();
 			return;
 		}
-		if( dy != 0 ) {
-			focus = focus < 0 ? 0 : (focus + dy + Contracts.COUNT) % Contracts.COUNT;
+		if( dy != 0 && count > 0 ) {
+			focus = focus < 0 ? 0 : (focus + dy + count) % count;
 			drawFocus();
 		}
 		if( ok && focus >= 0 ) deliver(focus);
