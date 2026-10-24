@@ -775,7 +775,8 @@ class Dev {
 			Sys.println("contratos: periodo " + Contracts.slot() + " | " + [for( i in 0...board.length ) {
 				var c = board[i];
 				i + " " + c.block.k + " x" + c.n + " +" + c.reward + " llevas " + Contracts.have(g.inv, c.block) + (Contracts.isDone(g.info, i) ? " ENTREGADO" : "");
-			}].join(" | ") + " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts != null));
+			}].join(" | ") + " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts != null)
+				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled));
 		case "menu":
 			// botones del menu abierto (etiqueta y y), de arriba abajo
 			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));

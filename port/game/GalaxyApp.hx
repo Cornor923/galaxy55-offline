@@ -953,6 +953,9 @@ class GalaxyApp extends hxd.App {
 		var edit = new Button(s, Lang.t("computer.edit"));
 		var trade = new Button(s, Lang.t("computer.trade"));
 		var contracts = new Button(s, Lang.t("computer.contracts"));
+		// en el tutorial los contratos se ven pero no se pueden abrir (se vuelve a mirar en openComputer: el menu se guarda)
+		contracts.enabled = !Tutorial.active(game.info);
+		computerContracts = contracts;
 		var close = new Button(s, Lang.t("computer.close"));
 		s.add(takeoff, x, y);
 		if( pilotOk ) {
@@ -1185,7 +1188,7 @@ class GalaxyApp extends hxd.App {
 		s2d.under(explorer);
 		space = new Space(uni);
 		space.tutorial = Tutorial.active(spaceInfo);
-		space.onRefuse = showToast;
+		space.onRefuse = function(msg) showToast(msg);
 		explorer.onTravel = space.travel;
 		explorer.canLand = space.canLand;
 		explorer.canLeave = space.canLeave;
@@ -1211,7 +1214,8 @@ class GalaxyApp extends hxd.App {
 			takeoffSave = 1.0;
 		}
 		if( mapToast != null ) {
-			showToast(mapToast);
+			// el aviso de la ESCorp al pasar el tutorial es largo: se deja mas tiempo para leerlo
+			showToast(mapToast, 7);
 			mapToast = null;
 		}
 	}
@@ -1322,7 +1326,11 @@ class GalaxyApp extends hxd.App {
 		captureMouse(false);
 		hud.visible = false; msgText.visible = false;
 		show("computer");
+		computerContracts.enabled = !Tutorial.active(game.info);
 	}
+
+	/** boton de los contratos del ordenador de a bordo (desactivado durante el tutorial) */
+	var computerContracts : Button;
 
 	/** Esc en el mapa de estrellas: el mapa se para y se abre este menu */
 	function openMapPause() {
@@ -1667,7 +1675,7 @@ class GalaxyApp extends hxd.App {
 	public var contracts : ContractPanel;
 
 	public function openContracts() {
-		if( game == null || contracts != null ) return;
+		if( game == null || contracts != null || Tutorial.active(game.info) ) return;
 		if( current != null ) resume();
 		contracts = new ContractPanel(s2d, atlas, game.info, game.inv);
 		contracts.onClose = closeContracts;
@@ -1952,12 +1960,13 @@ class GalaxyApp extends hxd.App {
 		guide.update(dt, info == null ? null : tutorial.text(info, g), g, tutorial.targets(g), s3d.camera, top);
 	}
 
-	function showToast( msg : String ) {
+	/** aviso abajo de la pantalla durante `time` segundos (el ultimo 0,6 s se desvanece) */
+	function showToast( msg : String, time = 2.2 ) {
 		toast.text = msg;
 		toast.x = (W - toast.textWidth * toast.scaleX) * 0.5;
 		toast.visible = true;
 		toast.alpha = 1;
-		toastTime = 2.2;
+		toastTime = time;
 	}
 
 	/** partidas de ejemplo para las capturas (--demo-saves: las 3 primeras) y para probar la lista (devsaves N); de la cuarta en
