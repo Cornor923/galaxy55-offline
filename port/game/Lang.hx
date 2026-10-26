@@ -28,6 +28,8 @@ class Lang {
 		"computer.title" => ["ORDENADOR DE A BORDO", "BOARD COMPUTER", "ORDINATEUR DE BORD"],
 		"computer.takeoff" => ["Despegar (mapa de estrellas)", "Take off (star map)", "Décoller (carte stellaire)"],
 		"computer.edit" => ["Modificar la nave (hangar)", "Modify the ship (hangar)", "Modifier le vaisseau (hangar)"],
+		// anadido del port: pilotar la nave sobre el planeta
+		"computer.pilot" => ["Pilotar la nave (sobre el planeta)", "Pilot the ship (over the planet)", "Piloter le vaisseau (survol)"],
 		"computer.trade" => ["Comerciar (ESCorp)", "Trade (ESCorp)", "Commercer (ESCorp)"],
 		"shop.title" => ["Robot comerciante", "Merchant robot", "Robot marchand"],
 		"shop.yours" => ["Lo que llevas (clic: vender)", "Your items (click: sell)", "Ton inventaire (clic : vendre)"],
@@ -78,6 +80,7 @@ class Lang {
 		"mode.creative" => ["Creativo", "Creative", "Créatif"],
 		"palette.title" => ["Bloques (modo creativo)", "Blocks (creative mode)", "Blocs (mode créatif)"],
 		"palette.hint" => ["Clic / A: poner en la casilla elegida   Rueda / LB RB: cambiar de pagina   I / Esc / B: cerrar", "Click / A: put in the selected slot   Wheel / LB RB: change page   I / Esc / B: close", "Clic / A : mettre dans la case choisie   Molette / LB RB : changer de page   I / Échap / B : fermer"],
+		"hud.pilot" => ["Pilotando: WASD mover la nave   Ratón girar la cámara   E / Esc dejar la nave aquí", "Piloting: WASD move the ship   Mouse turn the camera   E / Esc leave the ship here", "Pilotage : WASD déplacer le vaisseau   Souris tourner la caméra   E / Échap laisser le vaisseau ici"],
 		"hud.creative" => ["Creativo: I abre la paleta de bloques", "Creative: I opens the block palette", "Créatif : I ouvre la palette de blocs"],
 		"size.large" => ["Grande (384)", "Large (384)", "Grand (384)"],
 		"newgame.title" => ["NUEVA PARTIDA", "NEW GAME", "NOUVELLE PARTIE"],

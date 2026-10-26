@@ -1,0 +1,19 @@
+# pilotar (anadido del port): la nave vista desde los cuatro lados, para saber hacia donde mira su morro
+wait 3
+ship
+wait 10
+pilot
+wait 3
+look 0 0
+wait 3
+shot lado_0
+look 1.5708 0
+wait 3
+shot lado_90
+look 3.1416 0
+wait 3
+shot lado_180
+look 4.7124 0
+wait 3
+shot lado_270
+quit

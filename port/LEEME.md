@@ -30,6 +30,7 @@ Son los del juego original (el movimiento y la física son una copia de `ent/Her
 | Activar (ordenador de a bordo, puertas, bomba exótica) | apuntar y pulsar y soltar. Si se mantiene hasta que el bloque se rompe, se excava: así se recoge la bomba exótica sin que explote (hace falta la carga rosa, como para la roca exótica) |
 | Cantina de ESCorp (cofre) | apuntar y pulsar y soltar. El juego no se para: clic coge y deja (Mayús la mitad, Ctrl una; o flechas e Intro, o cruceta y A), arrastrar fuera de la ventana mira y alejarse la cierra (Esc y B también) |
 | Volver a la nave | Mayús+K, o entrar en el haz de luz del aterrizaje |
+| Pilotar la nave (añadido del port) | ordenador de a bordo > Pilotar la nave: WASD o palanca izquierda la mueven sobre el planeta, el ratón o la palanca derecha giran la cámara, E, Esc, B o Start la dejan donde está (frena, se endereza y aterriza sola) |
 | Creativo: paleta de bloques | I (clic = poner el bloque en la casilla elegida, rueda = página) |
 | Pausa | Esc |
 | Guardado rápido | F5 |
@@ -104,6 +105,11 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   conserva su color (en el original las plantas finas desaparecían de lejos y, más lejos aún, se mezclaban texturas vecinas).
 - El haz de luz del aterrizaje sigue cualquier cambio en la columna bajo la nave y empieza encima de los bloques bajos como las
   placas (el original solo lo movía al romper un bloque ahí); se vuelve a la nave solo de pie en su base, no desde más arriba.
+- Pilotar la nave sobre el planeta es un añadido de este port (el original la dejaba siempre en el mismo sitio de cada planeta):
+  desde el ordenador de a bordo, solo en los planetas jugables (no en la nave nodriza, el hangar ni durante el tutorial). Va
+  siempre a la misma altura, sin gasto, con una cámara por detrás y por encima y la niebla más suave mientras dura; el haz de
+  luz marca dónde quedará (a toda velocidad se desvanece y vuelve al ir despacio, al pararse y al aterrizar). Acelera y frena con suavidad, gira hacia donde va y se inclina en las curvas; al dejarla vuelve a su
+  orientación de siempre antes de aterrizar (sus bloques, cofres y sintetizadores no giran). El sitio se guarda por planeta; sin pilotarla, la nave aterriza donde siempre.
 - Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
 - El turbo minero hace excavar tres veces más rápido hasta 15 bloques a su alrededor (5 en el original) y se recupera al
   romperlo (en el original se perdía).

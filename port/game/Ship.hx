@@ -35,19 +35,32 @@ class Ship {
 	var beam : h3d.scene.Mesh;
 	var beamUv : h3d.shader.UVDelta;
 	var beamFog : Sky.FogShader;
+	var beamMat : h3d.mat.Material;
 	var time = 0.;
 	var needRecal = true;
 	/** la nave de la partida (la del hangar o la de serie): las imagenes del mapa se centran en ella */
 	var data : ShipData.ShipDataInfo;
+	/** desplazamiento de la nave mientras se pilota (con decimales; planet.shipDX/shipDY son su redondeo) */
+	var fx = 0.;
+	var fy = 0.;
+	/** true si el jugador la ha pilotado a otro sitio de este planeta (anadido del port): ese sitio se guarda */
+	public var moved(default, null) = false;
 
-	public function new( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, ?edits : Array<Int>, ?shipBytes : haxe.io.Bytes ) {
+	public function new( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, ?edits : Array<Int>, ?shipBytes : haxe.io.Bytes, ?at : { x : Int, y : Int } ) {
 		this.planet = planet;
 		data = ShipData.load(shipBytes != null ? shipBytes : Const.DEFAULT_SHIP);
 		crafts = data.crafts;
-		// el sitio de aterrizaje es fijo para cada planeta (misma semilla = mismo sitio), como en Game.placeShip
+		// el sitio de aterrizaje es fijo para cada planeta (misma semilla = mismo sitio), como en Game.placeShip; anadido del port:
+		// si el jugador la ha pilotado a otro sitio (at), aparece alli
 		var p = planet.shipPlace();
 		x = p != null ? p.x : 14;
 		y = p != null ? p.y : 12;
+		if( at != null ) {
+			var s = planet.size;
+			x = ((at.x % s) + s) % s;
+			y = ((at.y % s) + s) % s;
+			moved = true;
+		}
 		start = { x : data.entry.x, y : data.entry.y, z : data.entry.z + 1 + World.SHIP_Z };
 		var dx = x - start.x, dy = y - start.y;
 		// cambio del port: una puerta abierta a bordo vuelve cerrada al rehacer la nave (cargar, viajar, volver del hangar), como en
@@ -65,6 +78,8 @@ class Ship {
 		planet.ship = world;
 		planet.shipDX = dx;
 		planet.shipDY = dy;
+		fx = dx;
+		fy = dy;
 		world.root.setPosition(dx, dy, World.SHIP_Z);
 		// el punto de aparicion del jugador, ya en coordenadas del planeta
 		start = { x : x, y : y, z : start.z };
@@ -80,14 +95,22 @@ class Ship {
 	 * El agua, la lava y las plantas no tienen: con liquido encima el rayo baja hasta el fondo.
 	 */
 	public function recalDock() {
+		z = groundAt(x, y);
+		needRecal = false;
+		beamX = x;
+		beamY = y;
+		beamZ = z;
+		updateBeam();
+	}
+
+	/** base del rayo en una columna del planeta: encima de su bloque mas alto con colision */
+	function groundAt( cx : Int, cy : Int ) : Float {
 		var zz = World.HEIGHT - 1;
-		while( zz > 0 && !planet.collidePoint(x + 0.5, y + 0.5, zz) ) zz--;
+		while( zz > 0 && !planet.collidePoint(cx + 0.5, cy + 0.5, zz) ) zz--;
 		// cambio del port: sobre un bloque bajo (placa, cofre) la base es su cara de arriba; el original la ponia un bloque encima
 		// y desde la placa ya no se podia volver a la nave
-		var b = planet.block(x, y, zz);
-		z = zz + (b != null && b.size != null ? b.size.z2 : 1);
-		needRecal = false;
-		updateBeam();
+		var b = planet.block(cx, cy, zz);
+		return zz + (b != null && b.size != null ? b.size.z2 : 1);
 	}
 
 	// ---------------------------------------------------------------- haz de luz del punto de aterrizaje
@@ -124,6 +147,7 @@ class Ship {
 		mat.mainPass.depthWrite = false;
 		mat.mainPass.setPassName("alpha");
 		mat.color.set(1, 1, 1, 0.5);
+		beamMat = mat;
 		beamUv = new h3d.shader.UVDelta();
 		beamUv.uvScale.set(segs / 3, 1);
 		mat.mainPass.addShader(beamUv);
@@ -135,11 +159,128 @@ class Ship {
 		updateBeam();
 	}
 
+	/** columna y base del rayo: el punto de aterrizaje o, pilotando (anadido del port), donde aterrizaria la nave ahora */
+	var beamX = 0;
+	var beamY = 0;
+	var beamZ = 0.;
+
 	function updateBeam() {
 		if( beam == null ) return;
-		var h = start.z - z;
-		beam.setPosition(x + 0.5, y + 0.5, z);
+		var h = start.z - beamZ;
+		beam.setPosition(beamX + 0.5, beamY + 0.5, beamZ);
 		beam.scaleZ = h > 0 ? h : 0.01;
+	}
+
+	// ---------------------------------------------------------------- pilotar la nave sobre el planeta (anadido del port)
+
+	/** rumbo de la nave pilotada (0 = como aterriza, con el morro hacia +x, como la dibuja el mapa) e inclinacion lateral al girar.
+	    Solo se ve: los bloques, la colision y el guardado siguen en la orientacion de siempre, que recupera al aterrizar */
+	public var heading(default, null) = 0.;
+	var roll = 0.;
+	var poseQ = new h3d.Quat();
+
+	/** centro de la nave (media de sus bloques), en coordenadas del planeta y girado con el rumbo: la camara de pilotar mira ahi */
+	public function center() : { x : Float, y : Float, z : Float } {
+		var gx = 0., gy = 0., gz = 0.;
+		for( c in data.cells ) {
+			gx += c.x;
+			gy += c.y;
+			gz += c.z;
+		}
+		var n = data.cells.length > 0 ? data.cells.length : 1;
+		// alrededor de la entrada, como el giro (setPose)
+		var ox = 0.5 + gx / n - (data.entry.x + 0.5), oy = 0.5 + gy / n - (data.entry.y + 0.5);
+		var c = Math.cos(heading), s = Math.sin(heading);
+		return { x : fx + data.entry.x + 0.5 + ox * c - oy * s, y : fy + data.entry.y + 0.5 + ox * s + oy * c, z : 0.5 + gz / n + World.SHIP_Z };
+	}
+
+	/** pilotando (anadido del port): el rayo se ve con esta fuerza (0 = oculto, 1 = como siempre) */
+	public function setBeamFade( f : Float ) {
+		if( beam == null ) return;
+		beam.visible = f > 0.01;
+		beamMat.color.a = 0.5 * f;
+	}
+
+	/** gira la nave (solo la imagen) sobre la columna de su entrada: el rayo sigue debajo del teletransportador */
+	public function setPose( heading : Float, roll : Float ) {
+		this.heading = heading;
+		this.roll = roll;
+		placeRoot();
+	}
+
+	function placeRoot() {
+		var r = world.root;
+		if( heading == 0 && roll == 0 ) {
+			r.setRotation(0, 0, 0);
+			r.setPosition(fx, fy, World.SHIP_Z);
+			return;
+		}
+		var q = poseQ;
+		q.initRotateAxis(0, 0, 1, heading);
+		if( roll != 0 ) {
+			var qr = new h3d.Quat();
+			qr.initRotateAxis(1, 0, 0, roll);
+			q.multiply(q, qr);
+		}
+		r.setRotationQuat(q);
+		// la entrada (pivote) se queda donde estaba: posicion = desplazamiento + pivote - pivote girado
+		var p = new h3d.Vector(data.entry.x + 0.5, data.entry.y + 0.5, data.entry.z + 1);
+		var rp = p.transformed3x3(q.toMatrix());
+		r.setPosition(fx + p.x - rp.x, fy + p.y - rp.y, World.SHIP_Z + p.z - rp.z);
+	}
+
+	/** desplaza la nave (dx, dy) sobre el planeta, a la misma altura; el rayo marca donde aterrizaria si se deja ahora */
+	public function slide( dx : Float, dy : Float ) {
+		fx += dx;
+		fy += dy;
+		planet.shipDX = Math.round(fx);
+		planet.shipDY = Math.round(fy);
+		placeRoot();
+		var p = landingSpot();
+		if( p.x != beamX || p.y != beamY ) {
+			beamX = p.x;
+			beamY = p.y;
+			beamZ = groundAt(p.x, p.y);
+			updateBeam();
+		}
+	}
+
+	/**
+	 * Lo que falta mover para dejar la nave en una celda entera, con el punto de aterrizaje dentro del planeta (0..size-1).
+	 * El planeta da la vuelta: la vuelta entera (k * size) no cambia lo que se ve, solo deja las coordenadas en su rango.
+	 */
+	public function snapDelta() : { dx : Float, dy : Float } {
+		var s = planet.size;
+		var rx = Math.round(fx), ry = Math.round(fy);
+		var lx = rx + data.entry.x, ly = ry + data.entry.y; // punto de aterrizaje: encima esta la entrada de la nave
+		var nx = lx % s, ny = ly % s;
+		if( nx < 0 ) nx += s;
+		if( ny < 0 ) ny += s;
+		return { dx : rx - fx + (nx - lx), dy : ry - fy + (ny - ly) };
+	}
+
+	/** lo que falta para que la nave quede en una celda entera (sin la vuelta entera del planeta): el aterrizaje se centra con esto */
+	public function cellDelta() : { dx : Float, dy : Float } {
+		return { dx : Math.round(fx) - fx, dy : Math.round(fy) - fy };
+	}
+
+	/** punto de aterrizaje en que quedaria la nave si se aterriza ahora (para guardar a mitad del vuelo) */
+	public function landingSpot() : { x : Int, y : Int } {
+		var d = snapDelta();
+		return { x : Math.round(fx + d.dx) + data.entry.x, y : Math.round(fy + d.dy) + data.entry.y };
+	}
+
+	/** deja la nave en una celda entera y baja el rayo alli; devuelve lo que se ha movido en este ultimo paso */
+	public function land() : { dx : Float, dy : Float } {
+		var d = snapDelta();
+		heading = roll = 0; // vuelve a su orientacion de siempre (GameView la lleva poco a poco antes de llamar a land)
+		slide(d.dx, d.dy);
+		x = planet.shipDX + data.entry.x;
+		y = planet.shipDY + data.entry.y;
+		start = { x : x, y : y, z : start.z };
+		moved = true;
+		recalDock();
+		return d;
 	}
 
 	public function dispose() {
@@ -153,7 +294,7 @@ class Ship {
 	public function update( g : GameView, tmod : Float ) {
 		time += tmod;
 		world.flush();
-		if( needRecal ) recalDock();
+		if( needRecal && !g.piloting ) recalDock(); // pilotando, el rayo marca otra columna (slide); al aterrizar se recalcula
 		beamUv.uvDelta.set(time / 100, 0);
 
 		var s = planet.size;
@@ -161,8 +302,8 @@ class Ship {
 		// Render.viewX/viewY: el rayo se dibuja en la copia del planeta mas cercana al jugador
 		if( beam != null ) {
 			beamFog.curve = planet.sky.fog.curve;
-			beam.x = g.px + ddx;
-			beam.y = g.py + ddy;
+			beam.x = g.px + g.wrapDist(beamX + 0.5 - g.px);
+			beam.y = g.py + g.wrapDist(beamY + 0.5 - g.py);
 		}
 		var d = Math.sqrt(ddx * ddx + ddy * ddy);
 		var onShipEntry = g.pz > Const.SIZE && g.standingBlock == Block.all[Type.enumIndex(BShipEntry)];

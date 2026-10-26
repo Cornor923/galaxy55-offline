@@ -5,6 +5,13 @@
 ## Non publié
 - Dépôt : les fichiers qui servaient seulement à compiler la version Flash (`client*.hxml`, `build.bat`/`build.sh`, les SWF de
   `release/`, `libs/heaps` et `libs/format_old`) sont retirés de `main`. Ils restent intacts dans la branche `flash`. Le jeu ne change pas.
+- **Piloter le vaisseau** (ajout du portage) : dans l'ordinateur de bord, « Piloter le vaisseau » le déplace au-dessus de la
+  planète avec WASD ou le stick gauche (la souris ou le stick droit tournent la caméra) et E, Échap, B ou Start l'y laissent.
+  Toujours à la même hauteur et sans coût ; il accélère et freine en douceur, se tourne vers où il va et s'incline dans les
+  virages, et quand on le laisse il freine, se redresse et atterrit tout seul. Le rayon de lumière montre où il restera : il s'efface à pleine vitesse
+  et revient en allant doucement, à l'arrêt et à l'atterrissage. Seulement sur les planètes jouables : pas
+  dans le vaisseau-mère, le hangar ni pendant le tutoriel. L'endroit est enregistré par planète, même en plein vol ; les
+  parties précédentes ne changent pas.
 
 ## v0.5 — pre-release
 - Corrections de Cornor923 (merci !), intégrées depuis leurs PR 17-30 (changement du port) : pas de consommation d'oxygène sous

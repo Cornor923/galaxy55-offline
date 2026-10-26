@@ -128,6 +128,20 @@ class Sky {
 
 	var liquidCol : Null<Int> = null;
 	var dryK = 0.;
+	/** niebla de antes de pilotar (-1 = no se pilota) */
+	var pilotK = -1.;
+
+	/** pilotando la nave (anadido del port): la camara va muy por encima del suelo y con la niebla normal no se veria donde se
+	    deja la nave; se suaviza como la del menu mientras dura y se recupera al acabar */
+	public function setPilotFog( on : Bool ) {
+		if( on && pilotK < 0 ) {
+			pilotK = fog.fogK;
+			fog.fogK = Math.min(pilotK, 0.004);
+		} else if( !on && pilotK >= 0 ) {
+			fog.fogK = pilotK;
+			pilotK = -1;
+		}
+	}
 	/** color plano que tapa el degradado dentro de un liquido */
 	var flatSky = new h3d.shader.FixedColor();
 

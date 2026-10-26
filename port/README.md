@@ -31,6 +31,7 @@ They are the original game's (movement and physics are a copy of `ent/Hero.hx` a
 | Activate (on-board computer, doors, ancient bomb) | aim, press and release. Holding on until the block breaks digs it out instead: that is how an ancient bomb is picked up without setting it off (it needs a pink charge, like ancient rock) |
 | ESCorp canteen (chest) | aim, press and release. The game goes on: click takes and drops (Shift half, Ctrl one; or arrows and Enter, or d-pad and A), dragging outside the window looks around and walking away closes it (so do Esc and B) |
 | Return to the ship | Shift+K, or step into the landing light beam |
+| Pilot the ship (port addition) | on-board computer > Pilot the ship: WASD or left stick move it over the planet, mouse or right stick turn the camera, E, Esc, B or Start leave it where it is (it slows down, straightens up and lands by itself) |
 | Creative: block palette | I (click = put the block in the selected slot, wheel = page) |
 | Pause | Esc |
 | Quick save | F5 |
@@ -110,6 +111,11 @@ A player got it running on Linux this way; we have not tested it.
   (in the original, thin plants disappeared with distance and, further away, neighbouring textures got mixed).
 - The landing light beam follows any change in the column under the ship and starts on top of low blocks such as plates (the
   original only moved it when a block was broken there); you return to the ship only standing at its base, not from higher up.
+- Piloting the ship over the planet is an addition of this port (the original always left it at the same spot on each planet):
+  from the on-board computer, only on playable planets (not in the mothership, the hangar or during the tutorial). It always
+  stays at the same height, costs nothing, uses a camera behind and above it and lighter fog while it lasts; the light beam
+  shows where it will stay (it fades out at full speed and comes back when going slowly, stopping or landing). It speeds up and slows down smoothly, turns to face where it goes and banks in turns; when you
+  leave it, it returns to its usual heading before landing (its blocks, chests and synthesizers do not rotate). The spot is saved per planet; if you never pilot it, the ship lands where it always did.
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
 - The mining turbo makes you dig three times faster up to 15 blocks around it (5 in the original) and you get it back when
   you break it (the original lost it).

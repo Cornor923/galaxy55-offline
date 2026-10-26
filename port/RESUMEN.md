@@ -38,6 +38,25 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
 - Pruebas: `--screen=mine|place|cont [--n=frames --slot=N --at=x,y,yaw,pitch --deny --save]`, `port/savetest.hxml`.
 - Falta del original (inventario de bloques: 213; ~85 eran modelos, ya dibujados): puertas de nave (`door.md` binario), vida/daño/curación/oxígeno/lava, bloques activables y contenedores, líquidos que fluyen, romper/colocar, y los modos nave, hangar y mapa de exploración (`fla/explore`).
 - No probado en ventana real por mí: ratón/teclado/mando en vivo, ni el movimiento de la nieve (solo capturas y números).
+- Pilotar la nave (2026-10-26, añadido del port, rama `pilotar-nave`): botón "Pilotar la nave" del ordenador de a bordo (solo si
+  `GameView.canPilot`: planeta jugable, sin nave nodriza, hangar, tutorial ni fundido). `Ship.slide` mueve el volumen de la nave
+  (`fx/fy` con decimales, `World.shipDX/shipDY` redondeados) a la misma altura (z 130: por debajo chocaría con el planeta);
+  `Ship.land` la deja en celda entera con el punto de aterrizaje dentro del planeta (el planeta da la vuelta). El jugador y los
+  sueltos de la nave (`Drops.shiftShip`) van con ella; mientras se pilota no hay física del jugador ni de los sueltos. Cámara
+  detrás y arriba (`GameView.pilotCamera`, apunta compensando la curva de `Sky.FogShader`) y niebla más suave
+  (`Sky.setPilotFog`); el haz marca dónde quedará. Se guarda en `SaveInfo.shipAt` y `UniPlanet.shipAt` (opcionales: sin ellos,
+  el sitio de siempre); a mitad de vuelo se guarda el sitio en que aterrizaría con el jugador movido lo mismo. E/Esc/B/Start
+  la dejan. Textos `computer.pilot` y `hud.pilot`. Guiones `pilotar`, `pilotar_casos`, `pilotar_camara`, `pilotar_tuto`,
+  `pilotar_sintetizador`, `pilotar_vuelo`, `pilotar_lados`. Los hashes de los mundos no cambian.
+  Segunda vuelta (tras probarlo Pvie: "no gira hacia la dirección" y "demasiado tosco"): velocidad con inercia
+  (`GameView.pilotStep`: aceleración 1.8/s, frenado 3.5/s al dejarla, máximo 18 bloques/s), rumbo hacia donde va con inclinación
+  en las curvas (`Ship.setPose`, solo la imagen: gira `world.root` sobre la columna de la entrada, así el haz sigue debajo del
+  teletransportador; morro hacia +x, como lo dibuja el mapa). Al dejarla (E/Esc/B/Start, `stopPiloting`) frena, vuelve al rumbo
+  0 y se centra en su celda; luego `finishPiloting` aterriza. Los sueltos de la nave se ocultan en vuelo (`Drops.setShipVisible`).
+  Arreglo: al aterrizar el jugador está sobre el teletransportador y bajaba solo al planeta; ahora `enteringShip = -1` como en
+  `gotoShip`. Órdenes nuevas: `pilotkeys`, `pilotland`.
+  Tercera vuelta (Pvie: el haz molesta en vuelo, pero hace falta para saber dónde aterriza): el haz se desvanece con la velocidad
+  (`GameView.pilotBeam`, `Ship.setBeamFade`: entero hasta 3 bloques/s, nada desde 9, entero al aterrizar).
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |

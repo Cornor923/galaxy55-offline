@@ -2,6 +2,8 @@
 typedef UniPlanet = {
 	var id : Int;
 	var edits : Array<Int>;
+	/** donde se dejo la nave pilotandola (anadido del port); null = el sitio de aterrizaje de siempre */
+	@:optional var shipAt : { x : Int, y : Int };
 }
 
 /**
@@ -80,6 +82,8 @@ typedef SaveInfo = {
 	@:optional var chests : Array<{ key : String, t : Protocol.BlockInventory }>;
 	/** tutorial en curso (null: sin tutorial, terminado o pasado) */
 	@:optional var tuto : TutoInfo;
+	/** donde se dejo la nave en el planeta actual pilotandola (anadido del port); null = el sitio de aterrizaje de siempre */
+	@:optional var shipAt : { x : Int, y : Int };
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
@@ -114,12 +118,22 @@ class SaveData {
 			return {
 				seed : Std.int(o.seed), planetId : Std.int(o.planetId), pos : [for( v in (o.pos : Array<Dynamic>) ) Std.int(v)],
 				start : { seed : Std.int(o.start.seed), biome : o.start.biome, size : Std.int(o.start.size) },
-				planets : [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : [for( v in (p.edits : Array<Dynamic>) ) Std.int(v)] }],
+				planets : [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : [for( v in (p.edits : Array<Dynamic>) ) Std.int(v)], shipAt : readSpot(p.shipAt) }],
 				robot : o.robot != null ? { x : (o.robot.x : Float), y : (o.robot.y : Float) } : null,
 				space : o.space == true ? true : null,
 				ship : o.ship != null ? { x : (o.ship.x : Float), y : (o.ship.y : Float) } : null,
 				traveled : o.traveled != null ? (o.traveled : Float) : 0,
 			};
+		} catch( e : Dynamic ) {
+			return null;
+		}
+	}
+
+	/** sitio de la nave pilotada (anadido del port): null si no hay o no es valido */
+	static function readSpot( o : Dynamic ) : { x : Int, y : Int } {
+		try {
+			if( o == null || o.x == null || o.y == null ) return null;
+			return { x : Std.int(o.x), y : Std.int(o.y) };
 		} catch( e : Dynamic ) {
 			return null;
 		}
@@ -195,7 +209,7 @@ class SaveData {
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
 					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : readUni(o.uni), credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
-					tuto : readTuto(o.tuto),
+					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt),
 			};
 		} catch( e : Dynamic ) {
 			return null;

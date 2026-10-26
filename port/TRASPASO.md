@@ -107,6 +107,21 @@ Mientras tanto Cornor fusionó él mismo en GitHub los PR 59, 56 y 57 (2026-10-2
 de `Dev.hx` (`var mining`, se perdió `power`) y volvió a repetir la ayuda de `print`: `main` no compilaba. Arreglado al juntar
 `origin/main` con lo local; compilan SDL y DX y pasan `hangar_porte`, `nave_porte`, `fov_agua`, `tuto_espacio`.
 
+## Pilotar la nave (2026-10-26, añadido del port, rama `pilotar-nave`)
+Idea de Pvie hablada con Cornor (Cornor se queda con los cometas). En el ordenador de a bordo, "Pilotar la nave" la mueve sobre
+el planeta en X e Y (Z fija: bajar chocaría con el planeta, que llega a 128; subir obligaría a cambiar `SHIP_Z` en unos 60
+sitios). Sin gasto. Solo en planetas jugables: no en la nave nodriza (su ordenador sigue devolviendo al espacio), el hangar, el
+tutorial ni durante un fundido. Detalle técnico en RESUMEN. Probado con los guiones `pilotar*.txt` (datos en carpeta
+temporal): menú, Esc y E sin pausar, borde del planeta, guardar a mitad de vuelo y recargar, hangar, despegar y aterrizar,
+nave nodriza, tutorial, francés, sintetizador tras mover. Compilan SDL y DX; hashes de los 4 mundos iguales.
+Sin probar: con mando de verdad, en la ventana DirectX, y viajar a otro planeta y volver al primero (el código es el mismo
+que aterrizar en el mismo). Aún no está en `main`: Pvie lo prueba y Cornor lo revisa antes.
+Primera prueba de Pvie: la nave no giraba hacia donde iba y el movimiento era tosco. Ahora tiene inercia, gira hacia donde va,
+se inclina en las curvas y aterriza sola con suavidad (detalle en RESUMEN). El giro es solo visual: girar la nave de verdad
+(sus bloques, cofres, sintetizadores y el guardado) en pasos de 90 grados se podría hacer más adelante, pero toca mucho.
+Segunda prueba de Pvie: el haz molestaba en vuelo. Ahora se desvanece a toda velocidad y vuelve al ir despacio, al pararse y
+al aterrizar (opción elegida por Pvie entre varias).
+
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

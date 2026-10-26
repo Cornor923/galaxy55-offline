@@ -1,0 +1,36 @@
+# pilotar la nave (anadido del port): con el tutorial en curso el ordenador no ofrece pilotar; al pasarlo, si; en frances el
+# boton cabe
+wait 3
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+ship
+wait 10
+activatel 64 63 3
+wait 5
+print menu
+close
+wait 5
+pilot
+tuto skip
+wait 10
+setlang fr
+wait 5
+close
+wait 5
+activatel 64 63 3
+wait 5
+print menu
+shot pilotar_menu_fr
+close
+wait 5
+pilot
+wait 5
+shot pilotar_vuelo_fr
+pilotstop
+setlang es
+quit

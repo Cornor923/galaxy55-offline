@@ -31,6 +31,7 @@ Ce sont celles du jeu original (le déplacement et la physique sont copiés de `
 | Activer (ordinateur de bord, portes, bombe antique) | viser, appuyer et relâcher. En maintenant jusqu'à ce que le bloc casse, on le creuse : c'est ainsi qu'on ramasse une bombe antique sans la faire exploser (il faut la charge rose, comme pour la roche antique) |
 | Conteneur EScorp (coffre) | viser, appuyer et relâcher. Le jeu continue : clic prend et pose (Maj la moitié, Ctrl un ; ou flèches et Entrée, ou croix et A), glisser hors de la fenêtre fait regarder et s'éloigner le ferme (Échap et B aussi) |
 | Retourner au vaisseau | Maj+K, ou entrer dans le rayon de lumière d'atterrissage |
+| Piloter le vaisseau (ajout du portage) | ordinateur de bord > Piloter le vaisseau : WASD ou stick gauche le déplacent au-dessus de la planète, la souris ou le stick droit tournent la caméra, E, Échap, B ou Start le laissent où il est (il freine, se redresse et atterrit tout seul) |
 | Créatif : palette de blocs | I (clic = mettre le bloc dans la case choisie, molette = page) |
 | Pause | Échap |
 | Sauvegarde rapide | F5 |
@@ -116,6 +117,14 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - Le rayon de lumière d'atterrissage suit tout changement dans la colonne sous le vaisseau et part du dessus des blocs bas comme
   les plaques (l'original ne le bougeait qu'en cassant un bloc à cet endroit) ; on ne retourne au vaisseau que debout sur sa
   base, pas de plus haut.
+- Piloter le vaisseau au-dessus de la planète est un ajout de ce portage (l'original le laissait toujours au même endroit de
+  chaque planète) : depuis l'ordinateur de bord, seulement sur les planètes jouables (pas dans le vaisseau-mère, le hangar ni
+  pendant le tutoriel). Il reste toujours à la même hauteur, sans coût, avec une caméra derrière et au-dessus et un brouillard
+  plus léger pendant ce temps ; le rayon de lumière montre où il restera (il s'efface à pleine vitesse et revient en allant
+  doucement, à l'arrêt et à l'atterrissage). Il accélère et freine en douceur, se tourne vers où il
+  va et s'incline dans les virages ; quand on le laisse, il reprend son orientation habituelle avant d'atterrir (ses blocs,
+  coffres et synthétiseurs ne tournent pas). L'endroit est enregistré par planète ; sans le
+  piloter, le vaisseau atterrit au même endroit que d'habitude.
 - Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé et désactiver les vagues de l'eau.
 - Le turbo mineur fait creuser trois fois plus vite jusqu'à 15 blocs autour de lui (5 dans l'original) et se récupère quand
   on le casse (dans l'original, il était perdu).

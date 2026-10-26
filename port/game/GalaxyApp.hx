@@ -942,7 +942,10 @@ class GalaxyApp extends hxd.App {
 	function buildComputer() : Screen {
 		// visitar la nave nodriza solo se ofrece al editarla (editar_nodriza.bat); jugando se llega acoplandose al robot en el mapa
 		var mother = GameView.editMother;
-		var h = mother ? 560 : 498;
+		// anadido del port: pilotar la nave sobre el planeta (solo en los planetas jugables, fuera del tutorial)
+		var pilotOk = game != null && game.canPilot();
+		var dy = pilotOk ? 62 : 0;
+		var h = (mother ? 560 : 498) + dy;
 		var s = panelFor(640, h, Lang.t("computer.title"));
 		var x = (W - 540) * 0.5;
 		var y = (H - h) * 0.5 + 135;
@@ -951,14 +954,22 @@ class GalaxyApp extends hxd.App {
 		var trade = new Button(s, Lang.t("computer.trade"));
 		var close = new Button(s, Lang.t("computer.close"));
 		s.add(takeoff, x, y);
-		s.add(edit, x, y + 62);
-		s.add(trade, x, y + 124);
+		if( pilotOk ) {
+			var pilot = new Button(s, Lang.t("computer.pilot"));
+			s.add(pilot, x, y + 62);
+			pilot.onActivate = function() {
+				resume();
+				game.startPiloting();
+			};
+		}
+		s.add(edit, x, y + 62 + dy);
+		s.add(trade, x, y + 124 + dy);
 		if( mother ) {
 			var visit = new Button(s, Lang.t("computer.mothership"));
-			s.add(visit, x, y + 186);
+			s.add(visit, x, y + 186 + dy);
 			visit.onActivate = startMothership;
 		}
-		s.add(close, x, y + (mother ? 262 : 200));
+		s.add(close, x, y + (mother ? 262 : 200) + dy);
 		var soon = function() {
 			resume();
 			showToast(Lang.t("computer.soon"));
@@ -1253,7 +1264,7 @@ class GalaxyApp extends hxd.App {
 		uni.ship = null;
 		// los cambios del planeta del que despegaste se guardan con su id
 		uni.planets = uni.planets.filter(function(q) return q.id != uni.planetId);
-		uni.planets.push({ id : uni.planetId, edits : old.edits });
+		uni.planets.push({ id : uni.planetId, edits : old.edits, shipAt : old.shipAt });
 		var target : SaveData.UniPlanet = null;
 		for( q in uni.planets ) if( q.id == p.id ) target = q;
 		uni.planets = uni.planets.filter(function(q) return q.id != p.id);
@@ -1269,6 +1280,7 @@ class GalaxyApp extends hxd.App {
 		old.biome = p.biome;
 		old.sizeChunks = p.size;
 		old.edits = target != null ? target.edits : [];
+		old.shipAt = target != null ? target.shipAt : null; // donde se dejo la nave en ese planeta (anadido del port)
 		old.px = old.py = old.pz = -1;
 		old.yaw = old.pitch = 0;
 		startGame(old);
@@ -2084,7 +2096,11 @@ class GalaxyApp extends hxd.App {
 					palette.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
 				game.updateCamera();
-			} else if( chest == null && game.creative && (K.isPressed(K.I) || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
+			} else if( game.piloting && (K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start))) ) {
+				// anadido del port: Esc o Start dejan la nave donde esta (sin pausar)
+				game.stopPiloting();
+				pausedThisFrame = true;
+			} else if( chest == null && !game.piloting && game.creative && (K.isPressed(K.I) || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
 				openPalette();
 			} else if( chest == null && (K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start))) ) { pause(); pausedThisFrame = true; }
 			else {
@@ -2115,7 +2131,7 @@ class GalaxyApp extends hxd.App {
 				var lines = [];
 				if( showFps ) lines.push(Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps");
 				// con la cantina abierta, la ayuda de las teclas del juego no (casi todas estan desactivadas; la ventana tiene la suya)
-				if( Settings.showHelp && chest == null ) lines.push(Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : ""));
+				if( Settings.showHelp && chest == null ) lines.push(p.piloting ? Lang.t("hud.pilot") : Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : ""));
 				hud.text = lines.join("\n");
 				msgText.visible = game.message != null;
 				if( game.message != null ) {
@@ -2146,7 +2162,7 @@ class GalaxyApp extends hxd.App {
 		}
 		if( invBar != null ) invBar.visible = state == Playing || state == Paused;
 		cross.visible = state == Playing && game != null && game.laserActive;
-		dot.visible = state == Playing && game != null && !paletteOpen && (chest == null || chestDrag) && !cross.visible;
+		dot.visible = state == Playing && game != null && !game.piloting && !paletteOpen && (chest == null || chestDrag) && !cross.visible;
 		var fade = (state == Playing || state == Paused) && game != null ? Math.min(0.999, game.enteringShip) : 0.;
 		fadeRect.visible = fade > 0;
 		fadeRect.alpha = fade;

@@ -1,0 +1,49 @@
+# pilotar la nave (anadido del port): el boton del ordenador, mover la nave, dejarla, bajar por el rayo, guardar y recargar.
+# Debe salir "Pilotar la nave" en el menu, la nave debe quedar en otro sitio (print ship) con el jugador dentro, y tras
+# guardar y recargar la nave sigue alli. Despues, al otro lado del borde del planeta (da la vuelta): sitio dentro del planeta.
+wait 3
+ship
+wait 10
+print ship
+print pos
+activatel 64 63 3
+wait 5
+print menu
+shot pilotar_menu
+close
+wait 5
+pilot
+wait 5
+shot pilotar_vuelo1
+pilotgo 30 0
+wait 3
+pilotgo 0 -20.4
+wait 5
+shot pilotar_vuelo2
+print pos
+pilotstop
+wait 10
+print ship
+print pos
+print hud
+shot pilotar_dentro
+planet
+wait 20
+print pos
+shot pilotar_suelo
+closewin
+reload
+wait 80
+print ship
+print pos
+ship
+wait 10
+pilot
+pilotgo 300.3 -290.6
+wait 3
+pilotstop
+wait 10
+print ship
+print pos
+closewin
+quit

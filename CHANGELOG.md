@@ -5,6 +5,12 @@
 ## Sin publicar
 - Repositorio: se quitan de `main` los archivos que solo compilaban la versión Flash (`client*.hxml`, `build.bat`/`build.sh`,
   los SWF de `release/`, `libs/heaps` y `libs/format_old`). Siguen intactos en la rama `flash`. El juego no cambia.
+- **Pilotar la nave** (añadido del port): en el ordenador de a bordo, "Pilotar la nave" la mueve sobre el planeta con WASD o la
+  palanca izquierda (el ratón o la palanca derecha giran la cámara) y E, Esc, B o Start la dejan allí. Siempre a la misma
+  altura y sin gasto; acelera y frena con suavidad, gira hacia donde va y se inclina en las curvas, y al dejarla frena, se
+  endereza y aterriza sola. El haz de luz marca dónde quedará: a toda velocidad se desvanece y vuelve al ir
+  despacio, al pararse y al aterrizar. Solo en los planetas jugables: no en la nave nodriza, el hangar ni
+  durante el tutorial. El sitio se guarda por planeta, también a mitad del vuelo; las partidas anteriores no cambian.
 
 ## v0.5 — pre-release
 - Arreglos de Cornor923 (¡gracias!), integrados desde sus PR 17-30 (cambio del port): sin gasto de oxígeno bajo el agua en

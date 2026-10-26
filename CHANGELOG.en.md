@@ -5,6 +5,12 @@
 ## Unreleased
 - Repository: the files that only built the Flash version (`client*.hxml`, `build.bat`/`build.sh`, the SWFs in `release/`,
   `libs/heaps` and `libs/format_old`) are removed from `main`. They remain untouched in the `flash` branch. The game does not change.
+- **Pilot the ship** (port addition): on the on-board computer, "Pilot the ship" moves it over the planet with WASD or the left
+  stick (the mouse or right stick turn the camera) and E, Esc, B or Start leave it there. Always at the same height and free;
+  it speeds up and slows down smoothly, turns to face where it goes and banks in turns, and when you leave it, it slows down,
+  straightens up and lands by itself. The light beam shows where it will stay: it fades out at full speed and
+  comes back when going slowly, stopping or landing. Only on playable planets: not in the mothership, the hangar or during the tutorial.
+  The spot is saved per planet, also mid-flight; earlier saved games do not change.
 
 ## v0.5 — pre-release
 - Fixes by Cornor923 (thank you!), merged from their PRs 17-30 (port change): no oxygen use underwater in creative; ice next

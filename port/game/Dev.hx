@@ -13,6 +13,8 @@ import Common;
  *   nudge dx dy [dz]        mover al jugador desde donde esta
  *   lookat x y z            mirar a ese punto (planeta)    lookl x y z   (nave)
  *   ship | planet           ir a la nave / bajar al planeta
+ *   pilot | pilotgo dx dy | pilotkeys a l | pilotland | pilotstop   pilotar la nave (anadido del port): empezar, moverla de golpe,
+ *                           mantener las teclas, dejarla con suavidad (como E) o ya mismo (print pilot|pilotcam)
  *   tele                    pisar de nuevo el teletransporte (o el rayo): si se cumplen las condiciones, transporta al rato
  *   tpdock dx dy [dz]       colocar al jugador respecto al centro y la base del rayo de la nave
  *   dockp dz Bloque|none    poner o romper (como al jugar) en la columna del rayo; dz = 0 es su bloque de arriba
@@ -222,6 +224,18 @@ class Dev {
 					g.yaw = Math.atan2(dy, dx);
 					g.pitch = Math.atan2(dz, Math.sqrt(dx * dx + dy * dy));
 				case "ship": g.gotoShip(true);
+				// pilotar la nave (anadido del port): pilot empieza (como el boton del ordenador), pilotgo DX DY la mueve de golpe,
+				// pilotkeys AVANCE LADO mantiene las teclas (-1..1; "pilotkeys 0 0" las suelta), pilotland la deja como E (frena y
+				// aterriza sola), pilotstop la deja ya mismo
+				case "pilot":
+					g.startPiloting();
+					Sys.println("pilotar: " + (g.piloting ? "si" : "no (canPilot=" + g.canPilot() + ")"));
+				case "pilotgo": g.pilotSlide(f(a[1]), f(a[2]));
+				case "pilotkeys": g.debugPilot = f(a[1]) == 0 && f(a[2]) == 0 ? null : { speed : f(a[1]), strafe : f(a[2]) };
+				case "pilotland": g.stopPiloting();
+				case "pilotstop":
+					g.finishPiloting();
+					Sys.println("nave dejada en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z + " desplazamiento=" + w.shipDX + "," + w.shipDY + " jugador=" + Std.int(g.px * 100) / 100 + "," + Std.int(g.py * 100) / 100 + "," + Std.int(g.pz * 100) / 100);
 				case "planet": g.gotoShip(false);
 				case "tele": g.enteringShip = 0; // como si se hubiera apartado y vuelto a pisar
 				case "tpdock":
@@ -806,8 +820,10 @@ class Dev {
 		case "mips": Sys.println("mipmaps del atlas: " + Math.round(Atlas.mipTime * 1000) + " ms");
 		case "drops": Sys.println("sueltos: " + g.drops.count() + " " + [for( d in @:privateAccess g.drops.list ) d.block.k + " z=" + Math.round(d.z * 100) / 100 + " vida=" + Math.round(d.time * 100) / 100].join("  "));
 		case "loose":
-			// sueltos con su bloque y cantidad
-			Sys.println("sueltos: " + [for( d in @:privateAccess g.drops.list ) d.block.k + "x" + d.n].join(" "));
+			// sueltos con su bloque, cantidad y posicion (en la nave, tambien la local: pilotar la mueve)
+			var w = g.world;
+			Sys.println("sueltos: " + [for( d in @:privateAccess g.drops.list ) d.block.k + "x" + d.n + "@" + Math.round(d.x * 100) / 100 + "," + Math.round(d.y * 100) / 100 + "," + Math.round(d.z * 100) / 100
+				+ (d.z >= World.SHIP_Z ? " local " + (Math.round((d.x - w.shipDX) * 100) / 100) + "," + (Math.round((d.y - w.shipDY) * 100) / 100) : "")].join(" "));
 		case "chest":
 			// ventana de la cantina (abierta o no) y las cantinas de la partida con lo que tienen
 			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ");
@@ -883,7 +899,18 @@ class Dev {
 			top.sort(function(a, b) return count.get(b) - count.get(a));
 			Sys.println("bioma: mundo " + w.biomeName + ", partida " + g.info.biome + ", salida " + (u == null ? "-" : u.start.biome) + ", semilla " + g.info.seed
 				+ ", suelo " + [for( k in top.slice(0, 3) ) k + "x" + count.get(k)].join(" "));
+		case "pilotcam":
+			// camara de pilotar (anadido del port): posicion, objetivo y centro de la nave
+			var c = @:privateAccess g.s3d.camera, m = g.ship.center();
+			Sys.println("camara " + [c.pos.x, c.pos.y, c.pos.z].map(v -> Math.round(v)) + " mira " + [c.target.x, c.target.y, c.target.z].map(v -> Math.round(v)) + " centro nave " + [m.x, m.y, m.z].map(v -> Math.round(v)) + " raiz " + [g.ship.world.root.x, g.ship.world.root.y, g.ship.world.root.z].map(v -> Math.round(v)));
+		case "pilot":
+			Sys.println("pilotando: " + (g.piloting ? "si" : "no") + " pausa: " + (@:privateAccess app.current != null) + " guardado shipAt: " + g.info.shipAt
+				+ (g.ship != null ? " rumbo " + Math.round(g.ship.heading * 100) / 100 + " velocidad " + Math.round(Math.sqrt(@:privateAccess (g.pilotVX * g.pilotVX + g.pilotVY * g.pilotVY)) * 10) / 10 + " jugador " + Math.round(g.px * 100) / 100 + "," + Math.round(g.py * 100) / 100 : ""));
 		case "ship":
+			if( g.ship == null ) {
+				Sys.println("sin nave (nave nodriza o hangar)");
+				return;
+			}
 			var beam = @:privateAccess g.ship.beam;
 			Sys.println("nave en " + g.ship.x + "," + g.ship.y + " suelo z=" + g.ship.z + (beam == null ? "" : " rayo z=" + beam.z + " alto=" + Math.round(beam.scaleZ * 100) / 100));
 		default: Sys.println("print desconocido: " + a[1]);
