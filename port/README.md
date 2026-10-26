@@ -3,7 +3,7 @@
 [Español: `LEEME.md`](LEEME.md) · [Français : `LISEZMOI.md`](LISEZMOI.md)
 
 This folder contains the port of the game to a native desktop application, with no Flash. It is work in progress (with known
-bugs, see `BUGS.md` in the repository root); the original Flash game remains untouched in `src/`, `libs/` and `release/`, and in the `flash` branch.
+bugs, see `BUGS.md` in the repository root); the original Flash game, with its build files and SWFs, remains untouched in the `flash` branch (only the original code the port compiles is kept here).
 
 ## Play
 

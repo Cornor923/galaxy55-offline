@@ -2,8 +2,10 @@ LIBRERÍAS INCLUIDAS EN libs/
 ============================
 
   libs-haxe2/, libs-haxe3/   librerías de Motion Twin (CC BY-NC-SA 4.0), con nuestros cambios menores.
-  heaps/                     Heaps (motor 3D de Haxe) en el estado de 2012-11-30 (commit 787f6e88). Licencia MIT.
-  format_old/                librería "format" de Haxe en el estado de 2012-11-14 (commit b505801). Licencia BSD-2.
+
+heaps/ (Heaps de 2012-11-30) y format_old/ (format de 2012-11-14) solo los usaba la compilación Flash: desde el
+2026-10-26 están solo en la rama `flash`. El port usa el Heaps y el format actuales (haxelib). Lo de abajo sobre
+esas dos carpetas se refiere a la rama `flash`.
 
 Cada una conserva su propia licencia (archivo LICENSE dentro de la carpeta). El proyecto no usa las
 versiones actuales de Heaps ni de format: la API cambió mucho desde 2012, hay que usar estas.

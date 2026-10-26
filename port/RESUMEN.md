@@ -8,7 +8,8 @@ Flash está muerto, así que estamos **portándolo a una aplicación nativa de e
 (el mismo motor y lenguaje con el que se hizo el original, y con el que Motion Twin hizo Dead Cells).
 Metas: menú de inicio con guardado y carga, fidelidad al original, y a futuro Steam y multijugador.
 Desde el 2026-10-14 la versión nativa es la oficial: está en `main` y en `port-hashlink` (iguales). La versión Flash sigue intacta en la
-etiqueta `flash-version` y la rama `flash` (más los SWF de `release/`). El README avisa de las dos versiones y de los errores conocidos.
+etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilación. Desde el 2026-10-26 esos archivos (`client*.hxml`,
+`build.*`, `release/`, `libs/heaps`, `libs/format_old`) ya no están en `main`/`port-hashlink`: el port no los usa (usa el Heaps actual). El README avisa de las dos versiones y de los errores conocidos.
 
 ## Cómo lo hacemos
 - **Reutilizar, no reescribir:** los generadores de planetas originales (`src/G55/fla/client/src/gen`) se compilan tal cual.

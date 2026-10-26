@@ -1,5 +1,0 @@
--cp .
--cp ..
--neko XBXMake.n
--main XBXMake
--lib format

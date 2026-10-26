@@ -3,7 +3,7 @@
 [Español : `LEEME.md`](LEEME.md) · [English: `README.md`](README.md)
 
 Ce dossier contient le portage du jeu en application de bureau native, sans Flash. C'est un travail en cours (avec des bugs
-connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine reste intact dans `src/`, `libs/` et `release/`, et dans la branche `flash`.
+connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine, avec ses fichiers de compilation et ses SWF, reste intact dans la branche `flash` (ici ne reste que le code original que compile le port).
 
 ## Jouer
 

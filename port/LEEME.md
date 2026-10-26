@@ -3,7 +3,7 @@
 [English: `README.md`](README.md) · [Français : `LISEZMOI.md`](LISEZMOI.md)
 
 Esta carpeta contiene el port del juego a una aplicación de escritorio nativa, sin Flash. Es trabajo en curso (con errores
-conocidos, ver `ERRORES.md` en la raíz); el juego original en Flash sigue intacto en `src/`, `libs/` y `release/`, y también en la rama `flash`.
+conocidos, ver `ERRORES.md` en la raíz); el juego original en Flash, con sus archivos de compilación y sus SWF, sigue intacto en la rama `flash` (aquí solo queda el código original que compila el port).
 
 ## Jugar
 

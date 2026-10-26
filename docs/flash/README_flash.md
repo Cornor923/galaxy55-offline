@@ -1,8 +1,9 @@
 # Galaxy 55 — versión Flash (archivada)
 
 > Esta es la documentación de la **versión Flash** (SWF). La versión principal y activa es la nativa para Windows:
-> ver el [README principal](../../README.md). El código Flash sigue en `src/`, `libs/`, `release/` y en la rama
-> [`flash`](../../../../tree/flash). Las rutas de esta página (`src/`, `release/`...) son de la raíz del repositorio.
+> ver el [README principal](../../README.md). La versión Flash completa (SWF de `release/`, `client*.hxml`, `build.*`,
+> `libs/heaps`, `libs/format_old`) está en la rama [`flash`](../../../../tree/flash): desde el 2026-10-26 ya no está en `main`.
+> Las rutas de esta página (`src/`, `release/`...) son de la raíz del repositorio en esa rama.
 
 Galaxy 55 fue un juego web de Flash (alpha, 2012) de **Motion Twin**: exploración espacial, planetas
 generados al azar y un sistema de bloques ("kubes") y crafteo en 3D. Se cerró y su servidor ya no existe.

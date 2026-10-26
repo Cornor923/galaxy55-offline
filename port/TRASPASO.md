@@ -8,6 +8,8 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
 - Repo: https://github.com/Pv1E/galaxy55-offline. Las ramas `main` y `port-hashlink` van iguales: se sube con
   `git push origin HEAD:main HEAD:port-hashlink`. Licencia CC BY-NC-SA 4.0.
 - Resumen técnico largo del port: `port/RESUMEN.md`.
+- La versión Flash (con `client*.hxml`, `build.*`, `release/`, `libs/heaps`, `libs/format_old`) vive solo en la rama `flash`:
+  se quitaron de `main`/`port-hashlink` el 2026-10-26 porque el port no los usa. `src/`, `libs/libs-haxe*`, `stubs/`, `tools/` y `data/` se quedan.
 - Lista de lo que falta: `PENDIENTES.md` / `TODO.md`.
 - Errores conocidos: `ERRORES.md` / `BUGS.md`.
 - Novedades: `CHANGELOG.md`.

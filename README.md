@@ -63,7 +63,8 @@ port/           THE NATIVE PORT (active work)
   headless/     verification    dev/      test bench   LEEME.md, RESUMEN.md, RELEASE.md, jugar.bat
 docs/flash/     documentation of the Flash version (README, changelog, to-do of that time)
 docs/           research notes (sources, Twinpedia, Discord);  docs/img/  screenshots
-src/ libs/ stubs/ tools/ data/ release/ client*.hxml build.*   original (Motion Twin) code and the Flash version
+src/ libs/ stubs/ tools/ data/   original (Motion Twin) code the port compiles, and its tools
+                (the Flash build files and SWFs are in the `flash` branch)
 ```
 
 ## License and credits
@@ -130,7 +131,7 @@ Lista completa y numerada en [`ERRORES.md`](ERRORES.md). Los principales:
 ### Estructura del repositorio
 
 Ver el esquema en inglés más arriba: `port/` es el port nativo (activo); `docs/flash/` la documentación de la versión Flash;
-`docs/` las notas de investigación y `docs/img/` las capturas; el resto (`src/`, `libs/`, `release/`…) es el código original y la versión Flash.
+`docs/` las notas de investigación y `docs/img/` las capturas; el resto (`src/`, `libs/`, `stubs/`…) es el código original que compila el port; lo que solo servía para compilar la versión Flash (y sus SWF) está en la rama `flash`.
 
 ### Licencia y créditos
 
@@ -196,7 +197,7 @@ Liste complète et numérotée dans [`BUGS.fr.md`](BUGS.fr.md). Les principaux :
 ### Organisation du dépôt
 
 Voir le schéma en anglais plus haut : `port/` est le port natif (travail en cours) ; `docs/flash/` la documentation de la version Flash ;
-`docs/` les notes de recherche et `docs/img/` les captures ; le reste (`src/`, `libs/`, `release/`…) est le code original et la version Flash.
+`docs/` les notes de recherche et `docs/img/` les captures ; le reste (`src/`, `libs/`, `stubs/`…) est le code original que compile le port ; ce qui servait seulement à compiler la version Flash (et ses SWF) est dans la branche `flash`.
 
 ### Licence et crédits
 
