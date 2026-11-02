@@ -1,8 +1,0 @@
--cp samples
--swf engine.swf
--swf-header 800:600:30:FFFFFF
---flash-strict
--swf-version 11
--main Test
--lib format
---macro include('h3d')

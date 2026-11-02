@@ -8,6 +8,8 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
 - Repo: https://github.com/Pv1E/galaxy55-offline. Las ramas `main` y `port-hashlink` van iguales: se sube con
   `git push origin HEAD:main HEAD:port-hashlink`. Licencia CC BY-NC-SA 4.0.
 - Resumen técnico largo del port: `port/RESUMEN.md`.
+- La versión Flash (con `client*.hxml`, `build.*`, `release/`, `libs/heaps`, `libs/format_old`) vive solo en la rama `flash`:
+  se quitaron de `main`/`port-hashlink` el 2026-10-26 porque el port no los usa. `src/`, `libs/libs-haxe*`, `stubs/`, `tools/` y `data/` se quedan.
 - Lista de lo que falta: `PENDIENTES.md` / `TODO.md`.
 - Errores conocidos: `ERRORES.md` / `BUGS.md`.
 - Novedades: `CHANGELOG.md`.
@@ -104,6 +106,38 @@ por línea con un script.
 Mientras tanto Cornor fusionó él mismo en GitHub los PR 59, 56 y 57 (2026-10-23). Su fusión `01fbe7c` dejó rota una línea
 de `Dev.hx` (`var mining`, se perdió `power`) y volvió a repetir la ayuda de `print`: `main` no compilaba. Arreglado al juntar
 `origin/main` con lo local; compilan SDL y DX y pasan `hangar_porte`, `nave_porte`, `fov_agua`, `tuto_espacio`.
+
+## Pilotar la nave (2026-10-26, añadido del port, rama `pilotar-nave`)
+Idea de Pvie hablada con Cornor (Cornor se queda con los cometas). En el ordenador de a bordo, "Pilotar la nave" la mueve sobre
+el planeta en X e Y (Z fija: bajar chocaría con el planeta, que llega a 128; subir obligaría a cambiar `SHIP_Z` en unos 60
+sitios). Sin gasto. Solo en planetas jugables: no en la nave nodriza (su ordenador sigue devolviendo al espacio), el hangar, el
+tutorial ni durante un fundido. Detalle técnico en RESUMEN. Probado con los guiones `pilotar*.txt` (datos en carpeta
+temporal): menú, Esc y E sin pausar, borde del planeta, guardar a mitad de vuelo y recargar, hangar, despegar y aterrizar,
+nave nodriza, tutorial, francés, sintetizador tras mover. Compilan SDL y DX; hashes de los 4 mundos iguales.
+Sin probar: con mando de verdad, en la ventana DirectX, y viajar a otro planeta y volver al primero (el código es el mismo
+que aterrizar en el mismo). Aún no está en `main`: Pvie lo prueba y Cornor lo revisa antes.
+Primera prueba de Pvie: la nave no giraba hacia donde iba y el movimiento era tosco. Ahora tiene inercia, gira hacia donde va,
+se inclina en las curvas y aterriza sola con suavidad (detalle en RESUMEN). El giro es solo visual: girar la nave de verdad
+(sus bloques, cofres, sintetizadores y el guardado) en pasos de 90 grados se podría hacer más adelante, pero toca mucho.
+Segunda prueba de Pvie: el haz molestaba en vuelo. Ahora se desvanece a toda velocidad y vuelve al ir despacio, al pararse y
+al aterrizar (opción elegida por Pvie entre varias).
+
+## PR 60-63 de Cornor923 integrados (2026-11-02)
+Fusionados en local en `port-hashlink`, en orden 60, 61, 62, 63, sin conflictos. Compilan SDL y DX. Pasan sus guiones (datos
+en carpeta temporal): `contrats`, `contrats_tuto`, `contrats_json`, `bomb_liquids`, `place_front`, `ventana_neon` y
+`fullwindow`. Contenido: contratos de la ESCorp (60, añadido del port; créditos de salida 500 -> 200 al acabar el tutorial),
+la lava hace explotar la bomba antigua (61, cambio del port), poner delante de modelos y bloques parciales (62, como el
+original) y cara trasera oculta en el marco del cristal (63, como el original). Detalle en RESUMEN. Sin subir aún a GitHub.
+Después, 3 fallos de Sekhmet arreglados (altura máxima al poner, apuntar con la cabeza en una fuente de cascada, arena
+movediza hueca junto a la cascada) con sus guiones `altura_max`, `fuente_excavar` y `cascada_arena`; pasan también `place_front`,
+`hielo_cascada` y `ventana_neon`. La nave que cambia de sitio (ERRORES #15) era el fallo de la v0.4 arreglado en la v0.5 (sitio calculado con los cambios del
+jugador); comprobado con `nave_sitio`. Conviene confirmar con Sekhmet qué versión usaba.
+
+## v0.6 (2026-11-02)
+Subido a `main` y `port-hashlink` (011ff2e) antes de preparar la versión. Versión del menú, enlaces de los README, changelogs,
+ERRORES/BUGS y `port/RELEASE.md` pasan a v0.6. Zips con `package.ps1 -Version 0.6`; probados desde una carpeta vacía (SDL y
+DirectX: carga el planeta y los contratos leen `res/contracts.json`). Etiqueta `v0.6`. La release la crea Pvie en GitHub
+(pre-release, notas de `port/RELEASE.md`, los dos zips de `port/out/release`).
 
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**

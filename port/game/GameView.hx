@@ -188,7 +188,7 @@ class GameView {
 			enteringShip = -1;
 			return;
 		}
-		ship = new Ship(world, atlas, s3d, info.shipEdits, Hangar.currentShip(info));
+		ship = new Ship(world, atlas, s3d, info.shipEdits, Hangar.currentShip(info), info.shipAt);
 		ship.initCrafts(this);
 		if( info.px < 0 ) {
 			// partida nueva: se empieza dentro de la nave, encima del teletransportador
@@ -285,6 +285,16 @@ class GameView {
 		info.inv = Inv.copy(inv.inv);
 		info.edits = world.editsFlat();
 		if( ship != null ) info.shipEdits = ship.world.editsFlat();
+		// anadido del port: el sitio donde se dejo la nave pilotandola; a mitad de vuelo, el sitio en que aterrizaria ahora, con el
+		// jugador movido lo mismo (asi no aparece dentro de una pared ni fuera de la nave al cargar)
+		if( ship != null && ship.moved ) info.shipAt = { x : ship.x, y : ship.y };
+		if( ship != null && piloting ) {
+			var d = ship.snapDelta();
+			info.shipAt = ship.landingSpot();
+			info.px = px + d.dx;
+			info.py = py + d.dy;
+			info.pitch = pilotPitch;
+		}
 		return info;
 	}
 
@@ -328,6 +338,12 @@ class GameView {
 		var tmod = realDt * FPS;
 		var K = hxd.Key;
 		if( fadeFX != null && fadeFX.lock ) controls = false; // hero.lock del original mientras se vuelve a la nave
+		// pilotando (anadido del port): los controles mueven la nave, no al jugador
+		if( piloting ) {
+			if( fadeFX != null && fadeFX.lock ) finishPiloting();
+			else pilotStep(tmod, controls && !pilotLanding ? pilotInput(tmod, pad) : { x : 0., y : 0. });
+			controls = false;
+		}
 
 		var speed = 0., strafe = 0.;
 		var useJetpack = false;
@@ -406,7 +422,8 @@ class GameView {
 			strafe = debugStrafe;
 			walking = true;
 		}
-		stepPhysics(tmod, speed, strafe, useJetpack);
+		// pilotando, el jugador va quieto junto al ordenador y la nave lo lleva (pilotInput)
+		if( !piloting ) stepPhysics(tmod, speed, strafe, useJetpack);
 		updateViewZ(tmod);
 		updateLife(tmod);
 		// temblor (Game.update): baja con el tiempo y la camara sube o baja al azar hasta 0.4 * shake
@@ -425,6 +442,7 @@ class GameView {
 		if( hangar != null ) hangarUpdate(tmod);
 		else if( ship != null ) {
 			ship.update(this, tmod);
+			if( piloting ) enteringShip = -1; // sin teletransporte mientras se pilota (ship.update lo pondria a 0 lejos del rayo viejo)
 			message = ship.message(this);
 		}
 		// despues del teletransportador (el original sale de Game.update al acabar el fundido): la muerte lleva a la nave y
@@ -468,7 +486,7 @@ class GameView {
 		}
 		process.update(realDt, px, py, pz + viewZ * 0.5);
 		world.flush();
-		drops.update(this, tmod);
+		if( !piloting ) drops.update(this, tmod); // pilotando, los sueltos de la nave van con ella (pilotMove)
 		fx.update(this, realDt, tmod);
 		parts.update(tmod, s3d.camera, px, py);
 	}
@@ -960,6 +978,176 @@ class GameView {
 		return d;
 	}
 
+	// ---------------------------------------------------------------- pilotar la nave (anadido del port)
+
+	/** true mientras se pilota la nave sobre el planeta (desde el ordenador de a bordo) */
+	public var piloting(default, null) = false;
+	/** se ha pedido dejar la nave: frena, vuelve a su orientacion y se centra en su celda antes de bajar el rayo */
+	var pilotLanding = false;
+	/** inclinacion de la vista al empezar a pilotar: se recupera al acabar */
+	var pilotPitch = 0.;
+	/** velocidad actual de la nave pilotada (bloques por segundo) */
+	var pilotVX = 0.;
+	var pilotVY = 0.;
+	/** velocidad maxima de la nave pilotada, en bloques por segundo (sin gasto) */
+	static inline var PILOT_SPEED = 18.;
+	/** rapidez con que acelera y frena (1/s: cuanto mayor, mas brusco) */
+	static inline var PILOT_ACCEL = 1.8;
+	/** frenado al dejar la nave (1/s): mas firme, para que aterrice en un par de segundos */
+	static inline var PILOT_BRAKE = 3.5;
+	/** rapidez con que gira hacia donde va (1/s) e inclinacion lateral maxima al girar (rad) */
+	static inline var PILOT_TURN = 2.2;
+	static inline var PILOT_BANK = 0.3;
+	/** camara de pilotar: distancia por detras de la nave y altura sobre ella */
+	static inline var PILOT_CAM_DIST = 22.;
+	static inline var PILOT_CAM_UP = 30.;
+
+	/** solo en los planetas jugables: no en la nave nodriza, el hangar ni el tutorial, y no durante un fundido */
+	public function canPilot() : Bool {
+		return ship != null && hangar == null && info.mothership != true && !Tutorial.active(info) && (fadeFX == null || !fadeFX.lock)
+			&& life > 0 && pz >= World.SHIP_Z;
+	}
+
+	public function startPiloting() {
+		if( piloting || !canPilot() ) return;
+		piloting = true;
+		pilotLanding = false;
+		pilotVX = pilotVY = 0;
+		ship.slide(0, 0); // el rayo pasa a marcar donde aterrizaria
+		drops.setShipVisible(false); // la nave gira al volar y los sueltos de dentro no: se ocultan hasta aterrizar
+		world.sky.setPilotFog(true);
+		pilotPitch = pitch;
+		pitch = -0.35;
+		laserActive = false;
+		releaseAction();
+		stopSounds();
+	}
+
+	/** pide dejar la nave (E, B, Esc, Start): frena y aterriza sola en unos instantes (pilotStep) */
+	public function stopPiloting() {
+		if( piloting ) pilotLanding = true;
+	}
+
+	/** deja la nave ya mismo (en una celda entera, con su orientacion de siempre) y baja el rayo alli: al acabar el aterrizaje
+	    suave, en un fundido y en las pruebas */
+	public function finishPiloting() {
+		if( !piloting ) return;
+		var d = ship.land();
+		moveRiders(d.dx, d.dy);
+		drops.setShipVisible(true);
+		world.sky.setPilotFog(false);
+		piloting = false;
+		pilotLanding = false;
+		pilotVX = pilotVY = 0;
+		pilotBeam = 1;
+		ship.setBeamFade(1);
+		pitch = pilotPitch;
+		// de pie sobre el teletransportador: como al aparecer en la nave (gotoShip), no transporta hasta que te apartas y vuelves
+		enteringShip = -1;
+		releaseAction();
+	}
+
+	/** lo que va dentro de la nave se mueve con ella: el jugador y los bloques sueltos (las vistas previas de los sintetizadores) */
+	function moveRiders( dx : Float, dy : Float ) {
+		px += dx;
+		py += dy;
+		drops.shiftShip(dx, dy);
+	}
+
+	/**
+	 * WASD / flechas / palanca izquierda: hacia donde acelera la nave, segun la camara (raton y palanca derecha la giran).
+	 * Devuelve la velocidad buscada; E o B piden dejar la nave (Esc y Start, en GalaxyApp).
+	 */
+	function pilotInput( tmod : Float, pad : hxd.Pad ) : { x : Float, y : Float } {
+		var K = hxd.Key;
+		if( K.isPressed(K.E) || (pad != null && pad.isPressed(pad.config.B)) ) {
+			stopPiloting();
+			return { x : 0., y : 0. };
+		}
+		var speed = 0., strafe = 0.;
+		var arrows = actionKeys;
+		if( (arrows && K.isDown(K.UP)) || K.isDown(K.W) || K.isDown(K.Z) || K.isDown(K.NUMPAD_8) ) speed += 1;
+		if( (arrows && K.isDown(K.DOWN)) || K.isDown(K.S) || K.isDown(K.NUMPAD_2) ) speed -= 1;
+		if( (arrows && K.isDown(K.RIGHT)) || K.isDown(K.D) || K.isDown(K.NUMPAD_6) ) strafe += 1;
+		if( (arrows && K.isDown(K.LEFT)) || K.isDown(K.A) || K.isDown(K.Q) || K.isDown(K.NUMPAD_4) ) strafe -= 1;
+		if( pad != null ) {
+			var dead = 0.2;
+			if( Math.abs(pad.xAxis) > dead ) strafe += pad.xAxis;
+			if( Math.abs(pad.yAxis) > dead ) speed -= pad.yAxis;
+			if( Math.abs(pad.rxAxis) > dead ) yaw += pad.rxAxis * 0.054 * Settings.mouseSens * tmod;
+		}
+		if( debugPilot != null ) {
+			speed = debugPilot.speed;
+			strafe = debugPilot.strafe;
+		}
+		var s = Math.sqrt(speed * speed + strafe * strafe);
+		if( s == 0 ) return { x : 0., y : 0. };
+		if( s > 1 ) s = 1;
+		// mismo angulo que doMove: yaw + atan2(strafe, speed)
+		var a = yaw + Math.atan2(strafe, speed);
+		return { x : Math.cos(a) * s * PILOT_SPEED, y : Math.sin(a) * s * PILOT_SPEED };
+	}
+
+	/** banco de pruebas: mantiene pulsado avanzar (speed) y de lado (strafe) mientras se pilota, de -1 a 1 */
+	public var debugPilot : { speed : Float, strafe : Float };
+
+	/**
+	 * Un paso del vuelo: la velocidad se acerca poco a poco a la buscada (acelera y frena con suavidad), la nave gira hacia donde
+	 * va y se inclina un poco al girar. Al dejarla, frena, vuelve a su orientacion y se centra en su celda; entonces aterriza.
+	 */
+	function pilotStep( tmod : Float, want : { x : Float, y : Float } ) {
+		var dt = tmod / FPS;
+		var k = 1 - Math.exp(-dt * (pilotLanding ? PILOT_BRAKE : PILOT_ACCEL));
+		pilotVX += (want.x - pilotVX) * k;
+		pilotVY += (want.y - pilotVY) * k;
+		var v = Math.sqrt(pilotVX * pilotVX + pilotVY * pilotVY);
+		if( pilotLanding && v < 0.3 ) pilotVX = pilotVY = v = 0;
+		if( v > 0 ) pilotSlide(pilotVX * dt, pilotVY * dt);
+		// rumbo: hacia donde va (si va lo bastante rapido) o, al aterrizar, el de siempre (0)
+		var h = ship.heading;
+		var target = pilotLanding && v < 2 ? 0. : (v > 1 ? Math.atan2(pilotVY, pilotVX) : h);
+		var diff = angleDiff(target - h);
+		var turn = diff * (1 - Math.exp(-dt * PILOT_TURN * (pilotLanding ? 2 : 1)));
+		var bank = dt > 0 ? -turn / dt * 0.25 : 0.;
+		if( bank > PILOT_BANK ) bank = PILOT_BANK;
+		if( bank < -PILOT_BANK ) bank = -PILOT_BANK;
+		var roll = pilotRoll + (bank - pilotRoll) * (1 - Math.exp(-dt * 3));
+		pilotRoll = roll;
+		ship.setPose(h + turn, roll);
+		// el rayo: entero hasta 3 bloques/s, nada desde 9
+		var bt = pilotLanding ? 1. : Math.max(0, Math.min(1, 1 - (v - 3) / 6));
+		pilotBeam += (bt - pilotBeam) * (1 - Math.exp(-dt * 4));
+		ship.setBeamFade(pilotBeam);
+		if( !pilotLanding ) return;
+		// ya casi parada: se centra en su celda (sin dar saltos) y aterriza cuando esta derecha y en su sitio
+		if( v < 2 ) {
+			var c = ship.cellDelta();
+			var kc = 1 - Math.exp(-dt * 6);
+			if( Math.abs(c.dx) > 0.01 || Math.abs(c.dy) > 0.01 ) pilotSlide(c.dx * kc, c.dy * kc);
+			// lo que queda (menos de 3 grados y 0.05 bloques) lo quita land sin que se note
+			if( v == 0 && Math.abs(c.dx) < 0.05 && Math.abs(c.dy) < 0.05 && Math.abs(angleDiff(ship.heading)) < 0.05 && Math.abs(pilotRoll) < 0.05 )
+				finishPiloting();
+		}
+	}
+	var pilotRoll = 0.;
+	/** fuerza del rayo en vuelo: a toda velocidad no se ve y aparece al ir despacio, al pararse y al aterrizar, cuando se elige el sitio */
+	var pilotBeam = 1.;
+
+	/** angulo llevado a -PI..PI */
+	static function angleDiff( a : Float ) : Float {
+		a %= Math.PI * 2;
+		if( a > Math.PI ) a -= Math.PI * 2;
+		if( a < -Math.PI ) a += Math.PI * 2;
+		return a;
+	}
+
+	/** mueve la nave pilotada (dx, dy) con lo que lleva dentro */
+	public function pilotSlide( dx : Float, dy : Float ) {
+		if( !piloting ) return;
+		ship.slide(dx, dy);
+		moveRiders(dx, dy);
+	}
+
 	/** Hero.gotoShip: aparece en la nave (encima del teletransportador) o en el suelo, bajo ella */
 	public function gotoShip( inside : Bool ) {
 		enteringShip = -1;
@@ -1198,7 +1386,7 @@ class GameView {
 		var curve = hangar != null ? 0. : World.curve(world.size);
 		var lx = Math.floor(ex), ly = Math.floor(ey), lz = Math.floor(ez), have = false;
 		var cx = lx, cy = ly, cz = lz; // celda en la que esta el rayo
-		var eyeX = lx, eyeY = ly, eyeZ = lz;
+		var sx = lx, sy = ly, sz = lz; // celda de la camara
 		var t = 0.;
 		var ox = ex, oy = ey, oz = ez; // punto anterior del rayo
 		while( t < 7.0 ) {
@@ -1217,14 +1405,12 @@ class GameView {
 			// (no se salta la misma celda: los bloques parciales solo cuentan si el rayo pasa por su caja)
 			// el agua que no se apunta (mar, cascada que cae, agua puesta) no para el rayo: se pone bajo el agua; la fuente de
 			// cascada y la arena movediza si lo paran: se pone contra ellas (Render.pick del original)
-			var b = world.block(ix, iy, iz);
+			// la celda de la camara no cuenta: el original empieza el rayo en su borde (Render.pick), asi con la cabeza dentro de
+			// una fuente de cascada o de arena movediza se apunta a lo de delante
+			var b = ix == sx && iy == sy && iz == sz ? null : world.block(ix, iy, iz);
 			// con un bloque en la mano tampoco lo paran las hierbas ni las estalactitas: se pisan al poner (Block.canOverride), como
 			// en el original, donde BFDetail les quita PCanPick (aqui se apuntan para romperlas, PortRules)
 			if( b != null && hand != null && b.canOverride() ) b = null;
-			// la celda de los ojos no se apunta: Render.pick del original empieza en la primera cara que cruza el rayo. Con la cabeza
-			// dentro de una fuente de cascada (o de arena movediza, que tambien paran el rayo) se apunta a lo que hay delante; antes
-			// el rayo se paraba en ella al salir y no se podia excavar nada
-			if( b != null && ix == eyeX && iy == eyeY && iz == eyeZ ) b = null;
 			var bx = b != null ? pickBox(b) : null;
 			var model = b != null && b.size == null && bx != null && Atlas.pixels != null;
 			if( b != null && blocking(b) && (model ? modelHit(b, px0 - ix, py0 - iy, pz0 - iz, x - ix, y - iy, z - iz)
@@ -1250,10 +1436,8 @@ class GameView {
 						if( b.activable == null && b.toggle == null && !ship.inCraft(ix, iy, iz) ) return null;
 					} else if( !ship.inCraft(lx, ly, lz) )
 						return null; // con un bloque en la mano solo se puede poner dentro de esas zonas
-				} else if( (hand != null ? lz : iz) >= World.HEIGHT - 1 )
-					// como Game.update del original (select.z >= ZSIZE-1): con un bloque en la mano cuenta la celda donde iria; si no,
-					// se apuntaba encima del bloque de z = 126, se gastaba el bloque y World.setBlock no lo ponia en z = 127
-					return null;
+				} else if( iz >= World.HEIGHT - 1 || (hand != null && lz >= World.HEIGHT - 1) )
+					return null; // con un bloque en la mano cuenta la celda donde iria (Game.update: select.z >= ZSIZE - 1)
 				// con un bloque en la mano no se apunta si donde iria hay algo que no se pisa (Render.pick: "it might be a block which
 				// we can't pick"), p. ej. un modelo por cuyo hueco ha pasado el rayo
 				var old = hand != null ? world.block(lx, ly, lz) : null;
@@ -1455,6 +1639,8 @@ class GameView {
 		// en la nave solo se coloca dentro de las zonas de sintetizador (el casco se edita en el hangar) y alli no hace falta apoyo
 		var inShip = z >= World.SHIP_Z;
 		if( inShip && !ship.inCraft(x, y, z) ) return false;
+		// fuera del rango del planeta World.setBlock no pone nada: tampoco se gasta el bloque
+		if( !inShip && (z < 1 || z >= World.HEIGHT - 1) ) return false;
 		// celda ocupada (p. ej. por lo que se acaba de poner): no se gasta nada
 		var here = world.block(x, y, z);
 		if( here != null && !overridable(here) ) return false;
@@ -1649,6 +1835,10 @@ class GameView {
 	}
 
 	public function updateCamera() {
+		if( piloting ) {
+			pilotCamera();
+			return;
+		}
 		var cp = Math.cos(pitch);
 		var c = s3d.camera;
 		var ez = pz + viewZ + Math.sin(walkBobbing) * 0.05;
@@ -1679,5 +1869,26 @@ class GameView {
 		world.updateWrap(px, py);
 		// la mano va pegada a la camara de este fotograma (antes usaba la del anterior y temblaba al andar)
 		hand.update(inv.getCurrentBlock(), c, bobX, bobY);
+	}
+
+	/** camara de pilotar (anadido del port): fuera de la nave, detras y arriba, mirando a su centro; el raton la gira.
+	    El planeta es redondo (Sky.FogShader: cada vertice baja con el cuadrado de su distancia a la camara): se apunta a donde
+	    se dibuja la nave, no a donde esta */
+	function pilotCamera() {
+		var c = s3d.camera;
+		var m = ship.center();
+		var dist = PILOT_CAM_DIST, up = PILOT_CAM_UP;
+		c.fovY = Settings.fov;
+		c.zNear = 0.1;
+		c.zFar = 1500;
+		c.pos.set(m.x - Math.cos(yaw) * dist, m.y - Math.sin(yaw) * dist, m.z + up);
+		c.target.set(m.x, m.y, m.z - dist * dist * World.curve(world.size));
+		c.up.set(0, 0, 1);
+		world.sky.follow(c.pos.x, c.pos.y, c.pos.z);
+		world.sky.update(1 / 60);
+		world.sky.setLiquid(null, 0);
+		for( r in robots ) r.update(1 / 60, px, py, pz);
+		world.updateWrap(px, py);
+		hand.update(null, c, 0, 0);
 	}
 }

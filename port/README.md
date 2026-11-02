@@ -3,12 +3,12 @@
 [Español: `LEEME.md`](LEEME.md) · [Français : `LISEZMOI.md`](LISEZMOI.md)
 
 This folder contains the port of the game to a native desktop application, with no Flash. It is work in progress (with known
-bugs, see `BUGS.md` in the repository root); the original Flash game remains untouched in `src/`, `libs/` and `release/`, and in the `flash` branch.
+bugs, see `BUGS.md` in the repository root); the original Flash game, with its build files and SWFs, remains untouched in the `flash` branch (only the original code the port compiles is kept here).
 
 ## Play
 
 Build it (see below) and double-click `jugar.bat`, or download the portable zip from the
-[release](../../../releases/tag/v0.5). The start menu offers Continue (the list of saved games: play, rename or delete), New game, Options and Quit.
+[release](../../../releases/tag/v0.6). The start menu offers Continue (the list of saved games: play, rename or delete), New game, Options and Quit.
 In New game you choose name, seed and mode: **Adventure** (as in the original, with an empty inventory) or **Creative** (our addition, with biome and size).
 Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable), and screenshots (F2) to its `screenshots` folder.
 The save format may change between versions: do not count on today's saves working forever.
@@ -31,6 +31,7 @@ They are the original game's (movement and physics are a copy of `ent/Hero.hx` a
 | Activate (on-board computer, doors, ancient bomb) | aim, press and release. Holding on until the block breaks digs it out instead: that is how an ancient bomb is picked up without setting it off (it needs a pink charge, like ancient rock) |
 | ESCorp canteen (chest) | aim, press and release. The game goes on: click takes and drops (Shift half, Ctrl one; or arrows and Enter, or d-pad and A), dragging outside the window looks around and walking away closes it (so do Esc and B) |
 | Return to the ship | Shift+K, or step into the landing light beam |
+| Pilot the ship (port addition) | on-board computer > Pilot the ship: WASD or left stick move it over the planet, mouse or right stick turn the camera, E, Esc, B or Start leave it where it is (it slows down, straightens up and lands by itself) |
 | Creative: block palette | I (click = put the block in the selected slot, wheel = page) |
 | Pause | Esc |
 | Quick save | F5 |
@@ -99,6 +100,10 @@ A player got it running on Linux this way; we have not tested it.
   kept them on the server) and fall to the ground when it is broken.
 - The merchant robot's shop (the original was a web panel), its ship on the star map and the orange GPS arrow pointing to it
   are additions of this port.
+- ESCorp contracts (on-board computer > Contracts) are an addition of this port (in the original they came from the server;
+  only the list of trivial blocks for the base contracts survives). They are edited in `contracts.json`. Starting credits
+  are 200 and arrive at the end of the tutorial (before: 500 from the start).
+- Lava makes the ancient bomb explode (port change): the original broke and dropped it, as water still does.
 - Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
   holes up to its level and, when the water that flows in adds up to the volume of one layer of the sea, the level goes down
   one block on the whole planet, like the original.
@@ -110,6 +115,11 @@ A player got it running on Linux this way; we have not tested it.
   (in the original, thin plants disappeared with distance and, further away, neighbouring textures got mixed).
 - The landing light beam follows any change in the column under the ship and starts on top of low blocks such as plates (the
   original only moved it when a block was broken there); you return to the ship only standing at its base, not from higher up.
+- Piloting the ship over the planet is an addition of this port (the original always left it at the same spot on each planet):
+  from the on-board computer, only on playable planets (not in the mothership, the hangar or during the tutorial). It always
+  stays at the same height, costs nothing, uses a camera behind and above it and lighter fog while it lasts; the light beam
+  shows where it will stay (it fades out at full speed and comes back when going slowly, stopping or landing). It speeds up and slows down smoothly, turns to face where it goes and banks in turns; when you
+  leave it, it returns to its usual heading before landing (its blocks, chests and synthesizers do not rotate). The spot is saved per planet; if you never pilot it, the ship lands where it always did.
 - Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
 - The mining turbo makes you dig three times faster up to 15 blocks around it (5 in the original) and you get it back when
   you break it (the original lost it).

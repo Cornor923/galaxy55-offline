@@ -1,3 +1,0 @@
--cp ../..
--D haxe3
---macro include('format',true,['format.hxsl.Shader','format.tools.MemoryInput','format.tools.MemoryBytes'])

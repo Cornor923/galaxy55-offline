@@ -1,0 +1,50 @@
+# pilotar la nave (anadido del port), casos: Esc y E dejan la nave sin pausar; guardar a mitad del vuelo; volver del hangar;
+# despegar y aterrizar otra vez en el planeta; la nave nodriza no deja pilotar. En cada "print ship" la nave debe seguir en el
+# sitio donde se dejo, y el jugador dentro de la nave de pie sobre algo (print pos: suelo=...). Esc y E frenan y aterrizan
+# solos en un par de segundos (de ahi las esperas largas).
+wait 3
+ship
+wait 10
+pilot
+pilotgo 12.3 0
+wait 3
+tap esc
+wait 5
+print pilot
+wait 150
+print pilot
+print ship
+print menu
+pilot
+pilotgo 0 9.6
+wait 3
+tap e
+wait 150
+print pilot
+print ship
+pilot
+pilotgo 10.4 7.3
+wait 3
+closewin
+reload
+wait 80
+print pilot
+print ship
+print pos
+hangar
+wait 60
+hangarexit
+wait 60
+print ship
+print pos
+explore
+wait 60
+landhome
+wait 80
+print ship
+print pos
+mothership
+wait 60
+pilot
+print ship
+quit

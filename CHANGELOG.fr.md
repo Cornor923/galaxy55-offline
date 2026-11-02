@@ -2,6 +2,30 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## v0.6 — pre-release
+- Dépôt : les fichiers qui servaient seulement à compiler la version Flash (`client*.hxml`, `build.bat`/`build.sh`, les SWF de
+  `release/`, `libs/heaps` et `libs/format_old`) sont retirés de `main`. Ils restent intacts dans la branche `flash`. Le jeu ne change pas.
+- **Piloter le vaisseau** (ajout du portage) : dans l'ordinateur de bord, « Piloter le vaisseau » le déplace au-dessus de la
+  planète avec WASD ou le stick gauche (la souris ou le stick droit tournent la caméra) et E, Échap, B ou Start l'y laissent.
+  Toujours à la même hauteur et sans coût ; il accélère et freine en douceur, se tourne vers où il va et s'incline dans les
+  virages, et quand on le laisse il freine, se redresse et atterrit tout seul. Le rayon de lumière montre où il restera : il s'efface à pleine vitesse
+  et revient en allant doucement, à l'arrêt et à l'atterrissage. Seulement sur les planètes jouables : pas
+  dans le vaisseau-mère, le hangar ni pendant le tutoriel. L'endroit est enregistré par planète, même en plein vol ; les
+  parties précédentes ne changent pas.
+- De **Cornor923** (merci !, PR 60-63) :
+  - **Contrats ESCorp** (ajout du portage ; dans l'original ils étaient gérés par le serveur et sont perdus) : bouton
+    « Contrats (ESCorp) » de l'ordinateur de bord avec 3 contrats pour livrer des blocs contre des crédits (un contrat de base
+    parmi les blocs triviaux de l'original et deux commandes). Le tableau est le même pour tous et change toutes les 30 minutes
+    réelles ; les livraisons sont enregistrées avec la partie. Réglable dans `contracts.json` sans recompiler. Désactivé pendant
+    le tutoriel. Les crédits de départ passent de 500 à 200, envoyés par l'ESCorp à la fin du tutoriel (0 pendant).
+  - La lave fait exploser la bombe antique (changement du portage : l'original la cassait et la lâchait, comme l'eau le fait toujours).
+  - Avec un bloc en main, il se pose devant les plantes, les modèles et les blocs partiels (impossible avant), et les herbes et
+    stalactites sont écrasées en posant, comme dans l'original.
+  - Depuis l'intérieur du vaisseau, le cadre d'une fenêtre ne se mélange plus avec un néon collé dehors (faces arrière cachées, comme l'original).
+- Corrections de bugs trouvés par **Sekhmet** : poser un bloc au-dessus de la couche la plus haute ne le consomme plus sans le
+  poser ; la tête dans une source de cascade ou dans des sables mouvants, on peut viser et creuser ce qui est devant, comme dans
+  l'original ; les sables mouvants, la glace et le verre ne paraissent plus creux à côté d'une cascade (changement du port).
+
 ## v0.5 — pre-release
 - Corrections de Cornor923 (merci !), intégrées depuis leurs PR 17-30 (changement du port) : pas de consommation d'oxygène sous
   l'eau en créatif ; la glace près de l'eau n'est plus découpée en triangles vue d'en dessous ; l'aide de la palette créative

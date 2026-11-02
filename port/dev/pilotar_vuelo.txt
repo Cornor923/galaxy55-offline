@@ -1,0 +1,38 @@
+# pilotar la nave (anadido del port): acelera poco a poco, gira hacia donde va (morro hacia +x en reposo) y se inclina al
+# girar; al dejarla (como E) frena, vuelve a su orientacion, se centra en su celda y aterriza sola.
+# vuelo_cola*: camara detras de la marcha, debe verse la cola (como lado_0 en pilotar_lados); vuelo_giro: girando e inclinada.
+wait 3
+ship
+wait 10
+pilot
+look 0 0
+pilotkeys 1 0
+wait 6
+print pilot
+wait 40
+print pilot
+shot vuelo_cola1
+pilotkeys 0 1
+wait 12
+print pilot
+shot vuelo_giro
+wait 50
+print pilot
+look 1.5708 0
+wait 3
+shot vuelo_cola2
+pilotkeys 0 0
+pilotland
+wait 20
+print pilot
+shot vuelo_frenando
+wait 150
+print pilot
+print ship
+print pos
+shot vuelo_aterrizada
+# el teletransportador sigue funcionando: apartarse y volver a pisarlo baja al planeta
+tele
+wait 60
+print pos
+quit

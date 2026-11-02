@@ -3,12 +3,12 @@
 [Español : `LEEME.md`](LEEME.md) · [English: `README.md`](README.md)
 
 Ce dossier contient le portage du jeu en application de bureau native, sans Flash. C'est un travail en cours (avec des bugs
-connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine reste intact dans `src/`, `libs/` et `release/`, et dans la branche `flash`.
+connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine, avec ses fichiers de compilation et ses SWF, reste intact dans la branche `flash` (ici ne reste que le code original que compile le port).
 
 ## Jouer
 
 Compile-le (voir plus bas) et double-clique sur `jugar.bat`, ou télécharge le zip portable depuis la
-[release](../../../releases/tag/v0.5). Le menu de démarrage propose Continuer (la liste des parties : jouer, renommer ou supprimer), Nouvelle partie, Options et Quitter.
+[release](../../../releases/tag/v0.6). Le menu de démarrage propose Continuer (la liste des parties : jouer, renommer ou supprimer), Nouvelle partie, Options et Quitter.
 Dans Nouvelle partie, tu choisis le nom, la graine et le mode : **Aventure** (comme dans l'original, inventaire vide) ou **Créatif** (notre ajout, avec biome et taille).
 Les parties et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`), et les captures d'écran (F2) dans son dossier `screenshots`.
 Le format des sauvegardes peut changer d'une version à l'autre : ne compte pas sur le fait que les parties d'aujourd'hui fonctionnent toujours.
@@ -31,6 +31,7 @@ Ce sont celles du jeu original (le déplacement et la physique sont copiés de `
 | Activer (ordinateur de bord, portes, bombe antique) | viser, appuyer et relâcher. En maintenant jusqu'à ce que le bloc casse, on le creuse : c'est ainsi qu'on ramasse une bombe antique sans la faire exploser (il faut la charge rose, comme pour la roche antique) |
 | Conteneur EScorp (coffre) | viser, appuyer et relâcher. Le jeu continue : clic prend et pose (Maj la moitié, Ctrl un ; ou flèches et Entrée, ou croix et A), glisser hors de la fenêtre fait regarder et s'éloigner le ferme (Échap et B aussi) |
 | Retourner au vaisseau | Maj+K, ou entrer dans le rayon de lumière d'atterrissage |
+| Piloter le vaisseau (ajout du portage) | ordinateur de bord > Piloter le vaisseau : WASD ou stick gauche le déplacent au-dessus de la planète, la souris ou le stick droit tournent la caméra, E, Échap, B ou Start le laissent où il est (il freine, se redresse et atterrit tout seul) |
 | Créatif : palette de blocs | I (clic = mettre le bloc dans la case choisie, molette = page) |
 | Pause | Échap |
 | Sauvegarde rapide | F5 |
@@ -102,6 +103,10 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   la partie (dans l'original, sur le serveur) et tombe au sol quand on le casse.
 - La boutique du robot marchand (dans l'original, c'était un panneau web), son vaisseau sur la carte stellaire et la flèche
   GPS orange qui le désigne sont des ajouts du port.
+- Les contrats ESCorp (ordinateur de bord > Contrats) sont un ajout du port (dans l'original, ils venaient du serveur ; seule
+  reste la liste des blocs triviaux des contrats de base). Ils se modifient dans `contracts.json`. Les crédits de départ sont
+  de 200 et arrivent à la fin du tutoriel (avant : 500 dès le début).
+- La lave fait exploser la bombe antique (changement du port) : l'original la cassait et la lâchait, comme l'eau le fait toujours.
 - Les cascades et l'eau posée par le joueur baissent à chaque pas, avec une surface inclinée : ajout du port. La mer remplit
   les trous jusqu'à son niveau et, quand l'eau qui entre atteint le volume d'une couche de la mer, le niveau baisse d'un bloc
   sur toute la planète, comme l'original.
@@ -116,6 +121,14 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - Le rayon de lumière d'atterrissage suit tout changement dans la colonne sous le vaisseau et part du dessus des blocs bas comme
   les plaques (l'original ne le bougeait qu'en cassant un bloc à cet endroit) ; on ne retourne au vaisseau que debout sur sa
   base, pas de plus haut.
+- Piloter le vaisseau au-dessus de la planète est un ajout de ce portage (l'original le laissait toujours au même endroit de
+  chaque planète) : depuis l'ordinateur de bord, seulement sur les planètes jouables (pas dans le vaisseau-mère, le hangar ni
+  pendant le tutoriel). Il reste toujours à la même hauteur, sans coût, avec une caméra derrière et au-dessus et un brouillard
+  plus léger pendant ce temps ; le rayon de lumière montre où il restera (il s'efface à pleine vitesse et revient en allant
+  doucement, à l'arrêt et à l'atterrissage). Il accélère et freine en douceur, se tourne vers où il
+  va et s'incline dans les virages ; quand on le laisse, il reprend son orientation habituelle avant d'atterrir (ses blocs,
+  coffres et synthétiseurs ne tournent pas). L'endroit est enregistré par planète ; sans le
+  piloter, le vaisseau atterrit au même endroit que d'habitude.
 - Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé et désactiver les vagues de l'eau.
 - Le turbo mineur fait creuser trois fois plus vite jusqu'à 15 blocs autour de lui (5 dans l'original) et se récupère quand
   on le casse (dans l'original, il était perdu).

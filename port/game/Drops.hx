@@ -74,6 +74,22 @@ class Drops {
 
 	public function count() return list.length;
 
+	/** la nave pilotada se ha movido (dx, dy) (anadido del port): los sueltos que estan en ella van con ella */
+	public function shiftShip( dx : Float, dy : Float ) {
+		for( d in list ) {
+			if( d.z < World.SHIP_Z ) continue;
+			d.x += dx;
+			d.y += dy;
+			if( d.obj != null ) d.obj.setPosition(d.x, d.y, d.z);
+		}
+	}
+
+	/** pilotando, la nave gira y sus sueltos no (anadido del port): se ocultan durante el vuelo y vuelven al aterrizar */
+	public function setShipVisible( on : Bool ) {
+		for( d in list )
+			if( d.z >= World.SHIP_Z && d.obj != null && d.delay <= 0 ) d.obj.visible = on;
+	}
+
 	public function remove( d : Drop ) {
 		if( d.obj != null ) {
 			for( c in d.obj.getMeshes() ) c.primitive.dispose();

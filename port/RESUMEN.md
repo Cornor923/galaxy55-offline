@@ -8,7 +8,8 @@ Flash está muerto, así que estamos **portándolo a una aplicación nativa de e
 (el mismo motor y lenguaje con el que se hizo el original, y con el que Motion Twin hizo Dead Cells).
 Metas: menú de inicio con guardado y carga, fidelidad al original, y a futuro Steam y multijugador.
 Desde el 2026-10-14 la versión nativa es la oficial: está en `main` y en `port-hashlink` (iguales). La versión Flash sigue intacta en la
-etiqueta `flash-version` y la rama `flash` (más los SWF de `release/`). El README avisa de las dos versiones y de los errores conocidos.
+etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilación. Desde el 2026-10-26 esos archivos (`client*.hxml`,
+`build.*`, `release/`, `libs/heaps`, `libs/format_old`) ya no están en `main`/`port-hashlink`: el port no los usa (usa el Heaps actual). El README avisa de las dos versiones y de los errores conocidos.
 
 ## Cómo lo hacemos
 - **Reutilizar, no reescribir:** los generadores de planetas originales (`src/G55/fla/client/src/gen`) se compilan tal cual.
@@ -37,6 +38,44 @@ etiqueta `flash-version` y la rama `flash` (más los SWF de `release/`). El READ
 - Pruebas: `--screen=mine|place|cont [--n=frames --slot=N --at=x,y,yaw,pitch --deny --save]`, `port/savetest.hxml`.
 - Falta del original (inventario de bloques: 213; ~85 eran modelos, ya dibujados): puertas de nave (`door.md` binario), vida/daño/curación/oxígeno/lava, bloques activables y contenedores, líquidos que fluyen, romper/colocar, y los modos nave, hangar y mapa de exploración (`fla/explore`).
 - No probado en ventana real por mí: ratón/teclado/mando en vivo, ni el movimiento de la nieve (solo capturas y números).
+- Pilotar la nave (2026-10-26, añadido del port, rama `pilotar-nave`): botón "Pilotar la nave" del ordenador de a bordo (solo si
+  `GameView.canPilot`: planeta jugable, sin nave nodriza, hangar, tutorial ni fundido). `Ship.slide` mueve el volumen de la nave
+  (`fx/fy` con decimales, `World.shipDX/shipDY` redondeados) a la misma altura (z 130: por debajo chocaría con el planeta);
+  `Ship.land` la deja en celda entera con el punto de aterrizaje dentro del planeta (el planeta da la vuelta). El jugador y los
+  sueltos de la nave (`Drops.shiftShip`) van con ella; mientras se pilota no hay física del jugador ni de los sueltos. Cámara
+  detrás y arriba (`GameView.pilotCamera`, apunta compensando la curva de `Sky.FogShader`) y niebla más suave
+  (`Sky.setPilotFog`); el haz marca dónde quedará. Se guarda en `SaveInfo.shipAt` y `UniPlanet.shipAt` (opcionales: sin ellos,
+  el sitio de siempre); a mitad de vuelo se guarda el sitio en que aterrizaría con el jugador movido lo mismo. E/Esc/B/Start
+  la dejan. Textos `computer.pilot` y `hud.pilot`. Guiones `pilotar`, `pilotar_casos`, `pilotar_camara`, `pilotar_tuto`,
+  `pilotar_sintetizador`, `pilotar_vuelo`, `pilotar_lados`. Los hashes de los mundos no cambian.
+  Segunda vuelta (tras probarlo Pvie: "no gira hacia la dirección" y "demasiado tosco"): velocidad con inercia
+  (`GameView.pilotStep`: aceleración 1.8/s, frenado 3.5/s al dejarla, máximo 18 bloques/s), rumbo hacia donde va con inclinación
+  en las curvas (`Ship.setPose`, solo la imagen: gira `world.root` sobre la columna de la entrada, así el haz sigue debajo del
+  teletransportador; morro hacia +x, como lo dibuja el mapa). Al dejarla (E/Esc/B/Start, `stopPiloting`) frena, vuelve al rumbo
+  0 y se centra en su celda; luego `finishPiloting` aterriza. Los sueltos de la nave se ocultan en vuelo (`Drops.setShipVisible`).
+  Arreglo: al aterrizar el jugador está sobre el teletransportador y bajaba solo al planeta; ahora `enteringShip = -1` como en
+  `gotoShip`. Órdenes nuevas: `pilotkeys`, `pilotland`.
+  Tercera vuelta (Pvie: el haz molesta en vuelo, pero hace falta para saber dónde aterriza): el haz se desvanece con la velocidad
+  (`GameView.pilotBeam`, `Ship.setBeamFade`: entero hasta 3 bloques/s, nada desde 9, entero al aterrizar).
+- PR 60-63 de Cornor923 (fusionados 2026-11-02):
+  - 60, contratos de la ESCorp (añadido del port): `Contracts.hx` (tablero sorteado con el número del periodo UTC como semilla,
+    1 contrato de base de `Data.BASIC_BLOCKS` + 2 encargos, recompensa 1,5x el mejor precio de venta del robot + cargas),
+    `ContractPanel.hx`, datos en `src/G55/fla/client/gfx/contracts.json` (copiado por `package.ps1`), `SaveInfo.contracts`
+    opcional. Botón del ordenador de a bordo desactivado en el tutorial. `Market.START_CREDITS` 500 -> 200, entregados en
+    `Tutorial.finish`. `showToast` acepta duración (aviso de la ESCorp 7 s). Guiones `contrats`, `contrats_tuto`, `contrats_json`.
+  - 61, la lava hace explotar la bomba antigua (cambio del port): `WorldProcess.flowBreak` -> `GameView.lavaBomb` (a `bombQueue`;
+    en hangar y nodriza se rompe). El agua la sigue soltando como el original. Guion `bomb_liquids`.
+  - 62, poner delante de modelos y bloques parciales (como `Render.pick` del original): `GameView.pick` toma la celda por la que
+    llega el rayo; con bloque en la mano se ignoran los que `Block.canOverride` permite pisar; `place` usa `canOverride`. Guion `place_front`.
+  - 63, pasada opaca de `BTAlpha` (marco del cristal) con `culling = Back` como el original (`World.hx`). Guion `ventana_neon`.
+- Fallos de Sekhmet (2026-11-02): `GameView.pick` no apunta con un bloque en la mano si la celda donde iría está en z >= 127
+  (`Game.update` del original: `select.z >= ZSIZE - 1`) y `place` no gasta el bloque fuera de 1..126; la celda de la cámara no
+  cuenta al apuntar (`Render.pick` empieza el rayo en su borde): con la cabeza en una fuente de cascada se apunta lo de delante;
+  `World.openAlphaNear` (cambio del port): las caras de un `BTAlpha` que no es cascada se dibujan contra la cascada, que aquí baja
+  de altura y dejaba ver a través de la arena movediza. Guiones `altura_max`, `fuente_excavar`, `cascada_arena`. La nave que
+  cambia de sitio (ERRORES #15): ya arreglado en 167cc91 (v0.5, `World.shipPlace` antes de `applySaved`). Comprobado con
+  `nave_sitio`: con el código actual la nave sigue en 124,21 tras cavar, recargar y guardar dentro; quitando esa línea salta a
+  74,110 y se queda allí, como contó Sekhmet. Pasa con partidas de la v0.4 o anteriores.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |

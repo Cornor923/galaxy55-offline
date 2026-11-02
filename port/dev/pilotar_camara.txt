@@ -1,0 +1,13 @@
+# camara de pilotar (anadido del port): la nave debe verse grande en el centro, con el planeta debajo
+wait 3
+ship
+wait 10
+pilot
+wait 5
+print pilotcam
+shot pilotar_cam1
+look 0 0
+pilotgo 0 0
+wait 3
+print pilotcam
+quit

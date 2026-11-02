@@ -2,6 +2,29 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## v0.6 — pre-release
+- Repository: the files that only built the Flash version (`client*.hxml`, `build.bat`/`build.sh`, the SWFs in `release/`,
+  `libs/heaps` and `libs/format_old`) are removed from `main`. They remain untouched in the `flash` branch. The game does not change.
+- **Pilot the ship** (port addition): on the on-board computer, "Pilot the ship" moves it over the planet with WASD or the left
+  stick (the mouse or right stick turn the camera) and E, Esc, B or Start leave it there. Always at the same height and free;
+  it speeds up and slows down smoothly, turns to face where it goes and banks in turns, and when you leave it, it slows down,
+  straightens up and lands by itself. The light beam shows where it will stay: it fades out at full speed and
+  comes back when going slowly, stopping or landing. Only on playable planets: not in the mothership, the hangar or during the tutorial.
+  The spot is saved per planet, also mid-flight; earlier saved games do not change.
+- From **Cornor923** (thanks!, PRs 60-63):
+  - **ESCorp contracts** (port addition; in the original they were server-side and are lost): "Contracts (ESCorp)" button on
+    the on-board computer with 3 contracts to deliver blocks for credits (one base contract from the original's trivial
+    blocks and two orders). The board is the same for everyone and changes every 30 real minutes; deliveries are saved with
+    the game. Configured in `contracts.json` without rebuilding. Disabled during the tutorial. Starting credits drop from 500
+    to 200, sent by ESCorp at the end of the tutorial (0 during it).
+  - Lava makes the ancient bomb explode (port change: the original broke and dropped it, as water still does).
+  - With a block in hand, it is placed in front of plants, models and partial blocks (it could not be before), and herbs and
+    stalactites are overwritten when placing, as in the original.
+  - From inside the ship, a window frame no longer z-fights with a neon light right outside it (back faces culled, like the original).
+- Fixes for bugs found by **Sekhmet**: placing a block on top of the highest layer no longer uses it up without placing it; with
+  your head inside a cascade source or quicksand you can aim at and dig what is in front, as in the original; quicksand, ice and
+  glass no longer look hollow next to a cascade (port change).
+
 ## v0.5 — pre-release
 - Fixes by Cornor923 (thank you!), merged from their PRs 17-30 (port change): no oxygen use underwater in creative; ice next
   to water is no longer cut into triangles seen from below; the creative palette help fits its panel and no block is marked

@@ -15,7 +15,7 @@ It was shut down and its server no longer exists. This project ports it to a **n
 
 | I want to… | Look at |
 |---|---|
-| **Play without compiling** | [pre-release v0.5](../../releases/tag/v0.5): download the zip, unzip it, run `jugar.bat` |
+| **Play without compiling** | [pre-release v0.6](../../releases/tag/v0.6): download the zip, unzip it, run `jugar.bat` |
 | **Controls and how to build** | [`port/README.md`](port/README.md) |
 | **See or report bugs** | [`BUGS.md`](BUGS.md) (known bugs); to report a new one, open an *issue* or message me |
 | **See what is missing** | [`TODO.md`](TODO.md) (to-do list) |
@@ -26,10 +26,10 @@ It was shut down and its server no longer exists. This project ports it to a **n
 
 ## Play in 3 steps
 
-1. Download the zip from the [pre-release v0.5](../../releases/tag/v0.5) and **unzip everything** (keep all its folders).
+1. Download the zip from the [pre-release v0.6](../../releases/tag/v0.6) and **unzip everything** (keep all its folders).
 2. Check that there is a **`res/`** folder next to `galaxy55.hl` (with `texture.png`, `lazer.png`… inside). If you see loose files named
    like `res\texture.png` instead, extraction failed: unzip again with a different program. (Symptom: `Can't read res/texture.png`.)
-3. Windows: double-click `jugar.bat` (if it doesn't open, `jugar_dx.bat`). **Linux / macOS (not tested by us):** download the `galaxy55-offline-v0.5-linux-mac.zip` from the release,
+3. Windows: double-click `jugar.bat` (if it doesn't open, `jugar_dx.bat`). **Linux / macOS (not tested by us):** download the `galaxy55-offline-v0.6-linux-mac.zip` from the release,
    install [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` on macOS) and run `sh jugar.sh`. (A player got it running on Linux; tell us how it goes.)
    The language (Spanish, English, French), VSync and the FPS limit are changed in Options.
 
@@ -38,7 +38,8 @@ It was shut down and its server no longer exists. This project ports it to a **n
 ![Crafting room on the ship](docs/img/sintetizador.jpg)
 
 Start menu, saved games, planets identical to the original ones (verified by hash against Flash), digging and placing blocks, jetpack,
-creative mode (our addition), the ship with its teleporter, doors, synthesizer with the original recipes and the on-board computer,
+creative mode (our addition), the ship with its teleporter, doors, synthesizer with the original recipes and the on-board computer
+(from which you can also pilot the ship over the planet and take ESCorp contracts, our additions),
 the **hangar** to rebuild your ship, **sound**, **flowing water** (the original's), and the **star map** (sector, solar systems,
 scanning, landing, GPS arrows) with the **merchant robot**: follow it, dock and trade in its ship.
 
@@ -63,7 +64,8 @@ port/           THE NATIVE PORT (active work)
   headless/     verification    dev/      test bench   LEEME.md, RESUMEN.md, RELEASE.md, jugar.bat
 docs/flash/     documentation of the Flash version (README, changelog, to-do of that time)
 docs/           research notes (sources, Twinpedia, Discord);  docs/img/  screenshots
-src/ libs/ stubs/ tools/ data/ release/ client*.hxml build.*   original (Motion Twin) code and the Flash version
+src/ libs/ stubs/ tools/ data/   original (Motion Twin) code the port compiles, and its tools
+                (the Flash build files and SWFs are in the `flash` branch)
 ```
 
 ## License and credits
@@ -91,7 +93,7 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 | Quiero… | Mira |
 |---|---|
-| **Jugar sin compilar** | [pre-release v0.5](../../releases/tag/v0.5): descarga el zip, descomprímelo y abre `jugar.bat` |
+| **Jugar sin compilar** | [pre-release v0.6](../../releases/tag/v0.6): descarga el zip, descomprímelo y abre `jugar.bat` |
 | **Controles y cómo compilar** | [`port/LEEME.md`](port/LEEME.md) |
 | **Ver o avisar de errores** | [`ERRORES.md`](ERRORES.md); para avisar de uno nuevo, abre un *issue* o escríbeme |
 | **Saber qué falta por hacer** | [`PENDIENTES.md`](PENDIENTES.md) |
@@ -102,10 +104,10 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 ### Jugar en 3 pasos
 
-1. Descarga el zip de la [pre-release v0.5](../../releases/tag/v0.5) y **descomprímelo entero** (con todas sus carpetas).
+1. Descarga el zip de la [pre-release v0.6](../../releases/tag/v0.6) y **descomprímelo entero** (con todas sus carpetas).
 2. Comprueba que hay una carpeta **`res/`** junto a `galaxy55.hl` (con `texture.png`, `lazer.png`… dentro). Si en vez de eso ves
    archivos sueltos llamados `res\texture.png`, la extracción falló: vuelve a descomprimir con otro programa. (Síntoma: `Can't read res/texture.png`.)
-3. Windows: doble clic en `jugar.bat` (si no abre, `jugar_dx.bat`). **Linux / macOS (sin probar por nosotros):** descarga `galaxy55-offline-v0.5-linux-mac.zip` de la release,
+3. Windows: doble clic en `jugar.bat` (si no abre, `jugar_dx.bat`). **Linux / macOS (sin probar por nosotros):** descarga `galaxy55-offline-v0.6-linux-mac.zip` de la release,
    instala [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` en macOS) y ejecuta `sh jugar.sh`. (Un jugador lo ha hecho funcionar en Linux; cuéntanos qué tal.)
    El idioma (español, inglés, francés), la sincronización vertical (VSync) y el límite de FPS se cambian en Opciones.
 
@@ -113,7 +115,7 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 Menú de inicio, partidas guardadas, planetas idénticos a los del original (verificado por hash contra Flash),
 excavar y colocar, jetpack, modo creativo (añadido nuestro), la nave con teletransportador, puertas, sintetizador con las
-recetas del original y ordenador de a bordo, el **hangar** para rehacer tu nave, el **sonido**, el **agua que fluye** (la del
+recetas del original y ordenador de a bordo (desde el que también se pilota la nave sobre el planeta y se cumplen contratos de la ESCorp, añadidos nuestros), el **hangar** para rehacer tu nave, el **sonido**, el **agua que fluye** (la del
 original) y el **mapa de estrellas** (sector, sistemas solares, escaneo, aterrizaje, flechas GPS) con el **robot comerciante**:
 lo sigues, te acoplas y comercias en su nave. También la vida y el oxígeno (caídas, lava, ahogarse) y las olas del agua del
 original. Falta dar más profundidad al viaje espacial (combustible y otras ideas en [`IDEAS.md`](IDEAS.md)) y una opción de
@@ -130,7 +132,7 @@ Lista completa y numerada en [`ERRORES.md`](ERRORES.md). Los principales:
 ### Estructura del repositorio
 
 Ver el esquema en inglés más arriba: `port/` es el port nativo (activo); `docs/flash/` la documentación de la versión Flash;
-`docs/` las notas de investigación y `docs/img/` las capturas; el resto (`src/`, `libs/`, `release/`…) es el código original y la versión Flash.
+`docs/` las notas de investigación y `docs/img/` las capturas; el resto (`src/`, `libs/`, `stubs/`…) es el código original que compila el port; lo que solo servía para compilar la versión Flash (y sus SWF) está en la rama `flash`.
 
 ### Licencia y créditos
 
@@ -157,7 +159,7 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 | Je veux… | Voir |
 |---|---|
-| **Jouer sans compiler** | [pré-version v0.5](../../releases/tag/v0.5) : télécharge le zip, décompresse-le et lance `jugar.bat` |
+| **Jouer sans compiler** | [pré-version v0.6](../../releases/tag/v0.6) : télécharge le zip, décompresse-le et lance `jugar.bat` |
 | **Les commandes et la compilation** | [`port/LISEZMOI.md`](port/LISEZMOI.md) |
 | **Voir ou signaler des bugs** | [`BUGS.fr.md`](BUGS.fr.md) (bugs connus) ; pour en signaler un nouveau, ouvre une *issue* ou écris-moi |
 | **Voir ce qui manque** | [`TODO.fr.md`](TODO.fr.md) (liste des tâches) |
@@ -168,10 +170,10 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 ### Jouer en 3 étapes
 
-1. Télécharge le zip de la [pré-version v0.5](../../releases/tag/v0.5) et **décompresse-le entièrement** (avec tous ses dossiers).
+1. Télécharge le zip de la [pré-version v0.6](../../releases/tag/v0.6) et **décompresse-le entièrement** (avec tous ses dossiers).
 2. Vérifie qu'il y a un dossier **`res/`** à côté de `galaxy55.hl` (avec `texture.png`, `lazer.png`… dedans). Si tu vois à la place
    des fichiers isolés nommés `res\texture.png`, l'extraction a échoué : décompresse à nouveau avec un autre programme. (Symptôme : `Can't read res/texture.png`.)
-3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.5-linux-mac.zip` depuis la release,
+3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.6-linux-mac.zip` depuis la release,
    installe [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` sur macOS) et lance `sh jugar.sh`. (Un joueur l'a fait fonctionner sous Linux ; dis-nous comment ça se passe.)
    La langue (espagnol, anglais, français), la synchronisation verticale (VSync) et la limite d'images par seconde se changent dans les Options.
 
@@ -179,7 +181,7 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 Menu de démarrage, parties sauvegardées, planètes identiques à celles de l'original (vérifié par empreinte face à la version Flash),
 creuser et poser des blocs, jetpack, mode créatif (notre ajout), le vaisseau avec son téléporteur, les portes, le synthétiseur avec
-les recettes d'origine et l'ordinateur de bord, le **hangar** pour refaire ton vaisseau, le **son**, l'**eau qui s'écoule** (celle
+les recettes d'origine et l'ordinateur de bord (d'où l'on pilote aussi le vaisseau au-dessus de la planète et remplit des contrats ESCorp, nos ajouts), le **hangar** pour refaire ton vaisseau, le **son**, l'**eau qui s'écoule** (celle
 de l'original) et la **carte stellaire** (secteur, systèmes solaires, scan, atterrissage, flèches GPS) avec le **robot marchand** :
 tu le suis, tu t'amarres et tu fais du commerce dans son vaisseau. Aussi la vie et l'oxygène (chutes, lave, noyade) et les
 vagues de l'eau de l'original. Il reste à donner plus de profondeur au voyage spatial (carburant et autres idées dans
@@ -196,7 +198,7 @@ Liste complète et numérotée dans [`BUGS.fr.md`](BUGS.fr.md). Les principaux :
 ### Organisation du dépôt
 
 Voir le schéma en anglais plus haut : `port/` est le port natif (travail en cours) ; `docs/flash/` la documentation de la version Flash ;
-`docs/` les notes de recherche et `docs/img/` les captures ; le reste (`src/`, `libs/`, `release/`…) est le code original et la version Flash.
+`docs/` les notes de recherche et `docs/img/` les captures ; le reste (`src/`, `libs/`, `stubs/`…) est le code original que compile le port ; ce qui servait seulement à compiler la version Flash (et ses SWF) est dans la branche `flash`.
 
 ### Licence et crédits
 
