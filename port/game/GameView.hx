@@ -1237,7 +1237,9 @@ class GameView {
 						if( b.activable == null && b.toggle == null && !ship.inCraft(ix, iy, iz) ) return null;
 					} else if( !ship.inCraft(lx, ly, lz) )
 						return null; // con un bloque en la mano solo se puede poner dentro de esas zonas
-				} else if( iz >= World.HEIGHT - 1 )
+				} else if( (hand != null ? lz : iz) >= World.HEIGHT - 1 )
+					// como Game.update del original (select.z >= ZSIZE-1): con un bloque en la mano cuenta la celda donde iria; si no,
+					// se apuntaba encima del bloque de z = 126, se gastaba el bloque y World.setBlock no lo ponia en z = 127
 					return null;
 				// con un bloque en la mano no se apunta si donde iria hay algo que no se pisa (Render.pick: "it might be a block which
 				// we can't pick"), p. ej. un modelo por cuyo hueco ha pasado el rayo
