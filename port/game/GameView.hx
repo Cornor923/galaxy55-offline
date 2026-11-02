@@ -1196,6 +1196,7 @@ class GameView {
 		var curve = hangar != null ? 0. : World.curve(world.size);
 		var lx = Math.floor(ex), ly = Math.floor(ey), lz = Math.floor(ez), have = false;
 		var cx = lx, cy = ly, cz = lz; // celda en la que esta el rayo
+		var eyeX = lx, eyeY = ly, eyeZ = lz;
 		var t = 0.;
 		var ox = ex, oy = ey, oz = ez; // punto anterior del rayo
 		while( t < 7.0 ) {
@@ -1218,6 +1219,10 @@ class GameView {
 			// con un bloque en la mano tampoco lo paran las hierbas ni las estalactitas: se pisan al poner (Block.canOverride), como
 			// en el original, donde BFDetail les quita PCanPick (aqui se apuntan para romperlas, PortRules)
 			if( b != null && hand != null && b.canOverride() ) b = null;
+			// la celda de los ojos no se apunta: Render.pick del original empieza en la primera cara que cruza el rayo. Con la cabeza
+			// dentro de una fuente de cascada (o de arena movediza, que tambien paran el rayo) se apunta a lo que hay delante; antes
+			// el rayo se paraba en ella al salir y no se podia excavar nada
+			if( b != null && ix == eyeX && iy == eyeY && iz == eyeZ ) b = null;
 			var bx = b != null ? pickBox(b) : null;
 			var model = b != null && b.size == null && bx != null && Atlas.pixels != null;
 			if( b != null && blocking(b) && (model ? modelHit(b, px0 - ix, py0 - iy, pz0 - iz, x - ix, y - iy, z - iz)
