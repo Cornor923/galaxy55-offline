@@ -7,7 +7,7 @@ ship
 wait 10
 print inv
 # zona del sintetizador, con el jugador dentro: 20 BCoal y 10 BBlackIce, y se recoge cada uno antes de poner el siguiente
-# (un bloque puesto encima de un suelto lo empuja hacia arriba, hasta el techo de la nave)
+# (asi ningun bloque se pone encima de un suelto, que lo sacaria de su celda: suelto_enterrado.txt)
 tpl 60.5 63.5 3
 wait 5
 setl 59 62 3 BCoal
