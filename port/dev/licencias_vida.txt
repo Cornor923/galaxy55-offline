@@ -1,0 +1,20 @@
+# la pantalla de las licencias de exploracion (desde el ordenador de a bordo) tampoco para el juego: la vida sigue subiendo
+# en la nave (1.6/s, como con el menu del ordenador, ordenador_vida.txt); al volver al menu del ordenador, igual
+wait 3
+ship
+wait 10
+tpl 61.5 63.5 3.0 0 -1.2
+wait 10
+life 20
+computer
+wait 5
+licenses open
+wait 10
+print menu
+print life
+wait 200
+print life
+close
+wait 5
+print menu
+quit
