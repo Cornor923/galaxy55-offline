@@ -150,10 +150,10 @@ class Dev {
 			// en el sector y con la animacion de salida del sistema ya terminada (mientras dura, el mapa no hace caso)
 			case "sector": app.explorer != null && app.explorer.shipPos() != null && !@:privateAccess app.explorer.locked && !@:privateAccess app.explorer.serverLock;
 			case "window": app.explorer != null && app.explorer.devWindowOpen();
-			// dentro de un sistema solar, con la animacion de entrada ya terminada
-			case "system": app.explorer != null && app.explorer.shipPos() == null && !@:privateAccess app.explorer.locked && !@:privateAccess app.explorer.serverLock;
 			// la nave saltando: del destello de salida (entrada o salida de un sistema) a su llegada
 			case "jump": app.explorer != null && !@:privateAccess app.explorer.shipVisible;
+			// dentro de un sistema solar, con la animacion de entrada ya terminada
+			case "system": app.explorer != null && app.explorer.shipPos() == null && !@:privateAccess app.explorer.locked && !@:privateAccess app.explorer.serverLock;
 			case "planet": playing && g != null && g.info.mothership != true && g.hangar == null;
 			case "mother": playing && g != null && g.info.mothership == true;
 			case "ready": playing || (g == null && app.explorer != null);
