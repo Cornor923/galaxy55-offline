@@ -166,7 +166,7 @@ class KubPlanetsView extends KubView {
 			var c = new KubCell(right.content, e, st, st != Unknown && Kubindex.isFresh(info, e), panel.atlas);
 			c.setPosition((i % cols) * PITCH, y + Std.int(i / cols) * PITCH);
 			c.box = right;
-			c.onOver = function(c) panel.setHover(st == Unknown ? KubText.get("kub.unknown") + "  ·  " + KubData.get().placeShort(e) : e.getName());
+			c.onOver = function(c) panel.setHover(st == Unknown ? KubText.get("kub.unknown") + "  ·  " + KubData.get().placeShort(info, e) : e.getName());
 			c.onOut = function(_) panel.setHover(null);
 			c.onClick = function(c) panel.pick(e);
 		}

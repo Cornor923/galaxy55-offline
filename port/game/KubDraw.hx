@@ -16,8 +16,10 @@ class KubDraw {
 
 	/** icono de una ficha: normal (recuperada), oscurecido (localizada) o sombra negra (desconocida) */
 	public static function icon( parent : h2d.Object, e : Block, st : KubState, size : Float, atlas : h3d.mat.Texture ) : h2d.Bitmap {
-		var bm = new h2d.Bitmap(Icons.get(e, atlas), parent);
-		bm.setScale(size / Icons.SIZE);
+		// icono grande con mipmaps, dibujado liso: a 90 px y con el nearest de h2d salia pixelado al reducirlo o agrandarlo
+		var bm = new h2d.Bitmap(Icons.hires(e, atlas), parent);
+		bm.smooth = true;
+		bm.setScale(size / Icons.HIRES);
 		switch( st ) {
 			case Got:
 			case Seen: bm.color.set(0.3, 0.3, 0.36, 1);
@@ -111,7 +113,7 @@ class KubDraw {
 			fit(Theme.text(o, shape, 1.05, Theme.DIM, tx, ly), tw);
 			ly += 15;
 		}
-		if( st == Unknown && e != null ) fit(Theme.text(o, KubData.get().placeShort(e), 1.05, Theme.CYAN, tx, ly), tw);
+		if( st == Unknown && e != null ) fit(Theme.text(o, KubData.get().placeShort(info, e), 1.05, Theme.CYAN, tx, ly), tw);
 		if( e != null && !charge && st != Unknown && onPick != null ) {
 			var it = new h2d.Interactive(ITEM_W - 6, ITEM_H, o);
 			it.onClick = function(_) if( box == null || box.mouseIn() ) onPick(e);
