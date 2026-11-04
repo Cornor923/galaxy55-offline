@@ -145,12 +145,41 @@ class IconMesh {
 class Icons {
 
 	static var cache = new Map<Int, h2d.Tile>();
+	static var hiresCache = new Map<Int, h2d.Tile>();
 	static var scene : h3d.scene.Scene;
 	public static inline var SIZE = 90;
+	/** iconos grandes (Base de datos ESCorp): 256 px con mipmaps, para dibujarlos lisos a cualquier tamano */
+	public static inline var HIRES = 256;
 
 	public static function get( b : Block, atlas : h3d.mat.Texture ) : h2d.Tile {
 		var t = cache.get(b.index);
 		if( t != null ) return t;
+		t = h2d.Tile.fromTexture(render(b, atlas, SIZE));
+		cache.set(b.index, t);
+		return t;
+	}
+
+	/**
+	 * Icono de HIRES px con mipmaps (anadido del port, Base de datos ESCorp). Dibujado con smooth = true se reduce o se agranda
+	 * sin los pixeles desiguales de get() (90 px estirados con el filtro nearest de h2d).
+	 */
+	public static function hires( b : Block, atlas : h3d.mat.Texture ) : h2d.Tile {
+		var t = hiresCache.get(b.index);
+		if( t != null ) return t;
+		var src = render(b, atlas, HIRES);
+		var px = src.capturePixels();
+		src.dispose();
+		var tex = new h3d.mat.Texture(HIRES, HIRES, [MipMapped]);
+		tex.uploadPixels(px);
+		px.dispose();
+		tex.filter = Linear;
+		tex.mipMap = Linear;
+		t = h2d.Tile.fromTexture(tex);
+		hiresCache.set(b.index, t);
+		return t;
+	}
+
+	static function render( b : Block, atlas : h3d.mat.Texture, size : Int ) : h3d.mat.Texture {
 		// los bloques translucidos dibujan sus 6 caras: se ve a traves el cubo entero
 		var poly = IconMesh.polygon(b, b.type == BTAlpha);
 		// IconShader del original: tshade = shade < 1 ? shade * shade : shade (las caras de los lados, mas oscuras que en el mundo)
@@ -161,7 +190,7 @@ class Icons {
 					c.y *= c.y;
 					c.z *= c.z;
 				}
-		var tex = new h3d.mat.Texture(SIZE, SIZE, [Target]);
+		var tex = new h3d.mat.Texture(size, size, [Target]);
 		tex.filter = Linear;
 		if( poly != null ) {
 			var engine = h3d.Engine.getCurrent();
@@ -194,22 +223,21 @@ class Icons {
 			scene.render(engine);
 			engine.popTarget();
 			// Render.renderBlock: contorno negro, GlowFilter(0x0, 1, 2, 2, 1) sobre el icono de 45 px; aqui es de 90 px:
-			// 5 en lugar de 4 porque la caja del shim solo esta centrada con un tamano impar
+			// 5 en lugar de 4 porque la caja del shim solo esta centrada con un tamano impar (a otro tamano, lo mismo en proporcion)
+			var blur = size == SIZE ? 5 : (Std.int(5 * size / SIZE) | 1);
 			var px = tex.capturePixels();
 			px.convert(BGRA);
-			var bd = new flash.display.BitmapData(SIZE, SIZE, true, 0);
-			for( k in 0...SIZE * SIZE ) bd.px[k] = px.bytes.getInt32(k * 4);
-			bd.applyFilter(bd, bd.rect, new flash.geom.Point(0, 0), new flash.filters.GlowFilter(0x0, 1, 5, 5, 1));
-			for( k in 0...SIZE * SIZE ) px.bytes.setInt32(k * 4, bd.px[k]);
+			var bd = new flash.display.BitmapData(size, size, true, 0);
+			for( k in 0...size * size ) bd.px[k] = px.bytes.getInt32(k * 4);
+			bd.applyFilter(bd, bd.rect, new flash.geom.Point(0, 0), new flash.filters.GlowFilter(0x0, 1, blur, blur, 1));
+			for( k in 0...size * size ) px.bytes.setInt32(k * 4, bd.px[k]);
 			tex.uploadPixels(px);
 			px.dispose();
 			if( Sys.args().indexOf("--dumpicons") >= 0 )
-				sys.io.File.saveBytes("port/out/icon_" + b.k + ".png", tex.capturePixels().toPNG());
+				sys.io.File.saveBytes("port/out/icon_" + b.k + (size == SIZE ? "" : "_" + size) + ".png", tex.capturePixels().toPNG());
 			mesh.remove();
 			poly.dispose();
 		}
-		t = h2d.Tile.fromTexture(tex);
-		cache.set(b.index, t);
-		return t;
+		return tex;
 	}
 }

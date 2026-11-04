@@ -1,4 +1,5 @@
 import Common;
+import Ui;
 import SaveData.SaveInfo;
 
 /** Veces que el jugador ha puesto (p) y roto (b) un kube (nombre del constructor de BlockKind). */
@@ -20,6 +21,8 @@ typedef KubInfo = {
 	var comets : Array<{ sys : Int, slot : Int, b : String }>;
 	/** recetas fabricadas (Data.CRAFT: id) y cuantas veces */
 	var crafts : Array<{ id : Int, n : Int }>;
+	/** anomalias cruzadas (id de kubindex.json) */
+	var anomalies : Array<String>;
 	/** fichas nuevas desde la ultima vez que se miraron en la base de datos */
 	var fresh : Array<String>;
 }
@@ -39,7 +42,8 @@ enum abstract KubState(Int) to Int {
  *   que lo usan). Un kube que no suelta nada al romperlo (0 %) se recupera al romperlo; uno que suelta con suerte, solo cuando
  *   cae;
  * - una receta se descubre al recuperar uno de sus kubes (ingredientes o resultado);
- * - un tipo de planeta o de cometa se descubre al aterrizar en uno;
+ * - un tipo de planeta o de cometa se descubre al aterrizar en uno, una anomalia al pasar cerca de una (hasta entonces sale
+ *   como "???" en los sitios de sus kubes);
  * - los kubes de tu nave se conocen desde el principio (shipKnown). Las cargas no son fichas: salen en las recetas que las dan.
  * En creativo se sabe todo (Kubindex.full) y no se apunta nada.
  */
@@ -51,7 +55,7 @@ class Kubindex {
 	static var lastSeen : { kub : KubInfo, index : Int };
 
 	public static function empty() : KubInfo {
-		return { seen : [], got : [], stats : [], planets : [], comets : [], crafts : [], fresh : [] };
+		return { seen : [], got : [], stats : [], planets : [], comets : [], crafts : [], anomalies : [], fresh : [] };
 	}
 
 	/** crea los datos si la partida no los tiene (antes de copiarla para el hangar o la nodriza: las copias los comparten) */
@@ -99,11 +103,25 @@ class Kubindex {
 	/** bioma descubierto (en creativo, todos) */
 	public static function biomeKnown( info : SaveInfo, biome : String ) return full(info) || explored(info, biome) > 0;
 
-	/** anomalia descubierta: se ha localizado uno de sus kubes propios (KubData.anomalyOwnBlocks) */
+	/**
+	 * Anomalia identificada: se ha pasado cerca de una (encounter). Los cristales verdes, que el generador no apunta, se
+	 * identifican al identificar uno de sus kubes propios (KubData.anomalyOwnBlocks).
+	 */
 	public static function anomalyKnown( info : SaveInfo, id : String ) : Bool {
-		if( full(info) ) return true;
+		if( full(info) || ensure(info).anomalies.indexOf(id) >= 0 ) return true;
+		var a = KubData.get().anomaly(id);
+		if( a == null || !a.byBlocks ) return false;
 		for( e in KubData.get().anomalyOwnBlocks(id) ) if( known(info, e) ) return true;
 		return false;
+	}
+
+	/** se ha pasado cerca de una anomalia de ese tipo (GameView.updateAnomalies) */
+	public static function encounter( info : SaveInfo, id : String ) {
+		if( full(info) ) return;
+		var k = ensure(info);
+		if( k.anomalies.indexOf(id) >= 0 ) return;
+		k.anomalies.push(id);
+		if( onNews != null ) onNews({ title : KubText.get("kub.newanomaly"), name : KubData.get().anomalyName(id), colors : [Theme.ACCENT] });
 	}
 
 	/** receta descubierta: se ha recuperado uno de sus kubes */

@@ -200,7 +200,8 @@
     "Green crystals",
     "Cristaux verts"
    ],
-   "biomes": null
+   "biomes": null,
+   "byBlocks": true
   },
   {
    "id": "cavesphere",
@@ -304,8 +305,12 @@
     "BIAutumn",
     "BIWinterPeaks",
     "BIMars"
-   ]
+   ],
+   "byBlocks": true
   }
+ ],
+ "special": [
+  "BShipEngine"
  ],
  "places": {
   "BRock": [

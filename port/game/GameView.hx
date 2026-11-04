@@ -457,6 +457,7 @@ class GameView {
 		// ship.update, con el standingBlock del suelo, pondria enteringShip a 0 y el teletransportador lo bajaria
 		updateFade(tmod);
 		updateComet(realDt);
+		updateAnomalies(realDt);
 		if( debugDoorFrames > 0 && ++debugDoorFrames == 12 ) {
 			// solo pruebas: abre la puerta de la nave que hay cerca del teletransportador
 			if( Sys.args().indexOf("--computer") >= 0 ) onComputer();
@@ -670,6 +671,18 @@ class GameView {
 	 * Al acabarse, el jugador vuelve a la nave como con Mayus+K y, si baja otra vez de la altura de la nave por otro camino
 	 * (una puerta, el jetpack), se le devuelve.
 	 */
+	var anomalyCheck = 0.;
+
+	/** Base de datos ESCorp: una anomalia queda identificada al pasar cerca de ella (16 bloques; en las cuevas, a su altura) */
+	function updateAnomalies( dt : Float ) {
+		if( (anomalyCheck -= dt) > 0 || hangar != null || info.mothership == true || pz >= World.SHIP_Z ) return;
+		anomalyCheck = 0.5;
+		for( a in world.anomalies() ) {
+			var dx = wrapDist(a.x + 0.5 - px), dy = wrapDist(a.y + 0.5 - py);
+			if( dx * dx + dy * dy <= 16 * 16 && Math.abs(a.z - pz) <= 12 ) Kubindex.encounter(info, a.n);
+		}
+	}
+
 	function updateComet( dt : Float ) {
 		var c = info.comet;
 		if( c == null || hangar != null || ship == null ) return;

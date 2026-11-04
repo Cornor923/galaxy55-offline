@@ -1,10 +1,13 @@
 import Common;
+import SaveData.SaveInfo;
 
 /** Anomalia del terreno (DetailsGenerator): nombre en los tres idiomas y biomas en los que puede salir (null = todos). */
 typedef KubAnomaly = {
 	var id : String;
 	var names : Array<String>;
 	var biomes : Array<String>;
+	/** el generador no la apunta (cristales verdes): se identifica al identificar uno de sus kubes propios */
+	var byBlocks : Bool;
 }
 
 /** Donde se encuentra una ficha: biomas de planeta, anomalias (id) y tipos de cometa. */
@@ -30,9 +33,11 @@ enum abstract KubCat(Int) to Int {
  * - "places": por bloque (constructor de BlockKind), sus sitios: un bioma de planeta ("BIMoon"), un tipo de cometa
  *   ("BICometCinder", ver Comets.KINDS) o una anomalia ("a:volcano");
  * - "hidden": bloques con nombre que no son fichas (pruebas, los de la Ciudad muerta);
- * - "hiddenBiomes": biomas que no estan en la base de datos (la Ciudad muerta: nunca sale en el mapa).
- * Las fichas son los bloques con nombre (BlockNames.entry) que se pueden apuntar; lo que no tiene sitio ni receta es especial
- * (nave, nave nodriza...).
+ * - "hiddenBiomes": biomas que no estan en la base de datos (la Ciudad muerta: nunca sale en el mapa);
+ * - "special": bloques que son especiales aunque salgan en una anomalia (el motor espacial de la capsula estrellada).
+ * Las fichas son los bloques con nombre (BlockNames.entry) que se pueden apuntar. Categorias: planeta, cometa y fabricado si
+ * sale en un terreno, en una cometa o en una receta; anomalia solo si no sale en ninguno de ellos (la phosphomousse de las
+ * ruinas es de planeta, el blindaje fabricado); especial lo que no esta en ningun sitio (nave, nave nodriza) y "special".
  */
 class KubData {
 
@@ -51,6 +56,7 @@ class KubData {
 	public var anomalies(default, null) : Array<KubAnomaly> = [];
 	var places = new Map<Int, KubPlace>();
 	var hiddenBiomes = new Map<String, Bool>();
+	var special = new Map<Int, Bool>();
 	var isEntry = new Map<Int, Bool>();
 	var makes = new Map<Int, Array<CraftRule>>();
 	var usedIn = new Map<Int, Array<CraftRule>>();
@@ -69,6 +75,7 @@ class KubData {
 					id : Std.string(a.id),
 					names : [for( n in (a.names : Array<Dynamic>) ) Std.string(n)],
 					biomes : a.biomes == null ? null : [for( b in (a.biomes : Array<Dynamic>) ) Std.string(b)],
+					byBlocks : a.byBlocks == true,
 				});
 		for( b in Block.all ) {
 			if( b == null || BlockNames.entry(b) != b || hidden.exists(Type.enumConstructor(b.k)) ) continue;
@@ -92,6 +99,12 @@ class KubData {
 					var v = StringTools.startsWith(s, "a:") ? s.substr(2) : s;
 					if( list.indexOf(v) < 0 ) list.push(v);
 				}
+			}
+		if( o.special != null )
+			for( f in (o.special : Array<Dynamic>) ) {
+				var b = try Block.get(Type.createEnum(BlockKind, Std.string(f))) catch( e : Dynamic ) null;
+				var e = b == null ? null : entryOf(b);
+				if( e != null ) special.set(e.index, true);
 			}
 		for( r in Data.CRAFT ) {
 			add(makes, entryOf(Block.get(r.out)), r);
@@ -150,12 +163,14 @@ class KubData {
 
 	public function has( e : Block, c : KubCat ) : Bool {
 		var p = placeOf(e);
+		var natural = p.biomes.length + p.comets.length > 0, craft = recipesMaking(e).length > 0, forced = special.exists(e.index);
 		return switch( c ) {
 			case CPlanet: p.biomes.length > 0;
-			case CAnomaly: p.anomalies.length > 0;
 			case CComet: p.comets.length > 0;
-			case CCraft: recipesMaking(e).length > 0;
-			case CSpecial: p.biomes.length + p.anomalies.length + p.comets.length + recipesMaking(e).length == 0;
+			case CCraft: craft;
+			// anomalia solo si no se encuentra de otra manera
+			case CAnomaly: p.anomalies.length > 0 && !natural && !craft && !forced;
+			case CSpecial: forced || (!natural && !craft && p.anomalies.length == 0);
 		}
 	}
 
@@ -202,25 +217,33 @@ class KubData {
 		return m.quickBreaks[0].c;
 	}
 
-	/** donde se encuentra, en una linea por tipo de sitio (vacio = en ningun sitio natural) */
-	public function placeLines( e : Block ) : Array<String> {
+	/** donde se encuentra, en una linea por tipo de sitio; las anomalias que aun no se han cruzado salen como "???" */
+	public function placeLines( info : SaveInfo, e : Block ) : Array<String> {
 		var p = placeOf(e), out = [];
+		if( has(e, CSpecial) ) out.push(KubText.get("kub.where.special"));
 		if( p.biomes.length > 0 ) out.push(KubText.get("kub.where.planets") + " " + [for( b in p.biomes ) ExpData.ExpOffline.biomeName(b)].join(", "));
-		if( p.anomalies.length > 0 ) out.push(KubText.get("kub.where.anomalies") + " " + [for( a in p.anomalies ) anomalyName(a)].join(", "));
+		if( p.anomalies.length > 0 ) out.push(KubText.get("kub.where.anomalies") + " " + anomalyNames(info, p.anomalies));
 		if( p.comets.length > 0 ) out.push(KubText.get("kub.where.comets") + " " + [for( c in p.comets ) ExpData.ExpOffline.biomeName(c)].join(", "));
 		if( recipesMaking(e).length > 0 ) out.push(KubText.get("kub.where.craft"));
-		if( out.length == 0 ) out.push(KubText.get("kub.where.special"));
 		return out;
 	}
 
+	/** nombres de las anomalias identificadas, y "???" si queda alguna por cruzar */
+	function anomalyNames( info : SaveInfo, ids : Array<String> ) : String {
+		var names = [for( a in ids ) if( Kubindex.anomalyKnown(info, a) ) anomalyName(a)];
+		if( names.length < ids.length ) names.push(KubText.get("kub.unknown"));
+		return names.join(", ");
+	}
+
 	/** sitio en pocas palabras (bajo una ficha desconocida "???" de una receta) */
-	public function placeShort( e : Block ) : String {
+	public function placeShort( info : SaveInfo, e : Block ) : String {
 		var p = placeOf(e);
 		if( p.biomes.length > 0 ) return ExpData.ExpOffline.biomeName(p.biomes[0]) + (p.biomes.length > 1 ? " +" + (p.biomes.length - 1) : "");
 		if( p.comets.length > 0 ) return ExpData.ExpOffline.biomeName(p.comets[0]);
-		if( p.anomalies.length > 0 ) return anomalyName(p.anomalies[0]);
 		if( recipesMaking(e).length > 0 ) return KubText.get("kub.short.craft");
-		return KubText.get("kub.tag.special");
+		if( has(e, CSpecial) ) return KubText.get("kub.tag.special");
+		for( a in p.anomalies ) if( Kubindex.anomalyKnown(info, a) ) return anomalyName(a);
+		return KubText.get("kub.tag.anomaly") + " " + KubText.get("kub.unknown");
 	}
 
 	public function anomalyName( id : String ) : String {

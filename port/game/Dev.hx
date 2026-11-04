@@ -53,8 +53,8 @@ import Common;
  *                           contracts load RUTA lee otro contracts.json
  *   kub [close|tab N|pick Bloque|page D|nav dx dy]   Base de datos ESCorp (anadido del port): abrirla, cerrarla, pestana, ficha,
  *                           categoria, flechas; kub forget|visit|see Bloque|got Bloque|break Bloque|load RUTA olvidan todo,
- *                           exploran el planeta, localizan, recuperan o rompen un bloque como al jugar, o leen otro kubindex.json;
- *                           print kub|kubdata
+ *                           exploran el planeta, identifican, recuperan o rompen un bloque como al jugar, o leen otro kubindex.json;
+ *                           kub anomaly ID cruza una anomalia, kub goanomaly N lleva junto a la N del planeta; print kub|kubdata
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
@@ -702,6 +702,32 @@ class Dev {
 					case "nav": if( app.database != null ) app.database.view.nav(Std.parseInt(a[2]), Std.parseInt(a[3]));
 					case "forget": info.kub = Kubindex.empty();
 					case "visit": Kubindex.visit(info);
+					case "anomaly": Kubindex.encounter(info, a[2]);
+					case "goanomaly":
+						// junto a la anomalia N del planeta (World.anomalies)
+						var an = w.anomalies()[Std.parseInt(a[2])];
+						g.px = an.x + 0.5;
+						g.py = an.y + 0.5;
+						// a su altura (las de las cuevas): la celda libre mas cercana con suelo debajo y sitio para la cabeza; si no, sobre el suelo
+						g.pz = w.topCollide(an.x, an.y) + 0.01;
+						var free = function(x, y, z) return w.block(x, y, z) == null;
+						var done = false;
+						for( r in 0...8 ) {
+							for( dx in -r...r + 1 ) {
+								for( dy in -r...r + 1 ) {
+									for( z in an.z - 2...an.z + 8 ) {
+										var x = an.x + dx, y = an.y + dy;
+										if( done || !free(x, y, z) || !free(x, y, z + 1) || free(x, y, z - 1) ) continue;
+										g.px = x + 0.5;
+										g.py = y + 0.5;
+										g.pz = z + 0.01;
+										done = true;
+									}
+								}
+							}
+							if( done ) break;
+						}
+						Sys.println("anomalia " + an.n + " en " + an.x + "," + an.y + "," + an.z + " jugador z=" + Std.int(g.pz));
 					case "see": Kubindex.see(info, bk(a[2]));
 					case "got": Kubindex.gain(info, bk(a[2]));
 					case "break": Kubindex.broke(info, bk(a[2]));
@@ -911,6 +937,7 @@ class Dev {
 			Sys.println("kub: fichas " + d.entries.length + " vistos=" + k.seen.join(",") + " recuperados=" + k.got.join(",") + " nuevos=" + k.fresh.length
 				+ " planetas=" + [for( p in k.planets ) p.id + ":" + p.b].join(",") + " cometas=" + [for( c in k.comets ) c.sys + "/" + c.slot + ":" + c.b].join(",")
 				+ " recetas=" + [for( c in k.crafts ) c.id + "x" + c.n].join(",") + " stats=" + [for( s in k.stats ) s.k + ":" + s.p + "/" + s.b].join(",")
+				+ " anomalias=" + k.anomalies.join(",") + (g == null ? "" : " (planeta: " + [for( an in g.world.anomalies() ) an.n + "@" + an.x + "," + an.y + "," + an.z].join(" ") + ")")
 				+ " descubiertas=" + [for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r].length + "/" + Data.CRAFT.length
 				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step)
 				+ " avisos=" + app.kubNotify.devInfo());
@@ -918,7 +945,7 @@ class Dev {
 			// fichas del Kubindex con sus sitios y categorias (para revisar kubindex.json)
 			var d = KubData.get();
 			for( e in d.entries )
-				Sys.println(e.k + " '" + e.getName() + "' " + d.placeLines(e).join(" / ") + " drop=" + d.dropChance(e) + " hace=" + d.recipesMaking(e).length + " usa=" + d.recipesUsing(e).length);
+				Sys.println(e.k + " '" + e.getName() + "' " + d.placeLines(app.curInfo(), e).join(" / ") + " drop=" + d.dropChance(e) + " hace=" + d.recipesMaking(e).length + " usa=" + d.recipesUsing(e).length);
 		case "menu":
 			// botones del menu abierto (etiqueta y y), de arriba abajo
 			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));

@@ -226,6 +226,7 @@ class SaveData {
 			if( o.planets != null ) k.planets = [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), b : Std.string(p.b) }];
 			if( o.comets != null ) k.comets = [for( c in (o.comets : Array<Dynamic>) ) { sys : Std.int(c.sys), slot : Std.int(c.slot), b : Std.string(c.b) }];
 			if( o.crafts != null ) k.crafts = [for( c in (o.crafts : Array<Dynamic>) ) { id : Std.int(c.id), n : Std.int(c.n) }];
+			k.anomalies = strs(o.anomalies);
 		} catch( e : Dynamic ) {}
 		return k;
 	}
