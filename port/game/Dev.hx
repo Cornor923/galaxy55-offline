@@ -50,6 +50,10 @@ import Common;
  *   contracts [close]       abrir y cerrar los contratos de la ESCorp; contracts slot N impone el periodo (-1 = la hora real);
  *                           contracts fill i da los bloques del contrato i; deliver i lo entrega; print contracts;
  *                           contracts load RUTA lee otro contracts.json
+ *   kub [close|tab N|pick Bloque|page D|nav dx dy]   Base de datos ESCorp (anadido del port): abrirla, cerrarla, pestana, ficha,
+ *                           categoria, flechas; kub forget|visit|see Bloque|got Bloque|break Bloque|load RUTA olvidan todo,
+ *                           exploran el planeta, localizan, recuperan o rompen un bloque como al jugar, o leen otro kubindex.json;
+ *                           print kub|kubdata
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
@@ -660,6 +664,25 @@ class Dev {
 					case "load": @:privateAccess Contracts.config = Contracts.load(a[2]);
 					default:
 					}
+				case "kub":
+					// Base de datos ESCorp (Kubindex): abrir, cerrar, pestana, ficha, categoria, flechas; olvidar todo, localizar o
+					// recuperar un bloque como al jugar; leer otro kubindex.json
+					var info = app.curInfo();
+					switch( a[1] ) {
+					case null: app.openDatabase();
+					case "close": app.closeDatabase();
+					case "tab": if( app.database != null ) app.database.setTab(Std.parseInt(a[2]));
+					case "pick": if( app.database != null ) app.database.pick(KubData.get().entryOf(bk(a[2])));
+					case "page": if( app.database != null ) app.database.view.page(Std.parseInt(a[2]));
+					case "nav": if( app.database != null ) app.database.view.nav(Std.parseInt(a[2]), Std.parseInt(a[3]));
+					case "forget": info.kub = Kubindex.empty();
+					case "visit": Kubindex.visit(info);
+					case "see": Kubindex.see(info, bk(a[2]));
+					case "got": Kubindex.gain(info, bk(a[2]));
+					case "break": Kubindex.broke(info, bk(a[2]));
+					case "load": KubData.reload(a[2]);
+					default:
+					}
 				case "deliver":
 					// deliver i: entrega el contrato i (con el panel abierto, como su boton)
 					var i = Std.parseInt(a[1]);
@@ -851,6 +874,20 @@ class Dev {
 				i + " " + c.block.k + " x" + c.n + " +" + c.reward + " llevas " + Contracts.have(g.inv, c.block) + (Contracts.isDone(g.info, i) ? " ENTREGADO" : "");
 			}].join(" | ") + " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts != null)
 				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled));
+		case "kub":
+			// Base de datos ESCorp: localizados, recuperados, nuevos, planetas y cometas explorados, recetas fabricadas, estadisticas
+			// y, con el panel abierto, la pestana
+			var info = app.curInfo(), k = Kubindex.ensure(info), d = KubData.get();
+			Sys.println("kub: fichas " + d.entries.length + " vistos=" + k.seen.join(",") + " recuperados=" + k.got.join(",") + " nuevos=" + k.fresh.length
+				+ " planetas=" + [for( p in k.planets ) p.id + ":" + p.b].join(",") + " cometas=" + [for( c in k.comets ) c.sys + "/" + c.slot + ":" + c.b].join(",")
+				+ " recetas=" + [for( c in k.crafts ) c.id + "x" + c.n].join(",") + " stats=" + [for( s in k.stats ) s.k + ":" + s.p + "/" + s.b].join(",")
+				+ " descubiertas=" + [for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r].length + "/" + Data.CRAFT.length
+				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step));
+		case "kubdata":
+			// fichas del Kubindex con sus sitios y categorias (para revisar kubindex.json)
+			var d = KubData.get();
+			for( e in d.entries )
+				Sys.println(e.k + " '" + e.getName() + "' " + d.placeLines(e).join(" / ") + " drop=" + d.dropChance(e) + " hace=" + d.recipesMaking(e).length + " usa=" + d.recipesUsing(e).length);
 		case "menu":
 			// botones del menu abierto (etiqueta y y), de arriba abajo
 			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));

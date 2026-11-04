@@ -420,6 +420,8 @@ class GalaxyApp extends hxd.App {
 		toast.visible = false;
 		guide = new TutoGuide(s2d);
 		tutorial.onDone = function() saveGame(false);
+		// Base de datos ESCorp: lo nuevo se avisa abajo, sin tapar el aviso de una cometa
+		Kubindex.onNews = function(msg) if( state == Playing && (!toast.visible || toastTime < 0.5) ) showToast(msg, 2.6);
 
 		if( demoSaves ) makeDemoSaves();
 
@@ -955,8 +957,8 @@ class GalaxyApp extends hxd.App {
 		// anadido del port: pilotar la nave sobre el planeta (solo en los planetas jugables, fuera del tutorial)
 		var pilotOk = game != null && game.canPilot();
 		// botones antes de Cerrar; con todos (solo al editar la nodriza) se juntan un poco para que el panel quepa
-		var n = 5 + (pilotOk ? 1 : 0) + (mother ? 1 : 0);
-		var step = n > 6 ? 56 : 62;
+		var n = 6 + (pilotOk ? 1 : 0) + (mother ? 1 : 0);
+		var step = n > 7 ? 48 : n > 6 ? 56 : 62;
 		var h = 312 + n * step;
 		var s = panelFor(640, h, Lang.t("computer.title"));
 		var x = (W - 540) * 0.5;
@@ -972,6 +974,9 @@ class GalaxyApp extends hxd.App {
 		var licenses = new Button(s, Lang.t("computer.licenses"));
 		licenses.enabled = !Tutorial.active(game.info);
 		computerLicenses = licenses;
+		// Base de datos ESCorp (Kubindex, anadido del port): tambien durante el tutorial, que la presenta
+		var database = new Button(s, KubText.get("computer.database"));
+		computerDatabase = database;
 		var close = new Button(s, Lang.t("computer.close"));
 		var rows : Array<Button> = [takeoff];
 		if( pilotOk ) {
@@ -984,7 +989,7 @@ class GalaxyApp extends hxd.App {
 				else showToast(Lang.t("license.pilotmain"), 4);
 			};
 		}
-		rows = rows.concat([edit, trade, contracts, licenses]);
+		rows = rows.concat([edit, trade, contracts, licenses, database]);
 		if( mother ) {
 			var visit = new Button(s, Lang.t("computer.mothership"));
 			rows.push(visit);
@@ -1014,6 +1019,7 @@ class GalaxyApp extends hxd.App {
 		trade.onActivate = openShop;
 		contracts.onActivate = openContracts;
 		licenses.onActivate = openLicenses;
+		database.onActivate = openDatabase;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
 		return s;
@@ -1201,6 +1207,7 @@ class GalaxyApp extends hxd.App {
 		closePalette();
 		closeShop();
 		closeContracts();
+		closeDatabase();
 		closeChest();
 		game.dispose();
 		if( invBar != null ) {
@@ -1514,7 +1521,13 @@ class GalaxyApp extends hxd.App {
 		show("computer");
 		computerContracts.enabled = !Tutorial.active(game.info);
 		computerLicenses.enabled = !Tutorial.active(game.info);
+		// lo nuevo desde la ultima vez, entre parentesis
+		var fresh = Kubindex.freshCount(game.info);
+		computerDatabase.setLabel(KubText.get("computer.database") + (fresh > 0 ? " (" + fresh + ")" : ""));
 	}
+
+	/** boton de la Base de datos ESCorp del ordenador de a bordo (con lo nuevo entre parentesis) */
+	var computerDatabase : Button;
 
 	/** boton de los contratos del ordenador de a bordo (desactivado durante el tutorial) */
 	var computerContracts : Button;
@@ -1655,6 +1668,8 @@ class GalaxyApp extends hxd.App {
 	// ---------------------------------------------------------------- flujo del juego
 
 	function startGame( info : SaveInfo ) {
+		// antes de cualquier copia para el hangar o la nodriza: las copias comparten la Base de datos ESCorp
+		Kubindex.ensure(info);
 		state = Loading;
 		clearUi();
 		hud.visible = false; msgText.visible = false;
@@ -1698,6 +1713,8 @@ class GalaxyApp extends hxd.App {
 			return;
 		}
 		invBar = new InvBar(s2d, game.inv, atlas, W);
+		// el planeta o la cometa quedan explorados (Base de datos ESCorp)
+		Kubindex.visit(game.info);
 		game.onComputer = openComputer;
 		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
 		game.onChest = openChest;
@@ -1781,6 +1798,7 @@ class GalaxyApp extends hxd.App {
 		}
 		if( game == null || state != Playing ) return;
 		if( shop != null ) shop.scroll(e.wheelDelta);
+		else if( database != null ) database.scroll(e.wheelDelta);
 		else if( paletteOpen && palette != null ) palette.scroll(e.wheelDelta);
 		else game.scrollInventory(e.wheelDelta > 0 ? -1 : 1);
 	}
@@ -1869,6 +1887,30 @@ class GalaxyApp extends hxd.App {
 		contracts.onClose = closeContracts;
 		paletteOpen = true;
 		captureMouse(false);
+	}
+
+	/** Base de datos ESCorp (DatabasePanel, anadido del port), desde el ordenador de a bordo; en el tutorial es un paso */
+	public var database : DatabasePanel;
+
+	public function openDatabase() {
+		if( game == null || database != null ) return;
+		if( current != null ) resume();
+		database = new DatabasePanel(s2d, atlas, game.info);
+		database.onClose = closeDatabase;
+		Tutorial.databaseOpened(game.info);
+		paletteOpen = true;
+		captureMouse(false);
+	}
+
+	public function closeDatabase() {
+		if( database == null ) return;
+		database.remove();
+		database = null;
+		paletteOpen = false;
+		if( game != null && state == Playing ) {
+			captureMouse(true);
+			game.releaseAction();
+		}
 	}
 
 	public function closeContracts() {
@@ -2323,12 +2365,14 @@ class GalaxyApp extends hxd.App {
 					shop.update(dt, pad);
 				} else if( contracts != null ) {
 					contracts.update(dt, pad);
+				} else if( database != null ) {
+					database.update(dt, pad);
 				} else if( palette != null ) {
 					palette.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
 				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
 				// barra de vida se ve bajo el panel
-				if( shop != null || contracts != null ) {
+				if( shop != null || contracts != null || database != null ) {
 					game.update(dt, false, pad);
 					if( game == null || state != Playing ) return;
 					updateJetHud(game);
@@ -2874,7 +2918,7 @@ class GalaxyApp extends hxd.App {
 	    el casco y el HUD se ocultan un momento) y mira si queda magenta en algun punto de los cuatro bordes de la ventana. Se
 	    usa un color y no el alfa porque el mapa de estrellas suma sus capas (blend Add): su alfa es 1 aunque deje ver el fondo. */
 	public function devCover( ?name : String ) : String {
-		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
+		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
 		if( top == null ) return "nada abierto";
 		var hidden = [];
 		for( o in s2d )

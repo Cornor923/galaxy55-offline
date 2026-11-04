@@ -142,6 +142,9 @@ class GameView {
 					inv.inv.t.push({ k : Type.enumIndex(Type.createEnum(BlockKind, nm)), n : 5 });
 				while( inv.inv.t.length < 10 ) inv.inv.t.push(null);
 			}
+		// Base de datos ESCorp: lo que tienes o te llega queda recuperado (Kubindex)
+		inv.onContent = function() Kubindex.scan(info, inv.inv);
+		Kubindex.scan(info, inv.inv);
 		drops = new Drops(world, atlas);
 		process = new WorldProcess(world, (x, y, z, b) -> breakBlock(x, y, z, b, true));
 		process.lavaBombFn = lavaBomb;
@@ -1579,6 +1582,8 @@ class GameView {
 	function mine( tmod : Float ) {
 		var s = select;
 		var b = s.b;
+		// Base de datos ESCorp: lo que toca el laser queda localizado, aunque no se pueda romper (Kubindex)
+		Kubindex.see(info, b);
 		// bloques que se activan (ordenador, puertas, cofres): al soltar el boton se activan (Game.checkToggle); si se
 		// mantiene el laser hasta el final se rompen, como en el original (checkAction no los distingue)
 		if( b.activable != null || b.toggle != null ) {
@@ -1632,6 +1637,7 @@ class GameView {
 		if( laserCharge != null ) inv.useCharge(laserCharge);
 		activatePending = null;
 		breakBlock(s.x, s.y, s.z, b);
+		Kubindex.broke(info, b);
 		if( creative ) actionPause = 8;
 		select = null;
 	}
@@ -1736,6 +1742,7 @@ class GameView {
 		else world.setBlock(x, y, z, put);
 		if( !inShip ) process.onSet(x, y, z, here, put);
 		if( inShip ) ship.craft(x, y, z, put, this);
+		Kubindex.placed(info, put);
 		select = null;
 	}
 
