@@ -146,11 +146,10 @@ class KubPlanetsView extends KubView {
 		var y = title(known ? d.anomalyName(id) : KubText.get("pl.anomalyunknown") + " ???");
 		var where = a.biomes == null ? KubText.get("pl.everywhere")
 			: [for( b in a.biomes ) ExpData.ExpOffline.biomeName(b)].join(", ") + " " + KubText.get("pl.caves");
-		y = line(KubText.get("pl.where") + " " + where, 1.3, Theme.CYAN, y);
+		y = line(where, 1.3, Theme.CYAN, y);
 		var list = d.anomalyBlocks(id);
 		var got = [for( e in list ) if( Kubindex.got(info, e) ) e].length;
 		y = line(KubText.get("pl.progress").split("%g%").join("" + got).split("%t%").join("" + list.length), 1.4, Theme.TEXT, y);
-		if( !known ) y = line(KubText.get("pl.anomalyhint"), 1.3, Theme.DIM, y);
 		return grid(KubText.get("pl.blocks"), list, y + 4);
 	}
 

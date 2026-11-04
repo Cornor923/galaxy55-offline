@@ -53,11 +53,9 @@ class KubDetail extends h2d.Object {
 			return;
 		}
 		cy += 6;
-		// lo que da al minarlo: el mismo kube (con su probabilidad), cargas (citronox viejo, plantas...) o nada
-		var chance = d.dropChance(e), drop = e.getDrop();
-		if( chance > 0 ) line(KubText.get("kub.drop").split("%n%").join("" + chance), 1.3, Theme.TEXT);
-		else if( drop != null && drop.b.charge != null ) line(KubText.get("kub.drop.charge").split("%n%").join("" + drop.count).split("%c%").join(drop.b.getName()), 1.3, Theme.TEXT);
-		else line(KubText.get("kub.drop.never"), 1.3, Theme.TEXT);
+		// las cargas que da al minarlo (citronox viejo, plantas...)
+		var drop = e.getDrop();
+		if( drop != null && drop.b.charge != null ) line(KubText.get("kub.drop.charge").split("%n%").join("" + drop.count).split("%c%").join(drop.b.getName()), 1.3, Theme.TEXT);
 		var c = d.chargeFor(e);
 		if( c != null ) line(KubText.get("kub.charge").split("%n%").join(KubDraw.chargeName(c)), 1.3, Theme.TEXT);
 		var s = Kubindex.stat(info, e, false);

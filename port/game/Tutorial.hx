@@ -95,6 +95,12 @@ class Tutorial {
 		if( onDone != null ) onDone();
 	}
 
+	/**
+	 * La Base de datos ESCorp se abre desde su paso (DATABASE, tras fabricar el blindaje) hasta el final: COMPUTER y los numeros
+	 * de despues (HANGAR, LEAVE, DONE y DATABASE) son todos posteriores a PLATES. Antes, el boton sale desactivado.
+	 */
+	public static function databaseAllowed( info : SaveInfo ) return !active(info) || info.tuto.step >= COMPUTER;
+
 	/** se abre la Base de datos ESCorp: el paso DATABASE esta hecho */
 	public static function databaseOpened( info : SaveInfo ) if( active(info) && info.tuto.step == DATABASE ) info.tuto.step = COMPUTER;
 

@@ -138,8 +138,6 @@ class Kubindex {
 
 	public static function isFresh( info : SaveInfo, e : Block ) return !full(info) && ensure(info).fresh.indexOf(key(e)) >= 0;
 
-	public static function freshCount( info : SaveInfo ) return full(info) ? 0 : ensure(info).fresh.length;
-
 	/** la ficha se ha mirado en la base de datos */
 	public static function viewed( info : SaveInfo, e : Block ) if( e != null ) ensure(info).fresh.remove(key(e));
 

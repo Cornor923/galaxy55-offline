@@ -34,6 +34,12 @@ shot kub_cat_anomalias
 kub tab 1
 wait 2
 shot kub_espacio
+kub nav 0 6
+wait 2
+shot kub_esp_capsula
+kub nav 0 22
+wait 2
+shot kub_esp_cueva
 kub close
 print kub
 quit
