@@ -2369,8 +2369,8 @@ class GalaxyApp extends hxd.App {
 			}
 		} else if( state == Paused && game != null ) {
 			// el ordenador de a bordo no es una pausa (Game.openComputerMenu solo quita actionKeys): el juego sigue, se cura en la
-			// nave y el mundo no se para. Cambio del port: sin ningun control (ni andar ni mirar), el teclado y el raton son del menu.
-			// Las licencias de exploracion se abren desde el: tampoco paran el juego
+			// nave y el mundo no se para. Cambio del port: sin ningun control (ni andar ni mirar), el teclado y el raton son del menu
+			// la pantalla de licencias sale del ordenador de a bordo y tampoco para el juego (aviso del PR 77)
 			if( current != null && (currentName == "computer" || currentName == "licenses") ) {
 				game.update(dt, false, pad);
 				if( game == null || state != Paused ) return;
