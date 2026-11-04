@@ -262,6 +262,8 @@ class GalaxyApp extends hxd.App {
 	var helmetOnDone : Void -> Void;
 	var toast : h2d.Text;
 	var toastTime = 0.;
+	/** avisos de la Base de datos ESCorp (arriba a la derecha) */
+	public var kubNotify : KubNotify;
 	var orbit = 0.;
 	var autosaveTimer = 0.;
 	var frames = 0;
@@ -420,8 +422,9 @@ class GalaxyApp extends hxd.App {
 		toast.visible = false;
 		guide = new TutoGuide(s2d);
 		tutorial.onDone = function() saveGame(false);
-		// Base de datos ESCorp: lo nuevo se avisa abajo, sin tapar el aviso de una cometa
-		Kubindex.onNews = function(msg) if( state == Playing && (!toast.visible || toastTime < 0.5) ) showToast(msg, 2.6);
+		// Base de datos ESCorp: lo nuevo se avisa arriba a la derecha, con un aviso ligero
+		kubNotify = new KubNotify(s2d, atlas);
+		Kubindex.onNews = function(n) if( state == Playing ) kubNotify.push(n);
 
 		if( demoSaves ) makeDemoSaves();
 
@@ -989,7 +992,7 @@ class GalaxyApp extends hxd.App {
 				else showToast(Lang.t("license.pilotmain"), 4);
 			};
 		}
-		rows = rows.concat([edit, trade, contracts, licenses, database]);
+		rows = rows.concat([edit, database, trade, contracts, licenses]);
 		if( mother ) {
 			var visit = new Button(s, Lang.t("computer.mothership"));
 			rows.push(visit);
@@ -1713,7 +1716,8 @@ class GalaxyApp extends hxd.App {
 			return;
 		}
 		invBar = new InvBar(s2d, game.inv, atlas, W);
-		// el planeta o la cometa quedan explorados (Base de datos ESCorp)
+		// Base de datos ESCorp: los kubes de tu nave se conocen y el planeta o la cometa quedan explorados
+		Kubindex.shipKnown(game.info);
 		Kubindex.visit(game.info);
 		game.onComputer = openComputer;
 		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
@@ -2469,6 +2473,9 @@ class GalaxyApp extends hxd.App {
 			pausedThisFrame = false;
 		}
 
+		kubNotify.update(dt);
+		// ni en los menus ni con un panel abierto (la tienda, los contratos, la propia base de datos)
+		kubNotify.visible = state == Playing && !paletteOpen;
 		if( toastTime > 0 ) {
 			toastTime -= dt;
 			if( toastTime < 0.6 ) toast.alpha = Math.max(0, toastTime / 0.6);

@@ -4,7 +4,7 @@ import IconMesh.Icons;
 
 /**
  * Casilla de una ficha en las rejillas de la Base de datos ESCorp: el icono normal (recuperado), oscurecido (localizado) o una
- * sombra negra con "?" (desconocido); un punto naranja si es nueva. Elegida: marco naranja.
+ * sombra negra con "?" (desconocido); una estrellita naranja si es nueva. Elegida: marco naranja.
  */
 class KubCell extends h2d.Object {
 
@@ -31,7 +31,7 @@ class KubCell extends h2d.Object {
 		if( st == Unknown ) Theme.center(Theme.text(this, "?", 2.2, Theme.DIM), SIZE, SIZE);
 		if( fresh ) {
 			dot = new h2d.Graphics(this);
-			Theme.rect(dot, SIZE - 13, 4, 9, 9, Theme.ACCENT);
+			KubDraw.star(dot, SIZE - 10, 10, 7, Theme.ACCENT);
 		}
 		var it = new h2d.Interactive(SIZE, SIZE, this);
 		it.onOver = function(_) {

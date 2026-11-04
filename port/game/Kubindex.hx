@@ -39,13 +39,14 @@ enum abstract KubState(Int) to Int {
  *   que lo usan). Un kube que no suelta nada al romperlo (0 %) se recupera al romperlo; uno que suelta con suerte, solo cuando
  *   cae;
  * - una receta se descubre al recuperar uno de sus kubes (ingredientes o resultado);
- * - un tipo de planeta o de cometa se descubre al aterrizar en uno.
+ * - un tipo de planeta o de cometa se descubre al aterrizar en uno;
+ * - los kubes de tu nave se conocen desde el principio (shipKnown). Las cargas no son fichas: salen en las recetas que las dan.
  * En creativo se sabe todo (Kubindex.full) y no se apunta nada.
  */
 class Kubindex {
 
-	/** aviso al jugador al repertoriar algo nuevo (GalaxyApp: showToast) */
-	public static var onNews : String -> Void;
+	/** aviso al jugador al repertoriar algo nuevo (GalaxyApp: KubNotify, arriba a la derecha) */
+	public static var onNews : KubNotify.KubNews -> Void;
 
 	static var lastSeen : { kub : KubInfo, index : Int };
 
@@ -136,7 +137,7 @@ class Kubindex {
 		if( e == null || k.seen.indexOf(key(e)) >= 0 || k.got.indexOf(key(e)) >= 0 ) return;
 		k.seen.push(key(e));
 		k.fresh.push(key(e));
-		news("kub.seen", e);
+		news("kub.seen", e, Seen);
 	}
 
 	/** un kube llega al inventario (o se rompe uno que no suelta nunca nada) */
@@ -149,14 +150,26 @@ class Kubindex {
 		k.seen.remove(n);
 		k.got.push(n);
 		if( k.fresh.indexOf(n) < 0 ) k.fresh.push(n);
-		news("kub.got", e);
+		news("kub.got", e, Got);
 	}
 
-	/** lo que hay en el inventario (bloques y cargas) queda recuperado; se llama en cada cambio del inventario */
+	/** los bloques que hay en el inventario quedan recuperados (las cargas no son fichas); en cada cambio del inventario */
 	public static function scan( info : SaveInfo, inv : Protocol.InventoryInfos ) {
 		if( full(info) || inv == null ) return;
 		for( s in inv.t ) if( s != null && s.n > 0 ) gain(info, Block.all[s.k]);
-		for( c in inv.charges ) if( c.n > 0 ) gain(info, KubData.chargeBlock(c.c));
+	}
+
+	/** los kubes de tu nave se conocen desde el principio: recuperados, sin aviso ni estrella (tambien tras cambiarla en el hangar) */
+	public static function shipKnown( info : SaveInfo ) {
+		if( full(info) ) return;
+		var k = ensure(info), d = KubData.get();
+		for( c in ShipData.load(Hangar.currentShip(info)).cells ) {
+			var e = d.entryOf(Block.all[c.id]);
+			if( e == null || k.got.indexOf(key(e)) >= 0 ) continue;
+			k.seen.remove(key(e));
+			k.fresh.remove(key(e));
+			k.got.push(key(e));
+		}
 	}
 
 	/** el jugador ha roto b con el laser: cuenta en sus estadisticas y, si no suelta nunca nada de lo suyo, queda recuperado */
@@ -189,7 +202,8 @@ class Kubindex {
 
 	/** se juega en un planeta o una cometa: queda explorado (y su tipo descubierto) */
 	public static function visit( info : SaveInfo ) {
-		if( full(info) || info.hangar == true || info.mothership == true ) return;
+		// la Ciudad muerta (nunca sale en el mapa) no esta en la base de datos
+		if( full(info) || info.hangar == true || info.mothership == true || !KubData.get().biomeIndexed(info.biome) ) return;
 		var k = ensure(info);
 		var isNew = explored(info, info.biome) == 0;
 		if( info.comet != null ) {
@@ -200,10 +214,12 @@ class Kubindex {
 			for( p in k.planets ) if( p.id == id ) return;
 			k.planets.push({ id : id, b : info.biome });
 		}
-		if( isNew && onNews != null ) onNews(KubText.get(info.comet != null ? "kub.newcomet" : "kub.newbiome").split("%n%").join(ExpData.ExpOffline.biomeName(info.biome)));
+		if( isNew && onNews != null )
+			onNews({ title : KubText.get(info.comet != null ? "kub.newcomet" : "kub.newbiome"), name : ExpData.ExpOffline.biomeName(info.biome),
+				colors : Data.getBiome(Type.createEnum(BiomeKind, info.biome)).exploreColors });
 	}
 
-	static function news( what : String, e : Block ) {
-		if( onNews != null ) onNews(KubText.get(what).split("%n%").join(e.getName()));
+	static function news( what : String, e : Block, st : KubState ) {
+		if( onNews != null ) onNews({ title : KubText.get(what), name : e.getName(), block : e, state : st });
 	}
 }

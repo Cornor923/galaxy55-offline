@@ -26,6 +26,19 @@ class KubDraw {
 		return bm;
 	}
 
+	/** estrellita de 5 puntas de radio r centrada en cx, cy (lo nuevo en la Base de datos ESCorp) */
+	public static function star( g : h2d.Graphics, cx : Float, cy : Float, r : Float, color : Int ) {
+		g.beginFill(0x000000, 0.6);
+		g.drawCircle(cx, cy, r + 2);
+		g.endFill();
+		g.beginFill(color);
+		for( i in 0...10 ) {
+			var a = -Math.PI / 2 + i * Math.PI / 5, d = i % 2 == 0 ? r : r * 0.45;
+			if( i == 0 ) g.moveTo(cx + Math.cos(a) * d, cy + Math.sin(a) * d) else g.lineTo(cx + Math.cos(a) * d, cy + Math.sin(a) * d);
+		}
+		g.endFill();
+	}
+
 	/** nombre de una ficha, o "???" si no se conoce */
 	public static function name( info : SaveInfo, e : Block ) : String {
 		return Kubindex.known(info, e) ? e.getName() : KubText.get("kub.unknown");
@@ -46,7 +59,6 @@ class KubDraw {
 	 * conoce sale como sombra negra con "???" y donde encontrarlo. onPick: clic en una ficha conocida. Devuelve el ancho.
 	 */
 	public static function recipe( parent : h2d.Object, r : CraftRule, info : SaveInfo, atlas : h3d.mat.Texture, onPick : Block -> Void, ?box : KubScroll ) : Float {
-		var d = KubData.get();
 		var x = 0.;
 		var layered = r.schema.length > 1;
 		for( i in 0...r.schema.length ) {
@@ -58,7 +70,7 @@ class KubDraw {
 				case CSLine(k, len): b = k; n = len; shape = KubText.get("rc.line").split("%n%").join("" + len);
 			}
 			if( layered ) Theme.text(parent, KubText.get("rc.layer").split("%n%").join("" + (i + 1)), 1.05, Theme.DIM, x + 2, 0);
-			item(parent, d.entryOf(Block.get(b)), n, shape, info, atlas, x, 16, onPick, box);
+			item(parent, Block.get(b), n, shape, info, atlas, x, 16, onPick, box);
 			x += ITEM_W;
 		}
 		var g = new h2d.Graphics(parent);
@@ -70,16 +82,19 @@ class KubDraw {
 		g.lineTo(x + ARROW_W - 10, ay + 8);
 		g.endFill();
 		x += ARROW_W;
-		item(parent, d.entryOf(Block.get(r.out)), r.count == null ? 1 : r.count, "", info, atlas, x, 16, onPick, box);
+		item(parent, Block.get(r.out), r.count == null ? 1 : r.count, "", info, atlas, x, 16, onPick, box);
 		return x + ITEM_W;
 	}
 
-	static function item( parent : h2d.Object, e : Block, n : Int, shape : String, info : SaveInfo, atlas : h3d.mat.Texture, x : Float, y : Float,
+	/** un ingrediente o el resultado (b: el bloque de la receta); las cargas no son fichas pero se ven siempre, sin clic */
+	static function item( parent : h2d.Object, b : Block, n : Int, shape : String, info : SaveInfo, atlas : h3d.mat.Texture, x : Float, y : Float,
 			onPick : Block -> Void, box : KubScroll ) {
 		var o = new h2d.Object(parent);
 		o.setPosition(x, y);
 		var g = new h2d.Graphics(o);
-		var st = e == null ? Unknown : Kubindex.state(info, e);
+		var charge = b.charge != null;
+		var e = charge ? b : KubData.get().entryOf(b);
+		var st = e == null ? Unknown : charge ? Got : Kubindex.state(info, e);
 		Theme.rect(g, 0, 0, ITEM_W - 6, ITEM_H, 0xFFFFFF, st == Unknown ? 0.09 : 0.05);
 		if( e != null ) icon(o, e, st, 42, atlas).setPosition(4, 4);
 		// cuantos, en la esquina del icono
@@ -88,15 +103,16 @@ class KubDraw {
 			c.setPosition(4, 44);
 		}
 		var tx = 52, tw = ITEM_W - 6 - tx - 4;
-		var nm = Theme.text(o, e == null ? "-" : name(info, e), 1.15, st == Got ? Theme.TEXT : st == Seen ? Theme.DIM : Theme.DISABLED, tx, 4);
-		fit(nm, tw);
+		var nm = Theme.text(o, e == null ? "-" : charge ? b.getName() : name(info, e), 1.15, st == Got ? Theme.TEXT : st == Seen ? Theme.DIM : Theme.DISABLED, tx, 4);
+		// sin forma ni sitio debajo, el nombre puede ocupar dos lineas (cargas de citronox)
+		if( shape == "" && st != Unknown ) nm.maxWidth = tw / nm.scaleX else fit(nm, tw);
 		var ly = 22.;
 		if( shape != "" ) {
 			fit(Theme.text(o, shape, 1.05, Theme.DIM, tx, ly), tw);
 			ly += 15;
 		}
 		if( st == Unknown && e != null ) fit(Theme.text(o, KubData.get().placeShort(e), 1.05, Theme.CYAN, tx, ly), tw);
-		if( e != null && st != Unknown && onPick != null ) {
+		if( e != null && !charge && st != Unknown && onPick != null ) {
 			var it = new h2d.Interactive(ITEM_W - 6, ITEM_H, o);
 			it.onClick = function(_) if( box == null || box.mouseIn() ) onPick(e);
 		}

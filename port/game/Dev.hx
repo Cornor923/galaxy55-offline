@@ -882,7 +882,8 @@ class Dev {
 				+ " planetas=" + [for( p in k.planets ) p.id + ":" + p.b].join(",") + " cometas=" + [for( c in k.comets ) c.sys + "/" + c.slot + ":" + c.b].join(",")
 				+ " recetas=" + [for( c in k.crafts ) c.id + "x" + c.n].join(",") + " stats=" + [for( s in k.stats ) s.k + ":" + s.p + "/" + s.b].join(",")
 				+ " descubiertas=" + [for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r].length + "/" + Data.CRAFT.length
-				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step));
+				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step)
+				+ " avisos=" + app.kubNotify.devInfo());
 		case "kubdata":
 			// fichas del Kubindex con sus sitios y categorias (para revisar kubindex.json)
 			var d = KubData.get();

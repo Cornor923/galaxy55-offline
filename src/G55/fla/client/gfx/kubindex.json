@@ -1,8 +1,16 @@
 {
- "_doc": "Base de datos ESCorp (KubData): sitios de cada bloque del mundo (constructor de BlockKind; las variantes y la roca rota cuentan para su ficha): un bioma de planeta, un tipo de cometa (Comets.KINDS) o a:<anomalia>. Anomalia con biomes null = en todos los planetas.",
+ "_doc": "Base de datos ESCorp (KubData): las cargas no son fichas. Sitios de cada bloque del mundo (constructor de BlockKind; las variantes y la roca rota cuentan para su ficha): un bioma de planeta, un tipo de cometa (Comets.KINDS) o a:<anomalia>. Anomalia con biomes null = en todos los planetas.",
  "hidden": [
   "BTest",
-  "BTreeHerbs"
+  "BTreeHerbs",
+  "BDeadRock",
+  "BDeadSoil",
+  "BDeadSwamp",
+  "BDeadTree",
+  "BDarkLeaves"
+ ],
+ "hiddenBiomes": [
+  "BIDeadCity"
  ],
  "anomalies": [
   {
@@ -681,21 +689,6 @@
   "BMarsHerb3": [
    "BIMars"
   ],
-  "BDeadRock": [
-   "BIDeadCity"
-  ],
-  "BDeadSoil": [
-   "BIDeadCity"
-  ],
-  "BDeadSwamp": [
-   "BIDeadCity"
-  ],
-  "BDeadTree": [
-   "BIDeadCity"
-  ],
-  "BDarkLeaves": [
-   "BIDeadCity"
-  ],
   "BCoal": [
    "BICometCinder",
    "a:bigcrater",
@@ -818,14 +811,6 @@
   "BHardRockColumn": [
    "a:ruins"
   ],
-  "BPinkCharge": [
-   "a:ruins",
-   "a:artifact",
-   "a:crater",
-   "a:meadow",
-   "a:cavesphere",
-   "a:caveruins"
-  ],
   "BHealPlant": [
    "a:ruins",
    "a:artifact",
@@ -917,10 +902,6 @@
    "a:bonus",
    "a:cavebonus"
   ],
-  "BBonusCharge": [
-   "a:bonus",
-   "a:cavebonus"
-  ],
   "BPlantRock": [
    "a:cavesphere",
    "a:caveveins",
@@ -936,25 +917,6 @@
   ],
   "BYellowCeil": [
    "a:cavecharges"
-  ],
-  "BYellowCharge": [
-   "BIAutumn",
-   "BIMoon",
-   "BIAcidForest",
-   "BIWinterPeaks",
-   "BIMars",
-   "a:meadow",
-   "a:cavecharges"
-  ],
-  "BBlueCharge": [
-   "BIAutumn",
-   "BIMoon",
-   "BIAcidForest",
-   "BIWinterPeaks",
-   "BIMars",
-   "BICometCinder",
-   "a:meadow",
-   "a:caveveins"
   ]
  }
 }

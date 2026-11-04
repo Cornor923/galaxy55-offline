@@ -40,16 +40,14 @@ class KubText {
 		"kub.where.anomalies" => ["Anomalías:", "Anomalies:", "Anomalies :"],
 		"kub.where.comets" => ["Cometas:", "Comets:", "Comètes :"],
 		"kub.where.craft" => ["Sintetizador (ver Fabricación)", "Synthesizer (see Crafting)", "Synthétiseur (voir Fabrication)"],
-		"kub.where.special" => [
-			"Especial: no está en la naturaleza ni se fabrica",
-			"Special: not found in nature, cannot be crafted",
-			"Spécial : introuvable dans la nature, ne se fabrique pas"],
+		"kub.where.special" => ["Especial: solo lo suministra la ESCorp", "Special: supplied by ESCorp only", "Spécial : fourni uniquement par l'ESCorp"],
 		"kub.short.craft" => ["Sintetizador", "Synthesizer", "Synthétiseur"],
 		"kub.drop" => ["Recuperación al minarlo: %n% %", "Collected when mined: %n%%", "Récupération au minage : %n% %"],
 		"kub.drop.never" => [
 			"No se recupera al minarlo: se registra al destruirlo",
 			"Not collected when mined: recorded when destroyed",
 			"Ne se récupère pas au minage : répertorié en le détruisant"],
+		"kub.drop.charge" => ["Al minarlo da %n% × %c%", "When mined: gives %n% × %c%", "Au minage : donne %n% × %c%"],
 		"kub.charge" => ["Láser: necesita una carga %n%", "Laser: needs a %n% charge", "Laser : charge %n% nécessaire"],
 		"charge.CYellow" => ["amarilla", "yellow", "jaune"],
 		"charge.CBlue" => ["azul", "blue", "bleue"],
@@ -64,10 +62,10 @@ class KubText {
 			"Récupère ce kube pour débloquer ses recettes et ses statistiques."],
 		"kub.choose" => ["Elige un kube.", "Choose a kube.", "Choisis un kube."],
 		// avisos en el juego
-		"kub.seen" => ["Base ESCorp: kube localizado, %n%", "ESCorp database: kube spotted, %n%", "Base ESCorp : kube repéré, %n%"],
-		"kub.got" => ["Base ESCorp: kube registrado, %n%", "ESCorp database: kube recorded, %n%", "Base ESCorp : kube répertorié, %n%"],
-		"kub.newbiome" => ["Base ESCorp: nuevo tipo de planeta, %n%", "ESCorp database: new planet type, %n%", "Base ESCorp : nouveau type de planète, %n%"],
-		"kub.newcomet" => ["Base ESCorp: nuevo tipo de cometa, %n%", "ESCorp database: new comet type, %n%", "Base ESCorp : nouveau type de comète, %n%"],
+		"kub.seen" => ["ESCorp · Kube localizado", "ESCorp · Kube spotted", "ESCorp · Kube repéré"],
+		"kub.got" => ["ESCorp · Nuevo kube", "ESCorp · New kube", "ESCorp · Nouveau kube"],
+		"kub.newbiome" => ["ESCorp · Nuevo tipo de planeta", "ESCorp · New planet type", "ESCorp · Nouveau type de planète"],
+		"kub.newcomet" => ["ESCorp · Nuevo tipo de cometa", "ESCorp · New comet type", "ESCorp · Nouveau type de comète"],
 		// planetas
 		"pl.planets" => ["Tipos de planeta", "Planet types", "Types de planètes"],
 		"pl.comets" => ["Tipos de cometa", "Comet types", "Types de comètes"],

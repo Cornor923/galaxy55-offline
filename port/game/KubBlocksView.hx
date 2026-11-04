@@ -108,7 +108,8 @@ class KubBlocksView extends KubView {
 
 	/** muestra la ficha de e (desde una receta o un planeta): con la categoria Todos */
 	public function show( e : Block ) {
-		if( cat != 0 ) {
+		// tambien si se ha recuperado con el panel abierto (el juego sigue): la lista se rehace
+		if( cat != 0 || list.indexOf(e) < 0 ) {
 			cat = lastCat = 0;
 			fill();
 		}

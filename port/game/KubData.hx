@@ -29,7 +29,8 @@ enum abstract KubCat(Int) to Int {
  * - "anomalies": las anomalias del terreno con su nombre y sus biomas;
  * - "places": por bloque (constructor de BlockKind), sus sitios: un bioma de planeta ("BIMoon"), un tipo de cometa
  *   ("BICometCinder", ver Comets.KINDS) o una anomalia ("a:volcano");
- * - "hidden": bloques con nombre que no son fichas (pruebas).
+ * - "hidden": bloques con nombre que no son fichas (pruebas, los de la Ciudad muerta);
+ * - "hiddenBiomes": biomas que no estan en la base de datos (la Ciudad muerta: nunca sale en el mapa).
  * Las fichas son los bloques con nombre (BlockNames.entry) que se pueden apuntar; lo que no tiene sitio ni receta es especial
  * (nave, nave nodriza...).
  */
@@ -45,16 +46,11 @@ class KubData {
 	/** pruebas (Dev "kub load RUTA"): otro archivo */
 	public static function reload( path : String ) inst = new KubData(path);
 
-	/** bloque de cada carga (BFCharge) */
-	public static function chargeBlock( c : Int ) : Block {
-		for( b in Block.all ) if( b.charge != null && Type.enumIndex(b.charge) == c ) return b;
-		return null;
-	}
-
 	/** todas las fichas, en el orden de los datos */
 	public var entries(default, null) : Array<Block> = [];
 	public var anomalies(default, null) : Array<KubAnomaly> = [];
 	var places = new Map<Int, KubPlace>();
+	var hiddenBiomes = new Map<String, Bool>();
 	var isEntry = new Map<Int, Bool>();
 	var makes = new Map<Int, Array<CraftRule>>();
 	var usedIn = new Map<Int, Array<CraftRule>>();
@@ -66,6 +62,7 @@ class KubData {
 		};
 		var hidden = new Map<String, Bool>();
 		if( o.hidden != null ) for( h in (o.hidden : Array<Dynamic>) ) hidden.set(Std.string(h), true);
+		if( o.hiddenBiomes != null ) for( h in (o.hiddenBiomes : Array<Dynamic>) ) hiddenBiomes.set(Std.string(h), true);
 		if( o.anomalies != null )
 			for( a in (o.anomalies : Array<Dynamic>) )
 				anomalies.push({
@@ -75,8 +72,8 @@ class KubData {
 				});
 		for( b in Block.all ) {
 			if( b == null || BlockNames.entry(b) != b || hidden.exists(Type.enumConstructor(b.k)) ) continue;
-			// ni lo que no se puede apuntar (liquidos) ni lo que no se rompe nunca (roca madre)
-			if( !b.hasProp(PCanPick) || (b.requiredPower != null && b.requiredPower < 0) ) continue;
+			// ni lo que no se puede apuntar (liquidos), ni lo que no se rompe nunca (roca madre), ni las cargas (se citan en las recetas)
+			if( !b.hasProp(PCanPick) || (b.requiredPower != null && b.requiredPower < 0) || b.charge != null ) continue;
 			entries.push(b);
 			isEntry.set(b.index, true);
 		}
@@ -161,6 +158,9 @@ class KubData {
 			case CSpecial: p.biomes.length + p.anomalies.length + p.comets.length + recipesMaking(e).length == 0;
 		}
 	}
+
+	/** el bioma esta en la base de datos */
+	public function biomeIndexed( biome : String ) return !hiddenBiomes.exists(biome);
 
 	/** fichas del terreno de un bioma (o tipo de cometa) */
 	public function ofBiome( biome : String ) : Array<Block> {

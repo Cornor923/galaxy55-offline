@@ -10,8 +10,8 @@ import Kubindex.KubState;
  */
 class KubPlanetsView extends KubView {
 
-	/** los tipos de planeta que salen en el mapa (ExpData); la Ciudad muerta solo si se ha explorado (o en creativo) */
-	static var PLANETS = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest", "BIDeadCity"];
+	/** los tipos de planeta que salen en el mapa (ExpData); la Ciudad muerta (nunca sale) no esta en la base de datos */
+	static var PLANETS = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
 	static inline var LIST_W = 330;
 	static inline var ROW_H = 56;
 	static inline var RIGHT_X = 350;
@@ -37,7 +37,7 @@ class KubPlanetsView extends KubView {
 		types = [];
 		rows = [];
 		section("pl.planets");
-		for( b in PLANETS ) if( b != "BIDeadCity" || Kubindex.biomeKnown(info, b) ) biomeRow(b);
+		for( b in PLANETS ) biomeRow(b);
 		section("pl.comets");
 		for( b in Comets.KINDS ) biomeRow(b);
 		section("pl.anomalytypes");

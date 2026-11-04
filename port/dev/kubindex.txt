@@ -2,8 +2,10 @@
 # suelta y al recogerla queda recuperada (1 rota); el hielo no suelta nada y se recupera al romperlo; poner cuenta; fabricar
 # en el sintetizador cuenta la receta; lo que entra en el inventario (give) queda recuperado; se guarda con la partida.
 # Despues el panel: sus tres pestanas, una ficha recuperada, una localizada y el boton del ordenador de a bordo con lo nuevo.
-# -Extra "--lang=fr"
+# Al empezar, los kubes de la nave ya son conocidos (recuperados); las cargas y la Ciudad muerta no son fichas. Avisos arriba a
+# la derecha al localizar y al recuperar. -Extra "--lang=fr"
 wait 3
+print kub
 kub forget
 kub visit
 planet
@@ -17,8 +19,10 @@ wait 10
 mine 24 21 99
 wait 80
 unkey
-wait 40
+wait 20
 print kub
+shot kub_aviso
+wait 20
 # hielo (0 %): recuperado al romperlo
 set 24 22 100 BIce
 mine 24 22 100
@@ -26,6 +30,14 @@ wait 60
 unkey
 wait 10
 print kub
+# avisos arriba a la derecha: uno por kube (recuperado sustituye a localizado), mas nuevo arriba
+kub see BMarsRock
+kub see BLavaRock
+kub got BLavaRock
+kub got BCoal
+wait 5
+print kub
+shot kub_avisos
 # poner roca: 1 puesta
 give BRock 5
 print inv
@@ -61,6 +73,18 @@ shot kub_madera
 kub pick BIce
 wait 2
 shot kub_hielo
+kub got BYellowCrystalLight
+kub got BYellowCrystalDense
+kub pick BYellowCrystalLight
+wait 2
+shot kub_citronox_viejo
+kub pick BYellowCrystalDense
+wait 2
+shot kub_citronox
+kub got BShipComputer
+kub pick BShipComputer
+wait 2
+shot kub_especial
 kub page 1
 wait 2
 shot kub_planetas_cat
@@ -84,6 +108,7 @@ wait 3
 computer
 wait 5
 print menu
+shot kub_menu
 close
 wait 3
 print kub
