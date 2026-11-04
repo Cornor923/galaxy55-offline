@@ -30,6 +30,8 @@ import Common;
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan; expbutton [N]
  *                           pulsa el boton N (0) de la ventana del planeta (1 = Abandonar)
  *   button N                activar el control N de la ventana de confirmacion o del menu abierto (print menu)
+ *   comet force N|time S|speed|stats   cometas (anadido del port): el sistema N con cometa en cualquier franja; quedan S
+ *                           segundos en la cometa; velocidad de la nave y tiempo de amarre; cometas de cada sistema (print comet)
  *   licenses clock H|open|credits N|forget   licencias de la ESCorp: adelantar H horas su reloj; abrir su pantalla; dejar N
  *                           creditos; quitar sus datos como en una partida antigua (print licenses)
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
@@ -48,6 +50,10 @@ import Common;
  *   contracts [close]       abrir y cerrar los contratos de la ESCorp; contracts slot N impone el periodo (-1 = la hora real);
  *                           contracts fill i da los bloques del contrato i; deliver i lo entrega; print contracts;
  *                           contracts load RUTA lee otro contracts.json
+ *   kub [close|tab N|pick Bloque|page D|nav dx dy]   Base de datos ESCorp (anadido del port): abrirla, cerrarla, pestana, ficha,
+ *                           categoria, flechas; kub forget|visit|see Bloque|got Bloque|break Bloque|load RUTA olvidan todo,
+ *                           exploran el planeta, localizan, recuperan o rompen un bloque como al jugar, o leen otro kubindex.json;
+ *                           print kub|kubdata
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
@@ -467,6 +473,30 @@ class Dev {
 						u.mainTime = null;
 					default: Sys.println("licenses: orden desconocida " + a[1]);
 					}
+				case "comet":
+					// cometas (Comets, añadido del port): comet force N = el sistema N tiene cometa en cualquier franja (y se ve ya si
+					// estas en el); comet time S = quedan S segundos en la cometa; comet speed = velocidad de la nave y tiempo de amarre;
+					// comet stats = cometas de cada sistema ahora y proporcion en 6000 franjas
+					var info = app.curInfo();
+					switch( a[1] ) {
+					case "force":
+						Comets.devForce = Std.parseInt(a[2]);
+						if( app.explorer != null ) app.explorer.addComet();
+					case "time": if( info.comet != null ) info.comet.left = f(a[2]);
+					case "speed":
+						var s = Hangar.speedOf(Hangar.currentShip(info));
+						Sys.println("cometa: nave a " + s + " PC/s, amarre " + Comets.clock(Comets.dockTime(s)) + " | " + [for( v in [0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 1.0, 2.75, 3.0] ) v + "->" + Comets.clock(Comets.dockTime(v))].join(" "));
+					case "stats":
+						var u = info.uni, n = 0, tot = 0;
+						var now = [for( s in ExpData.ExpOffline.make(u.seed, u.start, u.licenses, u.pos, u.abandoned, u.gone).systems ) { var c = Comets.of(u, s); s.id + (c == null ? ":-" : ":" + c.biome + "/franja " + c.comet); }];
+						for( s in 0...10 )
+							for( k in Comets.slot(u.seed, s, Licenses.now()) - 300...Comets.slot(u.seed, s, Licenses.now()) + 300 ) {
+								tot++;
+								if( Comets.drawn(u.seed, s, k) ) n++;
+							}
+						Sys.println("cometas ahora: " + now.join(" ") + " | con cometa " + n + " de " + tot + " franjas (1 de " + Math.round(tot / n * 100) / 100 + ")");
+					default: Sys.println("comet: orden desconocida " + a[1]);
+					}
 				case "expgo": app.explorer.devClickPoint(f(a[1]), f(a[2]));
 				case "expgor": app.explorer.devClickPoint(f(a[1]), f(a[2]), true); // expgor DX DY: punto relativo a la nave
 				case "expangle": Sys.println(app.explorer.devShipAngle());
@@ -632,6 +662,25 @@ class Dev {
 						var c = Contracts.board(Contracts.slot())[Std.parseInt(a[2])];
 						g.inv.addBlocks(c.block, c.n);
 					case "load": @:privateAccess Contracts.config = Contracts.load(a[2]);
+					default:
+					}
+				case "kub":
+					// Base de datos ESCorp (Kubindex): abrir, cerrar, pestana, ficha, categoria, flechas; olvidar todo, localizar o
+					// recuperar un bloque como al jugar; leer otro kubindex.json
+					var info = app.curInfo();
+					switch( a[1] ) {
+					case null: app.openDatabase();
+					case "close": app.closeDatabase();
+					case "tab": if( app.database != null ) app.database.setTab(Std.parseInt(a[2]));
+					case "pick": if( app.database != null ) app.database.pick(KubData.get().entryOf(bk(a[2])));
+					case "page": if( app.database != null ) app.database.view.page(Std.parseInt(a[2]));
+					case "nav": if( app.database != null ) app.database.view.nav(Std.parseInt(a[2]), Std.parseInt(a[3]));
+					case "forget": info.kub = Kubindex.empty();
+					case "visit": Kubindex.visit(info);
+					case "see": Kubindex.see(info, bk(a[2]));
+					case "got": Kubindex.gain(info, bk(a[2]));
+					case "break": Kubindex.broke(info, bk(a[2]));
+					case "load": KubData.reload(a[2]);
 					default:
 					}
 				case "deliver":
@@ -825,6 +874,21 @@ class Dev {
 				i + " " + c.block.k + " x" + c.n + " +" + c.reward + " llevas " + Contracts.have(g.inv, c.block) + (Contracts.isDone(g.info, i) ? " ENTREGADO" : "");
 			}].join(" | ") + " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts != null)
 				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled));
+		case "kub":
+			// Base de datos ESCorp: localizados, recuperados, nuevos, planetas y cometas explorados, recetas fabricadas, estadisticas
+			// y, con el panel abierto, la pestana
+			var info = app.curInfo(), k = Kubindex.ensure(info), d = KubData.get();
+			Sys.println("kub: fichas " + d.entries.length + " vistos=" + k.seen.join(",") + " recuperados=" + k.got.join(",") + " nuevos=" + k.fresh.length
+				+ " planetas=" + [for( p in k.planets ) p.id + ":" + p.b].join(",") + " cometas=" + [for( c in k.comets ) c.sys + "/" + c.slot + ":" + c.b].join(",")
+				+ " recetas=" + [for( c in k.crafts ) c.id + "x" + c.n].join(",") + " stats=" + [for( s in k.stats ) s.k + ":" + s.p + "/" + s.b].join(",")
+				+ " descubiertas=" + [for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r].length + "/" + Data.CRAFT.length
+				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step)
+				+ " avisos=" + app.kubNotify.devInfo());
+		case "kubdata":
+			// fichas del Kubindex con sus sitios y categorias (para revisar kubindex.json)
+			var d = KubData.get();
+			for( e in d.entries )
+				Sys.println(e.k + " '" + e.getName() + "' " + d.placeLines(e).join(" / ") + " drop=" + d.dropChance(e) + " hace=" + d.recipesMaking(e).length + " usa=" + d.recipesUsing(e).length);
 		case "menu":
 			// botones del menu abierto (etiqueta y y), de arriba abajo
 			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));
@@ -989,6 +1053,28 @@ class Dev {
 		case "pilot":
 			Sys.println("pilotando: " + (g.piloting ? "si" : "no") + " pausa: " + (@:privateAccess app.current != null) + " guardado shipAt: " + g.info.shipAt
 				+ (g.ship != null ? " rumbo " + Math.round(g.ship.heading * 100) / 100 + " velocidad " + Math.round(Math.sqrt(@:privateAccess (g.pilotVX * g.pilotVX + g.pilotVY * g.pilotVY)) * 10) / 10 + " jugador " + Math.round(g.px * 100) / 100 + "," + Math.round(g.py * 100) / 100 : ""));
+		case "comet":
+			// cometa (Comets, añadido del port): tamano del mundo, altura del terreno, capas de roca madre, fuentes de lava,
+			// etherium y la cuenta atras
+			var top = 0, lava = 0, ether = 0, bed = World.HEIGHT;
+			for( y in 0...w.size )
+				for( x in 0...w.size ) {
+					var z = 0;
+					while( z < World.HEIGHT && w.block(x, y, z) != null && w.block(x, y, z).k == BBedrock ) z++;
+					if( z < bed ) bed = z;
+					for( z in 0...World.HEIGHT ) {
+						var b = w.block(x, y, z);
+						if( b == null ) continue;
+						if( z + 1 > top ) top = z + 1;
+						if( b.k == BLava ) lava++;
+						if( b.k == BBlueCrystalDense || b.k == BBlueCrystalLight ) ether++;
+					}
+				}
+			var c = g.info.comet;
+			Sys.println("cometa: mundo " + w.biomeName + " " + w.size + "x" + w.size + ", terreno hasta z=" + top + ", roca madre " + bed + " capas, lava " + lava
+				+ ", etherium " + ether + (c == null ? ", sin cuenta atras" : ", sistema " + c.sys + " franja " + c.slot + " quedan " + Comets.clock(c.left)
+				+ ", teletransportador " + (g.cometOver() ? "bloqueado" : "libre")) + ", planeta " + (g.info.uni == null ? "-" : "" + g.info.uni.planetId)
+				+ ", licencias " + (g.info.uni == null ? "-" : "" + g.info.uni.licenses) + ", principal " + (g.info.uni == null ? "-" : "" + g.info.uni.main));
 		case "ship":
 			if( g.ship == null ) {
 				Sys.println("sin nave (nave nodriza o hangar)");

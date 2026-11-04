@@ -142,6 +142,9 @@ class GameView {
 					inv.inv.t.push({ k : Type.enumIndex(Type.createEnum(BlockKind, nm)), n : 5 });
 				while( inv.inv.t.length < 10 ) inv.inv.t.push(null);
 			}
+		// Base de datos ESCorp: lo que tienes o te llega queda recuperado (Kubindex)
+		inv.onContent = function() Kubindex.scan(info, inv.inv);
+		Kubindex.scan(info, inv.inv);
 		drops = new Drops(world, atlas);
 		process = new WorldProcess(world, (x, y, z, b) -> breakBlock(x, y, z, b, true));
 		process.lavaBombFn = lavaBomb;
@@ -444,10 +447,16 @@ class GameView {
 			ship.update(this, tmod);
 			if( piloting ) enteringShip = -1; // sin teletransporte mientras se pilota (ship.update lo pondria a 0 lejos del rayo viejo)
 			message = ship.message(this);
+			// cometa (añadido del port): sobre el teletransportador, por que ya no baja
+			if( message == null && cometOver() && cometBeamWait <= 0 && pz >= World.SHIP_Z && standingBlock != null && standingBlock.k == BShipEntry ) {
+				message = Lang.t("comet.beamoff");
+				messageRed = true;
+			}
 		}
 		// despues del teletransportador (el original sale de Game.update al acabar el fundido): la muerte lleva a la nave y
 		// ship.update, con el standingBlock del suelo, pondria enteringShip a 0 y el teletransportador lo bajaria
 		updateFade(tmod);
+		updateComet(realDt);
 		if( debugDoorFrames > 0 && ++debugDoorFrames == 12 ) {
 			// solo pruebas: abre la puerta de la nave que hay cerca del teletransportador
 			if( Sys.args().indexOf("--computer") >= 0 ) onComputer();
@@ -642,6 +651,38 @@ class GameView {
 			gravity = 0;
 			gotoShip(true);
 		} };
+	}
+
+	// ---------------------------------------------------------------- cometa (Comets, añadido del port)
+
+	/** el tiempo en la cometa se ha acabado: el teletransportador de a bordo ya no baja */
+	public function cometOver() : Bool return info.comet != null && info.comet.left <= 0 && hangar == null;
+
+	/** al acabarse el tiempo en la cometa (GalaxyApp lo avisa COMET_OVER_TOAST segundos) */
+	public dynamic function onCometOver() {}
+
+	/** segundos del aviso de fin de la cometa: el mensaje rojo del teletransportador espera a que se vaya */
+	public static inline var COMET_OVER_TOAST = 5.;
+	var cometBeamWait = 0.;
+
+	/**
+	 * Cuenta atras de la cometa, en tiempo de juego (se para con Esc) y solo abajo, en la cometa: a bordo de la nave no corre.
+	 * Al acabarse, el jugador vuelve a la nave como con Mayus+K y, si baja otra vez de la altura de la nave por otro camino
+	 * (una puerta, el jetpack), se le devuelve.
+	 */
+	function updateComet( dt : Float ) {
+		var c = info.comet;
+		if( c == null || hangar != null || ship == null ) return;
+		if( cometBeamWait > 0 ) cometBeamWait -= dt;
+		if( c.left > 0 ) {
+			if( pz >= World.SHIP_Z ) return;
+			c.left -= dt;
+			if( c.left > 0 ) return;
+			c.left = 0;
+			cometBeamWait = COMET_OVER_TOAST;
+			onCometOver();
+		}
+		if( pz < World.SHIP_Z ) returnToShip(true);
 	}
 
 	/** Hero.heal */
@@ -1541,6 +1582,8 @@ class GameView {
 	function mine( tmod : Float ) {
 		var s = select;
 		var b = s.b;
+		// Base de datos ESCorp: lo que toca el laser queda localizado, aunque no se pueda romper (Kubindex)
+		Kubindex.see(info, b);
 		// bloques que se activan (ordenador, puertas, cofres): al soltar el boton se activan (Game.checkToggle); si se
 		// mantiene el laser hasta el final se rompen, como en el original (checkAction no los distingue)
 		if( b.activable != null || b.toggle != null ) {
@@ -1594,6 +1637,7 @@ class GameView {
 		if( laserCharge != null ) inv.useCharge(laserCharge);
 		activatePending = null;
 		breakBlock(s.x, s.y, s.z, b);
+		Kubindex.broke(info, b);
 		if( creative ) actionPause = 8;
 		select = null;
 	}
@@ -1698,6 +1742,7 @@ class GameView {
 		else world.setBlock(x, y, z, put);
 		if( !inShip ) process.onSet(x, y, z, here, put);
 		if( inShip ) ship.craft(x, y, z, put, this);
+		Kubindex.placed(info, put);
 		select = null;
 	}
 

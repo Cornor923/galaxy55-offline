@@ -39,6 +39,15 @@ typedef UniInfo = {
 	@:optional var abandoned : Array<Int>;
 	/** sistemas que desaparecieron (todos sus planetas abandonados), en orden: cada uno dejo otro cerca (ExpOffline.replaceSystem) */
 	@:optional var gone : Array<Int>;
+	/** cometas ya visitadas (Comets, añadido del port): pares [sistema, franja] */
+	@:optional var comets : Array<Int>;
+}
+
+/** Cometa en la que estas (Comets, añadido del port): su sistema, su franja y los segundos que quedan en ella. */
+typedef CometInfo = {
+	var sys : Int;
+	var slot : Int;
+	var left : Float;
 }
 
 /** Tutorial en curso (Tutorial, anadido del port): el paso y los bloques puestos para el en el planeta. */
@@ -97,6 +106,10 @@ typedef SaveInfo = {
 	@:optional var tuto : TutoInfo;
 	/** donde se dejo la nave en el planeta actual pilotandola (anadido del port); null = el sitio de aterrizaje de siempre */
 	@:optional var shipAt : { x : Int, y : Int };
+	/** cometa en la que estas (añadido del port); null en un planeta o en el espacio */
+	@:optional var comet : CometInfo;
+	/** lo que sabe la Base de datos ESCorp (Kubindex, añadido del port); null en las partidas antiguas */
+	@:optional var kub : Kubindex.KubInfo;
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
@@ -142,6 +155,7 @@ class SaveData {
 				mainChanges : o.mainChanges != null ? Std.int(o.mainChanges) : 0,
 				abandoned : ints(o.abandoned),
 				gone : ints(o.gone),
+				comets : ints(o.comets),
 			};
 		} catch( e : Dynamic ) {
 			return null;
@@ -188,6 +202,32 @@ class SaveData {
 		} catch( e : Dynamic ) {
 			return [];
 		}
+	}
+
+	static function readComet( o : Dynamic ) : CometInfo {
+		try {
+			if( o == null || o.sys == null || o.slot == null ) return null;
+			return { sys : Std.int(o.sys), slot : Std.int(o.slot), left : o.left != null ? (o.left : Float) : 0 };
+		} catch( e : Dynamic ) {
+			return null;
+		}
+	}
+
+	/** Base de datos ESCorp guardada; lo que falte o este mal formado se deja vacio */
+	static function readKub( o : Dynamic ) : Kubindex.KubInfo {
+		var k = Kubindex.empty();
+		if( o == null ) return k;
+		inline function strs( a : Dynamic ) : Array<String> return a == null ? [] : [for( v in (a : Array<Dynamic>) ) Std.string(v)];
+		try {
+			k.seen = strs(o.seen);
+			k.got = strs(o.got);
+			k.fresh = strs(o.fresh);
+			if( o.stats != null ) k.stats = [for( s in (o.stats : Array<Dynamic>) ) { k : Std.string(s.k), p : Std.int(s.p), b : Std.int(s.b) }];
+			if( o.planets != null ) k.planets = [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), b : Std.string(p.b) }];
+			if( o.comets != null ) k.comets = [for( c in (o.comets : Array<Dynamic>) ) { sys : Std.int(c.sys), slot : Std.int(c.slot), b : Std.string(c.b) }];
+			if( o.crafts != null ) k.crafts = [for( c in (o.crafts : Array<Dynamic>) ) { id : Std.int(c.id), n : Std.int(c.n) }];
+		} catch( e : Dynamic ) {}
+		return k;
 	}
 
 	static function readTuto( o : Dynamic ) : TutoInfo {
@@ -244,7 +284,7 @@ class SaveData {
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
 					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
-					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt),
+					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
 			};
 		} catch( e : Dynamic ) {
 			return null;
