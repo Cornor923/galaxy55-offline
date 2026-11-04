@@ -54,7 +54,9 @@ import Common;
  *   kub [close|tab N|pick Bloque|page D|nav dx dy]   Base de datos ESCorp (anadido del port): abrirla, cerrarla, pestana, ficha,
  *                           categoria, flechas; kub forget|visit|see Bloque|got Bloque|break Bloque|load RUTA olvidan todo,
  *                           exploran el planeta, identifican, recuperan o rompen un bloque como al jugar, o leen otro kubindex.json;
- *                           kub anomaly ID cruza una anomalia, kub goanomaly N lleva junto a la N del planeta; print kub|kubdata
+ *                           kub anomaly ID cruza una anomalia, kub goanomaly N lleva junto a la N del planeta, kub all lo da todo
+ *                           por recuperado; print kub|kubdata
+ *   savegame                guardar la partida (como F5, sin aviso)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
@@ -702,6 +704,16 @@ class Dev {
 					case "nav": if( app.database != null ) app.database.view.nav(Std.parseInt(a[2]), Std.parseInt(a[3]));
 					case "forget": info.kub = Kubindex.empty();
 					case "visit": Kubindex.visit(info);
+					case "all":
+						// todo recuperado: cada ficha, un planeta de cada tipo, cada tipo de cometa y cada anomalia (sin nada nuevo)
+						var k = Kubindex.ensure(info), d = KubData.get();
+						k.got = [for( e in d.entries ) Type.enumConstructor(e.k)];
+						k.seen = [];
+						k.fresh = [];
+						var types : Array<String> = @:privateAccess KubPlanetsView.PLANETS;
+						k.planets = [for( i in 0...types.length ) { id : -1 - i, b : types[i] }];
+						k.comets = [for( i in 0...Comets.KINDS.length ) { sys : -1, slot : i, b : Comets.KINDS[i] }];
+						k.anomalies = [for( a in d.anomalies ) a.id];
 					case "anomaly": Kubindex.encounter(info, a[2]);
 					case "goanomaly":
 						// junto a la anomalia N del planeta (World.anomalies)
@@ -734,6 +746,7 @@ class Dev {
 					case "load": KubData.reload(a[2]);
 					default:
 					}
+				case "savegame": @:privateAccess app.saveGame(false); // guardar la partida como F5 (sin aviso)
 				case "deliver":
 					// deliver i: entrega el contrato i (con el panel abierto, como su boton)
 					var i = Std.parseInt(a[1]);

@@ -15,9 +15,9 @@ class TutoText {
 			"Alert! The ship's hull is breached. Make an emergency landing on the planet shown by the green arrow.",
 			"Alerte ! La coque du vaisseau est percée. Pose-toi en urgence sur la planète indiquée par la flèche verte."],
 		"badplanet" => [
-			"Este planeta no sirve para nuestro aterrizaje de emergencia.",
-			"This planet is not suitable for our emergency landing.",
-			"Cette planète n'est pas adaptée à notre atterrissage d'urgence."],
+			"Este planeta no sirve para un aterrizaje de emergencia.",
+			"This planet is not suitable for an emergency landing.",
+			"Cette planète n'est pas adaptée à un atterrissage d'urgence."],
 		"noleave" => [
 			"La nave está demasiado dañada para salir del sistema.",
 			"The ship is too damaged to leave the system.",

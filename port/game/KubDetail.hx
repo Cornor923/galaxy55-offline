@@ -43,7 +43,6 @@ class KubDetail extends h2d.Object {
 		var tags = [for( c in [CPlanet, CAnomaly, CComet, CCraft, CSpecial] ) if( d.has(e, c) ) KubText.get(tagKey(c))];
 		Theme.text(o, tags.join("  ·  "), 1.2, Theme.ACCENT, 118, sy + 24);
 		cy = 116;
-		header(KubText.get("kub.where"));
 		for( l in d.placeLines(info, e) ) line(l, 1.3, Theme.TEXT);
 		if( st != Got ) {
 			cy += 8;
@@ -53,11 +52,9 @@ class KubDetail extends h2d.Object {
 			return;
 		}
 		cy += 6;
-		// lo que da al minarlo: el mismo kube (con su probabilidad), cargas (citronox viejo, plantas...) o nada
-		var chance = d.dropChance(e), drop = e.getDrop();
-		if( chance > 0 ) line(KubText.get("kub.drop").split("%n%").join("" + chance), 1.3, Theme.TEXT);
-		else if( drop != null && drop.b.charge != null ) line(KubText.get("kub.drop.charge").split("%n%").join("" + drop.count).split("%c%").join(drop.b.getName()), 1.3, Theme.TEXT);
-		else line(KubText.get("kub.drop.never"), 1.3, Theme.TEXT);
+		// las cargas que da al minarlo (citronox viejo, plantas...)
+		var drop = e.getDrop();
+		if( drop != null && drop.b.charge != null ) line(KubText.get("kub.drop.charge").split("%n%").join("" + drop.count).split("%c%").join(drop.b.getName()), 1.3, Theme.TEXT);
 		var c = d.chargeFor(e);
 		if( c != null ) line(KubText.get("kub.charge").split("%n%").join(KubDraw.chargeName(c)), 1.3, Theme.TEXT);
 		var s = Kubindex.stat(info, e, false);

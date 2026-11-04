@@ -224,7 +224,6 @@ class KubData {
 		if( p.biomes.length > 0 ) out.push(KubText.get("kub.where.planets") + " " + [for( b in p.biomes ) ExpData.ExpOffline.biomeName(b)].join(", "));
 		if( p.anomalies.length > 0 ) out.push(KubText.get("kub.where.anomalies") + " " + anomalyNames(info, p.anomalies));
 		if( p.comets.length > 0 ) out.push(KubText.get("kub.where.comets") + " " + [for( c in p.comets ) ExpData.ExpOffline.biomeName(c)].join(", "));
-		if( recipesMaking(e).length > 0 ) out.push(KubText.get("kub.where.craft"));
 		return out;
 	}
 

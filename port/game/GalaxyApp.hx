@@ -981,6 +981,9 @@ class GalaxyApp extends hxd.App {
 		var takeoff = new Button(s, Lang.t("computer.takeoff"));
 		var edit = new Button(s, Lang.t("computer.edit"));
 		var trade = new Button(s, Lang.t("computer.trade"));
+		// en el tutorial no se comercia (como los contratos); se vuelve a mirar en openComputer: el menu se guarda
+		trade.enabled = !Tutorial.active(game.info);
+		computerTrade = trade;
 		var contracts = new Button(s, Lang.t("computer.contracts"));
 		// en el tutorial los contratos se ven pero no se pueden abrir (se vuelve a mirar en openComputer: el menu se guarda)
 		contracts.enabled = !Tutorial.active(game.info);
@@ -991,6 +994,7 @@ class GalaxyApp extends hxd.App {
 		computerLicenses = licenses;
 		// Base de datos ESCorp (Kubindex, anadido del port): tambien durante el tutorial, que la presenta
 		var database = new Button(s, KubText.get("computer.database"));
+		database.enabled = Tutorial.databaseAllowed(game.info);
 		computerDatabase = database;
 		var close = new Button(s, Lang.t("computer.close"));
 		var rows : Array<Button> = [takeoff];
@@ -1031,7 +1035,7 @@ class GalaxyApp extends hxd.App {
 			skip.onActivate = function() askSkip(s);
 		}
 		edit.onActivate = startHangar;
-		trade.onActivate = openShop;
+		trade.onActivate = function() if( !Tutorial.active(game.info) ) openShop();
 		contracts.onActivate = openContracts;
 		licenses.onActivate = openLicenses;
 		database.onActivate = openDatabase;
@@ -1536,13 +1540,14 @@ class GalaxyApp extends hxd.App {
 		show("computer");
 		computerContracts.enabled = !Tutorial.active(game.info);
 		computerLicenses.enabled = !Tutorial.active(game.info);
-		// lo nuevo desde la ultima vez, entre parentesis
-		var fresh = Kubindex.freshCount(game.info);
-		computerDatabase.setLabel(KubText.get("computer.database") + (fresh > 0 ? " (" + fresh + ")" : ""));
+		computerTrade.enabled = !Tutorial.active(game.info);
+		computerDatabase.enabled = Tutorial.databaseAllowed(game.info);
 	}
 
-	/** boton de la Base de datos ESCorp del ordenador de a bordo (con lo nuevo entre parentesis) */
+	/** boton de la Base de datos ESCorp del ordenador de a bordo (en el tutorial, desde su paso) */
 	var computerDatabase : Button;
+	/** boton Comerciar del ordenador de a bordo (desactivado durante el tutorial) */
+	var computerTrade : Button;
 
 	/** boton de los contratos del ordenador de a bordo (desactivado durante el tutorial) */
 	var computerContracts : Button;
@@ -1909,7 +1914,7 @@ class GalaxyApp extends hxd.App {
 	public var database : DatabasePanel;
 
 	public function openDatabase() {
-		if( game == null || database != null ) return;
+		if( game == null || database != null || !Tutorial.databaseAllowed(game.info) ) return;
 		if( current != null ) resume();
 		database = new DatabasePanel(s2d, atlas, game.info);
 		database.onClose = closeDatabase;
