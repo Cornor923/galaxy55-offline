@@ -43,7 +43,6 @@ class KubDetail extends h2d.Object {
 		var tags = [for( c in [CPlanet, CAnomaly, CComet, CCraft, CSpecial] ) if( d.has(e, c) ) KubText.get(tagKey(c))];
 		Theme.text(o, tags.join("  ·  "), 1.2, Theme.ACCENT, 118, sy + 24);
 		cy = 116;
-		header(KubText.get("kub.where"));
 		for( l in d.placeLines(info, e) ) line(l, 1.3, Theme.TEXT);
 		if( st != Got ) {
 			cy += 8;
