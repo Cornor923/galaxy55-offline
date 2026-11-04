@@ -62,6 +62,10 @@ class TutoText {
 			"Activa el ordenador de a bordo (en verde) y abre la \"Base de datos ESCorp\": allí quedan los kubes que has identificado con el láser y los que has recuperado, los planetas explorados y las recetas descubiertas.",
 			"Activate the on-board computer (in green) and open the \"ESCorp database\": it keeps the kubes you have identified with your laser and the ones you have collected, the planets you have explored and the recipes you have discovered.",
 			"Active l'ordinateur de bord (en vert) et ouvre la \"Base de données ESCorp\" : elle garde les kubes identifiés avec ton laser et ceux que tu as récupérés, les planètes explorées et les recettes découvertes."],
+		"craftonly" => [
+			"durante el tutorial, el sintetizador solo fabrica %alu% y %hull%",
+			"during the tutorial, the synthesizer only makes %alu% and %hull%",
+			"pendant le tutoriel, le synthétiseur ne fabrique que de l'%alu% et du %hull%"],
 		"computer" => [
 			"Activa el ordenador de a bordo (en verde) y elige \"Modificar la nave\".",
 			"Activate the on-board computer (in green) and choose \"Modify the ship\".",
