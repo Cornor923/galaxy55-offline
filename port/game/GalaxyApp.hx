@@ -182,6 +182,7 @@ class GalaxyApp extends hxd.App {
 
 	static inline var W = Theme.W;
 	static inline var H = Theme.H;
+	static inline var TITLE = "Galaxy 55 (offline)";
 	/** color de fx.Load */
 	static inline var LOAD_COLOR = 0xC93814;
 	static var BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
@@ -327,7 +328,6 @@ class GalaxyApp extends hxd.App {
 		}
 
 		var win = hxd.Window.getInstance();
-		win.title = "Galaxy 55 (offline)";
 		applyVsync();
 		win.onClose = function() {
 			// en el mapa se guarda la partida en el espacio; durante el despegue el planeta aun esta cargado
@@ -499,6 +499,7 @@ class GalaxyApp extends hxd.App {
 				case "mappause": buildMapPause();
 				case "computer": buildComputer();
 				case "licenses": buildLicenses();
+				case "kubes": buildKubes();
 				default: null;
 			}
 			screens.set(name, s);
@@ -536,20 +537,31 @@ class GalaxyApp extends hxd.App {
 		var nw = new Button(s, Lang.t("new"));
 		nw.onActivate = function() show("new");
 		s.add(nw, 110, y + 64);
+		// anadido del port: dibujar kubes nuevos para enviarlos (KubeEditor)
+		var kb = new Button(s, Lang.t("kubes"));
+		kb.onActivate = function() show("kubes");
+		s.add(kb, 110, y + 128);
 		var op = new Button(s, Lang.t("options"));
 		op.onActivate = function() show("options");
-		s.add(op, 110, y + 128);
+		s.add(op, 110, y + 192);
 		var q = new Button(s, Lang.t("quit"));
 		q.onActivate = function() quit();
-		s.add(q, 110, y + 192);
+		s.add(q, 110, y + 256);
 		if( saves.length > 0 ) {
 			var l = saves[0];
-			Theme.text(s, Lang.t("lastgame") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 266);
+			Theme.text(s, Lang.t("lastgame") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 330);
 		}
 		versionText = Theme.text(s, "v0.6 · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
 		anchorToWindow();
 		s.onBack = null;
 		return s;
+	}
+
+	/** Editor de kubes (anadido del port): Esc o Volver regresan al menu principal; al entrar otra vez sigue el mismo kube */
+	function buildKubes() : Screen {
+		var k = new KubeEditor(ui, atlas);
+		k.onClose = function() show("main");
+		return k;
 	}
 
 	function randomSeed() : Int return 1 + Std.random(999999);
@@ -2974,6 +2986,9 @@ class GalaxyApp extends hxd.App {
 				Sys.stderr().writeString(Std.string(e) + "\n" + haxe.CallStack.toString(haxe.CallStack.exceptionStack()) + "\n");
 				Sys.exit(1);
 			};
+		// cambio del port: Heaps abre la ventana en 800x600 y sin titulo antes de init, que despues la pasaba a W x H: al arrancar
+		// se veia un momento una ventana casi cuadrada que crecia de golpe. Se crea ya con su tamano y su titulo
+		hxd.System.createWindow = function() return new hxd.Window(TITLE, W, H);
 		new GalaxyApp();
 	}
 }
