@@ -123,7 +123,14 @@ class Explorer extends h2d.Object {
 	/** el texto de la ventana de una cometa, bajo su nombre (su tiempo de amarre) */
 	public dynamic function cometInfo( p : ExpPlanet ) : String return "";
 	/** planeta al que lleva el tutorial (flecha del GPS aunque no se haya visitado); -1 = ninguno */
-	public var tutoTarget = -1;
+	public var tutoTarget(default, set) = -1;
+
+	/** se pone despues de crear el mapa, cuando las flechas ya estan hechas: se rehacen para que salga la del tutorial */
+	function set_tutoTarget( v : Int ) {
+		tutoTarget = v;
+		if( gpsLayer != null ) rebuildGps();
+		return v;
+	}
 	/** boton del candado de un sistema cerrado (el original lo abria pagando la licencia): para Space */
 	public dynamic function onUnlock( s : ExpSystem ) {}
 	/** posicion guardada del robot comerciante (la pone el juego antes de abrir el mapa; null = en un sistema al azar) */
@@ -1867,7 +1874,9 @@ class Explorer extends h2d.Object {
 
 	public function devInfo() : String {
 		var s = (inSolar ? "SISTEMA SOLAR " + curSystem.name : "SECTOR") + " nave=" + Std.int(ship.x) + "," + Std.int(ship.y) + " vel=" + Std.int(ship.getScreenSpeed() * 100) / 100
-			+ " camara=" + Std.int(current.viewX) + "," + Std.int(current.viewY) + " bloqueado=" + locked + " ventana=" + (win != null);
+			+ " camara=" + Std.int(current.viewX) + "," + Std.int(current.viewY) + " bloqueado=" + locked + " ventana=" + (win != null)
+			+ " gps=" + gps.length + (gpsLayer.visible ? "" : " (ocultas)") + [for( g in gps ) " " + Std.int(g.target.x) + "," + Std.int(g.target.y) + " alfa " + Std.int(g.arrow.alpha * 100) + "%"].join("")
+			+ " tuto=" + tutoTarget;
 		var list = inSolar ? solarSpots : sectorSpots;
 		for( sp in list )
 			s += "\n  " + (sp.system != null ? "sistema " + sp.system.id + " " + sp.system.name : "planeta " + sp.planet.id + " " + sp.planet.name + " " + sp.planet.biome + " (" + ExpOffline.biomeName(sp.planet.biome) + ") tam=" + sp.planet.size
