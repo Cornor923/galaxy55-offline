@@ -329,8 +329,7 @@
   "BBlueCrystalLight": [
    "BIAutumn",
    "BIMoon",
-   "BIWinterPeaks",
-   "BICometCinder"
+   "BIWinterPeaks"
   ],
   "BBlueCrystalDense": [
    "BIAutumn",
@@ -666,6 +665,7 @@
   ],
   "BMarsBlueRock": [
    "BIMars",
+   "BICometCinder",
    "a:caveveins"
   ],
   "BMarsCactus": [
