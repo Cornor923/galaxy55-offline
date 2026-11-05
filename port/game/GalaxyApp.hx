@@ -302,6 +302,7 @@ class GalaxyApp extends hxd.App {
 	var mapToast : String;
 
 	override function init() {
+		var tInit = haxe.Timer.stamp();
 		PortRules.apply();
 		for( a in Sys.args() ) {
 			if( StringTools.startsWith(a, "--shot=") ) shotPath = a.substr(7);
@@ -433,6 +434,7 @@ class GalaxyApp extends hxd.App {
 		showLoading(Lang.t("loading"));
 
 		hxd.Pad.wait(function(p) pad = p);
+		if( frameTime ) Sys.println("init: " + Std.int((haxe.Timer.stamp() - tInit) * 1000) + " ms");
 	}
 
 	// ---------------------------------------------------------------- utilidades de pantalla
@@ -2309,7 +2311,16 @@ class GalaxyApp extends hxd.App {
 
 	// ---------------------------------------------------------------- bucle principal
 
-	static var frameTime = Sys.args().indexOf("--frametime") >= 0;
+	/** --frametime[=MS]: avisar de los fotogramas de mas de MS milisegundos (250 por defecto) */
+	static var frameTime = frameLimit() > 0;
+	static var frameMax = frameLimit();
+	static function frameLimit() : Float {
+		for( a in Sys.args() ) {
+			if( a == "--frametime" ) return 0.25;
+			if( StringTools.startsWith(a, "--frametime=") ) return Std.parseFloat(a.substr(12)) / 1000;
+		}
+		return 0;
+	}
 	var lastStamp = 0.;
 
 	/** VSync de Opciones (--novsync lo quita siempre, para diagnosticar) */
@@ -2336,10 +2347,10 @@ class GalaxyApp extends hxd.App {
 	override function update( dt : Float ) {
 		limitFps();
 		frames++;
-		// diagnostico (--frametime): fotogramas de mas de 250 ms y en que estado estaba el juego
+		// diagnostico (--frametime): fotogramas lentos y en que estado estaba el juego
 		if( frameTime ) {
 			var now = haxe.Timer.stamp();
-			if( lastStamp > 0 && now - lastStamp > 0.25 ) Sys.println("parada " + Std.int((now - lastStamp) * 1000) + " ms en el fotograma " + frames + ", estado " + state + (bgBuilding != null ? ", construyendo fondo" : ""));
+			if( lastStamp > 0 && now - lastStamp > frameMax ) Sys.println("parada " + Std.int((now - lastStamp) * 1000) + " ms en el fotograma " + frames + ", estado " + state + (bgBuilding != null ? ", construyendo fondo" : ""));
 			lastStamp = now;
 		}
 		if( dt > 0.1 ) dt = 0.1;
