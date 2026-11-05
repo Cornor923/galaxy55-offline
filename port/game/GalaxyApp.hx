@@ -969,8 +969,10 @@ class GalaxyApp extends hxd.App {
 	function buildComputer() : Screen {
 		// visitar la nave nodriza solo se ofrece al editarla (editar_nodriza.bat); jugando se llega acoplandose al robot en el mapa
 		var mother = GameView.editMother;
-		// anadido del port: pilotar la nave sobre el planeta (solo en los planetas jugables, fuera del tutorial)
-		var pilotOk = game != null && game.canPilot();
+		// anadido del port: pilotar la nave sobre el planeta (solo en los planetas jugables, fuera del tutorial; en aventura, solo
+		// sobre el planeta principal: en los demas no sale)
+		var pilotOk = pilotOffered();
+		computerPilot = pilotOk;
 		// botones antes de Cerrar; con todos (solo al editar la nodriza) se juntan un poco para que el panel quepa
 		var n = 6 + (pilotOk ? 1 : 0) + (mother ? 1 : 0);
 		var step = n > 7 ? 48 : n > 6 ? 56 : 62;
@@ -1001,11 +1003,9 @@ class GalaxyApp extends hxd.App {
 		if( pilotOk ) {
 			var pilot = new Button(s, Lang.t("computer.pilot"));
 			rows.push(pilot);
-			// en aventura solo sobre el planeta principal (Licenses)
 			pilot.onActivate = function() {
 				resume();
-				if( game.pilotLicensed() ) game.startPiloting();
-				else showToast(Lang.t("license.pilotmain"), 4);
+				game.startPiloting();
 			};
 		}
 		rows = rows.concat([edit, database, trade, contracts, licenses]);
@@ -1105,7 +1105,7 @@ class GalaxyApp extends hxd.App {
 		var top = (H - h) * 0.5;
 		for( c in s ) if( c != bg && c != title ) c.y += top;
 		drawPanel(bg, title, PW, h);
-		var leave = function() show("computer");
+		var leave = showComputer;
 		back.onActivate = leave;
 		s.onBack = leave;
 		return s;
@@ -1537,12 +1537,33 @@ class GalaxyApp extends hxd.App {
 		state = Paused;
 		captureMouse(false);
 		hud.visible = false; msgText.visible = false;
-		show("computer");
+		showComputer();
 		centerMouse();
 		computerContracts.enabled = !Tutorial.active(game.info);
 		computerLicenses.enabled = !Tutorial.active(game.info);
 		computerTrade.enabled = !Tutorial.active(game.info);
 		computerDatabase.enabled = Tutorial.databaseAllowed(game.info);
+	}
+
+	/** el ordenador de a bordo ofrece Pilotar la nave: donde se puede pilotar (GameView.canPilot) y, en aventura, solo sobre el
+	    planeta principal (GameView.pilotLicensed) */
+	function pilotOffered() return game != null && game.canPilot() && game.pilotLicensed();
+
+	/** el menu del ordenador guardado tiene Pilotar la nave */
+	var computerPilot = false;
+
+	/** el menu del ordenador se guarda (al volver de las licencias): si ya no toca Pilotar la nave, o ahora si (se ha cambiado de
+	    planeta principal), se rehace */
+	function showComputer() {
+		var old = screens.get("computer");
+		var rebuild = old != null && computerPilot != pilotOffered();
+		if( rebuild ) {
+			old.remove();
+			screens.remove("computer");
+		}
+		show("computer");
+		// como al abrirlo (centerMouse): el boton que queda bajo el puntero no se lleva el foco hasta que se mueva el raton
+		if( rebuild ) current.holdHover();
 	}
 
 	/** boton de la Base de datos ESCorp del ordenador de a bordo (en el tutorial, desde su paso) */
