@@ -45,13 +45,13 @@ class KubText {
 		"kub.where.comets" => ["Cometas:", "Comets:", "Comètes :"],
 		"kub.where.special" => ["Especial: solo lo suministra la ESCorp", "Special: supplied by ESCorp only", "Spécial : fourni uniquement par l'ESCorp"],
 		"kub.short.craft" => ["Sintetizador", "Synthesizer", "Synthétiseur"],
-		"kub.drop.charge" => ["Al minarlo da %n% × %c%", "When mined: gives %n% × %c%", "Au minage : donne %n% × %c%"],
 		// carga que pide el laser, bajo las categorias de la ficha (con su color)
 		"chargetag.CYellow" => ["Carga amarilla", "Yellow charge", "Charge jaune"],
 		"chargetag.CBlue" => ["Carga azul", "Blue charge", "Charge bleue"],
 		"chargetag.CPink" => ["Carga rosa", "Pink charge", "Charge rose"],
 		"chargetag.CBonus" => ["Carga de bonus", "Bonus charge", "Charge bonus"],
 		"kub.stats" => ["Puestos: %p%   Rotos: %b%   Fabricados: %c%", "Placed: %p%   Broken: %b%   Crafted: %c%", "Posés : %p%   Cassés : %b%   Fabriqués : %c%"],
+		"kub.broken" => ["Se produce al romperlo", "Produced when broken", "Produit en cassant"],
 		"kub.made" => ["Fabricación", "Crafting", "Fabrication"],
 		"kub.uses" => ["Se usa en", "Used in", "Utilisé dans"],
 		"kub.locked" => [
