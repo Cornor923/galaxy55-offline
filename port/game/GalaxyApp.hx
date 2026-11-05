@@ -1717,8 +1717,13 @@ class GalaxyApp extends hxd.App {
 			loadWorld.lightTop = Hangar.SZ; // y planet.lightHeight: el sol entra bajo el techo
 		}
 		loadWorld.root.visible = false;
+		// la nave del planeta (no en la nodriza ni en el hangar) tambien se construye en la pantalla de carga, despues del planeta
+		loadShip = info.mothership == true || info.hangar == true ? null : Ship.prepare(loadWorld, atlas, s3d, info.shipEdits, Hangar.currentShip(info));
 		showPlanetLoading();
 	}
+
+	/** el mundo de la nave mientras se carga el planeta (Ship.prepare) */
+	var loadShip : World;
 
 	function finishLoading() {
 		bgDisposeAll();
@@ -1727,8 +1732,9 @@ class GalaxyApp extends hxd.App {
 			Sys.println("mundo " + loadWorld.biomeName + ": " + loadWorld.faces + " caras, spawn z=" + loadWorld.spawnPoint().z);
 			Sys.println(loadWorld.debugStats());
 		}
-		game = new GameView(s3d, loadWorld, loadInfo, atlas);
+		game = new GameView(s3d, loadWorld, loadInfo, atlas, loadShip);
 		loadWorld = null;
+		loadShip = null;
 		if( loadInfo.uni != null && loadInfo.uni.space == true && loadInfo.hangar != true && loadInfo.mothership != true ) {
 			// partida en el espacio: el planeta solo se carga para hacer las imagenes de la nave; luego se abre el mapa
 			shipFrames = game.ship.captureFrames(engine, s3d);
@@ -2411,13 +2417,14 @@ class GalaxyApp extends hxd.App {
 		}
 
 		if( state == Loading && loadWorld != null ) {
-			loadWorld.step(14);
+			if( !loadWorld.isReady() ) loadWorld.step(14);
+			else if( loadShip != null ) loadShip.step(14);
 			// Game.update: el trozo avanza 0.1 en cada imagen y vuelve al principio
 			loadAnimPos += 0.1;
 			if( loadAnimPos > 1 ) loadAnimPos--;
 			drawLoadAnim();
 			if( dev != null ) dev.loadingFrame(this);
-			if( loadWorld.isReady() ) finishLoading();
+			if( loadWorld.isReady() && (loadShip == null || loadShip.isReady()) ) finishLoading();
 		}
 
 		if( state == Playing && game != null ) {
