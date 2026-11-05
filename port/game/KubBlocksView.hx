@@ -7,8 +7,8 @@ import KubData.KubCat;
  */
 class KubBlocksView extends KubView {
 
-	static var CATS : Array<Null<KubCat>> = [null, CPlanet, CAnomaly, CComet, CCraft, CSpecial];
-	static var CAT_KEYS = ["kub.cat.all", "kub.cat.planet", "kub.cat.anomaly", "kub.cat.comet", "kub.cat.craft", "kub.cat.special"];
+	static var CATS : Array<Null<KubCat>> = [null, CPlanet, CAnomaly, CComet, CCraft, CSpecial, CCharge];
+	static var CAT_KEYS = ["kub.cat.all", "kub.cat.planet", "kub.cat.anomaly", "kub.cat.comet", "kub.cat.craft", "kub.cat.special", "kub.cat.charge"];
 	static inline var FILTER_W = 190;
 	static inline var COLS = 7;
 	static inline var PITCH = KubCell.SIZE + 2;
@@ -42,6 +42,8 @@ class KubBlocksView extends KubView {
 
 	function known( c : Null<KubCat> ) : Array<Block> {
 		var d = KubData.get();
+		// las cargas solo salen en su categoria
+		if( c == CCharge ) return [for( e in d.charges ) if( Kubindex.known(panel.info, e) ) e];
 		return [for( e in d.entries ) if( Kubindex.known(panel.info, e) && (c == null || d.has(e, c)) ) e];
 	}
 
@@ -106,11 +108,12 @@ class KubBlocksView extends KubView {
 		detail.show(e);
 	}
 
-	/** muestra la ficha de e (desde una receta o un planeta): con la categoria Todos */
+	/** muestra la ficha de e (desde una receta o un planeta): con la categoria Todos (las cargas, con la suya) */
 	public function show( e : Block ) {
+		var want = e.charge != null ? CATS.indexOf(CCharge) : 0;
 		// tambien si se ha recuperado con el panel abierto (el juego sigue): la lista se rehace
-		if( cat != 0 || list.indexOf(e) < 0 ) {
-			cat = lastCat = 0;
+		if( cat != want || list.indexOf(e) < 0 ) {
+			cat = lastCat = want;
 			fill();
 		}
 		var i = list.indexOf(e);

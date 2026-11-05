@@ -703,7 +703,7 @@ class Dev {
 					case null: app.openDatabase();
 					case "close": app.closeDatabase();
 					case "tab": if( app.database != null ) app.database.setTab(Std.parseInt(a[2]));
-					case "pick": if( app.database != null ) app.database.pick(KubData.get().entryOf(bk(a[2])));
+					case "pick": if( app.database != null ) app.database.pick(KubData.get().entryOrCharge(bk(a[2])));
 					case "page": if( app.database != null ) app.database.view.page(Std.parseInt(a[2]));
 					case "nav": if( app.database != null ) app.database.view.nav(Std.parseInt(a[2]), Std.parseInt(a[3]));
 					case "forget": info.kub = Kubindex.empty();
@@ -711,7 +711,7 @@ class Dev {
 					case "all":
 						// todo recuperado: cada ficha, un planeta de cada tipo, cada tipo de cometa y cada anomalia (sin nada nuevo)
 						var k = Kubindex.ensure(info), d = KubData.get();
-						k.got = [for( e in d.entries ) Type.enumConstructor(e.k)];
+						k.got = [for( e in d.entries.concat(d.charges) ) Type.enumConstructor(e.k)];
 						k.seen = [];
 						k.fresh = [];
 						var types : Array<String> = @:privateAccess KubPlanetsView.PLANETS;

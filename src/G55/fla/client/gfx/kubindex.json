@@ -922,6 +922,14 @@
   ],
   "BYellowCeil": [
    "a:cavecharges"
+  ],
+  "BPinkCharge": [
+   "a:crater",
+   "a:meadow",
+   "a:ruins",
+   "a:artifact",
+   "a:cavesphere",
+   "a:caveruins"
   ]
  }
 }

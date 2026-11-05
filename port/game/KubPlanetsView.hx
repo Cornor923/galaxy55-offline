@@ -174,7 +174,7 @@ class KubPlanetsView extends KubView {
 
 	override function nav( dx : Int, dy : Int ) {
 		var d = dy != 0 ? dy : dx;
-		if( types.length > 0 ) select((sel + d + types.length) % types.length);
+		if( types.length > 0 ) select(((sel + d) % types.length + types.length) % types.length);
 	}
 
 	/** RePag/AvPag: seccion siguiente o anterior (planetas, cometas, anomalias) */

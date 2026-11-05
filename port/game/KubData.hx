@@ -24,6 +24,8 @@ enum abstract KubCat(Int) to Int {
 	var CComet = 2;
 	var CCraft = 3;
 	var CSpecial = 4;
+	/** las cargas (citronox, etherium, rosa): fichas aparte, fuera de "Todos" */
+	var CCharge = 5;
 }
 
 /**
@@ -51,8 +53,10 @@ class KubData {
 	/** pruebas (Dev "kub load RUTA"): otro archivo */
 	public static function reload( path : String ) inst = new KubData(path);
 
-	/** todas las fichas, en el orden de los datos */
+	/** todas las fichas, en el orden de los datos (sin las cargas) */
 	public var entries(default, null) : Array<Block> = [];
+	/** las cargas con ficha propia (categoria Cargas): amarilla, azul y rosa; la de bonus no */
+	public var charges(default, null) : Array<Block> = [];
 	public var anomalies(default, null) : Array<KubAnomaly> = [];
 	var places = new Map<Int, KubPlace>();
 	var hiddenBiomes = new Map<String, Bool>();
@@ -84,10 +88,11 @@ class KubData {
 			entries.push(b);
 			isEntry.set(b.index, true);
 		}
+		for( b in Block.all ) if( b != null && b.charge != null && b.charge != CBonus && BlockNames.entry(b) == b ) charges.push(b);
 		if( o.places != null )
 			for( f in Reflect.fields(o.places) ) {
 				var b = try Block.get(Type.createEnum(BlockKind, f)) catch( e : Dynamic ) null;
-				var e = b == null ? null : entryOf(b);
+				var e = b == null ? null : entryOrCharge(b);
 				if( e == null ) {
 					Sys.stderr().writeString(path + ": " + f + " no es una ficha del Kubindex\n");
 					continue;
@@ -125,6 +130,30 @@ class KubData {
 		var e = BlockNames.entry(b);
 		return e != null && isEntry.exists(e.index) ? e : null;
 	}
+
+	/** ficha de un bloque o, si es una de las cargas con ficha, la propia carga */
+	public function entryOrCharge( b : Block ) : Block {
+		if( b == null ) return null;
+		return charges.indexOf(b) >= 0 ? b : entryOf(b);
+	}
+
+	/** bloques que la sueltan al romperlos, con cuantas (citronox viejo: 3 cargas amarillas) */
+	public function chargeSources( c : Block ) : Array<{ e : Block, n : Int }> {
+		var out : Array<{ e : Block, n : Int }> = [];
+		for( b in Block.all ) {
+			var d = b == null ? null : b.getDrop();
+			var e = d == null || d.b != c || b == c ? null : entryOf(b);
+			if( e == null || Lambda.exists(out, function(s) return s.e == e) ) continue;
+			out.push({ e : e, n : d.count });
+		}
+		return out;
+	}
+
+	/** recetas que la fabrican (citronox: 25 cargas amarillas) */
+	public function chargeRecipes( c : Block ) : Array<CraftRule> return [for( r in Data.CRAFT ) if( Block.get(r.out) == c ) r];
+
+	/** fichas que piden esa carga para minarlas */
+	public function chargeNeeded( c : Block ) : Array<Block> return [for( e in entries ) if( chargeFor(e) == c.charge ) e];
 
 	public function placeOf( e : Block ) : KubPlace {
 		var p = places.get(e.index);
@@ -170,16 +199,52 @@ class KubData {
 			case CCraft: craft;
 			// anomalia solo si no se encuentra de otra manera
 			case CAnomaly: p.anomalies.length > 0 && !natural && !craft && !forced;
-			case CSpecial: forced || (!natural && !craft && p.anomalies.length == 0);
+			case CSpecial: e.charge == null && (forced || (!natural && !craft && p.anomalies.length == 0));
+			case CCharge: e.charge != null;
 		}
 	}
 
 	/** el bioma esta en la base de datos */
 	public function biomeIndexed( biome : String ) return !hiddenBiomes.exists(biome);
 
-	/** fichas del terreno de un bioma (o tipo de cometa) */
+	/** fichas del terreno de un bioma (o tipo de cometa), en el orden de terrainRank */
 	public function ofBiome( biome : String ) : Array<Block> {
-		return [for( e in entries ) if( placeOf(e).biomes.indexOf(biome) >= 0 || placeOf(e).comets.indexOf(biome) >= 0 ) e];
+		var l = [for( e in entries ) if( placeOf(e).biomes.indexOf(biome) >= 0 || placeOf(e).comets.indexOf(biome) >= 0 ) e];
+		l.sort(function(a, b) {
+			var d = terrainRank(a) - terrainRank(b);
+			return d != 0 ? d : a.index - b.index;
+		});
+		return l;
+	}
+
+	/**
+	 * Orden de los kubes de un planeta: tierra, roca, madera, follaje, varios, plantas, hierbas, lo que da cargas al romperlo
+	 * (amarillas y luego azules), lo que da cargas en el sintetizador, y al final bauxita, pirita y rouge'rosh.
+	 */
+	function terrainRank( e : Block ) : Int {
+		switch( e.k ) {
+			case BMinAluminium: return 1000;
+			case BMinIron: return 1100;
+			case BHardRock: return 1200;
+			default:
+		}
+		var d = e.getDrop();
+		if( d != null && d.b.charge != null ) return 800 + Type.enumIndex(d.b.charge);
+		for( r in recipesUsing(e) ) {
+			var o = Block.get(r.out);
+			if( o.charge != null ) return 900 + Type.enumIndex(o.charge);
+		}
+		var m = e.matter == null ? e.k : e.matter.k;
+		if( e.hasFlag(BFDetail) || m == BHighHerb1 ) return 700;
+		return switch( m ) {
+			case BSoil, BMoonSand: 100;
+			case BRock, BAlienRock: 200;
+			case BHardRock: e.k == BCoral1 || e.k == BCoral2 ? 500 : 200;
+			case BWood: 300;
+			case BGreenLeaves: 400;
+			case BCactus, BMarsCactus: 600;
+			default: e.type == BTModel2Side ? 600 : 500;
+		}
 	}
 
 	/** anomalias que pueden salir en un planeta de ese bioma (ninguna en una cometa) */
