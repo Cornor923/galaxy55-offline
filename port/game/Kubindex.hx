@@ -142,6 +142,15 @@ class Kubindex {
 	/** la ficha se ha mirado en la base de datos */
 	public static function viewed( info : SaveInfo, e : Block ) if( e != null ) ensure(info).fresh.remove(key(e));
 
+	/** cambia en cuanto cambia algo de lo que se ve en la base de datos (DatabasePanel: una pestana guardada se rehace) */
+	public static function version( info : SaveInfo ) : String {
+		var k = ensure(info), used = 0, made = 0;
+		for( s in k.stats ) used += s.p + s.b;
+		for( c in k.crafts ) made += c.n;
+		return [k.seen.length, k.got.length, k.fresh.length, k.planets.length, k.comets.length, k.anomalies.length, used, made].join(",")
+			+ (full(info) ? "+" : "");
+	}
+
 	// ---------------------------------------------------------------- lo que hace el jugador
 
 	/** el laser toca el bloque b del mundo (cada imagen mientras dure: solo la primera cuenta) */

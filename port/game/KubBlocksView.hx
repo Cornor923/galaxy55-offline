@@ -33,6 +33,7 @@ class KubBlocksView extends KubView {
 		filters = new h2d.Object(this);
 		grid = new KubScroll(this, COLS * PITCH + 8, DatabasePanel.CH);
 		grid.x = GRID_X;
+		grid.itemH = PITCH;
 		detail = new KubDetail(panel, this, DatabasePanel.CW - DETAIL_X, DatabasePanel.CH);
 		detail.x = DETAIL_X;
 		fill();

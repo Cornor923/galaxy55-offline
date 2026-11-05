@@ -20,6 +20,13 @@ class DatabasePanel extends h2d.Object {
 	public var atlas(default, null) : h3d.mat.Texture;
 	public var tab(default, null) = -1;
 	public var view(default, null) : KubView;
+	/**
+	 * las pestanas ya hechas se guardan (ocultas) mientras el panel este abierto, con la Kubindex.version de cuando se dejaron:
+	 * al volver a una sin que nada haya cambiado no se rehace. Rehacerla creaba cientos de objetos y el recolector de memoria
+	 * de HashLink paraba el juego unas decenas de ms
+	 */
+	var views : Array<KubView> = [];
+	var versions : Array<String> = [];
 	var px : Float;
 	var py : Float;
 	var tabsG : h2d.Graphics;
@@ -64,14 +71,23 @@ class DatabasePanel extends h2d.Object {
 
 	public function setTab( i : Int ) {
 		if( i == tab ) return;
+		if( view != null ) {
+			view.visible = false;
+			versions[tab] = Kubindex.version(info);
+		}
 		tab = i;
-		content.removeChildren();
-		view = switch( i ) {
-			case 1: new KubPlanetsView(this, content);
-			case 2: new KubRecipesView(this, content);
-			default: new KubBlocksView(this, content);
-		};
-		view.refresh();
+		view = views[i];
+		if( view != null && versions[i] == Kubindex.version(info) )
+			view.visible = true;
+		else {
+			if( view != null ) view.remove();
+			view = views[i] = switch( i ) {
+				case 1: new KubPlanetsView(this, content);
+				case 2: new KubRecipesView(this, content);
+				default: new KubBlocksView(this, content);
+			};
+			view.refresh();
+		}
 		setHover(null);
 		tabsG.clear();
 		for( j in 0...TABS.length ) {
