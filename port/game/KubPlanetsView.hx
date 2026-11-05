@@ -30,6 +30,7 @@ class KubPlanetsView extends KubView {
 	override function refresh() {
 		removeChildren();
 		left = new KubScroll(this, LIST_W, DatabasePanel.CH);
+		left.itemH = ROW_H;
 		right = new KubScroll(this, DatabasePanel.CW - RIGHT_X, DatabasePanel.CH);
 		right.x = RIGHT_X;
 		var info = panel.info, d = KubData.get();

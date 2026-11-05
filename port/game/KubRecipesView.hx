@@ -20,14 +20,16 @@ class KubRecipesView extends KubView {
 		Theme.text(this, KubText.get("rc.count").split("%n%").join("" + known.length).split("%t%").join("" + Data.CRAFT.length), 1.6, Theme.TEXT, 0, 0);
 		list = new KubScroll(this, DatabasePanel.CW, DatabasePanel.CH - 34);
 		list.y = 34;
+		// cada linea se hace cuando entra en la zona (hacer las 60 al abrir la pestana la paraba ~100 ms)
+		list.itemH = ROW_H;
 		if( known.length == 0 ) Theme.text(list.content, KubText.get("rc.empty"), 1.5, Theme.DIM, 0, 8);
 		for( i in 0...known.length ) {
 			var r = known[i];
-			var o = new h2d.Object(list.content);
-			o.setPosition((i % 2) * COL_W, Std.int(i / 2) * ROW_H);
-			var g = new h2d.Graphics(o);
-			Theme.rect(g, -4, -2, COL_W - 12, ROW_H - 4, 0xFFFFFF, 0.04);
-			KubDraw.recipe(o, r, info, panel.atlas, panel.pick, list);
+			list.lazy((i % 2) * COL_W, Std.int(i / 2) * ROW_H, function(o) {
+				var g = new h2d.Graphics(o);
+				Theme.rect(g, -4, -2, COL_W - 12, ROW_H - 4, 0xFFFFFF, 0.04);
+				KubDraw.recipe(o, r, info, panel.atlas, panel.pick, list);
+			});
 		}
 		list.contentH = Math.ceil(known.length / 2) * ROW_H;
 		list.done();
