@@ -82,6 +82,10 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   pausa, robot en el salto del mapa, vigilante de HashLink pausado al construir el mapa, textos del ordenador, luz por cara
   junto a un neón, `World.openCascade` (cascada contra cristal), `Ship.updateWrap` y licencias (`Licenses.hx`, añadido del
   port). Añadido al fusionar: la pantalla `licenses` deja correr el juego como `computer` (guion `licencias_vida`).
+- "Pilotar la nave" fuera del planeta principal (2026-11-05, Cornor923): en aventura el ordenador de a bordo ya no lo ofrece
+  (`GalaxyApp.pilotOffered`: `canPilot` y `pilotLicensed`) en vez de sacarlo y avisar al pulsarlo (se quita el texto
+  `license.pilotmain`); en creativo, en todos. El menú guardado se rehace al volver de las licencias si ha cambiado
+  (`showComputer`). Guiones `licencias` y `licencias_creativo`.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |

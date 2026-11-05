@@ -68,8 +68,9 @@ class KubPlanetsView extends KubView {
 		var sw = new h2d.Graphics(o);
 		Theme.rect(sw, 10, 12, 30, 30, known && colors.length > 0 ? colors[0] : 0x000000, known ? 1 : 0.9);
 		if( known && colors.length > 1 ) Theme.rect(sw, 25, 12, 15, 30, colors[1]);
-		KubDraw.fit(Theme.text(o, name, 1.5, known ? Theme.TEXT : Theme.DIM, 52, 8), LIST_W - 70);
-		Theme.text(o, sub, 1.2, Theme.CYAN, 52, 30);
+		// sin linea de debajo (creativo), el nombre queda centrado en la fila
+		KubDraw.fit(Theme.text(o, name, 1.5, known ? Theme.TEXT : Theme.DIM, 52, sub != null ? 8 : 18), LIST_W - 70);
+		if( sub != null ) Theme.text(o, sub, 1.2, Theme.CYAN, 52, 30);
 		var it = new h2d.Interactive(LIST_W - 10, ROW_H - 4, o);
 		it.onClick = function(_) if( left.mouseIn() ) select(i);
 		rows.push({ y : ly, g : g });
@@ -79,8 +80,9 @@ class KubPlanetsView extends KubView {
 	function biomeRow( biome : String ) {
 		var info = panel.info;
 		var known = Kubindex.biomeKnown(info, biome);
+		// en creativo no se apunta nada: sin "Explorados", que siempre estaria a 0
 		row(biome, known ? ExpData.ExpOffline.biomeName(biome) : KubText.get("pl.unknown") + " ???",
-			KubText.get("pl.explored").split("%n%").join("" + Kubindex.explored(info, biome)), known,
+			Kubindex.full(info) ? null : KubText.get("pl.explored").split("%n%").join("" + Kubindex.explored(info, biome)), known,
 			Data.getBiome(Type.createEnum(BiomeKind, biome)).exploreColors);
 	}
 
@@ -123,7 +125,7 @@ class KubPlanetsView extends KubView {
 		var info = panel.info, d = KubData.get();
 		var known = Kubindex.biomeKnown(info, biome);
 		var y = title(known ? ExpData.ExpOffline.biomeName(biome) : KubText.get("pl.unknown") + " ???");
-		y = line(KubText.get("pl.explored").split("%n%").join("" + Kubindex.explored(info, biome)), 1.4, Theme.CYAN, y);
+		if( !Kubindex.full(info) ) y = line(KubText.get("pl.explored").split("%n%").join("" + Kubindex.explored(info, biome)), 1.4, Theme.CYAN, y);
 		if( !known ) return line(KubText.get("pl.notexplored"), 1.4, Theme.DIM, y);
 		var terrain = d.ofBiome(biome);
 		var got = [for( e in terrain ) if( Kubindex.got(info, e) ) e].length;
