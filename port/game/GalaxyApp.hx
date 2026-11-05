@@ -2644,8 +2644,12 @@ class GalaxyApp extends hxd.App {
 		var cands = [[0.5, 0.5, 0.2], [0.5, 0.5, 0.3], [0.5, 0.5, 0.4], [0.4, 0.4, 0.2], [0.6, 0.4, 0.2], [0.4, 0.6, 0.2], [0.6, 0.6, 0.2], [0.4, 0.4, 0.3], [0.6, 0.4, 0.3], [0.4, 0.6, 0.3], [0.6, 0.6, 0.3]];
 		var best : Array<Float> = null;
 		var bestScore = 1e18;
+		// altura de cada columna, calculada una sola vez: las rutas pasan por las mismas columnas (topCollide ~100 000 veces
+		// costaba 100-170 ms en la imagen en que aparece el menu)
+		var tops = new haxe.ds.Vector<Int>(s * s);
+		for( i in 0...s * s ) tops[i] = -1;
 		for( c in cands ) {
-			var tab = bgPathAlt(w, s * c[0], s * c[1], s * c[2]);
+			var tab = bgPathAlt(w, s * c[0], s * c[1], s * c[2], tops);
 			var total = 0., mx = 0.;
 			for( i in 0...tab.length ) {
 				total += Math.abs(tab[(i + 1) % tab.length] - tab[i]);
@@ -2674,9 +2678,9 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
-	/** Tabla de alturas (180 muestras) para una ruta circular. */
-	function bgPathAlt( w : World, cx : Float, cy : Float, r : Float ) : Array<Float> {
-		var M = 180;
+	/** Tabla de alturas (180 muestras) para una ruta circular. tops: altura de cada columna ya calculada (-1 = aun no) */
+	function bgPathAlt( w : World, cx : Float, cy : Float, r : Float, tops : haxe.ds.Vector<Int> ) : Array<Float> {
+		var M = 180, s = w.size;
 		var raw = new Array<Float>();
 		for( i in 0...M ) {
 			var a = i / M * Math.PI * 2;
@@ -2684,7 +2688,10 @@ class GalaxyApp extends hxd.App {
 			var top = 0;
 			for( dx in -3...4 )
 				for( dy in -3...4 ) {
-					var hh = w.topCollide(x + dx * 2, y + dy * 2);
+					// la misma columna que lee topCollide (el planeta da la vuelta)
+					var col = ((x + dx * 2) % s + s) % s + ((y + dy * 2) % s + s) % s * s;
+					var hh = tops[col];
+					if( hh < 0 ) hh = tops[col] = w.topCollide(x + dx * 2, y + dy * 2);
 					if( hh > top ) top = hh;
 				}
 			raw.push(top);
