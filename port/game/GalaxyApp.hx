@@ -1693,6 +1693,7 @@ class GalaxyApp extends hxd.App {
 	function startGame( info : SaveInfo ) {
 		// antes de cualquier copia para el hangar o la nodriza: las copias comparten la Base de datos ESCorp
 		Kubindex.ensure(info);
+		warmIcons(info);
 		state = Loading;
 		clearUi();
 		hud.visible = false; msgText.visible = false;
@@ -1739,6 +1740,7 @@ class GalaxyApp extends hxd.App {
 		// Base de datos ESCorp: los kubes de tu nave se conocen y el planeta o la cometa quedan explorados
 		Kubindex.shipKnown(game.info);
 		Kubindex.visit(game.info);
+		warmDelay = 2;
 		game.onComputer = openComputer;
 		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
 		game.onChest = openChest;
@@ -1933,6 +1935,20 @@ class GalaxyApp extends hxd.App {
 		Tutorial.databaseOpened(game.info);
 		paletteOpen = true;
 		captureMouse(false);
+	}
+
+	/** segundos de juego tras llegar al planeta antes de seguir con los iconos de reserva que falten (no se suman a la llegada) */
+	var warmDelay = 0.;
+
+	/**
+	 * Los iconos grandes de la Base de datos ESCorp se hacen de reserva en la pantalla de carga (Icons.pump, en update): al
+	 * abrirla ya estan. Primero las fichas que ya salen en el Kubindex
+	 */
+	function warmIcons( info : SaveInfo ) {
+		if( !Tutorial.databaseAllowed(info) ) return;
+		var d = KubData.get();
+		var known = [for( e in d.entries ) if( Kubindex.known(info, e) ) e];
+		IconMesh.Icons.warm(known.concat(d.charges).concat(d.entries), atlas);
 	}
 
 	public function closeDatabase() {
@@ -2354,6 +2370,11 @@ class GalaxyApp extends hxd.App {
 			lastStamp = now;
 		}
 		if( dt > 0.1 ) dt = 0.1;
+		// iconos grandes de la Base de datos ESCorp: unos pocos por fotograma (mas con ella abierta); los de reserva, en la pantalla
+		// de carga del planeta y, si faltan, jugando y pasado un rato desde la llegada
+		if( warmDelay > 0 && state == Playing ) warmDelay -= dt;
+		var spareIcons = (state == Loading && loadWorld != null) || (state == Playing && warmDelay <= 0);
+		if( IconMesh.Icons.busy(spareIcons) ) IconMesh.Icons.pump(database != null ? 8 : 3, spareIcons);
 		if( state != Playing ) {
 			jetBar.visible = false;
 			lifeBar.visible = false;
@@ -2944,6 +2965,8 @@ class GalaxyApp extends hxd.App {
 	}
 
 	public function capture( path : String, exit = true ) {
+		// los iconos de la Base de datos ESCorp que aun se estan haciendo salen ya en la captura
+		IconMesh.Icons.flush();
 		var w = engine.width, h = engine.height;
 		var tex = new h3d.mat.Texture(w, h, [Target]);
 		tex.depthBuffer = new h3d.mat.Texture(w, h, [Target], Depth24Stencil8);
@@ -2965,6 +2988,7 @@ class GalaxyApp extends hxd.App {
 	public function devCover( ?name : String ) : String {
 		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
 		if( top == null ) return "nada abierto";
+		IconMesh.Icons.flush();
 		var hidden = [];
 		for( o in s2d )
 			if( o != top && o.visible ) {
