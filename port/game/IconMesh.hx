@@ -237,8 +237,50 @@ class Icons {
 		return asked.length > 0 || (withSpare && spare.length > 0);
 	}
 
+	/** shaders de los iconos ya compilados por pump (warmShaders) */
+	static var warmed = 0;
+
+	/**
+	 * La primera vez, pump compila los tres shaders de los iconos (el del bloque, IconAlphaSum, IconOutline) uno por llamada,
+	 * con un icono de prueba por partes: los tres en la misma imagen paraban la pantalla de carga ~140 ms
+	 */
+	static function warmShaders( b : Block ) {
+		var src = drawTex.get(HIRES);
+		if( src == null ) {
+			drawTex.set(HIRES, src = new h3d.mat.Texture(HIRES, HIRES, [Target]));
+			sumTex.set(HIRES, new h3d.mat.Texture(HIRES, HIRES, [Target], R32F));
+		}
+		if( sumFx == null ) {
+			sumFx = new h3d.pass.ScreenFx(new IconAlphaSum());
+			outlineFx = new h3d.pass.ScreenFx(new IconOutline());
+		}
+		var engine = h3d.Engine.getCurrent();
+		switch( warmed++ ) {
+		case 0:
+			draw(b, hiresAtlas, src);
+		case 1:
+			sumFx.shader.src = src;
+			engine.pushTarget(sumTex.get(HIRES));
+			sumFx.render();
+			engine.popTarget();
+		default:
+			var tmp = new h3d.mat.Texture(HIRES, HIRES, [Target]);
+			outlineFx.shader.src = src;
+			outlineFx.shader.sums = sumTex.get(HIRES);
+			engine.pushTarget(tmp);
+			outlineFx.render();
+			engine.popTarget();
+			tmp.dispose();
+		}
+	}
+
 	/** hace iconos grandes durante unos budgetMs (al menos uno): los pedidos y, con withSpare, los de reserva */
 	public static function pump( budgetMs : Float, withSpare : Bool ) {
+		if( warmed < 3 ) {
+			var b = asked.length > 0 ? asked[0] : withSpare && spare.length > 0 ? spare[0] : null;
+			if( b != null ) warmShaders(b);
+			return;
+		}
 		var t0 = haxe.Timer.stamp();
 		do {
 			var b = asked.length > 0 ? asked.shift() : withSpare && spare.length > 0 ? spare.shift() : null;
@@ -414,36 +456,28 @@ private class IconOutline extends h3d.shader.ScreenShader {
 			var o = c;
 			if( a == 0. ) o = vec4(0., 0., 0., g);
 			else if( translucent > 0. ) {
-				if( a < 255. ) o = vec4(unpremultiply(c.r, a), unpremultiply(c.g, a), unpremultiply(c.b, a), a);
+				// BitmapData.unpremultiply: int(min(255, v * 255 / a))
+				if( a < 255. ) o = vec4(min(vec3(255.), idiv(c.rgb * 255., a)), a);
 			} else if( a < 255. && g > 0. ) {
-				// BitmapData.over(contorno negro, icono): oa * 255 = d / 255 y cada color, v * 255 * a / d (redondeados)
+				// BitmapData.over(contorno negro, icono): oa * 255 = d / 255 y cada color, round(v * 255 * a / d), v * 255 * a < 2^24
 				var d = 255. * a + g * (255. - a);
-				o = vec4(over(c.r, a, d), over(c.g, a, d), over(c.b, a, d), floor((2. * d + 255.) / 510.));
+				var n = c.rgb * a * 255.;
+				var q = idiv(n, d);
+				o = vec4(q + step(vec3(d), 2. * (n - q * d)), floor((2. * d + 255.) / 510.));
 			}
 			// + 0.25: el byte sale igual tanto si la tarjeta redondea como si trunca
 			pixelColor = (o + 0.25) / 255.;
 		}
 
 		/**
-		 * floor(n / d) exacto con enteros positivos de menos de 2^24 (en float, exactos): la division de la tarjeta puede quedarse
-		 * a un ulp y la entera no siempre es exacta; se corrige con el resto
+		 * floor(n / d) exacto en los tres colores, con enteros positivos de menos de 2^24 (en float, exactos): la division de la
+		 * tarjeta puede quedarse a un ulp y la entera no siempre es exacta; se corrige con el resto (una sola vez para los tres:
+		 * menos que compilar)
 		 */
-		function idiv( n : Float, d : Float ) : Float {
+		function idiv( n : Vec3, d : Float ) : Vec3 {
 			var q = floor(n / d);
 			var r = n - q * d;
-			return r < 0. ? q - 1. : r >= d ? q + 1. : q;
-		}
-
-		/** BitmapData.unpremultiply: int(min(255, v * 255 / a)) */
-		function unpremultiply( v : Float, a : Float ) : Float {
-			return min(255., idiv(v * 255., a));
-		}
-
-		/** un color de BitmapData.over sobre negro: round(v * 255 * a / d), v * 255 * a < 2^24 */
-		function over( v : Float, a : Float, d : Float ) : Float {
-			var n = v * a * 255.;
-			var q = idiv(n, d);
-			return 2. * (n - q * d) >= d ? q + 1. : q;
+			return q + step(vec3(d), r) - (1. - step(vec3(0.), r));
 		}
 	};
 }
