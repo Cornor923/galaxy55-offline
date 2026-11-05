@@ -78,6 +78,7 @@ import Common;
  *   kube ORDEN              editor de kubes abierto (screen kubes): load BLOQUE (copiar un bloque del juego), shape ID, face NOMBRE,
  *                           paint x0 y0 x1 y1 AARRGGBB (rectangulo de la cara, 0 = borrar), name TEXTO, tab 0|1, file N (cargar el
  *                           .kube N de Mis kubes), save; print kube
+ *   print mouse             donde cree el juego que esta el puntero (pixeles de la ventana, zona 1280x720) y el cursor del sistema
  *   quit
  */
 class Dev {
@@ -562,6 +563,8 @@ class Dev {
 					var mx = (f(a[1]) - area.x) * eng.width / area.w, my = (f(a[2]) - area.y) * eng.height / area.h;
 					var win = hxd.Window.getInstance();
 					mousePos = [mx, my];
+					// como un movimiento de verdad, la ventana sabe donde esta el puntero (Screen.holdHover lo mira)
+					@:privateAccess { win.curMouseX = Std.int(mx); win.curMouseY = Std.int(my); }
 					win.event(new hxd.Event(EMove, mx, my));
 					if( a[3] == "click" ) {
 						win.event(new hxd.Event(EPush, mx, my));
@@ -849,6 +852,13 @@ class Dev {
 		if( a[1] == "kube" ) {
 			var k = Std.downcast(@:privateAccess app.current, KubeEditor);
 			Sys.println(k == null ? "kube: el editor de kubes no esta abierto" : k.devInfo());
+			return;
+		}
+		if( a[1] == "mouse" ) {
+			var win = hxd.Window.getInstance(), gx = 0, gy = 0;
+			sdl.Sdl.getGlobalMouseState(gx, gy);
+			Sys.println("raton: ventana " + win.mouseX + "," + win.mouseY + " de " + win.width + "x" + win.height
+				+ " | zona " + Std.int(app.s2d.mouseX) + "," + Std.int(app.s2d.mouseY) + " | sistema " + gx + "," + gy);
 			return;
 		}
 		if( a[1] == "shots" ) {
