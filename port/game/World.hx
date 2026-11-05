@@ -39,6 +39,38 @@ class MeshBuf {
 	public function new() {}
 }
 
+/**
+ * Malla de un trozo del mundo (anadido del port): un Polygon que, al subirse a la tarjeta, suelta sus puntos, normales, uvs y
+ * colores (cuatro objetos por vertice) y se queda solo con los floats ya preparados, por si hubiera que volver a subirlos.
+ * Con los de todo el planeta vivos, cada pasada del recolector de memoria de HashLink tardaba decenas de ms (al construir
+ * los trozos en la carga y al jugar)
+ */
+class ChunkPrim extends h3d.prim.Polygon {
+	var data : hxd.FloatBuffer;
+	var format : hxd.BufferFormat;
+	var verts = 0;
+
+	override function alloc( engine : h3d.Engine ) {
+		if( data == null ) {
+			format = getBufferFormat();
+			data = getCPUBuffer();
+			verts = points.length;
+			// la caja (getBounds) se calcula con los puntos y se queda guardada
+			getBounds();
+			points = null;
+			normals = null;
+			uvs = null;
+			colors = null;
+		}
+		dispose();
+		buffer = h3d.Buffer.ofFloats(data, format);
+		if( idx != null )
+			indexes = h3d.Indexes.alloc(idx);
+	}
+
+	override function vertexCount() return verts;
+}
+
 /** Una bajada del mar mientras se reparte su luz (World.reduceWater), que puede durar varios fotogramas. */
 class SeaLight {
 	public var z = 0;
@@ -1641,7 +1673,7 @@ class World {
 
 	function emitMesh( m : MeshBuf, kind : Int ) {
 		if( m.pts.length == 0 ) return;
-		var poly = new h3d.prim.Polygon(m.pts, m.idx);
+		var poly = new ChunkPrim(m.pts, m.idx);
 		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = m.uvs;
 		poly.colors = m.cols;
