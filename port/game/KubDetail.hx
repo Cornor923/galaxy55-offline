@@ -65,14 +65,15 @@ class KubDetail extends h2d.Object {
 			return;
 		}
 		cy += 6;
-		// las cargas que da al minarlo (citronox viejo, plantas...)
-		var drop = e.getDrop();
-		if( drop != null && drop.b.charge != null ) line(KubText.get("kub.drop.charge").split("%n%").join("" + drop.count).split("%c%").join(drop.b.getName()), 1.3, Theme.TEXT);
 		var s = Kubindex.stat(info, e, false);
 		// fabricados: los que han salido del sintetizador (veces que se hizo cada receta que lo da, por lo que da cada vez)
 		var made = 0;
 		for( r in d.recipesMaking(e) ) made += Kubindex.craftCount(info, r) * (r.count == null ? 1 : r.count);
 		line(KubText.get("kub.stats").split("%p%").join("" + (s == null ? 0 : s.p)).split("%b%").join("" + (s == null ? 0 : s.b)).split("%c%").join("" + made), 1.3, Theme.TEXT);
+		// las cargas que da al romperlo (citronox viejo, plantas...), como una receta: el kube -> sus cargas
+		var drop = e.getDrop();
+		if( drop != null && drop.b.charge != null )
+			recipes(KubText.get("kub.broken"), [{ id : -1, schema : [CSSingle(e.k)], out : drop.b.k, count : drop.count }]);
 		recipes(KubText.get("kub.made"), d.recipesMaking(e));
 		recipes(KubText.get("kub.uses"), d.recipesUsing(e));
 		box.contentH = cy;

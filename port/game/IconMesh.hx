@@ -11,6 +11,8 @@ class IconMesh {
 
 	/** caja parcial en curso (x1, y1, x2, y2, z2): sus caras muestran un recorte de la casilla, como en el mundo */
 	static var rb : Array<Float> = null;
+	/** con las 6 caras: primero las de atras (-x, +y, abajo), para mezclar bien las translucidas sin escribir profundidad */
+	static var backFirst = false;
 
 	static function quad( m : MeshBuf, p : Array<Float>, tile : Int, shade : Float, face = -1 ) {
 		if( tile < 0 || tile >= 0xFFF ) return;
@@ -59,14 +61,16 @@ class IconMesh {
 			return;
 		}
 		rb = red ? [x1, y1, x2, y2, z2] : null;
-		quad(m, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], tu, su, 0);
-		quad(m, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], tlr, sx, 3);
-		quad(m, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], tlr, sy, 4);
-		if( all ) {
+		var back = function() {
 			quad(m, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], td, sd, 1);
 			quad(m, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], tlr, sx, 2);
 			quad(m, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], tlr, sy, 5);
-		}
+		};
+		if( all && backFirst ) back();
+		quad(m, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], tu, su, 0);
+		quad(m, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], tlr, sx, 3);
+		quad(m, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], tlr, sy, 4);
+		if( all && !backFirst ) back();
 		rb = null;
 	}
 
@@ -113,7 +117,8 @@ class IconMesh {
 	 * Malla de un bloque en la celda (0..1). all=true dibuja todas las caras (objetos sueltos);
 	 * scale/centro: se reduce alrededor del centro de la celda.
 	 */
-	public static function polygon( b : Block, all : Bool, scale = 1.0 ) : h3d.prim.Polygon {
+	public static function polygon( b : Block, all : Bool, scale = 1.0, backFaces = false ) : h3d.prim.Polygon {
+		backFirst = backFaces;
 		var m = new MeshBuf();
 		switch( b.type ) {
 		case BTModel, BTModel2Side, BTSprite:
@@ -126,6 +131,7 @@ class IconMesh {
 		default:
 			box(m, b, 0, 0, 0, 1, 1, 1, all);
 		}
+		backFirst = false;
 		if( m.pts.length == 0 ) return null;
 		if( scale != 1.0 )
 			for( p in m.pts ) {
@@ -180,8 +186,10 @@ class Icons {
 	}
 
 	static function render( b : Block, atlas : h3d.mat.Texture, size : Int ) : h3d.mat.Texture {
-		// los bloques translucidos dibujan sus 6 caras: se ve a traves el cubo entero
-		var poly = IconMesh.polygon(b, b.type == BTAlpha);
+		// iconos grandes (Base de datos ESCorp) de bloques translucidos: alfa bien acumulado y sin el contorno por dentro (ver abajo)
+		var translucent = size != SIZE && (b.type == BTAlpha || b.type == BTWater);
+		// los bloques translucidos dibujan sus 6 caras: se ve a traves el cubo entero (en los grandes, las de atras primero)
+		var poly = IconMesh.polygon(b, b.type == BTAlpha, 1.0, translucent);
 		// IconShader del original: tshade = shade < 1 ? shade * shade : shade (las caras de los lados, mas oscuras que en el mundo)
 		if( poly != null )
 			for( c in poly.colors )
@@ -192,8 +200,6 @@ class Icons {
 				}
 		var tex = new h3d.mat.Texture(size, size, [Target]);
 		tex.filter = Linear;
-		// iconos grandes (Base de datos ESCorp) de bloques translucidos: alfa bien acumulado y sin el contorno por dentro (ver abajo)
-		var translucent = size != SIZE && (b.type == BTAlpha || b.type == BTWater);
 		if( poly != null ) {
 			var engine = h3d.Engine.getCurrent();
 			if( scene == null ) scene = new h3d.scene.Scene();
@@ -208,7 +214,7 @@ class Icons {
 				if( translucent ) {
 					// el blend Alpha de Heaps usa SrcAlpha tambien para el alfa: sobre el fondo vacio queda a * a (casi invisible) y
 					// el color premultiplicado (oscuro). Aqui el alfa se suma como debe (One, OneMinusSrcAlpha) y el color se
-					// despremultiplica al leerlo; sin escribir profundidad, para que se vean todas las caras y no segun su orden
+					// despremultiplica al leerlo; sin escribir profundidad y con las caras de atras dibujadas antes que las de delante
 					mat.mainPass.blendAlphaSrc = One;
 					mat.mainPass.blendAlphaDst = OneMinusSrcAlpha;
 					mat.mainPass.depthWrite = false;
