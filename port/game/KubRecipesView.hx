@@ -2,7 +2,8 @@ import Ui;
 import Common;
 
 /**
- * Pestana Recetas: las recetas descubiertas (se recupero uno de sus kubes), en dos columnas, con cuantas veces se han fabricado.
+ * Pestana Recetas: las recetas descubiertas (se recupero uno de sus kubes), en dos columnas (cuantos se han fabricado sale en la
+ * ficha de cada kube).
  * Clic en una ficha conocida: su ficha en el Kubindex.
  */
 class KubRecipesView extends KubView {
@@ -26,10 +27,7 @@ class KubRecipesView extends KubView {
 			o.setPosition((i % 2) * COL_W, Std.int(i / 2) * ROW_H);
 			var g = new h2d.Graphics(o);
 			Theme.rect(g, -4, -2, COL_W - 12, ROW_H - 4, 0xFFFFFF, 0.04);
-			var w = KubDraw.recipe(o, r, info, panel.atlas, panel.pick, list);
-			var n = Kubindex.craftCount(info, r);
-			var t = Theme.text(o, n > 0 ? KubText.get("rc.made").split("%n%").join("" + n) : KubText.get("rc.never"), 1.1, n > 0 ? Theme.CYAN : Theme.DISABLED, w + 4, 36);
-			t.maxWidth = (COL_W - w - 24) / t.scaleX;
+			KubDraw.recipe(o, r, info, panel.atlas, panel.pick, list);
 		}
 		list.contentH = Math.ceil(known.length / 2) * ROW_H;
 		list.done();

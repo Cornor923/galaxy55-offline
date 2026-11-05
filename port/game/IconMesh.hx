@@ -192,6 +192,8 @@ class Icons {
 				}
 		var tex = new h3d.mat.Texture(size, size, [Target]);
 		tex.filter = Linear;
+		// iconos grandes (Base de datos ESCorp) de bloques translucidos: alfa bien acumulado y sin el contorno por dentro (ver abajo)
+		var translucent = size != SIZE && (b.type == BTAlpha || b.type == BTWater);
 		if( poly != null ) {
 			var engine = h3d.Engine.getCurrent();
 			if( scene == null ) scene = new h3d.scene.Scene();
@@ -203,6 +205,14 @@ class Icons {
 			if( b.type == BTAlpha || b.type == BTWater ) {
 				// cristal, hielo, agua: se ven translucidos, no solo sus marcos (el original los dibuja con alfa)
 				mat.blendMode = Alpha;
+				if( translucent ) {
+					// el blend Alpha de Heaps usa SrcAlpha tambien para el alfa: sobre el fondo vacio queda a * a (casi invisible) y
+					// el color premultiplicado (oscuro). Aqui el alfa se suma como debe (One, OneMinusSrcAlpha) y el color se
+					// despremultiplica al leerlo; sin escribir profundidad, para que se vean todas las caras y no segun su orden
+					mat.mainPass.blendAlphaSrc = One;
+					mat.mainPass.blendAlphaDst = OneMinusSrcAlpha;
+					mat.mainPass.depthWrite = false;
+				}
 			} else {
 				mat.textureShader.killAlpha = true;
 				mat.textureShader.killAlphaThreshold = 0.5;
@@ -229,7 +239,11 @@ class Icons {
 			px.convert(BGRA);
 			var bd = new flash.display.BitmapData(size, size, true, 0);
 			for( k in 0...size * size ) bd.px[k] = px.bytes.getInt32(k * 4);
+			if( translucent ) for( k in 0...size * size ) bd.px[k] = unpremultiply(bd.px[k]);
+			var shape = translucent ? bd.px.copy() : null;
 			bd.applyFilter(bd, bd.rect, new flash.geom.Point(0, 0), new flash.filters.GlowFilter(0x0, 1, blur, blur, 1));
+			// el contorno negro va alrededor, no detras de las caras translucidas (las oscurecia): donde hay bloque queda el bloque
+			if( translucent ) for( k in 0...size * size ) if( (shape[k] >>> 24) > 0 ) bd.px[k] = shape[k];
 			for( k in 0...size * size ) px.bytes.setInt32(k * 4, bd.px[k]);
 			tex.uploadPixels(px);
 			px.dispose();
@@ -239,5 +253,13 @@ class Icons {
 			poly.dispose();
 		}
 		return tex;
+	}
+
+	/** ARGB con el color premultiplicado por el alfa -> color normal */
+	static function unpremultiply( c : Int ) : Int {
+		var a = (c >>> 24) & 0xFF;
+		if( a == 0 || a == 0xFF ) return c;
+		inline function ch( v : Int ) return Std.int(Math.min(255, v * 255 / a));
+		return (a << 24) | (ch((c >> 16) & 0xFF) << 16) | (ch((c >> 8) & 0xFF) << 8) | ch(c & 0xFF);
 	}
 }

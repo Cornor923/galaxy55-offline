@@ -44,6 +44,7 @@ enum abstract KubState(Int) to Int {
  * - una receta se descubre al recuperar uno de sus kubes (ingredientes o resultado);
  * - un tipo de planeta o de cometa se descubre al aterrizar en uno, una anomalia al pasar cerca de una (hasta entonces sale
  *   como "???" en los sitios de sus kubes);
+ * - las cargas (citronox, etherium, rosa) tienen su propia categoria: se recuperan al tenerlas.
  * - los kubes de tu nave se conocen desde el principio (shipKnown). Las cargas no son fichas: salen en las recetas que las dan.
  * En creativo se sabe todo (Kubindex.full) y no se apunta nada.
  */
@@ -149,7 +150,7 @@ class Kubindex {
 		var k = ensure(info);
 		if( lastSeen != null && lastSeen.kub == k && lastSeen.index == b.index ) return;
 		lastSeen = { kub : k, index : b.index };
-		var e = KubData.get().entryOf(b);
+		var e = KubData.get().entryOrCharge(b);
 		if( e == null || k.seen.indexOf(key(e)) >= 0 || k.got.indexOf(key(e)) >= 0 ) return;
 		k.seen.push(key(e));
 		k.fresh.push(key(e));
@@ -159,7 +160,7 @@ class Kubindex {
 	/** un kube llega al inventario (o se rompe uno que no suelta nunca nada) */
 	public static function gain( info : SaveInfo, b : Block ) {
 		if( full(info) || b == null ) return;
-		var e = KubData.get().entryOf(b);
+		var e = KubData.get().entryOrCharge(b);
 		if( e == null ) return;
 		var k = ensure(info), n = key(e);
 		if( k.got.indexOf(n) >= 0 ) return;
@@ -169,10 +170,13 @@ class Kubindex {
 		news("kub.got", e, Got);
 	}
 
-	/** los bloques que hay en el inventario quedan recuperados (las cargas no son fichas); en cada cambio del inventario */
+	/** lo que hay en el inventario (bloques y cargas) queda recuperado; en cada cambio del inventario */
 	public static function scan( info : SaveInfo, inv : Protocol.InventoryInfos ) {
 		if( full(info) || inv == null ) return;
 		for( s in inv.t ) if( s != null && s.n > 0 ) gain(info, Block.all[s.k]);
+		for( c in inv.charges )
+			if( c.n > 0 )
+				for( b in KubData.get().charges ) if( Type.enumIndex(b.charge) == c.c ) gain(info, b);
 	}
 
 	/** los kubes de tu nave se conocen desde el principio: recuperados, sin aviso ni estrella (tambien tras cambiarla en el hangar) */

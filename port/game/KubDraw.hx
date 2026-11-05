@@ -54,7 +54,15 @@ class KubDraw {
 		t.text = StringTools.rtrim(s) + "...";
 	}
 
-	public static function chargeName( c : ChargeKind ) return KubText.get("charge." + Type.enumConstructor(c));
+	/** color de cada carga (amarilla, azul, rosa, bonus verde) */
+	public static function chargeColor( c : ChargeKind ) : Int {
+		return switch( c ) {
+			case CYellow: 0xFFD23F;
+			case CBlue: 0x5AB4FF;
+			case CPink: 0xFF7AD9;
+			case CBonus: 0x7CE85A;
+		}
+	}
 
 	/**
 	 * Linea de una receta: sus niveles de abajo arriba (cada uno con su ficha, cuantos y la forma) y el resultado. Lo que no se
@@ -88,7 +96,7 @@ class KubDraw {
 		return x + ITEM_W;
 	}
 
-	/** un ingrediente o el resultado (b: el bloque de la receta); las cargas no son fichas pero se ven siempre, sin clic */
+	/** un ingrediente o el resultado (b: el bloque de la receta); las cargas se ven siempre, y se pinchan una vez recuperadas */
 	static function item( parent : h2d.Object, b : Block, n : Int, shape : String, info : SaveInfo, atlas : h3d.mat.Texture, x : Float, y : Float,
 			onPick : Block -> Void, box : KubScroll ) {
 		var o = new h2d.Object(parent);
@@ -114,7 +122,7 @@ class KubDraw {
 			ly += 15;
 		}
 		if( st == Unknown && e != null ) fit(Theme.text(o, KubData.get().placeShort(info, e), 1.05, Theme.CYAN, tx, ly), tw);
-		if( e != null && !charge && st != Unknown && onPick != null ) {
+		if( e != null && st != Unknown && (!charge || Kubindex.known(info, e)) && onPick != null ) {
 			var it = new h2d.Interactive(ITEM_W - 6, ITEM_H, o);
 			it.onClick = function(_) if( box == null || box.mouseIn() ) onPick(e);
 		}
