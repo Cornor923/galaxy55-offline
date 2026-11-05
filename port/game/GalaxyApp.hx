@@ -1698,6 +1698,18 @@ class GalaxyApp extends hxd.App {
 		clearUi();
 		hud.visible = false; msgText.visible = false;
 		loadInfo = info;
+		loadWorld = null;
+		loadShip = null;
+		// la nave nodriza: sus datos (~100 ms la primera vez) y su mundo, cada uno en una imagen de la pantalla de carga
+		if( info.mothership == true ) loadSteps = [function() { Mothership.data(); }, function() createWorld(info)];
+		else createWorld(info);
+		showPlanetLoading();
+	}
+
+	/** lo que queda por hacer en la pantalla de carga antes de tener el mundo (uno por imagen) */
+	var loadSteps : Array<Void -> Void> = [];
+
+	function createWorld( info : SaveInfo ) {
 		loadWorld = info.mothership == true
 			? new World(info.seed, "BIMoon", (Mothership.data() != null ? Mothership.sizeChunks : 1), s3d, atlas, false, null, Mothership.withShip(Hangar.currentShip(info)))
 			: info.hangar == true
@@ -1719,7 +1731,6 @@ class GalaxyApp extends hxd.App {
 		loadWorld.root.visible = false;
 		// la nave del planeta (no en la nodriza ni en el hangar) tambien se construye en la pantalla de carga, despues del planeta
 		loadShip = info.mothership == true || info.hangar == true ? null : Ship.prepare(loadWorld, atlas, s3d, info.shipEdits, Hangar.currentShip(info));
-		showPlanetLoading();
 	}
 
 	/** el mundo de la nave mientras se carga el planeta (Ship.prepare) */
@@ -2416,15 +2427,22 @@ class GalaxyApp extends hxd.App {
 			bgCamera(dt);
 		}
 
-		if( state == Loading && loadWorld != null ) {
-			if( !loadWorld.isReady() ) loadWorld.step(14);
-			else if( loadShip != null ) loadShip.step(14);
+		if( state == Loading && (loadWorld != null || loadSteps.length > 0) ) {
+			var skyDone = false;
+			if( loadWorld == null )
+				loadSteps.shift()();
+			else {
+				if( !loadWorld.isReady() ) loadWorld.step(14);
+				else if( loadShip != null ) loadShip.step(14);
+				// el cielo de espacio de la nodriza (Sky.stepSpace) se pinta a la vez; mas deprisa cuando el mundo ya esta
+				skyDone = loadWorld.sky.stepSpace(loadWorld.isReady() ? 30 : 8);
+			}
 			// Game.update: el trozo avanza 0.1 en cada imagen y vuelve al principio
 			loadAnimPos += 0.1;
 			if( loadAnimPos > 1 ) loadAnimPos--;
 			drawLoadAnim();
 			if( dev != null ) dev.loadingFrame(this);
-			if( loadWorld.isReady() && (loadShip == null || loadShip.isReady()) ) finishLoading();
+			if( skyDone && loadWorld.isReady() && (loadShip == null || loadShip.isReady()) ) finishLoading();
 		}
 
 		if( state == Playing && game != null ) {

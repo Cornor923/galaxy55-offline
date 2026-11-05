@@ -300,6 +300,7 @@ class World {
 	public function step( budgetMs : Float ) : Float {
 		var t0 = haxe.Timer.stamp();
 		if( phase == 0 && isShip ) {
+			if( shipCells != null && !placeCells(t0, budgetMs) ) return progress = 0.25;
 			if( lighting == null ) {
 				applySaved();
 				lighting = lightTask();
@@ -625,8 +626,8 @@ class World {
 				}
 				stage = infos.length > 0 ? 2 : 3;
 			case 2:
-				// las lamparas de una fila de columnas
-				var end = p0 + size * HEIGHT;
+				// las lamparas de un cuarto de fila de columnas (en la nodriza, llena de lamparas, una fila entera pasaba de 50 ms)
+				var end = p0 + (size * HEIGHT >> 2);
 				lamps(p0, end, lightIdx, infos, powers);
 				p0 = end;
 				if( p0 >= n ) {
@@ -793,8 +794,29 @@ class World {
 		wraps = false;
 		bytes = haxe.io.Bytes.alloc(size * size * HEIGHT);
 		initLightTables();
-		for( c in d.cells )
-			bytes.set(((c.x + c.y * size) << ZBITS) | c.z, localId(Block.all[c.id]));
+		// las celdas se ponen en los primeros pasos de la carga (placeCells): las ~390 000 de la nave nodriza tardaban ~100 ms
+		shipCells = d.cells;
+		shipCell = 0;
+	}
+
+	/** celdas de la nave aun por poner (initShip) y la siguiente */
+	var shipCells : Array<ShipData.ShipCell>;
+	var shipCell = 0;
+
+	/** pone celdas de la nave, en orden, hasta acabarlas o gastar el tiempo de este paso (empezado en t0); true si estan todas */
+	function placeCells( t0 : Float, budgetMs : Float ) : Bool {
+		var cells = shipCells;
+		while( shipCell < cells.length ) {
+			if( (haxe.Timer.stamp() - t0) * 1000 >= budgetMs ) return false;
+			var end = shipCell + 8192 < cells.length ? shipCell + 8192 : cells.length;
+			for( i in shipCell...end ) {
+				var c = cells[i];
+				bytes.set(((c.x + c.y * size) << ZBITS) | c.z, localId(Block.all[c.id]));
+			}
+			shipCell = end;
+		}
+		shipCells = null;
+		return true;
 	}
 
 	/** coordenada de la nave que corresponde a una del planeta (el planeta da la vuelta) */
