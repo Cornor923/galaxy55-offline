@@ -65,11 +65,14 @@ class KubDetail extends h2d.Object {
 			return;
 		}
 		cy += 6;
-		var s = Kubindex.stat(info, e, false);
-		// fabricados: los que han salido del sintetizador (veces que se hizo cada receta que lo da, por lo que da cada vez)
-		var made = 0;
-		for( r in d.recipesMaking(e) ) made += Kubindex.craftCount(info, r) * (r.count == null ? 1 : r.count);
-		line(KubText.get("kub.stats").split("%p%").join("" + (s == null ? 0 : s.p)).split("%b%").join("" + (s == null ? 0 : s.b)).split("%c%").join("" + made), 1.3, Theme.TEXT);
+		// en creativo no se apunta nada: sin estadisticas, que siempre estarian a 0
+		if( !Kubindex.full(info) ) {
+			var s = Kubindex.stat(info, e, false);
+			// fabricados: los que han salido del sintetizador (veces que se hizo cada receta que lo da, por lo que da cada vez)
+			var made = 0;
+			for( r in d.recipesMaking(e) ) made += Kubindex.craftCount(info, r) * (r.count == null ? 1 : r.count);
+			line(KubText.get("kub.stats").split("%p%").join("" + (s == null ? 0 : s.p)).split("%b%").join("" + (s == null ? 0 : s.b)).split("%c%").join("" + made), 1.3, Theme.TEXT);
+		}
 		// las cargas que da al romperlo (citronox viejo, plantas...), como una receta: el kube -> sus cargas
 		var drop = e.getDrop();
 		if( drop != null && drop.b.charge != null )
