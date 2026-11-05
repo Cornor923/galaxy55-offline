@@ -1534,6 +1534,9 @@ class World {
 		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = m.uvs;
 		poly.colors = m.cols;
+		// sus buffers se crean y se suben ya, con el trozo (en la carga, dentro del tiempo de cada paso): si no, se hacian en el
+		// primer dibujo, los de todo el planeta en la misma imagen (~280 buffers y 350-730 ms al aparecer el menu o el planeta)
+		poly.alloc(h3d.Engine.getCurrent());
 		// con mipmaps como el original (DefShader, TransShader, WaterShader1); el hielo y el cristal sin ellos (AlphaShader1)
 		var mat = h3d.mat.Material.create(kind == 3 || Atlas.mipped == null ? atlas : Atlas.mipped);
 		mat.shadows = false;
