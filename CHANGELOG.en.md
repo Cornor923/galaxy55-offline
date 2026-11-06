@@ -2,7 +2,7 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Unreleased
+## v0.7 — pre-release
 - **ESCorp database** (port addition), on the on-board computer, with three tabs: the **Kubindex**, with every kube of the
   game by category (pointing the laser at one spots it; having it in the inventory collects it, with how many times it was
   placed, broken and crafted, the recipes that make it and the ones that use it); **Space**, with the planet and comet types
@@ -24,6 +24,7 @@
 - The congratulations at the end of the tutorial go away on takeoff and last 12 s (16 before): they no longer come back on
   the next planet, followed by "this is your main planet".
 - Kube editor: in French, the help says "enregistrer" again for Ctrl+S.
+- With the ESCorp database open, the key help no longer shows behind its tabs.
 - **Kube editor** (port addition): in the start menu, under New game. Draw the faces of a block pixel by pixel in one of the
   shapes the game already draws (cube, 6-sided cube, box, door, plant, panel, column...), watch it turn in 3D and save it as a
   `.kube` file in the `kubes` folder of the game data to send it to us. Any game block can be the starting point.

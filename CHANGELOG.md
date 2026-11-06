@@ -2,7 +2,7 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Sin publicar
+## v0.7 — pre-release
 - **Base de datos ESCorp** (añadido del port), en el ordenador de a bordo, con tres pestañas: el **Kubindex**, con todos los
   kubes del juego por categorías (apuntar uno con el láser lo localiza; tenerlo en el inventario lo recupera, con las veces
   que se ha puesto, roto y fabricado, las recetas que lo dan y las que lo usan); **Espacio**, con los tipos de planeta y de
@@ -24,6 +24,7 @@
 - Las felicitaciones del final del tutorial se van al despegar y duran 12 s (antes 16): ya no vuelven en el planeta
   siguiente, seguidas de "este es tu planeta principal".
 - Editor de kubes: en francés, la ayuda vuelve a decir "enregistrer" para Ctrl+S.
+- Con la base de datos ESCorp abierta ya no se ve la ayuda de las teclas detrás de sus pestañas.
 - **Editor de kubes** (añadido del port): en el menú de inicio, debajo de Nueva partida. Se dibujan las caras de un bloque
   píxel a píxel en una de las formas que ya dibuja el juego (cubo, cubo de 6 caras, caja, puerta, planta, panel, columna...),
   se ve girar en 3D y se guarda como archivo `.kube` en la carpeta `kubes` de los datos del juego para enviárnoslo. Se puede

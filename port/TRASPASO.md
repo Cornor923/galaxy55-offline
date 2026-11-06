@@ -208,6 +208,35 @@ A tener en cuenta:
   igual sin el 92 en el fork.
 - `port/headless` (93): comparado con `main` en 7 de los 14 casos (todos los biomas con pasos repartidos y Marte), mismos
   Adler-32; en el fork de Cornor, los 14.
+
+## Comprobación de los PR 87-95 en el PC de Pvie (2026-11-06)
+Cornor los fusionó él mismo en `main` (49be008). Aquí: compilan SDL, **DX** y headless; los 8 mundos de `port/headless` dan las
+mismas sumas que antes de los PR (generador repartido en trabajos, mismo orden); las partidas guardadas con baf96ac cargan
+(`load` con `--load`); `kubindex.json` en `package.ps1`; `BICometCinder` al final de `BiomeKind`, sin bloques nuevos. Pasan sus
+13 guiones nuevos y 25 de los de siempre (sintetizador, colocar, tutorial, menús, mapa, hangar, pilotar, kubes, luz). Notas:
+`kubindex_guardar` difiere antes/después de recargar solo porque `kub forget` borra los kubes de la nave y al recargar
+`Kubindex.shipKnown` los vuelve a poner (como en una partida normal); en una prueba sin idioma elegido (sin settings.json) los
+nombres son los del original y la carga rosa sale "-": en el juego la primera vez se elige idioma y no pasa.
+Arreglado aquí: con la base de datos abierta, la ayuda de las teclas (hud) se veía detrás de sus pestañas (el panel es
+translúcido); `openDatabase` la oculta y `closeDatabase` la vuelve a mostrar.
+## v0.7 preparada (2026-11-06)
+Changelogs ES/EN/FR y ERRORES/BUGS pasan de "Sin publicar" a v0.7; enlaces de los README a `releases/tag/v0.7`; menú
+"v0.7 · port nativo"; notas en `port/RELEASE.md` (3 idiomas). Zips con `package.ps1 -Version 0.7 -HashLink
+..\tools-portable\hashlink\hashlink-1.16.0-win` en `port/out/release` (Windows 8,4 MB, Linux/macOS 3,0 MB, los dos con
+`res/kubindex.json`). Probado el de Windows descomprimido en una carpeta vacía: OpenGL y DirectX crean partida, cargan el
+planeta y leen la base de datos (164 fichas). Falta: etiqueta `v0.7`, subir y que Pvie cree la release (pre-release) con los
+dos zips.
+## README con la v0.7 (2026-11-06)
+Sección "New in v0.7" / "Novedades de la v0.7" / "Nouveautés de la v0.7" en `README.md`, con `docs/img/base-datos.jpg`
+(Kubindex), `docs/img/cometa.jpg` (ventana del cometa en el mapa), `docs/img/editor-kubes.gif` (editor con el motor espacial
+girando) y `docs/img/pilotar.gif` (vuelo sobre el planeta). Capturas en inglés, sin la ayuda de teclas (settings.json con
+"showHelp": false), hechas con devrun y pasadas a GIF con ffmpeg (12 fps, 640 px, paleta de 128 colores). La vista del cometa
+desde el suelo o dando la vuelta salía oscura y poco clara: por eso la foto es la del mapa.
+`docs/img/biomas.jpg` rehecha (2026-11-06): nevado, Marte, Luna y bosque ácido (bajo los árboles-seta), desde el suelo, sin
+ayuda de teclas, FPS ni nombre del bloque (settings.json con "showHelp": false y "targetName": false), 2x2 a 1280x720.
+Notas de la release v0.7 rehechas con el texto largo de Cornor (en inglés, comprobado contra el código: licencias, 1000
+créditos y 24 h, abandonar, categorías del Kubindex, cometas), formato limpio, cómo jugar, créditos y traducción ES/FR, en
+`port/RELEASE.md`; Pvie guarda el cambio en la página de la release.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
