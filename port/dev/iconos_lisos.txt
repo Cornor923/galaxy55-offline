@@ -1,6 +1,7 @@
-# iconos de la paleta del modo creativo y de la barra del inventario: los bloques translucidos (cristal, hielo, agua, gemas de
-# Kube, campo de fuerza...) se ven como en la Base de datos ESCorp (alfa bien acumulado, sin el contorno por dentro) y los iconos
-# salen lisos (el grande con mipmaps, smooth = true) tambien en una ventana pequena. Capturas port/out/iconos_*.png
+# iconos de los bloques en toda la interfaz (Icons.bitmap): paleta del modo creativo, barra del inventario, cofre, tienda del
+# robot, contratos y editor de kubes. Los bloques translucidos (cristal, hielo, agua, gemas de Kube, campo de fuerza...) se ven
+# como en la Base de datos ESCorp (alfa bien acumulado, sin el contorno por dentro) y los iconos salen lisos (el grande con
+# mipmaps, smooth = true) tambien en una ventana pequena. Capturas port/out/iconos_*.png
 wait 3
 setlang fr
 planet
@@ -55,4 +56,55 @@ wait 5
 shot iconos_paleta1_pequena
 close
 wait 5
+# el cofre, la tienda del robot y los contratos, con los mismos bloques en el inventario: en la ventana pequena y en la normal
+ship
+wait 10
+setl 62 61 3 BChest
+wait 5
+activatel 62 61 3
+wait 5
+shot iconos_cofre_pequena
+winsize 1280 720
+wait 10
+shot iconos_cofre
+close
+wait 5
+shop
+wait 5
+shot iconos_tienda
+winsize 640 360
+wait 10
+shot iconos_tienda_pequena
+close
+wait 5
+contracts
+wait 5
+shot iconos_contratos_pequena
+winsize 1280 720
+wait 10
+shot iconos_contratos
+contracts close
+wait 5
+# el editor de kubes (Menu principal > Editor de Kubes): la lista de los bloques del juego
+menu
+waitfor menu
+tap down
+tap down
+tap enter
+wait 30
+kube tab 0
+wait 10
+print kube
+shot iconos_editor
+winsize 640 360
+wait 10
+shot iconos_editor_pequena
+# Mis kubes: la miniatura de un kube guardado, lisa como los iconos
+kube load BIce
+kube name Glace lisse test
+kube save
+wait 3
+kube tab 1
+wait 10
+shot iconos_editor_miskubes_pequena
 quit
