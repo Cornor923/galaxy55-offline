@@ -8,7 +8,7 @@ connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine, ave
 ## Jouer
 
 Compile-le (voir plus bas) et double-clique sur `jugar.bat`, ou télécharge le zip portable depuis la
-[release](../../../releases/tag/v0.6). Le menu de démarrage propose Continuer (la liste des parties : jouer, renommer ou supprimer), Nouvelle partie, Options et Quitter.
+[release](../../../releases/tag/v0.6). Le menu de démarrage propose Continuer (la liste des parties : jouer, renommer ou supprimer), Nouvelle partie, Éditeur de Kubes (ajout du portage : dessiner de nouveaux blocs et les enregistrer en `.kube` dans le dossier `kubes` des données), Options et Quitter.
 Dans Nouvelle partie, tu choisis le nom, la graine et le mode : **Aventure** (comme dans l'original, inventaire vide) ou **Créatif** (notre ajout, avec biome et taille).
 Les parties et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`), et les captures d'écran (F2) dans son dossier `screenshots`.
 Le format des sauvegardes peut changer d'une version à l'autre : ne compte pas sur le fait que les parties d'aujourd'hui fonctionnent toujours.
@@ -87,8 +87,9 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 
 - `game/` le jeu : menus (`GalaxyApp`, `Ui`), langues (`Lang`), réglages (`Settings`), sauvegardes (`SaveData`), planète, lumière et
   maillage (`World`), écoulement de l'eau (`WorldProcess`), modèles de blocs (`Models`), ciel et brouillard (`Sky`), neige (`Snow`),
-  joueur, creuser et poser (`GameView`), inventaire (`Inv`, `InvBar`, `Palette`), effets et objets tombés (`Fx`, `Drops`) et le
-  vaisseau (`Ship`, `ShipData`).
+  joueur, creuser et poser (`GameView`), inventaire (`Inv`, `InvBar`, `Palette`), effets et objets tombés (`Fx`, `Drops`), le
+  vaisseau (`Ship`, `ShipData`), les comètes (`Comets`, `CometGenerator`) et la base de données ESCorp (`Kubindex`, `KubData`,
+  `DatabasePanel` et les vues `Kub*`).
 - `explore/` la carte stellaire (`Explorer`, avec le robot marchand et les flèches GPS).
 - `shim/` couche de compatibilité `flash.*` pour que les générateurs d'origine compilent en HashLink.
 - `headless/` programmes de vérification : les mondes sont identiques à ceux de Flash (empreinte Adler-32, eau et blocs) ; ils lisent aussi le vaisseau et les sauvegardes.
@@ -124,8 +125,8 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   les plaques (l'original ne le bougeait qu'en cassant un bloc à cet endroit) ; on ne retourne au vaisseau que debout sur sa
   base, pas de plus haut.
 - Piloter le vaisseau au-dessus de la planète est un ajout de ce portage (l'original le laissait toujours au même endroit de
-  chaque planète) : depuis l'ordinateur de bord, seulement sur les planètes jouables (pas dans le vaisseau-mère, le hangar ni
-  pendant le tutoriel). Il reste toujours à la même hauteur, sans coût, avec une caméra derrière et au-dessus et un brouillard
+  chaque planète) : depuis l'ordinateur de bord, seulement sur les planètes jouables (pas dans le vaisseau-mère, le hangar, les comètes ni
+  pendant le tutoriel ; en aventure, seulement au-dessus de la planète principale). Il reste toujours à la même hauteur, sans coût, avec une caméra derrière et au-dessus et un brouillard
   plus léger pendant ce temps ; le rayon de lumière montre où il restera (il s'efface à pleine vitesse et revient en allant
   doucement, à l'arrêt et à l'atterrissage). Il accélère et freine en douceur, se tourne vers où il
   va et s'incline dans les virages ; quand on le laisse, il reprend son orientation habituelle avant d'atterrir (ses blocs,
@@ -139,4 +140,18 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   qu'ils ne sont pas autorisés à bord. L'original n'empêchait de poser que ce qui se propage (source de cascade et lave), sans message.
 - Dans le hangar, on creuse quatre fois plus vite et sans charges, comme dans les zones de synthétiseur du vaisseau : changement
   du port, pour modifier le vaisseau confortablement. Dans l'original, on y creusait comme sur une planète, avec les charges.
+- Tomber dans le sable mouvant (changement du port) : en le touchant, on prend le choc de la chute jusqu'à lui, comme sur le
+  sol, et le sable arrête la chute ; en le quittant par le bas, la chute se compte depuis la sortie. Dans l'original, il ne
+  faisait que ralentir le temps : la vitesse continuait d'augmenter dedans et les dégâts arrivaient à la fin, ceux de toute la
+  chute. Comme dans l'original, le sable fait perdre de la vie quand les yeux sont dedans et, de l'intérieur, on ne vise rien
+  en regardant vers le bas.
+- La base de données ESCorp (ordinateur de bord) est un ajout de ce portage : le Kubindex avec tous les kubes, les types de
+  planète et de comète, les anomalies et les recettes, qui se remplissent en jouant. La marque des nouveautés est une icône de
+  Mush (`recent.png`, Motion Twin, CC BY-NC-SA 4.0).
+- Les comètes sont un ajout de ce portage : des mondes de 96x96 qui passent un moment dans les systèmes (un tirage fixe par
+  système et par tranche de 2 heures, pas le serveur). Elles n'utilisent pas de licence et le temps d'amarrage dépend de la
+  vitesse du vaisseau.
+- Dans la zone du synthétiseur et dans le hangar, ce qu'on casse tombe toujours (changement du portage : dans l'original, ce qui
+  ne tombe qu'avec de la chance était souvent perdu quand on le reprenait là). Un bloc tombé enterré sous des blocs posés
+  ressort par le côté ; dans l'original, il montait à travers eux et, dans le vaisseau, finissait sur le toit.
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).

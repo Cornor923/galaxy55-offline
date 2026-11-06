@@ -67,6 +67,7 @@ import Common;
  *                           las acciones (izq / der = flechas, ok = Intro, clic< / clic> = clic en esas flechas, clicfila =
  *                           clic en el titulo de la fila) y pulsa Crear; seguir con waitfor planet y print biome
  *   tuto new|notuto [semilla] partida de aventura nueva en el espacio, con o sin tutorial; tuto step N; tuto skip (sin preguntar)
+ *                           tuto goto|goin|mine|activate: junto al primer objetivo / dentro de su celda / excavarlo / activarlo
  *   print tuto              paso del tutorial, objetivos marcados, sus bloques en el planeta y el texto (tambien en el mapa)
  *   menu                    Menu principal (guarda la partida, como desde la pausa); el guion sigue en los menus de inicio
  *   devsaves N              borra las partidas de la carpeta de datos de prueba y crea N de ejemplo (solo con GALAXY55_DATA)
@@ -75,10 +76,10 @@ import Common;
  *   wheel N                 rueda del raton (N > 0 = hacia abajo), donde lo dejo la ultima orden mouse
  *   mouse X Y [click]       llevar el raton a ese punto de la zona 1280x720 (y hacer clic)
  *   print menu|saves        pantalla de menu abierta y su foco / partidas guardadas (waitfor menu: el menu y su fondo listos)
+ *   print mouse             donde cree el juego que esta el puntero (pixeles de la ventana, zona 1280x720) y el cursor del sistema
  *   kube ORDEN              editor de kubes abierto (screen kubes): load BLOQUE (copiar un bloque del juego), shape ID, face NOMBRE,
  *                           paint x0 y0 x1 y1 AARRGGBB (rectangulo de la cara, 0 = borrar), name TEXTO, tab 0|1, file N (cargar el
  *                           .kube N de Mis kubes), save; print kube
- *   print mouse             donde cree el juego que esta el puntero (pixeles de la ventana, zona 1280x720) y el cursor del sistema
  *   quit
  */
 class Dev {
@@ -562,9 +563,9 @@ class Dev {
 					var area = Ui.Theme.visibleArea(), eng = h3d.Engine.getCurrent();
 					var mx = (f(a[1]) - area.x) * eng.width / area.w, my = (f(a[2]) - area.y) * eng.height / area.h;
 					var win = hxd.Window.getInstance();
-					mousePos = [mx, my];
 					// como un movimiento de verdad, la ventana sabe donde esta el puntero (Screen.holdHover lo mira)
 					@:privateAccess { win.curMouseX = Std.int(mx); win.curMouseY = Std.int(my); }
+					mousePos = [mx, my];
 					win.event(new hxd.Event(EMove, mx, my));
 					if( a[3] == "click" ) {
 						win.event(new hxd.Event(EPush, mx, my));
@@ -650,10 +651,12 @@ class Dev {
 							lines.insert(pc, "lookat " + (t.x + 0.5) + " " + (t.y + 0.5) + " " + (t.z + 0.5));
 							lines.insert(pc, "tp " + (t.x + 0.5 + d[0] * 6) + " " + (t.y + 0.5 + d[1] * 6) + " top");
 						}
-					case "goto", "mine", "activate":
-						// sobre el primer objetivo marcado: goto = de pie a 1,5 bloques mirandolo; mine y activate como esas ordenes
+					case "goto", "goin", "mine", "activate":
+						// sobre el primer objetivo marcado: goto = de pie a 1,5 bloques mirandolo; goin = dentro de su celda (el rayo de
+						// la nave, que hay que pisar); mine y activate como esas ordenes
 						var t = @:privateAccess app.tutorial.targets(g)[0];
 						if( t == null ) Sys.println("tuto " + a[1] + ": sin objetivo");
+						else if( a[1] == "goin" ) lines.insert(pc, "tp " + (t.x + 0.5) + " " + (t.y + 0.5) + " " + t.z);
 						else if( a[1] == "goto" ) {
 							// en una celda libre junto a el (con sitio para la cabeza): el hueco del risco, el lado del filon
 							var at = null;
@@ -849,16 +852,17 @@ class Dev {
 			Sys.println(app.devSavesInfo());
 			return;
 		}
+		if( a[1] == "mouse" ) {
+			var win = hxd.Window.getInstance(), gx = 0, gy = 0;
+			// sdl.Sdl solo existe en el build SDL: en el de DirectX (game_dx.hxml) no compilaba; alli el cursor del sistema sale 0,0
+			#if hlsdl sdl.Sdl.getGlobalMouseState(gx, gy); #end
+			Sys.println("raton: ventana " + win.mouseX + "," + win.mouseY + " de " + win.width + "x" + win.height
+				+ " | zona " + Std.int(app.s2d.mouseX) + "," + Std.int(app.s2d.mouseY) + " | sistema " + gx + "," + gy);
+			return;
+		}
 		if( a[1] == "kube" ) {
 			var k = Std.downcast(@:privateAccess app.current, KubeEditor);
 			Sys.println(k == null ? "kube: el editor de kubes no esta abierto" : k.devInfo());
-			return;
-		}
-		if( a[1] == "mouse" ) {
-			var win = hxd.Window.getInstance(), gx = 0, gy = 0;
-			sdl.Sdl.getGlobalMouseState(gx, gy);
-			Sys.println("raton: ventana " + win.mouseX + "," + win.mouseY + " de " + win.width + "x" + win.height
-				+ " | zona " + Std.int(app.s2d.mouseX) + "," + Std.int(app.s2d.mouseY) + " | sistema " + gx + "," + gy);
 			return;
 		}
 		if( a[1] == "shots" ) {

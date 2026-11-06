@@ -105,15 +105,6 @@ class Tutorial {
 	public function takeoff() doneTime = 0;
 
 	/**
-	 * La Base de datos ESCorp se abre desde su paso (DATABASE, tras fabricar el blindaje) hasta el final: COMPUTER y los numeros
-	 * de despues (HANGAR, LEAVE, DONE y DATABASE) son todos posteriores a PLATES. Antes, el boton sale desactivado.
-	 */
-	public static function databaseAllowed( info : SaveInfo ) return !active(info) || info.tuto.step >= COMPUTER;
-
-	/** se abre la Base de datos ESCorp: el paso DATABASE esta hecho */
-	public static function databaseOpened( info : SaveInfo ) if( active(info) && info.tuto.step == DATABASE ) info.tuto.step = COMPUTER;
-
-	/**
 	 * Mientras dura, el sintetizador solo fabrica lo que el tutorial pide: aluminio (de la bauxita, ALU) y blindaje (del aluminio,
 	 * PLATES). Si no, el aluminio se podia gastar en otra receta (tubos, malla, dalle blindados...) y el tutorial se quedaba sin
 	 * salida: no hay mas bauxita que la que pone.
@@ -123,6 +114,15 @@ class Tutorial {
 		var out = Block.get(r.out).k;
 		return out == BAluminium || out == BShipHull;
 	}
+
+	/**
+	 * La Base de datos ESCorp se abre desde su paso (DATABASE, tras fabricar el blindaje) hasta el final: COMPUTER y los numeros
+	 * de despues (HANGAR, LEAVE, DONE y DATABASE) son todos posteriores a PLATES. Antes, el boton sale desactivado.
+	 */
+	public static function databaseAllowed( info : SaveInfo ) return !active(info) || info.tuto.step >= COMPUTER;
+
+	/** se abre la Base de datos ESCorp: el paso DATABASE esta hecho */
+	public static function databaseOpened( info : SaveInfo ) if( active(info) && info.tuto.step == DATABASE ) info.tuto.step = COMPUTER;
 
 	/** al salir del hangar con la nave guardada (valida y cambiada): se acaba en la siguiente actualizacion */
 	public static function repaired( info : SaveInfo ) if( active(info) ) info.tuto.step = DONE;

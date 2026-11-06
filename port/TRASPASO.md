@@ -150,6 +150,64 @@ no se reproduce en las pruebas, Cornor lo mira) y la nave que se movió (lo más
 pedir su partida: en Linux, `~/Galaxy55/saves/`). Comprobado además que la nave no se mueve con distintas velocidades de carga
 ni al continuar desde el menú mientras se genera el planeta de fondo.
 
+## PR 79-86 de Cornor923 integrados (2026-11-05)
+Fusionados en local en orden 80, 81, 83, 84, 85, 82, 86, 79. Un conflicto en `Dev.hx` entre el 86 (`mouse` fija la posición de
+la ventana, `print mouse`) y el 79 (`mousePos` para `wheel`, orden `kube`, `print kube`): se conservan las dos partes. El 86
+no compilaba en DirectX (`sdl.Sdl.getGlobalMouseState` en `print mouse`): se envuelve en `#if hlsdl`. Compilan SDL, DX y
+headless. Cambios del port respecto al original: el 85 (en Flash un segundo clic antes de 0,47 s tampoco ponía el bloque), el
+82 (ordenador del sintetizador con bloque en la mano y clic derecho) y el 81 (corte de alfa 0.03 en los trozos). El 79 añade
+el botón Editor de kubes al menú de inicio (los demás botones bajan una fila).
+Pasan los guiones de los PR (herbe_particules, tuto_flecha, tuto_sintetizador, sintetizador_rapido, sintetizador_mano,
+ordenador_raton, pausa_raton, kubes) y los de siempre synth y computer_menu; el build DX abre el menú de inicio. Después
+(2026-11-05): la línea de ayuda del editor de kubes no cabía en español ni en francés (la última orden bajaba a una segunda
+línea; en inglés sí cabe). Se acortan en `Lang.hx` ("Izq./Der.: cara"; "Flèches : face") y caben en una línea en los tres
+idiomas (capturas kubes_ayuda_es/en/fr). Arriba y abajo no hacen nada en el editor, así que "Flèches" no engaña. En francés
+Ctrl+S sigue siendo "enregistrer" ("sauver" no se dice de guardar en una interfaz) y la línea sigue cabiendo.
+Revisión a fondo posterior (2026-11-05), sin regresiones de los PR 79-86: unos 45 guiones (colocar, sintetizador, trozos,
+tutorial, ordenador y pausa, mapa, menús, partida) más 14 guiones en BIMoon, BIMars, BIWinterPeaks y BIAcidForest, y pruebas
+propias (menú de inicio con teclado, editor de kubes, pausa y ordenador seguidos, clic derecho, recetas en el tutorial).
+Arreglado en esta revisión:
+- Suelo negro bajo cuatro lingotes juntos en la nave (reportado por Pvie): `World.cornerLight`, cambio del port, solo caras de
+  arriba. Comparado píxel a píxel con el build anterior en 9 escenas de luz: solo cambia ese suelo.
+- Pruebas: la ventana de prueba salía visible en el centro del escritorio y movía el cursor real (captura del ratón de Heaps).
+  Con `GalaxyApp.TEST_RUN` (--script/--shot) se crea en -10000,-10000 y no captura el ratón; por eso fallaba a ratos
+  `menu_partidas` (el cursor real daba el foco a otro botón).
+- Editor de kubes: nombres reservados de Windows (con, aux...) se guardan con "-kube"; `print menu` con el editor abierto.
+Después, aclarado y arreglado: la hierba de Marte sí se apunta; es baja y las plantas se eligen por los píxeles de su
+textura (`GameView.modelHit`), así que solo se apunta de 0,1 a 0,4 de altura (barrido de puntos). No es un bug. `herb` ahora
+usa una plataforma propia a z=99 y apunta a 0,2 (pasa en otoño, Marte y Luna). `tuto_planeta` usa la nueva orden de Dev
+`tuto goin` (dentro de la celda del objetivo) para pisar el rayo: llega al paso 7. `tuto_bandeau` comprobado con un
+settings.json `{ "lang" : "es", "showHelp" : false }` en los datos de prueba: sin la ayuda de teclas el recuadro del tutorial
+sube bajo el inventario. Ojo: "lang" tiene que ser texto; con un número la lectura se corta y se ignora el resto del archivo.
+## PR 87-94 de Cornor923 integrados (2026-11-05)
+Fusionados en orden 87 a 91, 93, 94 y por último 92. El 92 (Base de datos ESCorp) iba sobre el 90 (cometas): la base de datos
+lista los tipos de cometa. Tres conflictos, todos resueltos conservando las dos partes:
+- `port/RESUMEN.md` entre el 88 y el 91: cada uno añade su entrada al final de "Estado actual"; van una tras otra.
+- `port/game/GalaxyApp.hx` entre el 88 (`pilotOffered`, `computerPilot`, `showComputer`) y el 92 (`computerDatabase`,
+  `computerTrade`): los dos bloques seguidos.
+- `port/game/World.hx` entre el 93 (`lighting`, `lightSteps`, `lightTime`) y el 92 (`anomalies()`): la luz primero.
+Los dos del 92 se resolvieron en su rama, fusionando `main` en ella. El 94 entra sin conflicto. Compila en SDL con todo. DirectX no
+se ha compilado aquí: en el PC de Cornor el hldx portátil es más antiguo que heaps (`dx.Window` sin `NO_ACTIVATE` en
+`hxd/Window.hl.hx`), y pasa igual con `main` sin los PR.
+Cada PR se comprobó por separado sobre `main` con sus guiones (ver su descripción): `licencias`, `licencias_creativo` (88);
+`tuto_despegue` (89); `cometa`, `cometa_terreno`, `hangar`, `vuelta_nave` (90); `arena_movediza`, `creativo_caida` (91);
+los cinco `kubindex*` (92); `mother`, `hangar`, `vuelta_nave` y `port/headless` (93); `recuperar_zona`,
+`suelto_enterrado`, `drop_rest` (94).
+Añadidos del port: 90 (cometas) y 92 (Base de datos ESCorp). Cambios del port respecto al original: 88 (Pilotar la nave ya no
+sale fuera del planeta principal), 91 (caer en la arena movediza es como aterrizar; el daño dentro y que desde dentro no se apunte
+mirando abajo se quedan como el original, a propósito) y 94 (en la zona del sintetizador y en el hangar todo se suelta; el suelto
+enterrado sale por un lado).
+A tener en cuenta:
+- `res/kubindex.json` tiene que ir junto a los demás recursos: `package.ps1` ya lo copia; un script de compilación propio que
+  copie `res/` a mano tiene que añadirlo (sin él la base de datos sale vacía).
+- El icono de "nuevo" del 92 es `img/icons/ui/recent.png` de Mush (WebGamesArchives de Motion Twin, CC BY-NC-SA 4.0), sin
+  modificar, acreditado en `NOTICE` e incluido en el .hl con `-resource`.
+- Partidas antiguas: sin `kub` empiezan con la base de datos vacía (los kubes de la nave ya conocidos) y tienen cometas igual
+  (no se guarda nada por cometa).
+- `kubindex_tuto`: el último `waitfor planet` (al entrar en el hangar) caduca, pero el paso queda en HANGAR como debe; pasa
+  igual sin el 92 en el fork.
+- `port/headless` (93): comparado con `main` en 7 de los 14 casos (todos los biomas con pasos repartidos y Marte), mismos
+  Adler-32; en el fork de Cornor, los 14.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

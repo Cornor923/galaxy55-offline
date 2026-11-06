@@ -36,17 +36,15 @@ class KubDraw {
 		return bm;
 	}
 
-	/** estrellita de 5 puntas de radio r centrada en cx, cy (lo nuevo en la Base de datos ESCorp) */
-	public static function star( g : h2d.Graphics, cx : Float, cy : Float, r : Float, color : Int ) {
-		g.beginFill(0x000000, 0.6);
-		g.drawCircle(cx, cy, r + 2);
-		g.endFill();
-		g.beginFill(color);
-		for( i in 0...10 ) {
-			var a = -Math.PI / 2 + i * Math.PI / 5, d = i % 2 == 0 ? r : r * 0.45;
-			if( i == 0 ) g.moveTo(cx + Math.cos(a) * d, cy + Math.sin(a) * d) else g.lineTo(cx + Math.cos(a) * d, cy + Math.sin(a) * d);
-		}
-		g.endFill();
+	static var freshTile : h2d.Tile;
+
+	/**
+	 * marca de lo nuevo en la Base de datos ESCorp, 16x16: recent.png de Mush (Motion Twin, CC BY-NC-SA 4.0, ver NOTICE),
+	 * metida en el .hl (game.hxml, -resource) para no tener que copiarla con el juego
+	 */
+	public static function fresh( parent : h2d.Object ) : h2d.Bitmap {
+		if( freshTile == null ) freshTile = hxd.res.Any.fromBytes("mush_recent.png", haxe.Resource.getBytes("mush_recent.png")).toTile();
+		return new h2d.Bitmap(freshTile, parent);
 	}
 
 	/** nombre de una ficha, o "???" si no se conoce */

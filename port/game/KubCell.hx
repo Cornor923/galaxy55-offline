@@ -4,7 +4,7 @@ import IconMesh.Icons;
 
 /**
  * Casilla de una ficha en las rejillas de la Base de datos ESCorp: el icono normal (recuperado), oscurecido (localizado) o una
- * sombra negra con "?" (desconocido); una estrellita naranja si es nueva. Elegida: marco naranja.
+ * sombra negra con "?" (desconocido); arriba a la derecha, la marca de lo nuevo (KubDraw.fresh) si es nueva. Elegida: marco naranja.
  */
 class KubCell extends h2d.Object {
 
@@ -18,7 +18,7 @@ class KubCell extends h2d.Object {
 	/** la casilla esta en una zona desplazable: solo responde si el raton esta en su parte visible */
 	public var box : KubScroll;
 	var bg : h2d.Graphics;
-	var dot : h2d.Graphics;
+	var dot : h2d.Bitmap;
 	var selected = false;
 	var over = false;
 
@@ -30,8 +30,9 @@ class KubCell extends h2d.Object {
 		KubDraw.icon(this, e, st, SIZE - 12, atlas).setPosition(6, 6);
 		if( st == Unknown ) Theme.center(Theme.text(this, "?", 2.2, Theme.DIM), SIZE, SIZE);
 		if( fresh ) {
-			dot = new h2d.Graphics(this);
-			KubDraw.star(dot, SIZE - 10, 10, 7, Theme.ACCENT);
+			// 16x16 centrada en (54, 10), en la esquina de arriba a la derecha
+			dot = KubDraw.fresh(this);
+			dot.setPosition(SIZE - 18, 2);
 		}
 		var it = new h2d.Interactive(SIZE, SIZE, this);
 		it.onOver = function(_) {

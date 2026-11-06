@@ -82,10 +82,75 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   pausa, robot en el salto del mapa, vigilante de HashLink pausado al construir el mapa, textos del ordenador, luz por cara
   junto a un neón, `World.openCascade` (cascada contra cristal), `Ship.updateWrap` y licencias (`Licenses.hx`, añadido del
   port). Añadido al fusionar: la pantalla `licenses` deja correr el juego como `computer` (guion `licencias_vida`).
+- PR 79-86 de Cornor923 (2026-11-05): editor de kubes (`KubeEditor.hx`, `KubeData.hx`, pantalla `kubes` del menú de inicio,
+  añadido del port; guarda `.kube` en `Settings.dir()/kubes`), ventana creada ya a W x H con título (`hxd.System.createWindow`
+  en `main`), corte de alfa de los trozos 0.03 (`Parts`, cambio del port), flecha del tutorial (`Explorer.tutoTarget` con
+  setter), `Tutorial.craftAllowed` en `Ship.checkCraft`, pausa tras poner anulada al soltar (`GameView`, cambio del port),
+  ordenador del sintetizador con bloque en la mano y clic derecho (`GameView.synthAimed`, cambio del port) y puntero al centro
+  en ordenador y pausa (`GalaxyApp.centerMouse`, `Screen.holdHover`). Arreglado al fusionar: `print mouse` (PR 86) usaba
+  `sdl.Sdl` sin guarda y el build DirectX no compilaba; ahora va en `#if hlsdl`. Después: la ayuda del editor (`kube.help`)
+  se acorta en ES y FR para que quepa en una línea.
+- Revisión posterior (2026-11-05): `World.cornerLight` (cambio del port) da a las esquinas de las caras de arriba la luz más
+  alta alrededor de un bloque parcial (BTReduced) vecino en vez de 0: el suelo entre cuatro lingotes salía negro. Solo caras
+  de arriba; comparado píxel a píxel con el build anterior en luz_parcial, luz_neon, ventana_neon, snow_cover, hangar, mother,
+  homebay, zones y sintetizador_mano (solo cambia ese suelo). `GalaxyApp.TEST_RUN`: con --script/--shot no se captura el ratón
+  ni se mueve el cursor del sistema (Heaps lo llevaba a la ventana de prueba al soltar la captura). `KubeData.slug` añade
+  "-kube" a los nombres de dispositivo de Windows (con, aux, nul, prn, com1-9, lpt1-9).
+  Con TEST_RUN la ventana además se crea fuera de la pantalla (-10000,-10000): devrun la pedía minimizada, pero SDL la mostraba
+  en el centro del escritorio (pasaba ya antes de estos PR); las capturas salen igual.
+- Arena movediza (2026-11-05, Cornor923). **A propósito, se quedan como el original** (no "arreglarlo"): el daño dentro
+  (`Hero.doMove`: con los ojos dentro, 1 de cada 20 pasos de física, `hit(dt * 5)`, unos 6-8 por segundo) y que mirando abajo
+  desde dentro no se apunte nada (`Render.pick` para en la arena y `Game.update` no deja apuntar a la celda de los pies ni a la
+  de encima; el original tampoco apuntaba nada mientras se estaba aturdido). Cambio del port en la caída: el original solo
+  frenaba con `dt *= 0.3`; la gravedad seguía creciendo y el daño llegaba al final, el de toda la caída. Ahora tocar la arena
+  cayendo es como aterrizar (`GameView.fallImpact`, el mismo golpe que en el suelo) y la gravedad vuelve a 0; al salir por
+  debajo se sigue a la velocidad que se veía dentro (`SAND_SLOW`, `inSand`), así que la caída se cuenta desde la salida.
+  Desde z=76 sobre una losa de 2 y 6 de aire: al tocarla 67.8 (11 sobre roca: 69.9), abajo 63.6 (original: 100 al tocarla,
+  47.0 abajo). Desde z=75 sobre un pozo de 3: 32.0 al tocarlo, 22.9 en el fondo por la arena (original: 46.4 en el fondo).
+  Guion `arena_movediza`.
 - "Pilotar la nave" fuera del planeta principal (2026-11-05, Cornor923): en aventura el ordenador de a bordo ya no lo ofrece
   (`GalaxyApp.pilotOffered`: `canPilot` y `pilotLicensed`) en vez de sacarlo y avisar al pulsarlo (se quita el texto
   `license.pilotmain`); en creativo, en todos. El menú guardado se rehace al volver de las licencias si ha cambiado
   (`showComputer`). Guiones `licencias` y `licencias_creativo`.
+- PR 87-94 de Cornor923 (2026-11-05; el 88 y el 91 tienen su entrada arriba):
+  - 87: en francés la ayuda del editor de kubes (`kube.help`) vuelve a decir "enregistrer" para Ctrl+S.
+  - 89: `Tutorial.takeoff()` (desde `GalaxyApp.buildExplorer`, tras `space.takeoff()`) pone `doneTime = 0`: las
+    felicitaciones y el aviso del planeta principal ya no se quedan parados en el mapa ni vuelven en el planeta siguiente.
+    `DONE_TIME` 16 -> 12 s, `MAIN_TIME` igual. Guion `tuto_despegue` (a 30 fps: los avisos cuentan tiempo real).
+  - 90, cometas (añadido del port): `Comets.hx`: franjas de 2 h de hora real (`Licenses.now`) desplazadas por sistema y una
+    tirada fija (semilla del sector, sistema y franja) con 1 de 6; nada se guarda por cometa. Id `sistema * 10 + 9`, fuera de
+    `ExpSystem.planets` (ni el sector ni las licencias lo cuentan); `UniInfo.comets` guarda los visitados y `SaveInfo.comet`
+    el tiempo que queda. `CometGenerator.hx` (`BICometCinder` al final de `BiomeKind`, proba 0 en `DataGen`): mundo de 96
+    (múltiplo de 16 por los chunks; la nave sigue en 128 y aterriza a 12 o más del borde). Amarre según `Hangar.speedOf`
+    (`Hangar.check` lee los bloques por función): 1:30 a 0,2 PC/s o menos, 15:00 como mucho. `GameView.updateComet`: cuenta
+    atrás solo abajo, vuelta de emergencia como Mayús+K, teletransportador en rojo. `Explorer.cometStart`: al despegar la nave
+    sale donde estaba el cometa. Escanearlo no gasta licencia; nunca es principal ni se pilota. Guiones `cometa`,
+    `cometa_terreno`.
+  - 92, Base de datos ESCorp (añadido del port): `Kubindex.hx` (`SaveInfo.kub`: vistos, recuperados, estadísticas, planetas,
+    cometas, recetas fabricadas, anomalías y nuevos; por nombre de constructor de `BlockKind`), `KubData.hx` (categorías y
+    sitios, en `res/kubindex.json`, que copia `package.ps1`), `DatabasePanel` y las vistas `KubBlocksView`, `KubPlanetsView`,
+    `KubRecipesView`, `KubDetail`, `KubCell`, `KubScroll`, `KubNotify`, `KubText`. `DetailsGenerator.placed` /
+    `World.anomalies()` para saber qué anomalía se cruza. En creativo todo se sabe, nada se cuenta y no salen los contadores
+    (`Kubindex.full`). En el tutorial se abre desde el paso DATABASE (`Tutorial.databaseAllowed`, `databaseOpened`).
+    Sin parón al abrirla (antes 3 a 4,7 s con todo sabido): el contorno de los iconos se hace en la GPU (`IconAlphaSum`,
+    `IconOutline`, la misma aritmética entera que `BitmapData.glowCommon`: 431 de 436 iconos idénticos, los 5 de lava a
+    1/255), sin leer de vuelta; los iconos grandes se hacen unos pocos por imagen (`Icons.pump`; los de reserva, `Icons.warm`,
+    en la pantalla de carga, con sus tres shaders compilados uno por imagen); las pestañas se guardan mientras está abierta
+    (`Kubindex.version`) y `KubScroll` no dibuja lo que no se ve. Los iconos del inventario usan el mismo contorno. Marca de
+    nuevo: `mush_recent.png` (`img/icons/ui/recent.png` de Mush, WebGamesArchives de Motion Twin, CC BY-NC-SA 4.0, en
+    `NOTICE`; dentro del .hl con `-resource`). Guiones `kubindex`, `kubindex_guardar`, `kubindex_cometa`,
+    `kubindex_anomalias`, `kubindex_tuto`.
+  - 93, sin parones: los buffers de cada chunk se crean al construirlo (`World.emitMesh`) y no todos en la primera imagen
+    (primera imagen del menú ~740 -> ~110 ms); `ChunkPrim` guarda solo el buffer de floats y sus límites (el GC ya no recorre
+    millones de objetos); `bgComputeAlt` guarda la altura de cada columna para sus 11 caminos (110-170 -> ~15 ms); la nave del
+    aterrizaje se construye en la pantalla de carga (`Ship.prepare`, imagen de llegada ~550-700 -> ~90 ms); los pasos largos del
+    generador se reparten (`Generator.jobs`, mismo orden; las versiones de una vez se quedan para Marte; mismos Adler-32 en
+    `port/headless`); la luz por partes (`World.lightTask`; `--lighttime` da su suma, igual antes y después); la nodriza por
+    pasos (`GalaxyApp.loadSteps`, `World.placeCells`, `SpaceSky.build` como tarea, mismas caras píxel a píxel): 440-880 ms en
+    cada visita y ~6 s la primera -> 90-97 ms, 163 ms la primera.
+  - 94 (cambios del port): `GameView.breakBlock` suelta siempre en las zonas de sintetizador y en el hangar
+    (`GameView.inCraftZone`, la que ya usaba `mine()`); `Drops.unbury` saca por un lado (el más cercano al jugador) un suelto
+    enterrado con otro bloque sólido encima; sin lado libre, en la nave va al jugador. Guiones `recuperar_zona`, `suelto_enterrado`.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |
@@ -152,6 +217,9 @@ PR 52-59 de Cornor923 (2026-10-22/23, cambio del port): menu de inicio con lista
 tutorial de aventura en el espacio (58: `Tutorial.hx`, `TutoGuide.hx`, `TutoText.hx`, `SaveInfo.tuto`, anadido del port),
 sin atajo a la nodriza en el ordenador (52), flecha '<' y Ciudad muerta en el mapa (53), sin temblor en caidas en creativo (55),
 puertas abiertas en el hangar (57), arreglos perdidos de los PR 31-51 (56), `devrun.ps1` sin robar teclado ni mando (59).
+PR 87-94 de Cornor923 (2026-11-05): `kub ...` y `print kub|kubdata` (Base de datos ESCorp), `comet force|time|speed|stats`,
+`print comet` y `--all-comets` (cometas), `breakl` (romper en coordenadas locales de la nave), `--frametime=MS` (umbral de los
+fotogramas lentos y tiempo de arranque) y `--lighttime` con la suma Adler-32 de la luz.
 Los ganchos antiguos `--screen=... --craft --at=...` siguen funcionando, pero para pruebas nuevas se usa Dev.
 
 ## Siguiente paso acordado (mañana): paquete de prueba

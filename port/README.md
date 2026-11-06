@@ -8,7 +8,7 @@ bugs, see `BUGS.md` in the repository root); the original Flash game, with its b
 ## Play
 
 Build it (see below) and double-click `jugar.bat`, or download the portable zip from the
-[release](../../../releases/tag/v0.6). The start menu offers Continue (the list of saved games: play, rename or delete), New game, Options and Quit.
+[release](../../../releases/tag/v0.6). The start menu offers Continue (the list of saved games: play, rename or delete), New game, Kube editor (port addition: draw new blocks and save them as `.kube` files in the `kubes` folder of the game data), Options and Quit.
 In New game you choose name, seed and mode: **Adventure** (as in the original, with an empty inventory) or **Creative** (our addition, with biome and size).
 Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable), and screenshots (F2) to its `screenshots` folder.
 The save format may change between versions: do not count on today's saves working forever.
@@ -85,7 +85,8 @@ A player got it running on Linux this way; we have not tested it.
 
 - `game/` the game: menus (`GalaxyApp`, `Ui`), languages (`Lang`), settings (`Settings`), saves (`SaveData`), planet, light and meshing (`World`),
   block models (`Models`), sky and fog (`Sky`), snow (`Snow`), player, digging and placing (`GameView`), inventory (`Inv`, `InvBar`, `Palette`),
-  effects and drops (`Fx`, `Drops`) and the ship (`Ship`, `ShipData`).
+  effects and drops (`Fx`, `Drops`), the ship (`Ship`, `ShipData`), comets (`Comets`, `CometGenerator`) and the ESCorp
+  database (`Kubindex`, `KubData`, `DatabasePanel` and the `Kub*` views).
 - `explore/` the star map (`Explorer`, with the merchant robot and the GPS arrows). Flowing water is in `game/WorldProcess.hx`.
 - `shim/` `flash.*` compatibility layer so the original generators compile in HashLink.
 - `headless/` verification programs: worlds are identical to the Flash ones (Adler-32 hash, water and blocks); they also read the ship and the saves.
@@ -118,7 +119,7 @@ A player got it running on Linux this way; we have not tested it.
 - The landing light beam follows any change in the column under the ship and starts on top of low blocks such as plates (the
   original only moved it when a block was broken there); you return to the ship only standing at its base, not from higher up.
 - Piloting the ship over the planet is an addition of this port (the original always left it at the same spot on each planet):
-  from the on-board computer, only on playable planets (not in the mothership, the hangar or during the tutorial). It always
+  from the on-board computer, only on playable planets (not in the mothership, the hangar, on comets or during the tutorial; in adventure, only over the main planet). It always
   stays at the same height, costs nothing, uses a camera behind and above it and lighter fog while it lasts; the light beam
   shows where it will stay (it fades out at full speed and comes back when going slowly, stopping or landing). It speeds up and slows down smoothly, turns to face where it goes and banks in turns; when you
   leave it, it returns to its usual heading before landing (its blocks, chests and synthesizers do not rotate). The spot is saved per planet; if you never pilot it, the ship lands where it always did.
@@ -130,4 +131,16 @@ A player got it running on Linux this way; we have not tested it.
   not allowed on board. The original only stopped the blocks that spread (cascade source and lava), without a message.
 - In the hangar you dig four times faster and without charges, like in the ship's synthesizer areas: a change of this port,
   so that editing the ship is comfortable. In the original you dug there as on a planet, with the charges.
+- Falling into quicksand (a change of this port): touching it gives the hit of the fall down to it, as on the ground, and the
+  sand stops the fall; when leaving it from below, the fall counts from the way out. In the original it only slowed time
+  down: the speed kept growing inside and the damage came at the end, that of the whole fall. As in the original, the sand
+  takes life while your eyes are in it and, from inside, looking down aims at nothing.
+- The ESCorp database (on-board computer) is an addition of this port: the Kubindex with every kube, the planet and comet
+  types, the anomalies and the recipes, filled in as you play. The mark for new entries is an icon from Mush (`recent.png`,
+  Motion Twin, CC BY-NC-SA 4.0).
+- Comets are an addition of this port: 96x96 worlds that visit systems for a while (a fixed draw per system and 2-hour slot,
+  not the server). They use no license and the docking time depends on the ship's speed.
+- In the synthesizer area and in the hangar, whatever is broken always drops (port change: in the original, what only drops
+  by chance was often lost when taken back from there). A drop buried under placed blocks comes out by the side; in the
+  original it rose through them and, in the ship, ended on the roof.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).
