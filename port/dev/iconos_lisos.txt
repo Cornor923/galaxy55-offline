@@ -1,0 +1,58 @@
+# iconos de la paleta del modo creativo y de la barra del inventario: los bloques translucidos (cristal, hielo, agua, gemas de
+# Kube, campo de fuerza...) se ven como en la Base de datos ESCorp (alfa bien acumulado, sin el contorno por dentro) y los iconos
+# salen lisos (el grande con mipmaps, smooth = true) tambien en una ventana pequena. Capturas port/out/iconos_*.png
+wait 3
+setlang fr
+planet
+wait 30
+creative
+# la paleta, sus tres paginas
+palette
+wait 5
+print palette
+shot iconos_paleta1
+palette 1
+wait 5
+print palette
+shot iconos_paleta2
+palette 1
+wait 5
+print palette
+shot iconos_paleta3
+close
+wait 5
+# la barra del inventario con bloques translucidos, recortados y opacos
+slot 1
+hand BGlass
+slot 2
+hand BIce
+slot 3
+hand BWater
+slot 4
+hand BKubeAmethyste
+slot 5
+hand BKubeRubis
+slot 6
+hand BMotherField
+slot 7
+hand BGreenLeaves
+slot 8
+hand BLeavesCurtain
+slot 9
+hand BShipGlass
+slot 10
+hand BWood
+slot 0
+wait 5
+print inv
+shot iconos_inv
+# ventana pequena: la barra y la paleta con iconos de unos 22 px
+winsize 640 360
+wait 10
+shot iconos_inv_pequena
+palette
+wait 5
+shot iconos_paleta1_pequena
+close
+wait 5
+quit
