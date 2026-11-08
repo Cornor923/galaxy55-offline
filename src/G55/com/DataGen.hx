@@ -306,7 +306,9 @@ class DataGen {
 		{ id : BShipGlassRed, type : BTAlpha, texture : [54,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée rouge", basePrice : 100 },
 		{ id : BShipGlassBlue, type : BTAlpha, texture : [55,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée bleue", basePrice : 100 },
 		{ id : BShipGlassGreen, type : BTAlpha, texture : [56,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée verte", basePrice : 100 },
-		{ id : BShipGlassPink, type : BTAlpha, texture : [57,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée rose", basePrice : 100 }
+		{ id : BShipGlassPink, type : BTAlpha, texture : [57,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée rose", basePrice : 100 },
+		{ id : BKubeGreyHavenTreeTrunk, type : BTFull, texture : [57,41], texUp : [58,41], texDown : [58,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Tronc de Grey Haven", basePrice : 100 },
+		{ id : BKubeGreyHavenSand, type : BTFull, texture : [59,41], texUp : [60,41], texDown : [61,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Sable de Grey Haven", basePrice : 100 }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [

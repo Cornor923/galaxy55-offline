@@ -336,6 +336,8 @@ enum BlockKind {
 	BShipGlassBlue;
 	BShipGlassGreen;
 	BShipGlassPink;
+	BKubeGreyHavenTreeTrunk;
+	BKubeGreyHavenSand;
 }
 
 enum BlockModel {

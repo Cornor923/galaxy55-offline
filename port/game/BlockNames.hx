@@ -95,6 +95,7 @@ class BlockNames {
 		"BKubeMystery" => "Mystery Kube",
 		"BShipGlassRed" => "Red Tinted Toughened Glass", "BShipGlassBlue" => "Blue Tinted Toughened Glass",
 		"BShipGlassGreen" => "Green Tinted Toughened Glass", "BShipGlassPink" => "Pink Tinted Toughened Glass",
+		"BKubeGreyHavenTreeTrunk" => "Grey Haven Tree Trunk", "BKubeGreyHavenSand" => "Grey Haven Sand",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -140,6 +141,7 @@ class BlockNames {
 		"BKubeMystery" => "Kube misterioso",
 		"BShipGlassRed" => "Vidrio blindado rojo", "BShipGlassBlue" => "Vidrio blindado azul",
 		"BShipGlassGreen" => "Vidrio blindado verde", "BShipGlassPink" => "Vidrio blindado rosa",
+		"BKubeGreyHavenTreeTrunk" => "Tronco de Grey Haven", "BKubeGreyHavenSand" => "Arena de Grey Haven",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */
