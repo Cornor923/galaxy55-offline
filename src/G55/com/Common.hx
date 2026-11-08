@@ -327,6 +327,8 @@ enum BlockKind {
 	BHardRockWallSquare;
 	BAcidWallSquare;
 	BWinterWallSquare;
+	BKubeGreyHavenTreeTrunk;
+	BKubeGreyHavenSand;
 }
 
 enum BlockModel {

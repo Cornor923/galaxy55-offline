@@ -301,7 +301,9 @@ class DataGen {
 		{ id : BRockColumn, type : BTModel, texture : [1,42], texUp : [2,42], texDown : [2,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.9, weight : null, flags : [BFModel(MBigColumn),BFMagnet(UpDown)], matter : BRock, name : "Colonne en rosh", basePrice : 100 },
 		{ id : BHardRockWallSquare, type : BTFull, texture : [0,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 1.0, weight : null, flags : [], matter : BHardRock, name : "Carrelage en rouge'rosh", basePrice : 100 },
 		{ id : BAcidWallSquare, type : BTFull, texture : [3,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [], matter : BRock, name : "Carrelage de roche douce", basePrice : 100 },
-		{ id : BWinterWallSquare, type : BTFull, texture : [4,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [], matter : BRock, name : "Carrelage du frimas", basePrice : 100 }
+		{ id : BWinterWallSquare, type : BTFull, texture : [4,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [], matter : BRock, name : "Carrelage du frimas", basePrice : 100 },
+		{ id : BKubeGreyHavenTreeTrunk, type : BTFull, texture : [57,41], texUp : [58,41], texDown : [58,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Tronc de Grey Haven", basePrice : 100 },
+		{ id : BKubeGreyHavenSand, type : BTFull, texture : [59,41], texUp : [60,41], texDown : [61,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Sable de Grey Haven", basePrice : 100 }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [
