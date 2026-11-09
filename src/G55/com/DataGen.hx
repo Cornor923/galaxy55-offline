@@ -303,7 +303,8 @@ class DataGen {
 		{ id : BAcidWallSquare, type : BTFull, texture : [3,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [], matter : BRock, name : "Carrelage de roche douce", basePrice : 100 },
 		{ id : BWinterWallSquare, type : BTFull, texture : [4,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [], matter : BRock, name : "Carrelage du frimas", basePrice : 100 },
 		{ id : BKubeGreyHavenTreeTrunk, type : BTFull, texture : [57,41], texUp : [58,41], texDown : [58,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Tronc de Grey Haven", basePrice : 100 },
-		{ id : BKubeGreyHavenSand, type : BTFull, texture : [59,41], texUp : [60,41], texDown : [61,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Sable de Grey Haven", basePrice : 100 }
+		{ id : BKubeGreyHavenSand, type : BTFull, texture : [59,41], texUp : [60,41], texDown : [61,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Sable de Grey Haven", basePrice : 100 },
+		{ id : BKubeMystery, type : BTFull, texture : [62,41], texUp : [63,41], texDown : [63,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Kube mystère", basePrice : null }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [
@@ -390,7 +391,13 @@ class DataGen {
 		{ id : 61, schema : [CSBase(BHardRock,2),CSBase(BHardRock,2)], out : BHardRockWallSquare, count : 2 },
 		{ id : 62, schema : [CSBase(BIron,2),CSBase(BIron,2)], out : BChest, count : null },
 		{ id : 63, schema : [CSBase(BAcidRock,2),CSBase(BAcidRock,2)], out : BAcidWallSquare, count : 2 },
-		{ id : 64, schema : [CSBase(BWinterRock,2),CSBase(BWinterRock,2)], out : BWinterWallSquare, count : 2 }
+		{ id : 64, schema : [CSBase(BWinterRock,2),CSBase(BWinterRock,2)], out : BWinterWallSquare, count : 2 },
+		{ id : 65, schema : [CSSingle(BKubeChest)], out : BKubeMystery, count : null, random : [BKubeRubis,BKubeSaphir,BKubeEmeraude,BKubeAmethyste] },
+		{ id : 66, schema : [CSBase(BKubeRubis,2),CSBase(BKubeRubis,2)], out : BKubeShade, count : null },
+		{ id : 67, schema : [CSBase(BKubeSaphir,2),CSBase(BKubeSaphir,2)], out : BKubeShade, count : null },
+		{ id : 68, schema : [CSBase(BKubeEmeraude,2),CSBase(BKubeEmeraude,2)], out : BKubeShade, count : null },
+		{ id : 69, schema : [CSBase(BKubeAmethyste,2),CSBase(BKubeAmethyste,2)], out : BKubeShade, count : null },
+		{ id : 70, schema : [CSBase(BKubeShade,2),CSBase(BKubeShade,2)], out : BKubeTeleport, count : null }
 	];
 
 }
