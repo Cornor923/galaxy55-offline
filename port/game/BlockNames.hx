@@ -93,6 +93,7 @@ class BlockNames {
 		"BRockColumn" => "Rock Column", "BHardRockWallSquare" => "HardRoq Tiles",
 		"BAcidWallSquare" => "Soft Rock Tiles", "BWinterWallSquare" => "Frost Tiles",
 		"BKubeGreyHavenTreeTrunk" => "Grey Haven Tree Trunk", "BKubeGreyHavenSand" => "Grey Haven Sand",
+		"BKubeMystery" => "Mystery Kube",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -136,6 +137,7 @@ class BlockNames {
 		"BRockColumn" => "Pilar de piedra", "BHardRockWallSquare" => "Zócalo de volcanita",
 		"BAcidWallSquare" => "Zócalo de roca ácida", "BWinterWallSquare" => "Zócalo de escarcha",
 		"BKubeGreyHavenTreeTrunk" => "Tronco de Grey Haven", "BKubeGreyHavenSand" => "Arena de Grey Haven",
+		"BKubeMystery" => "Kube misterioso",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */
