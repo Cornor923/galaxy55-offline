@@ -1,8 +1,8 @@
 # Vitres blindees de gema (anadido del port): en el sintetizador, una vitre blindee (BShipGlass) y encima una gema dan la vitre
 # blindee de su color (rubis rouge, saphir bleue, emeraude verte, amethyste rose). Son de la nave (materia BShipHull), con el
 # estilo de la vitre teintee pero mas claras (Atlas.gemGlassTiles) y, al contrario que ella, no desvelan los kubes invisibles.
-# Capturas port/out/vg_*.png: la zona con la receta, la pared de la nave con las seis vitres (abajo la teintee y la blindee para
-# comparar), la misma con kubes invisibles detras, la ficha de la Base de datos ESCorp y la pestana Recetas.
+# Capturas port/out/vg_*.png: la zona con la receta, la pared de la nave con las cuatro vitres (a la derecha, tras el
+# sintetizador, la teintee y la blindee para comparar), la misma con kubes invisibles detras y las fichas de la Base de datos ESCorp.
 # uso: devrun.ps1 -Script port/dev/vitres_gemmes.txt -Extra "--lang=fr" -Timeout 300
 wait 3
 kub forget
