@@ -96,6 +96,8 @@ class BlockNames {
 		"BShipGlassRed" => "Red Tinted Toughened Glass", "BShipGlassBlue" => "Blue Tinted Toughened Glass",
 		"BShipGlassGreen" => "Green Tinted Toughened Glass", "BShipGlassPink" => "Pink Tinted Toughened Glass",
 		"BKubeGreyHavenTreeTrunk" => "Grey Haven Tree Trunk", "BKubeGreyHavenSand" => "Grey Haven Sand",
+		"BKubeGreyHavenLeaves" => "Grey Haven Leaves", "BKubeGreyHavenRocks" => "Grey Haven Rocks",
+		"BKubeGreyHavenDirt" => "Grey Haven Dirt", "BKubeDesertPhosphomoss" => "Desert Mushlite",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -142,6 +144,8 @@ class BlockNames {
 		"BShipGlassRed" => "Vidrio blindado rojo", "BShipGlassBlue" => "Vidrio blindado azul",
 		"BShipGlassGreen" => "Vidrio blindado verde", "BShipGlassPink" => "Vidrio blindado rosa",
 		"BKubeGreyHavenTreeTrunk" => "Tronco de Grey Haven", "BKubeGreyHavenSand" => "Arena de Grey Haven",
+		"BKubeGreyHavenLeaves" => "Hojas de Grey Haven", "BKubeGreyHavenRocks" => "Rocas de Grey Haven",
+		"BKubeGreyHavenDirt" => "Tierra de Grey Haven", "BKubeDesertPhosphomoss" => "Fosforium del desierto",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */

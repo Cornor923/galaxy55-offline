@@ -308,7 +308,11 @@ class DataGen {
 		{ id : BShipGlassGreen, type : BTAlpha, texture : [56,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée verte", basePrice : 100 },
 		{ id : BShipGlassPink, type : BTAlpha, texture : [57,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée rose", basePrice : 100 },
 		{ id : BKubeGreyHavenTreeTrunk, type : BTFull, texture : [57,41], texUp : [58,41], texDown : [58,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Tronc de Grey Haven", basePrice : 100 },
-		{ id : BKubeGreyHavenSand, type : BTFull, texture : [59,41], texUp : [60,41], texDown : [61,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Sable de Grey Haven", basePrice : 100 }
+		{ id : BKubeGreyHavenSand, type : BTFull, texture : [59,41], texUp : [60,41], texDown : [61,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Sable de Grey Haven", basePrice : 100 },
+		{ id : BKubeGreyHavenLeaves, type : BTFull, texture : [5,42], texUp : [6,42], texDown : [7,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Feuilles de Grey Haven", basePrice : 100 },
+		{ id : BKubeGreyHavenRocks, type : BTFull, texture : [8,42], texUp : [9,42], texDown : [9,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Roches de Grey Haven", basePrice : 100 },
+		{ id : BKubeGreyHavenDirt, type : BTFull, texture : [10,42], texUp : [11,42], texDown : [11,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Terre de Grey Haven", basePrice : 100 },
+		{ id : BKubeDesertPhosphomoss, type : BTFull, texture : [12,42], texUp : [13,42], texDown : [13,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(8.0,2.0),BFNoShade], matter : null, name : "Phosphomousse du désert", basePrice : 100 }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [
