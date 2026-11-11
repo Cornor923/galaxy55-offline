@@ -1,0 +1,60 @@
+# Nave nodriza: la tienda del robot comerciante (Mothership.shop), abierta y en el pasillo central del hangar, entre las dos
+# filas de bahias (antes en el morro, cerrada), solo con bloques del juego. Capturas port/out/tienda_centro_*.png: desde junto a la bahia de aparicion, de
+# cerca, desde un lado (se ve el hangar a traves) y desde detras; y se habla con el robot (tienda_robot_*): saludo, Charlar y
+# Comerciar. La charla es un panel abajo con el estilo de la ventana de Contratos (RobotDialog):
+# el robot escribe con estatica, la camara lo encuadra y las respuestas salen numeradas.
+# Mundo = celda de mothership.bin + (135, 18, 24): el robot (56, 189, 18) queda en (191, 207, 42).
+wait 2
+mothership
+waitfor mother
+wait 60
+print pos
+tp 212.5 190.5 44
+lookat 191.5 206.5 45
+wait 20
+shot tienda_centro_bahia
+tp 191.5 197.5 44 1.5708 -0.1
+wait 20
+shot tienda_centro_cerca
+tp 178.5 206.5 44 0 -0.05
+wait 20
+shot tienda_centro_lado
+tp 191.5 218.5 44 -1.5708 -0.05
+wait 20
+shot tienda_centro_detras
+# hablar con el robot: talk hace lo del clic sobre el (la tienda ya no tiene ordenador); antes, mirando al mostrador no se le apunta
+tp 191.5 203.3 43
+wait 10
+lookat 191.5 204.5 42.5
+wait 5
+talk
+lookat 191.5 207.5 43.9
+wait 5
+talk
+wait 20
+shot tienda_robot_hola
+wait 120
+shot tienda_robot_opciones
+button 1
+wait 25
+shot tienda_robot_charla
+wait 40
+shot tienda_robot_charla2
+wait 200
+shot tienda_robot_fin
+talk
+wait 5
+button 0
+wait 10
+shot tienda_centro_abierta
+close
+wait 5
+# pared invisible: se camina hacia el mostrador desde delante y se salta; no hay que acabar dentro de la tienda (y < 205)
+tp 191.5 199.5 43 1.5708 0
+wait 10
+press w space
+wait 60
+release w space
+wait 10
+print pos
+quit

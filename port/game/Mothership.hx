@@ -160,7 +160,47 @@ class Mothership {
 					if( k != 0 ) out.push({ x : ox + x, y : oy + y, z : oz + z, id : k });
 				}
 		spawnAt = { x : ox + sx, y : oy + sy, z : oz + sz };
+		shopCells = new Map();
+		for( r in robots ) if( r.k < 4 ) shop(r, out);
 		return { sx : size, sy : size, sz : oz + h, cells : out, entry : null, crafts : [] };
+	}
+
+	/** celdas de las tiendas (shop): no se guardan en la nave nodriza (la pared invisible no cabe en un byte) */
+	static var shopCells : Map<Int, Bool>;
+
+	/** celda de la tienda del robot r a (a, b): a a su derecha, b hacia delante */
+	public static function shopCell( r : { x : Int, y : Int, z : Int, k : Int }, a : Int, b : Int ) {
+		var fx = [1, 0, -1, 0][r.k], fy = [0, 1, 0, -1][r.k];
+		return { x : r.x + b * fx - a * fy, y : r.y + b * fy + a * fx };
+	}
+
+	/**
+	 * Tienda del robot comerciante r (anadido del port), hecha aqui y no en mothership.bin, asi no se pierde al volver a generarla
+	 * con mc2g55.py. Solo con bloques del juego y abierta, para que no tape el hangar: un cuadro de 7x7 a la altura del robot con
+	 * el mostrador de blindaje estriado todo alrededor (se le habla con un clic: GameView.aimedMerchant) y una losa baja por
+	 * dentro; columnas de tubos en las esquinas y, encima (a 4 de alto), un techo de casco con neones. Sobre el mostrador, hasta el
+	 * techo, una pared invisible (BShopBarrier) para que no se salte adentro; no se apunta, asi se le sigue hablando al robot.
+	 */
+	static function shop( r : { x : Int, y : Int, z : Int, k : Int }, out : Array<ShipData.ShipCell> ) {
+		function put( a : Int, b : Int, dz : Int, k : BlockKind ) {
+			var c = shopCell(r, a, b);
+			var x = c.x, y = c.y, z = r.z + dz;
+			shopCells.set(cellKey(x, y, z), true);
+			out.push({ x : x, y : y, z : z, id : Block.get(k).index });
+		}
+		for( a in -3...4 )
+			for( b in -3...4 ) {
+				var ring = Std.int(Math.max(Math.abs(a), Math.abs(b)));
+				if( ring == 3 ) {
+					if( Math.abs(a) == 3 && Math.abs(b) == 3 ) for( dz in 0...4 ) put(a, b, dz, BShipTubes);
+					else {
+						put(a, b, 0, BShipWire);
+						for( dz in 1...4 ) put(a, b, dz, BShopBarrier);
+					}
+				} else if( ring == 2 ) put(a, b, 0, BShipPlate);
+				put(a, b, 4, BShipHull);
+				if( Math.abs(a) == 2 && Math.abs(b) == 2 ) put(a, b, 3, BShipLight);
+			}
 	}
 
 	/** archivo cargado (para guardar lo editado con --editnodriza): ruta, cabecera tal cual, tamano, rejilla original y origen */
@@ -184,7 +224,8 @@ class Mothership {
 				for( x in 0...f.w ) {
 					var wx = f.ox + x, wy = f.oy + y, wz = f.oz + z;
 					var k = 0;
-					if( shipCells != null && shipCells.exists(cellKey(wx, wy, wz)) ) k = f.base.get(i);
+					var key = cellKey(wx, wy, wz);
+					if( (shipCells != null && shipCells.exists(key)) || (shopCells != null && shopCells.exists(key)) ) k = f.base.get(i);
 					else {
 						var b = world.block(wx, wy, wz);
 						if( b != null ) k = b.index < 256 ? b.index : Type.enumIndex(b.k);

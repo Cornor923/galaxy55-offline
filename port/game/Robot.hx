@@ -19,6 +19,8 @@ class Robot {
 	var y : Float;
 	var z : Float;
 	var face : Float;
+	/** hacia donde mira detras del mostrador cuando no hay nadie cerca */
+	var face0 : Float;
 	var t = 0.;
 	var head : h3d.scene.Object;
 	var armL : h3d.scene.Object;
@@ -26,6 +28,13 @@ class Robot {
 	var tip : h3d.scene.Object;
 	var eyes : Array<h3d.scene.Object> = [];
 	var headYaw = 0.;
+	/** segundos que le quedan hablando (RobotBubble lo renueva mientras escribe): mueve la cabeza y los ojos parpadean rapido */
+	public var talk = 0.;
+
+	public function isMerchant() return kind == MERCHANT;
+
+	/** encima de la cabeza, en el mundo (para el globo de dialogo) */
+	public function headPos() return { x : x, y : y, z : z + 1.75 };
 
 	/** (x, y, z): centro de la celda donde esta; face: hacia donde mira (radianes, 0 = +x) */
 	public function new( world : World, atlas : h3d.mat.Texture, kind : Int, x : Float, y : Float, z : Float, face : Float ) {
@@ -36,6 +45,7 @@ class Robot {
 		this.y = y;
 		this.z = z;
 		this.face = face;
+		this.face0 = face;
 		t = Math.random() * 10;
 		root = new h3d.scene.Object(world.root);
 		if( kind == DRONE ) buildDrone() else buildMerchant();
@@ -141,20 +151,34 @@ class Robot {
 			return;
 		}
 		root.setPosition(x, y, z + Math.sin(t * 1.8) * 0.06);
-		root.setRotation(0, 0, face);
-		// la cabeza sigue al jugador si esta cerca; si no, mira a un lado y a otro
+		// el cuerpo entero se gira hacia el jugador si esta cerca (la tienda esta abierta por todos lados: se le ve desde detras);
+		// si no, vuelve poco a poco a mirar hacia delante
 		var dx = px - x, dy = py - y;
-		var target = Math.sqrt(dx * dx + dy * dy) < 9 ? Math.atan2(dy, dx) - face : Math.sin(t * 0.4) * 0.6;
+		var near = Math.sqrt(dx * dx + dy * dy) < 9;
+		var turn = (near ? Math.atan2(dy, dx) : face0) - face;
+		while( turn > Math.PI ) turn -= Math.PI * 2;
+		while( turn < -Math.PI ) turn += Math.PI * 2;
+		face += turn * Math.min(1, dt * 2.5);
+		root.setRotation(0, 0, face);
+		// la cabeza va un poco por delante del cuerpo; lejos, mira a un lado y a otro
+		var target = near ? Math.atan2(dy, dx) - face : Math.sin(t * 0.4) * 0.6;
 		while( target > Math.PI ) target -= Math.PI * 2;
 		while( target < -Math.PI ) target += Math.PI * 2;
 		if( target > 1.2 ) target = 1.2 else if( target < -1.2 ) target = -1.2;
 		headYaw += (target - headYaw) * Math.min(1, dt * 4);
-		head.setRotation(0, 0, headYaw);
+		// hablando: asiente y ladea la cabeza un poco, deprisa
+		var nod = 0., tilt = 0.;
+		if( talk > 0 ) {
+			talk -= dt;
+			nod = Math.sin(t * 15) * 0.12 + Math.sin(t * 6.3) * 0.05;
+			tilt = Math.sin(t * 4.1) * 0.08;
+		}
+		head.setRotation(tilt, nod, headYaw + (talk > 0 ? Math.sin(t * 3.2) * 0.12 : 0));
 		// brazos: como si atendiera el mostrador
 		armL.setRotation(0, -0.35 + Math.sin(t * 1.1) * 0.25, 0);
 		armR.setRotation(0, -0.35 + Math.sin(t * 1.1 + 2.0) * 0.25, 0);
 		// ojos que parpadean y antena que destella
-		var blink = (t % 4.0) < 0.12;
+		var blink = talk > 0 ? (t * 10) % 1 < 0.3 : (t % 4.0) < 0.12;
 		for( e in eyes ) e.visible = !blink;
 		tip.visible = (t % 1.5) < 0.9;
 	}

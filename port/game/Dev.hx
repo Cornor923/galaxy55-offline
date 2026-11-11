@@ -617,6 +617,7 @@ class Dev {
 				case "exprobot": app.explorer.devClickRobot();
 				case "exprsys": app.explorer.devClickRobotSystem(); // el sistema abierto mas cercano al robot
 				case "exprinfo": Sys.println(app.explorer.devRobotInfo());
+				case "expdock": @:privateAccess app.dockRobot(); // como acoplarse al robot en el mapa: se entra en la nave nodriza
 				case "exppause": @:privateAccess app.openMapPause(); // Esc en el mapa
 				case "landhome": app.devLandHome(); // aterrizar en el planeta del que despegaste
 				case "reload": app.devReload(); // Menu principal y Continuar con esta partida
@@ -735,6 +736,15 @@ class Dev {
 				case "fps": Sys.println("fps " + Std.int(hxd.Timer.fps()));
 				case "helptext": Settings.showHelp = a[1] == "1"; // helptext 0|1: opcion de ayuda en pantalla
 				case "hangar": app.startHangar();
+				case "talk":
+					// talk: como el clic sobre el robot comerciante: dice si se le apunta (GameView.aimedMerchant) y, si si, abre el panel
+					// de hablar con el (el guion sigue en el; button N elige y close lo cierra)
+					var aimed = g.aimedMerchant();
+					Sys.println("robot apuntado: " + aimed);
+					if( aimed ) {
+						app.openRobotTalk();
+						inPause = true;
+					}
 				case "computer":
 					// el menu del ordenador de a bordo, como al activarlo (el guion sigue; close lo cierra)
 					@:privateAccess app.openComputer();

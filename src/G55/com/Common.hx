@@ -338,6 +338,9 @@ enum BlockKind {
 	BShipGlassBlue;
 	BShipGlassGreen;
 	BShipGlassPink;
+	// pared invisible de la tienda del robot comerciante de la nave nodriza (Mothership.shop): se choca con ella pero no se ve ni
+	// se apunta (BFNoPick: el puntero y el laser la atraviesan). Sin precio y kubindex.json hidden
+	BShopBarrier;
 }
 
 enum BlockModel {

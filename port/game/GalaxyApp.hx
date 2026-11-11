@@ -1561,6 +1561,56 @@ class GalaxyApp extends hxd.App {
 		startGame(h);
 	}
 
+	/** conversacion con el robot comerciante abierta (RobotDialog) */
+	var robotDialog : RobotDialog;
+
+	/**
+	 * Hablar con el robot comerciante de la nave nodriza (anadido del port): la terminal ambar de la ESCorp abajo de la pantalla
+	 * (RobotDialog), con lo que dice y las respuestas Comerciar, Charlar y Adios. La camara se gira hasta mirarlo
+	 * (updateRobotDialog) y el mundo sigue (el robot se mueve y habla); el jugador no se mueve mientras tanto.
+	 */
+	public function openRobotTalk() {
+		if( state != Playing || game == null || shop != null || robotDialog != null ) return;
+		var r = game.merchantRobot();
+		if( r == null ) return;
+		game.stopSounds();
+		state = Paused;
+		captureMouse(false);
+		hud.visible = false; msgText.visible = false;
+		var d = new RobotDialog(ui, r, !Tutorial.active(game.info));
+		d.onTrade = function() {
+			closeRobotTalk();
+			openShop();
+		};
+		d.onBye = closeRobotTalk;
+		robotDialog = d;
+		screens.set("robot", d);
+		show("robot");
+		centerMouse();
+	}
+
+	function closeRobotTalk() {
+		if( robotDialog == null ) return;
+		robotDialog.close();
+		robotDialog = null;
+		screens.remove("robot");
+		if( currentName == "robot" ) resume();
+	}
+
+	/** con la conversacion abierta, la camara se gira despacio hasta mirar la cabeza del robot */
+	function updateRobotDialog( dt : Float ) {
+		if( robotDialog == null || game == null ) return;
+		var h = robotDialog.robot.headPos();
+		var dx = h.x - game.px, dy = h.y - game.py, dz = h.z - 0.35 - (game.pz + game.viewZ);
+		var yaw = Math.atan2(dy, dx), pitch = Math.atan2(dz, Math.sqrt(dx * dx + dy * dy));
+		var d = yaw - game.yaw;
+		while( d > Math.PI ) d -= Math.PI * 2;
+		while( d < -Math.PI ) d += Math.PI * 2;
+		var k = Math.min(1, dt * 5);
+		game.yaw += d * k;
+		game.pitch += (pitch - game.pitch) * k;
+	}
+
 	function openComputer() {
 		if( state != Playing ) return;
 		game.stopSounds();
@@ -1809,6 +1859,22 @@ class GalaxyApp extends hxd.App {
 				mapToast = loadToast;
 				loadToast = null;
 			}
+			// guardada dentro de la nave nodriza: se vuelve a entrar en ella (como al acoplarse al robot: dockRobot); al salir, al mapa
+			if( loadInfo.inMother != null ) {
+				var info = loadInfo;
+				var at = info.inMother;
+				info.inMother = null;
+				hangarReturn = info;
+				var h : SaveInfo = Reflect.copy(info);
+				h.inv = Inv.copy(info.inv);
+				h.market = Market.copy(info.market);
+				h.mothership = true;
+				// donde estaba al guardar (GameView lo usa en vez del teletransportador de su nave)
+				h.inMother = at;
+				dim.visible = true;
+				startGame(h);
+				return;
+			}
 			toSpace(loadInfo);
 			return;
 		}
@@ -1817,6 +1883,7 @@ class GalaxyApp extends hxd.App {
 		Kubindex.shipKnown(game.info);
 		Kubindex.visit(game.info);
 		game.onComputer = openComputer;
+		game.onTalk = openRobotTalk;
 		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
 		game.onChest = openChest;
 		game.onChestBreak = function(t) if( chest != null && chest.box == t ) closeChest();
@@ -1844,6 +1911,10 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function resume() {
+		if( robotDialog != null ) {
+			robotDialog.close();
+			robotDialog = null;
+		}
 		current = null;
 		ui.removeChildren();
 		screens = new Map();
@@ -2136,7 +2207,12 @@ class GalaxyApp extends hxd.App {
 		}
 		// en el hangar se guarda la partida tal como estaba al entrar (con el tiempo jugado); en la nodriza, con lo comprado y vendido
 		if( game.info.mothership == true && !GameView.editMother ) syncMothership();
-		var ok = SaveData.write(game.hangar != null || game.info.mothership == true ? returnInfo() : game.toInfo(), captureThumb());
+		var info = game.hangar != null || game.info.mothership == true ? returnInfo() : game.toInfo();
+		// dentro de la nodriza (llegando del mapa): se apunta, para que al cargar se aparezca dentro y no en el mapa
+		var inMother = game.info.mothership == true && !GameView.editMother && info != null && info.uni != null && info.uni.space == true;
+		if( inMother ) info.inMother = { x : game.px, y : game.py, z : game.pz, yaw : game.yaw, pitch : game.pitch };
+		var ok = SaveData.write(info, captureThumb());
+		if( inMother ) info.inMother = null;
 		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza
 		if( GameView.editMother && game.info.mothership == true )
 			ok = (try Mothership.save(game.world) catch( e : Dynamic ) false) && ok;
@@ -2614,7 +2690,9 @@ class GalaxyApp extends hxd.App {
 			// el ordenador de a bordo no es una pausa (Game.openComputerMenu solo quita actionKeys): el juego sigue, se cura en la
 			// nave y el mundo no se para. Cambio del port: sin ningun control (ni andar ni mirar), el teclado y el raton son del menu
 			// la pantalla de licencias sale del ordenador de a bordo y tampoco para el juego (aviso del PR 77)
-			if( current != null && (currentName == "computer" || currentName == "licenses") ) {
+			// la conversacion con el robot tampoco: el se mueve y habla mientras la camara lo encuadra
+			if( current != null && (currentName == "computer" || currentName == "licenses" || currentName == "robot") ) {
+				if( currentName == "robot" ) updateRobotDialog(dt);
 				game.update(dt, false, pad);
 				if( game == null || state != Paused ) return;
 			}
