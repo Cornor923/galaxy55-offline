@@ -10,11 +10,13 @@ class DetailsGenerator extends BiomeGenerator {
 	static inline var WATER = Generator.WATER;
 	static inline var BEDROCK = Generator.BEDROCK;
 	static inline var CAVE = Generator.CAVE;
+	static inline var TMASK = Generator.TMASK;
 	
 	public static var DETAILS = [];
 	/**
 	 * anadido del port: anomalias puestas en este planeta (n = su tipo en kubindex.json; Base de datos ESCorp). h: lo que ocupa por
-	 * encima de z (la anomalia Invisible flota sobre el suelo; las demas no lo ponen)
+	 * encima de z (la anomalia Invisible flota sobre el suelo; las demas no lo ponen). Al acabar el mundo solo quedan las que han
+	 * dejado algo (dropEmptyAnomalies)
 	 */
 	public var placed : Array<{ x : Int, y : Int, z : Int, n : String, ?h : Int }> = [];
 	
@@ -80,6 +82,7 @@ class DetailsGenerator extends BiomeGenerator {
 			if( found == null )
 				continue;
 			initStep();
+			changed = [];
 			var ntry = 1000;
 			while( ntry-- > 0 ) {
 				var x = rnd.random(size);
@@ -90,10 +93,11 @@ class DetailsGenerator extends BiomeGenerator {
 					z--;
 				if( found.f(x, y, z) ) {
 					DETAILS.push( { x:x, y:y, z:z } );
-					placed.push({ x : x, y : y, z : z, n : found.n });
+					addPlaced(x, y, z, found.n);
 					break;
 				}
 			}
+			changed = null;
 		}
 		
 		
@@ -183,6 +187,7 @@ class DetailsGenerator extends BiomeGenerator {
 			if( found == null )
 				continue;
 			initStep();
+			changed = [];
 			var ntry = 1000;
 			while( ntry-- > 0 ) {
 				var x = rnd.random(size);
@@ -190,11 +195,80 @@ class DetailsGenerator extends BiomeGenerator {
 				var z = height(x, y);
 				if( found.f(x, y, z) ) {
 					DETAILS.push( { x:x, y:y, z:z } );
-					placed.push({ x : x, y : y, z : z, n : found.n });
+					addPlaced(x, y, z, found.n);
 					break;
 				}
 			}
+			changed = null;
 		}
+	}
+
+	/** anadido del port: celdas de muestra (direccion, bloque) de lo que ha puesto cada anomalia de placed (null: no se revisa) */
+	var placedCells : Array<Array<Int>> = [];
+	/** cuantas celdas de muestra se guardan como mucho por anomalia (repartidas entre todas las que ha cambiado) */
+	static inline var PLACED_SAMPLES = 256;
+
+	/**
+	 * Anadido del port: apunta en placed la anomalia que acaba de poner la funcion de detalle, con una muestra de lo que ha cambiado
+	 * (changed, desde que empezo a buscarle sitio). Basta un bloque: si ha puesto alguno, solo se miran esos; si solo ha cavado,
+	 * el aire.
+	 */
+	function addPlaced( x : Int, y : Int, z : Int, n : String ) {
+		placed.push({ x : x, y : y, z : z, n : n });
+		var solid = [], air = [];
+		for( addr in changed )
+			if( fget(addr) & TMASK != EMPTY ) solid.push(addr) else air.push(addr);
+		var from = solid.length > 0 ? solid : air;
+		var step = Math.ceil(from.length / PLACED_SAMPLES), cells = [], i = 0;
+		while( i < from.length ) {
+			cells.push(from[i]);
+			cells.push(fget(from[i]) & TMASK);
+			i += step;
+		}
+		placedCells.push(cells);
+	}
+
+	/** placed ya revisada (dropEmptyAnomalies) */
+	var placedChecked = false;
+
+	override public function process( maxTimeSlice = 100 ) {
+		var more = super.process(maxTimeSlice);
+		if( !more && !placedChecked ) {
+			placedChecked = true;
+			dropEmptyAnomalies();
+		}
+		return more;
+	}
+
+	/**
+	 * Anadido del port, con el mundo acabado: quita de placed (Base de datos ESCorp) las anomalias que no han dejado nada. Las
+	 * funciones de detalle del juego original devuelven true aunque no pongan nada: las de las cuevas solo ponen sus bloques
+	 * junto a la roca (ROCK), y a poca altura la cueva suele estar en la tierra (SOIL); los Filones pueden tocar la roca del
+	 * planeta (no cambia nada); los Pilares extranos se saltan el terreno muy inclinado. Y un paso de despues puede borrar lo
+	 * que habian puesto (removeBlobs, la Fuente subterranea colgada en el aire; un gran crater). El juego original no las
+	 * nombraba; aqui avisarian de una anomalia que no hay. No cambia el mundo.
+	 */
+	function dropEmptyAnomalies() {
+		var keep = [];
+		for( i in 0...placed.length ) {
+			var cells = placedCells[i];
+			if( cells == null || survives(cells) ) keep.push(placed[i]);
+		}
+		placed = keep;
+		placedCells = null;
+	}
+
+	/** queda alguna de las celdas de muestra como la dejo la anomalia (o cubierta: la tierra con hierba o nieve encima) */
+	function survives( cells : Array<Int> ) {
+		var i = 0;
+		while( i < cells.length ) {
+			var cur = fget(cells[i]) & TMASK, b = cells[i + 1];
+			if( cur == b ) return true;
+			var cover = blocks[b].covered;
+			if( cover != null && hblocks.get(Type.enumIndex(cover.k)) == cur ) return true;
+			i += 2;
+		}
+		return false;
 	}
 	
 	private function bonusHerb(x,y,z, ?empty=EMPTY) {
@@ -286,6 +360,7 @@ class DetailsGenerator extends BiomeGenerator {
 					DETAILS.push( { x:x+c, y:y+c, z:top } );
 					// desde el suelo (lo mas alto debajo) hasta arriba del cubo: se identifica al pasar por debajo o a su lado
 					placed.push({ x : x + c, y : y + c, z : top, n : "invisible", h : invisibleTop - top });
+					placedCells.push(null);
 					break;
 				}
 			}

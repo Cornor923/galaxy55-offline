@@ -1,0 +1,12 @@
+# Base de datos ESCorp: una anomalia que no ha dejado nada no se apunta (DetailsGenerator.dropEmptyAnomalies). Winter Peaks,
+# semilla 39: la gruta de citronox de 25,81,23 no tiene ninguna estalactita (techo de tierra glacial), asi que el planeta solo
+# apunta el crater y al pasar por la gruta no sale "Anomalia identificada". -Extra "--seed=39 --bgbiome=BIWinterPeaks --lang=fr"
+wait 3
+kub forget
+print kub
+count BYellowCeil 0 0 127 127
+tp 25.5 80.5 23
+wait 60
+print pos
+print kub
+shot anomalias_vacias
