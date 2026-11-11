@@ -327,6 +327,8 @@ enum BlockKind {
 	BHardRockWallSquare;
 	BAcidWallSquare;
 	BWinterWallSquare;
+	BKubeGreyHavenTreeTrunk;
+	BKubeGreyHavenSand;
 	// lo que ensena el sintetizador antes de fabricar una receta al azar (CraftRule.random): un kube con un "?" sobre las cuatro
 	// gemas. No se puede tener: ni en la paleta, ni en la tienda, ni en la base de datos (kubindex.json hidden)
 	BKubeMystery;
@@ -336,8 +338,9 @@ enum BlockKind {
 	BShipGlassBlue;
 	BShipGlassGreen;
 	BShipGlassPink;
-	BKubeGreyHavenTreeTrunk;
-	BKubeGreyHavenSand;
+	// pared invisible de la tienda del robot comerciante de la nave nodriza (Mothership.shop): se choca con ella pero no se ve ni
+	// se apunta (BFNoPick: el puntero y el laser la atraviesan). Sin precio y kubindex.json hidden
+	BShopBarrier;
 	BKubeGreyHavenLeaves;
 	BKubeGreyHavenRocks;
 	BKubeGreyHavenDirt;

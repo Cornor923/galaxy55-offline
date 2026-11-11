@@ -92,10 +92,10 @@ class BlockNames {
 		// anadidos del port, como sus parejas (Rock Tiles, HardRoq Column)
 		"BRockColumn" => "Rock Column", "BHardRockWallSquare" => "HardRoq Tiles",
 		"BAcidWallSquare" => "Soft Rock Tiles", "BWinterWallSquare" => "Frost Tiles",
+		"BKubeGreyHavenTreeTrunk" => "Grey Haven Tree Trunk", "BKubeGreyHavenSand" => "Grey Haven Sand",
 		"BKubeMystery" => "Mystery Kube",
 		"BShipGlassRed" => "Red Tinted Toughened Glass", "BShipGlassBlue" => "Blue Tinted Toughened Glass",
-		"BShipGlassGreen" => "Green Tinted Toughened Glass", "BShipGlassPink" => "Pink Tinted Toughened Glass",
-		"BKubeGreyHavenTreeTrunk" => "Grey Haven Tree Trunk", "BKubeGreyHavenSand" => "Grey Haven Sand",
+		"BShipGlassGreen" => "Green Tinted Toughened Glass", "BShipGlassPink" => "Pink Tinted Toughened Glass", "BShopBarrier" => "-",
 		"BKubeGreyHavenLeaves" => "Grey Haven Leaves", "BKubeGreyHavenRocks" => "Grey Haven Rocks",
 		"BKubeGreyHavenDirt" => "Grey Haven Dirt", "BKubeDesertPhosphomoss" => "Desert Mushlite",
 	];
@@ -140,10 +140,10 @@ class BlockNames {
 		// anadidos del port, como sus parejas (Zocalo de piedra, Pilar de volcanita)
 		"BRockColumn" => "Pilar de piedra", "BHardRockWallSquare" => "Zócalo de volcanita",
 		"BAcidWallSquare" => "Zócalo de roca ácida", "BWinterWallSquare" => "Zócalo de escarcha",
+		"BKubeGreyHavenTreeTrunk" => "Tronco de Grey Haven", "BKubeGreyHavenSand" => "Arena de Grey Haven",
 		"BKubeMystery" => "Kube misterioso",
 		"BShipGlassRed" => "Vidrio blindado rojo", "BShipGlassBlue" => "Vidrio blindado azul",
-		"BShipGlassGreen" => "Vidrio blindado verde", "BShipGlassPink" => "Vidrio blindado rosa",
-		"BKubeGreyHavenTreeTrunk" => "Tronco de Grey Haven", "BKubeGreyHavenSand" => "Arena de Grey Haven",
+		"BShipGlassGreen" => "Vidrio blindado verde", "BShipGlassPink" => "Vidrio blindado rosa", "BShopBarrier" => "-",
 		"BKubeGreyHavenLeaves" => "Hojas de Grey Haven", "BKubeGreyHavenRocks" => "Rocas de Grey Haven",
 		"BKubeGreyHavenDirt" => "Tierra de Grey Haven", "BKubeDesertPhosphomoss" => "Fosforium del desierto",
 	];

@@ -1,13 +1,13 @@
 # iconos de los bloques en toda la interfaz (Icons.bitmap): paleta del modo creativo, barra del inventario, cofre, tienda del
-# robot, contratos y editor de kubes. Los bloques translucidos (cristal, hielo, agua, arena movediza, HUD blindado, campo de
-# fuerza...) se ven como en la Base de datos ESCorp (alfa bien acumulado, sin el contorno por dentro) y los iconos salen lisos
-# (el grande con mipmaps, smooth = true) tambien en una ventana pequena. Capturas port/out/iconos_*.png
+# robot, contratos y editor de kubes. Los bloques translucidos (cristal, hielo, agua, gemas de Kube, campo de fuerza...) se ven
+# como en la Base de datos ESCorp (alfa bien acumulado, sin el contorno por dentro) y los iconos salen lisos (el grande con
+# mipmaps, smooth = true) tambien en una ventana pequena. Capturas port/out/iconos_*.png
 wait 3
 setlang fr
 planet
 wait 30
 creative
-# la paleta, sus dos paginas
+# la paleta, sus tres paginas
 palette
 wait 5
 print palette
@@ -16,6 +16,10 @@ palette 1
 wait 5
 print palette
 shot iconos_paleta2
+palette 1
+wait 5
+print palette
+shot iconos_paleta3
 close
 wait 5
 # la barra del inventario con bloques translucidos, recortados y opacos
@@ -26,9 +30,9 @@ hand BIce
 slot 3
 hand BWater
 slot 4
-hand BMarsQuickSand
+hand BKubeAmethyste
 slot 5
-hand BShipGlass2
+hand BKubeRubis
 slot 6
 hand BMotherField
 slot 7

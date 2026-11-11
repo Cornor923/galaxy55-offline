@@ -177,6 +177,16 @@ class GameView {
 			}
 			yaw = Math.PI / 2;
 			pitch = 0;
+			// partida guardada dentro de la nodriza: donde estaba (GalaxyApp.finishLoading)
+			var at = info.inMother;
+			if( at != null ) {
+				px = at.x;
+				py = at.y;
+				pz = at.z;
+				yaw = at.yaw;
+				pitch = at.pitch;
+				info.inMother = null;
+			}
 			// robots (añadido del port): el comerciante del puesto y los drones
 			for( r in Mothership.robots ) {
 				var drone = r.k >= 4;
@@ -1264,6 +1274,32 @@ class GameView {
 
 	/** se llama al activar el ordenador de a bordo */
 	public dynamic function onComputer() {}
+	/** se llama al hacer clic sobre el robot comerciante de la nave nodriza (GalaxyApp.openRobotTalk) */
+	public dynamic function onTalk() {}
+
+	/**
+	 * el puntero esta sobre un robot comerciante cercano (anadido del port): el rayo de la vista pasa por su cuerpo (un cilindro
+	 * de 0.6 de radio y 2 de alto sobre su celda) antes de tocar un bloque al que se apunte. La pared invisible de la tienda
+	 * (BShopBarrier) no se apunta y no lo tapa.
+	 */
+	public function aimedMerchant() : Bool {
+		var cp = Math.cos(pitch);
+		var dx = Math.cos(yaw) * cp, dy = Math.sin(yaw) * cp, dz = Math.sin(pitch);
+		var ex = px, ey = py, ez = pz + viewZ;
+		var t = 0.;
+		while( t < 6.0 ) {
+			t += 0.05;
+			var x = ex + dx * t, y = ey + dy * t, z = ez + dz * t;
+			for( r in Mothership.robots ) {
+				if( r.k >= 4 ) continue;
+				var rx = x - (r.x + 0.5), ry = y - (r.y + 0.5);
+				if( rx * rx + ry * ry < 0.36 && z >= r.z && z < r.z + 2 ) return true;
+			}
+			var b = world.block(Math.floor(x), Math.floor(y), Math.floor(z));
+			if( b != null && b.hasProp(PCanPick) ) return false;
+		}
+		return false;
+	}
 	/** celda del ultimo ordenador activado (en la nave nodriza decide si es el del robot o el de tu nave) */
 	public var lastComputer : { x : Int, y : Int, z : Int };
 
@@ -1626,6 +1662,11 @@ class GameView {
 			if( placedHold ) actionPause = 0;
 			placedHold = false;
 		}
+		// robot comerciante de la nave nodriza: un clic sobre el le habla (onTalk) en vez de usar el laser
+		if( controls && held && armed && !actionWait && info.mothership == true && aimedMerchant() ) {
+			armed = false;
+			onTalk();
+		}
 		laserActive = controls && held && armed && !actionWait;
 		if( actionPause > 0 ) actionPause -= tmod;
 
@@ -1962,6 +2003,20 @@ class GameView {
 
 	/** robots de la nave nodriza (Robot.hx) */
 	var robots : Array<Robot> = [];
+
+	/** el robot comerciante mas cercano al jugador (null si no hay) */
+	public function merchantRobot() : Robot {
+		var best : Robot = null, bd = 1e9;
+		for( r in robots )
+			if( r.isMerchant() ) {
+				var h = r.headPos(), dx = h.x - px, dy = h.y - py, d = dx * dx + dy * dy;
+				if( d < bd ) {
+					bd = d;
+					best = r;
+				}
+			}
+		return best;
+	}
 
 	/** color y opacidad del velo de pantalla dentro de un liquido (Game.getEffects: fades), null fuera */
 	public var liquidFade(default, null) : { a : Float, col : Int } = null;

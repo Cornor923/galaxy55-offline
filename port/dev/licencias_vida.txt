@@ -1,5 +1,5 @@
-# la pantalla de licencias (ordenador de a bordo) tampoco para el juego, como el menu del ordenador (ordenador_vida.txt): con
-# ella abierta la vida sube en la nave (1.6/s). Aviso del PR 77 al juntarlo con el 71
+# la pantalla de las licencias de exploracion (desde el ordenador de a bordo) tampoco para el juego: la vida sigue subiendo
+# en la nave (1.6/s, como con el menu del ordenador, ordenador_vida.txt); al volver al menu del ordenador, igual
 wait 3
 ship
 wait 10
@@ -14,4 +14,7 @@ print menu
 print life
 wait 200
 print life
+close
+wait 5
+print menu
 quit

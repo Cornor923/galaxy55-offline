@@ -1,0 +1,29 @@
+# poner en lo mas alto: z = 126 es la ultima capa (World.setBlock no pone en z >= HEIGHT - 1 = 127).
+# Encima de un bloque de z = 126, con un bloque en la mano no se apunta y no se gasta nada (como el original); en z = 126 si se pone.
+wait 3
+set 60 60 126 BRock
+set 61 60 126 BRock
+set 60 62 125 BRock
+tp 61.5 60.5 127
+wait 5
+slot 1
+hand BRock
+# encima del bloque de z = 126: la celda seria z = 127
+lookat 60.5 60.5 127
+wait 2
+print select
+key place
+wait 10
+unkey
+print inv
+print block 60 60 127
+# encima del bloque de z = 125: se pone en z = 126
+lookat 60.5 62.5 126
+wait 2
+print select
+key place
+wait 10
+unkey
+print inv
+print block 60 62 126
+quit

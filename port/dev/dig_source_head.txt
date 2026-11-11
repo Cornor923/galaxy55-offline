@@ -1,0 +1,27 @@
+# excavar con la cabeza dentro de una fuente de cascada: como en Render.pick del original, la celda de los ojos no se apunta y se
+# excava lo que hay delante. A traves de otra fuente no se excava: se apunta a ella, como siempre.
+wait 3
+set 59 61 99 BRock
+set 60 61 99 BRock
+set 61 61 99 BRock
+set 62 61 99 BRock
+set 63 61 99 BRock
+set 62 61 101 BRock
+set 60 61 101 BCascadeSource
+tp 60.5 61.5 100 0 0
+wait 5
+lookat 62.5 61.5 101.5
+wait 2
+print select
+mine 62 61 101
+wait 600
+unkey
+print block 62 61 101
+# otra fuente delante: se apunta a ella (no se excava a traves)
+set 62 61 101 BRock
+set 61 61 101 BCascadeSource
+tp 60.5 61.5 100 0 0
+lookat 62.5 61.5 101.5
+wait 2
+print select
+quit
