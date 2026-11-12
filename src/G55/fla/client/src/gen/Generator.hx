@@ -152,9 +152,18 @@ class Generator {
 		flash.Memory.setByte(addr + outPos, v);
 	}
 
+	/**
+	 * anadido del port: mientras no es null, set y oset apuntan aqui las celdas que cambian de verdad (la cueva cuenta como
+	 * aire). DetailsGenerator lo usa para saber que ha puesto cada anomalia; solo lee, el mundo sale igual
+	 */
+	var changed : Array<Int> = null;
+
 	inline function set(x, y, z, v) {
-		if( z > 0 && z < HEIGHT )
-			fset(((real(x) + real(y) * size) << HBITS) | z, v);
+		if( z > 0 && z < HEIGHT ) {
+			var addr = ((real(x) + real(y) * size) << HBITS) | z;
+			if( changed != null && (fget(addr) & TMASK) != (v & TMASK) ) changed.push(addr);
+			fset(addr, v);
+		}
 	}
 	
 	function get(x, y, z) {
@@ -167,6 +176,7 @@ class Generator {
 		if( z > 0 && z < HEIGHT ) {
 			var addr = ((real(x) + real(y) * size) << HBITS) | z;
 			if( fget(addr) == EMPTY ) {
+				if( changed != null && v & TMASK != EMPTY ) changed.push(addr);
 				fset(addr, v);
 				return true;
 			}
