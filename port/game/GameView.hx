@@ -63,7 +63,8 @@ class GameView {
 	/** Hero.miningPower: 3 cerca de un turbo minero (WorldProcess.updateTrack), si no 1 */
 	public var miningPower(get, never) : Float;
 	inline function get_miningPower() return process.miningPower;
-	/** modo creativo (anadido nuestro): bloques sin limite, rotura instantanea y jetpack infinito */
+	/** modo creativo (anadido nuestro): bloques sin limite, rotura instantanea y jetpack infinito. Es el modo en curso: una
+	    partida creada en creativo puede pasar a supervivencia y volver (setSurvival); lo de la partida va con info.creative */
 	public var creative(default, null) = false;
 	/** --editnodriza: la nave nodriza se puede editar (en creativo) y al salir se guarda en mothership.bin */
 	public static var editMother = Sys.args().indexOf("--editnodriza") >= 0;
@@ -142,7 +143,7 @@ class GameView {
 		playSeconds = info.playSeconds;
 		// Game.init: con la vida a 0 se vuelve a la nave (hero.hit(0)); aqui directamente con la vida llena
 		life = info.life != null && info.life > 0 ? info.life : 100;
-		creative = info.creative == true || Sys.args().indexOf("--creative") >= 0 || (editMother && info.mothership == true);
+		creative = (info.creative == true && info.survival != true) || Sys.args().indexOf("--creative") >= 0 || (editMother && info.mothership == true);
 		inv = new Inv(info.inv != null ? Inv.copy(info.inv) : Inv.defaults());
 		// solo pruebas: --inv=BIron,BGlass,... llena el inventario con esos bloques
 		for( a in Sys.args() )
@@ -359,7 +360,6 @@ class GameView {
 		if( realDt > 0.1 ) realDt = 0.1;
 		playSeconds += realDt;
 		var tmod = realDt * FPS;
-		var K = hxd.Key;
 		if( fadeFX != null && fadeFX.lock ) controls = false; // hero.lock del original mientras se vuelve a la nave
 		// pilotando (anadido del port): los controles mueven la nave, no al jugador
 		if( piloting ) {
@@ -374,17 +374,17 @@ class GameView {
 		walking = false;
 		if( controls ) {
 			// A/D y flechas izquierda/derecha: en el original giran al personaje, con aceleracion
-			// (Settings.turnKeys); por defecto se desplazan de lado
+			// (Settings.turnKeys); por defecto se desplazan de lado. Las teclas son las de Keys (configurables)
 			var move = false;
 			var turnMode = Settings.turnKeys;
 			var arrows = actionKeys;
-			if( (arrows && K.isDown(K.RIGHT)) || K.isDown(K.D) || K.isDown(K.NUMPAD_6) ) {
+			if( Keys.down("right", arrows) ) {
 				if( turnSpeed < 0 ) turnSpeed = 0;
 				if( turnMode ) turnSpeed += 0.008 * tmod;
 				else strafe += 0.15;
 				move = true;
 			}
-			if( (arrows && K.isDown(K.LEFT)) || K.isDown(K.A) || K.isDown(K.Q) || K.isDown(K.NUMPAD_4) ) {
+			if( Keys.down("left", arrows) ) {
 				if( turnSpeed > 0 ) turnSpeed = 0;
 				if( turnMode ) turnSpeed -= 0.008 * tmod;
 				else strafe -= 0.15;
@@ -396,12 +396,13 @@ class GameView {
 			if( turnSpeed > tmax ) turnSpeed = tmax;
 			var turn = turnSpeed;
 
-			walkingSlow = K.isDown(K.X);
-			if( (arrows && K.isDown(K.UP)) || K.isDown(K.W) || K.isDown(K.Z) || K.isDown(K.X) || K.isDown(K.NUMPAD_8) ) {
+			// caminar despacio (X) tambien hace avanzar
+			walkingSlow = Keys.down("slow", arrows);
+			if( Keys.down("forward", arrows) || walkingSlow ) {
 				speed += 0.15;
 				walking = true;
 			} else pushPower = 0.0;
-			if( (arrows && K.isDown(K.DOWN)) || K.isDown(K.S) || K.isDown(K.NUMPAD_2) ) {
+			if( Keys.down("back", arrows) ) {
 				speed -= 0.15;
 				walking = true;
 			}
@@ -433,7 +434,7 @@ class GameView {
 				strafe *= 0.4;
 				turn *= 0.4;
 			}
-			if( actionKeys && (K.isDown(K.SPACE) || K.isDown(K.CTRL)) ) useJetpack = true;
+			if( actionKeys && Keys.down("jump") ) useJetpack = true;
 			yaw += turn;
 			clampPitch();
 		} else
@@ -643,6 +644,30 @@ class GameView {
 	inline function stunnedLock() return false;
 
 	var fallBob = 0.;
+
+	// ---------------------------------------------------------------- modo creativo / supervivencia (anadido del port)
+
+	/** solo una partida creada en creativo pasa a supervivencia y vuelve; una de aventura nunca */
+	public function canSwitchMode() : Bool return info.creative == true;
+
+	/**
+	 * Partida creativa: pasa a supervivencia (on) o vuelve a creativo. Sigue al modo lo que mira `creative`: dano, oxigeno,
+	 * jetpack, rotura y botin, bloques gastados al ponerlos, paleta. La partida sigue siendo creativa (info.creative): licencias,
+	 * Base de datos ESCorp completa. Mismo inventario en los dos modos; al pasar a supervivencia, vida y oxigeno llenos. El modo
+	 * queda en info.survival y se guarda con la partida. Devuelve false si no ha cambiado nada.
+	 */
+	public function setSurvival( on : Bool ) : Bool {
+		if( !canSwitchMode() || creative != on ) return false;
+		creative = !on;
+		info.survival = on ? true : null;
+		if( on ) {
+			life = 100;
+			oxygen = 100;
+			jetpack = 1;
+		}
+		laserCharge = null;
+		return true;
+	}
 
 	// ---------------------------------------------------------------- vida (Hero.hit, Hero.heal, Hero.update)
 
@@ -1104,9 +1129,10 @@ class GameView {
 			&& life > 0 && pz >= World.SHIP_Z;
 	}
 
-	/** licencias (Licenses, anadido del port): en aventura solo se pilota sobre el planeta principal; en creativo, sobre todos */
+	/** licencias (Licenses, anadido del port): en aventura solo se pilota sobre el planeta principal; en creativo, sobre todos
+	    (tambien en supervivencia en una partida creativa: las licencias son de la partida) */
 	public function pilotLicensed() : Bool {
-		return creative || info.uni == null || Licenses.isMain(info.uni, info.uni.planetId);
+		return creative || info.creative == true || info.uni == null || Licenses.isMain(info.uni, info.uni.planetId);
 	}
 
 	public function startPiloting() {
@@ -1157,20 +1183,19 @@ class GameView {
 
 	/**
 	 * WASD / flechas / palanca izquierda: hacia donde acelera la nave, segun la camara (raton y palanca derecha la giran).
-	 * Devuelve la velocidad buscada; E o B piden dejar la nave (Esc y Start, en GalaxyApp).
+	 * Devuelve la velocidad buscada; Dejar la nave (E, Keys) o B la dejan (Esc y Start, en GalaxyApp).
 	 */
 	function pilotInput( tmod : Float, pad : hxd.Pad ) : { x : Float, y : Float } {
-		var K = hxd.Key;
-		if( K.isPressed(K.E) || (pad != null && pad.isPressed(pad.config.B)) ) {
+		if( Keys.pressed("leave") || (pad != null && pad.isPressed(pad.config.B)) ) {
 			stopPiloting();
 			return { x : 0., y : 0. };
 		}
 		var speed = 0., strafe = 0.;
 		var arrows = actionKeys;
-		if( (arrows && K.isDown(K.UP)) || K.isDown(K.W) || K.isDown(K.Z) || K.isDown(K.NUMPAD_8) ) speed += 1;
-		if( (arrows && K.isDown(K.DOWN)) || K.isDown(K.S) || K.isDown(K.NUMPAD_2) ) speed -= 1;
-		if( (arrows && K.isDown(K.RIGHT)) || K.isDown(K.D) || K.isDown(K.NUMPAD_6) ) strafe += 1;
-		if( (arrows && K.isDown(K.LEFT)) || K.isDown(K.A) || K.isDown(K.Q) || K.isDown(K.NUMPAD_4) ) strafe -= 1;
+		if( Keys.down("forward", arrows) ) speed += 1;
+		if( Keys.down("back", arrows) ) speed -= 1;
+		if( Keys.down("right", arrows) ) strafe += 1;
+		if( Keys.down("left", arrows) ) strafe -= 1;
 		if( pad != null ) {
 			var dead = 0.2;
 			if( Math.abs(pad.xAxis) > dead ) strafe += pad.xAxis;
@@ -1616,10 +1641,10 @@ class GameView {
 	}
 
 	function updateAction( tmod : Float, controls : Bool, pad : hxd.Pad ) {
-		var K = hxd.Key;
 		var held = false, forceEmpty = false;
 		if( controls && actionKeys ) {
-			held = K.isDown(K.MOUSE_LEFT) || K.isDown(K.E) || K.isDown(K.SHIFT);
+			// teclas de Keys (por defecto clic / E / Mayus, clic central = copiar, 1-0 casillas, Tab excavador, R / Supr tirar)
+			held = Keys.down("action");
 			if( pad != null ) {
 				var rt = pad.isDown(pad.config.RT), lt = pad.isDown(pad.config.LT);
 				if( rt || lt ) held = true;
@@ -1631,18 +1656,18 @@ class GameView {
 				if( pad.isPressed(pad.config.Y) && inv.getCurrentBlock() != null ) dropCurrent();
 				if( pad.isPressed(pad.config.analogClick) ) copyTarget();
 			}
-			if( hxd.Key.isPressed(hxd.Key.MOUSE_MIDDLE) ) copyTarget();
+			if( Keys.pressed("copy") ) copyTarget();
 			// casillas: TAB = excavador, 1..9 y 0 = los 10 bloques. El original (Game.checkKeys) ponia el excavador tambien en 1
 			// y dejaba la ultima casilla sin atajo; aqui se corrige a peticion de los jugadores
 			for( i in 1...11 )
-				if( K.isPressed(K.NUMBER_0 + (i % 10)) && inv.inv.t.length >= i ) inv.select(i);
-			if( K.isPressed(K.TAB) ) inv.select(0);
+				if( Keys.pressed(Keys.SLOT_IDS[i - 1]) && inv.inv.t.length >= i ) inv.select(i);
+			if( Keys.pressed("digger") ) inv.select(0);
 			// Mayus + K: volver a la nave (Game.checkKeys); sin nave (nave nodriza) gotoShip sale de ella al momento
-			if( K.isDown(K.SHIFT) && K.isPressed(K.K) ) {
+			if( Keys.pressed("ship") ) {
 				if( ship != null ) returnToShip(true);
 				else gotoShip(true);
 			}
-			if( (K.isPressed(K.R) || K.isPressed(K.DELETE)) && inv.getCurrentBlock() != null ) dropCurrent();
+			if( Keys.pressed("drop") && inv.getCurrentBlock() != null ) dropCurrent();
 		}
 		if( debugAction || (debugKey != null && actionKeys) ) {
 			held = true;
@@ -1697,7 +1722,7 @@ class GameView {
 		select = s;
 		synthAimed = hand == null && isSynth(s);
 		// cambio del port: el clic derecho (no hacia nada) tambien usa el ordenador del sintetizador, con o sin bloque en la mano
-		if( synthAimed && controls && actionKeys && K.isPressed(K.MOUSE_RIGHT) ) activateBlock(s.x, s.y, s.z, s.b);
+		if( synthAimed && controls && actionKeys && Keys.pressed("synth") ) activateBlock(s.x, s.y, s.z, s.b);
 
 		if( !laserActive ) {
 			if( activatePending != null ) {
@@ -1961,9 +1986,15 @@ class GameView {
 	function dropCurrent() {
 		var index = inv.blockIndex - 1;
 		var s = inv.drop(index);
-		if( s == null || creative ) return; // en creativo tirar solo vacia la casilla
-		var d = drops.add(px + Math.cos(yaw), py + Math.sin(yaw), pz + 1.2, Block.all[s.k]);
-		d.n = s.n;
+		if( s != null ) throwStack(Block.all[s.k], s.n);
+	}
+
+	/** tira n bloques b delante del jugador, como R (dropCurrent; tambien la pantalla de inventario): un solo suelto con todos,
+	    que se recoge entero. En creativo no cae nada: tirar solo vacia la casilla */
+	public function throwStack( b : Block, n : Int ) {
+		if( creative || n <= 0 ) return;
+		var d = drops.add(px + Math.cos(yaw), py + Math.sin(yaw), pz + 1.2, b);
+		d.n = n;
 		d.vx = Math.cos(yaw) * 0.3;
 		d.vy = Math.sin(yaw) * 0.3;
 		d.active = false;

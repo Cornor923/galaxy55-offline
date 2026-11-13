@@ -2,6 +2,28 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## v0.8.1 — pre-release
+- **Pantalla de inventario** (añadido del port, PR 125): en aventura, I (o R3) abre un panel con las 10 casillas de la barra:
+  arrastrar, partir montones, tirar fuera del panel, como en Minecraft. En creativo, I sigue abriendo la paleta.
+- **De creativo a supervivencia** (añadido del port, PR 121 y 125): una partida creada en creativo puede pasar a supervivencia y
+  volver (botón en la paleta y en la pantalla de inventario). El modo se guarda con la partida.
+- **Buscar en la paleta** (añadido del port, PR 122): un campo en la paleta creativa filtra bloques y kubes por su nombre.
+- **Contrato especial de la ESCorp** (añadido del port, PR 123): una vez por partida, 16 de Tierra roja dan un Contenedor ESCorp,
+  sin límite de tiempo. Nuevo paso "Contratos" en el tutorial.
+- El visor del casco sigue el tamaño de la ventana al cambiarla con el ordenador de a bordo, la pausa o un panel abiertos (cambio
+  del port, PR 120); antes quedaban bandas oscuras o los bordes fuera de la pantalla.
+- La paleta creativa ya no muestra dos veces el Agua ácida (PR 124).
+- **Teclas a tu gusto** (añadido del port, PR 118): Opciones > Controles > Personalizar teclas. 28 acciones, hasta 4 teclas o botones
+  del ratón cada una; avisa en rojo si una tecla ya la usa otra acción y hay un botón para volver a las de siempre. Se guardan en
+  `settings.json`. Las ayudas en pantalla y el tutorial muestran las teclas elegidas. Esc, las teclas de los menús, la rueda y el
+  mando no cambian. La opción "A/D y flechas" pasa a llamarse "Izquierda y derecha".
+- **Marco de selección** (añadido del port, PR 117): nueva opción en Opciones > Interfaz para quitar el marco naranja del bloque
+  apuntado. Viene activada.
+- **Más de 255 bloques distintos por mundo** (cambio del port, PR 116): cada celda guarda su bloque en dos bytes. Ya no hay bloques
+  que no se puedan poner por falta de sitio. Las partidas guardadas no cambian. El mundo ocupa el doble de memoria.
+- El kube invisible se ve translúcido cuando está tirado en el suelo y en la mano (cambio del port, PR 119); antes no se veía.
+- Repositorio: se borró la rama `port-hashlink`, que era una copia de `main`. Todo el trabajo está en `main`.
+
 ## v0.8 — pre-release
 - **Kubes de Kube** (añadido del port): los 77 bloques de Kube (Motion Twin, 2010) están en el juego como bloques enteros,
   con sus texturas, su luz y su transparencia, en la paleta creativa y en la Base de datos ESCorp. El agua y la lava de Kube

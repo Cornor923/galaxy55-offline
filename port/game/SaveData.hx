@@ -70,6 +70,10 @@ typedef SaveInfo = {
 	var sizeChunks : Int;
 	var created : Float;
 	var saved : Float;
+	/** version del juego que creo la partida (GalaxyApp.VERSION, anadido del port); null en las partidas de antes */
+	@:optional var createdWith : String;
+	/** version del juego que la guardo por ultima vez (va con saved); null si no se ha guardado desde entonces */
+	@:optional var savedWith : String;
 	var playSeconds : Float;
 	var px : Float;
 	var py : Float;
@@ -87,6 +91,8 @@ typedef SaveInfo = {
 	@:optional var shipEdits : Array<Int>;
 	/** modo creativo: bloques sin limite, rotura instantanea y jetpack infinito (no existe en el original) */
 	@:optional var creative : Bool;
+	/** partida creativa jugada ahora en supervivencia (GameView.setSurvival, anadido del port); null = en creativo */
+	@:optional var survival : Null<Bool>;
 	/** aventura: se eligio jugar el tutorial al crear la partida (null en las partidas antiguas) */
 	@:optional var tutorial : Null<Bool>;
 	/** universo (mapa de estrellas); las partidas antiguas no lo tienen y se crea al abrir el mapa */
@@ -97,6 +103,8 @@ typedef SaveInfo = {
 	@:optional var market : Market.MarketInfo;
 	/** contratos de la ESCorp: lineas entregadas y abandonadas en el periodo actual, y contratos en curso (Contracts) */
 	@:optional var contracts : Contracts.ContractsInfo;
+	/** contrato especial de la ESCorp (Contracts, anadido del port); null = sin empezar (y en las partidas antiguas) */
+	@:optional var special : Contracts.SpecialInfo;
 	/** nave editada en el hangar (zlib en base64); null = la de serie */
 	@:optional var shipData : String;
 	/** solo mientras se esta en el hangar (no se guarda) */
@@ -142,7 +150,7 @@ class SaveData {
 		var now = Date.now().getTime();
 		return {
 			version : VERSION, id : newId(), name : name, seed : seed, biome : biome, sizeChunks : sizeChunks,
-			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : creative ? Inv.defaults() : Inv.empty(), edits : [], shipEdits : [], creative : creative, credits : Market.START_CREDITS,
+			created : now, saved : now, createdWith : GalaxyApp.VERSION, savedWith : GalaxyApp.VERSION, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : creative ? Inv.defaults() : Inv.empty(), edits : [], shipEdits : [], creative : creative, credits : Market.START_CREDITS,
 		};
 	}
 
@@ -217,6 +225,16 @@ class SaveData {
 						slot : a.slot != null ? Std.int(a.slot) : 0, index : a.index != null ? Std.int(a.index) : -1 });
 				}
 			return { slot : Std.int(o.slot), done : o.done != null ? ints(o.done) : [], abandoned : o.abandoned != null ? ints(o.abandoned) : [], active : active };
+		} catch( e : Dynamic ) {
+			return null;
+		}
+	}
+
+	/** contrato especial; null si no hay o esta mal formado */
+	static function readSpecial( o : Dynamic ) : Contracts.SpecialInfo {
+		try {
+			if( o == null ) return null;
+			return { given : o.given != null ? Std.int(o.given) : 0, done : o.done == true };
 		} catch( e : Dynamic ) {
 			return null;
 		}
@@ -312,11 +330,13 @@ class SaveData {
 				version : o.version, id : id, name : o.name != null ? o.name : id, seed : o.seed, biome : o.biome,
 				sizeChunks : o.sizeChunks != null ? o.sizeChunks : 1,
 				created : o.created != null ? o.created : 0, saved : o.saved != null ? o.saved : 0,
+				createdWith : o.createdWith != null ? Std.string(o.createdWith) : null, savedWith : o.savedWith != null ? Std.string(o.savedWith) : null,
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
-					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), chests : readChests(o.chests), shipData : o.shipData,
+					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), special : readSpecial(o.special), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
+					survival : o.creative == true && o.survival == true ? true : null,
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
 					inMother : readMotherPos(o.inMother),
 			};
@@ -326,10 +346,13 @@ class SaveData {
 	}
 
 	/** Escribe la partida; se guarda primero a un archivo temporal para no corromperla si falla a medias.
-	    touch = false deja la fecha de guardado como estaba (renombrar no cambia el orden de la lista). */
+	    touch = false deja la fecha y la version de guardado como estaban (renombrar no cambia el orden de la lista). */
 	public static function write( info : SaveInfo, thumbPng : haxe.io.Bytes, touch = true ) : Bool {
 		try {
-			if( touch ) info.saved = Date.now().getTime();
+			if( touch ) {
+				info.saved = Date.now().getTime();
+				info.savedWith = GalaxyApp.VERSION;
+			}
 			var path = jsonPath(info.id);
 			sys.io.File.saveContent(path + ".tmp", haxe.Json.stringify(info, null, "  "));
 			if( sys.FileSystem.exists(path) ) sys.FileSystem.deleteFile(path);

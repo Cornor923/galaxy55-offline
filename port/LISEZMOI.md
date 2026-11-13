@@ -8,7 +8,7 @@ connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine, ave
 ## Jouer
 
 Compile-le (voir plus bas) et double-clique sur `jugar.bat`, ou télécharge le zip portable depuis la
-[release](../../../releases/tag/v0.8). Le menu de démarrage propose Continuer (la liste des parties : jouer, renommer ou supprimer), Nouvelle partie, Éditeur de Kubes (ajout du portage : dessiner de nouveaux blocs et les enregistrer en `.kube` dans le dossier `kubes` des données), Options et Quitter.
+[release](../../../releases/tag/v0.8.1). Le menu de démarrage propose Continuer (la liste des parties : jouer, renommer ou supprimer), Nouvelle partie, Éditeur de Kubes (ajout du portage : dessiner de nouveaux blocs et les enregistrer en `.kube` dans le dossier `kubes` des données), Options et Quitter.
 Dans Nouvelle partie, tu choisis le nom, la graine et le mode : **Aventure** (comme dans l'original, inventaire vide) ou **Créatif** (notre ajout, avec biome et taille).
 Les parties et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`), et les captures d'écran (F2) dans son dossier `screenshots`.
 Le jeu y écrit aussi `gpu.txt`, avec la carte graphique et le pilote : joins-le si tu signales un bug d'affichage.
@@ -16,7 +16,7 @@ Le format des sauvegardes peut changer d'une version à l'autre : ne compte pas 
 
 ## Commandes
 
-Ce sont celles du jeu original (le déplacement et la physique sont copiés de `ent/Hero.hx` et `Game.moveHero`).
+Elles se changent dans Options > Contrôles > Personnaliser les touches (ajout du port). Par défaut ce sont celles du jeu original (le déplacement et la physique sont copiés de `ent/Hero.hx` et `Game.moveHero`).
 
 | Action | Touches |
 |---|---|
@@ -140,7 +140,7 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   va et s'incline dans les virages ; quand on le laisse, il reprend son orientation habituelle avant d'atterrir (ses blocs,
   coffres et synthétiseurs ne tournent pas). L'endroit est enregistré par planète ; sans le
   piloter, le vaisseau atterrit au même endroit que d'habitude.
-- Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé et désactiver les vagues de l'eau.
+- Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé, cacher le cadre de sélection et désactiver les vagues de l'eau.
 - Le turbo mineur fait creuser trois fois plus vite jusqu'à 15 blocs autour de lui (5 dans l'original) et se récupère quand
   on le casse (dans l'original, il était perdu).
 - La capture d'écran de F2 est enregistrée directement dans le dossier `screenshots` et un message indique où (l'original ouvrait la boîte de dialogue de Flash pour l'enregistrer).

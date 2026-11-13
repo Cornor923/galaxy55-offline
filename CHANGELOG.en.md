@@ -2,6 +2,28 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## v0.8.1 — pre-release
+- **Inventory screen** (port addition, PR 125): in adventure, I (or R3) opens a panel with the 10 slots of the bar: drag, split
+  stacks, throw outside the panel, Minecraft style. In creative, I still opens the palette.
+- **Creative to survival** (port addition, PRs 121 and 125): a game created in creative can switch to survival and back (button in
+  the palette and in the inventory screen). The mode is saved with the game.
+- **Palette search** (port addition, PR 122): a field in the creative palette filters blocks and kubes by name.
+- **ESCorp special contract** (port addition, PR 123): once per game, 16 Red Earth give an ESCorp Container, no time limit. New
+  "Contracts" step in the tutorial.
+- The helmet visor follows window resizes with the on-board computer, the pause menu or a panel open (port change, PR 120); there
+  were dark bands or its edges went off-screen.
+- The creative palette no longer lists Acid Water twice (PR 124).
+- **Custom key bindings** (port addition, PR 118): Options > Controls > Customize keys. 28 actions, up to 4 keys or mouse buttons
+  each; a key another action already uses turns red, and a button puts back the default keys. Saved in `settings.json`. The
+  on-screen help and the tutorial show the chosen keys. Esc, menu keys, the mouse wheel and the gamepad do not change. The
+  "A/D and arrow keys" option is renamed "Left and right".
+- **Selection frame** (port addition, PR 117): new option in Options > Interface to hide the orange frame on the targeted block.
+  On by default.
+- **More than 255 different blocks per world** (port change, PR 116): each cell stores its block on two bytes. No more blocks
+  refused for lack of room. Saves do not change. The world uses twice the memory.
+- The invisible kube shows translucent when dropped on the ground and in the hand (port change, PR 119); it could not be seen.
+- Repository: the `port-hashlink` branch, a copy of `main`, was deleted. All work is on `main`.
+
 ## v0.8 — pre-release
 - **The kubes of Kube** (port addition): its 77 blocks (Motion Twin, 2010) are in the game as full blocks, with their
   textures, light and transparency, in the creative palette and the ESCorp database. Kube Water and Kube Lava run down their

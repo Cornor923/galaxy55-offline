@@ -1,15 +1,15 @@
-# Traspaso para seguir en otra PC (2026-10-16)
+# Traspaso para seguir en otra PC (2026-10-16, al día el 2026-11-12)
 
 Léelo entero antes de tocar nada. El usuario es **Pvie** (Pv1E en GitHub): habla español,
 quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Twin, sin inventar**. Lo que añadimos nosotros se marca como
 "cambio del port" o "añadido del port".
 
 ## Dónde está todo
-- Repo: https://github.com/Pv1E/galaxy55-offline. Las ramas `main` y `port-hashlink` van iguales: se sube con
-  `git push origin HEAD:main HEAD:port-hashlink`. Licencia CC BY-NC-SA 4.0.
+- Repo: https://github.com/Pv1E/galaxy55-offline. Se trabaja solo en la rama `main` y se sube con `git push origin main`
+  (la rama `port-hashlink`, copia de `main`, se borró el 2026-11-12). Licencia CC BY-NC-SA 4.0.
 - Resumen técnico largo del port: `port/RESUMEN.md`.
 - La versión Flash (con `client*.hxml`, `build.*`, `release/`, `libs/heaps`, `libs/format_old`) vive solo en la rama `flash`:
-  se quitaron de `main`/`port-hashlink` el 2026-10-26 porque el port no los usa. `src/`, `libs/libs-haxe*`, `stubs/`, `tools/` y `data/` se quedan.
+  se quitaron de `main` el 2026-10-26 porque el port no los usa. `src/`, `libs/libs-haxe*`, `stubs/`, `tools/` y `data/` se quedan.
 - Lista de lo que falta: `PENDIENTES.md` / `TODO.md`.
 - Errores conocidos: `ERRORES.md` / `BUGS.md`.
 - Novedades: `CHANGELOG.md`.
@@ -270,19 +270,36 @@ Zips con `package.ps1 -Version 0.8 -HashLink ..\tools-portable\hashlink\hashlink
 `dx.Window.NO_ACTIVATE`, así que `game_dx.hxml` se compiló con una copia de `dx/Window.hx` que lo define a 0 (fuera del
 repositorio). Probado el de Windows descomprimido en una carpeta vacía: OpenGL y DirectX crean partida, cargan el planeta y
 abren la base de datos (249 fichas). Falta: etiqueta `v0.8` y crear la release (pre-release) con los dos zips.
-## Lo siguiente (orden acordado)
-1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
+## PR 116-119 de Cornor923 integrados (2026-11-12)
+Fusionados en local en `main`, en orden 116, 117, 119, 118. Un conflicto en `Settings.save` (117 añade `selectBox`, 118 añade
+`keys`): se dejaron los dos campos. Compilan SDL, DX y headless. #116 (celdas de dos bytes) no toca el generador, así que los
+hashes de referencia no cambian; una partida guardada con `main` anterior (bb31545+) carga con los mismos bloques y `lightcheck`
+0; `mas_de_255.txt` da 288 distintos, 33 con id > 255, misma suma antes y después de cargar, `lightcheck` 0. #117, #118 y #119
+no se probaron aquí más allá de compilar (Cornor describe sus guiones en cada PR). Changelogs ES/EN/FR y LEEME/README/LISEZMOI
+actualizados (la sección "Controles" de LEEME/README dice que se pueden cambiar). Después, revisión de los `.md`: en
+`RESUMEN.md` entran los PR 116-119 y sus órdenes de Dev, y las secciones antiguas "Siguiente paso acordado" y "Pendiente"
+quedan marcadas como plan de octubre ya hecho en gran parte; en este archivo, "Lo siguiente" marca lo hecho.
+
+## v0.8.1 preparada (2026-11-13)
+Traídos los PR 120-125 de Cornor923 (visor del casco al redimensionar, creativo/supervivencia, buscador de la paleta, contrato
+especial ESCorp, Agua ácida doble en la paleta, pantalla de inventario), que no traían changelog: se añadieron a los changelogs
+ES/EN/FR y a ERRORES/BUGS. Todo pasa de "Sin publicar" a v0.8.1; enlaces de los README a `releases/tag/v0.8.1` con un párrafo
+de novedades; menú "v0.8.1 · port nativo"; notas en `port/RELEASE.md` (3 idiomas) con todo lo nuevo desde la v0.8 (PR 116-125). Compilan SDL y DX. Zips con
+`package.ps1 -Version 0.8.1 -HashLink ..\tools-portable\hashlink\hashlink-1.16.0-win` en `port/out/release`.
+
+## Lo siguiente (orden acordado en octubre; la lista al día es `PENDIENTES.md`)
+1. (HECHO: bahías del hangar y tienda en el centro, v0.8) **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
    - marcas: **bloque de esmeralda** en el centro de cada bahía y **bloque de diamante** en el mostrador del robot.
    Cuando mande el zip nuevo: convertir, leer esas marcas en el conversor (guardarlas en el .bin), aparcar la nave del jugador
    en una bahía, poner el robot y abrir la tienda en el mostrador. Las otras bahías quedan para el multijugador.
-2. **El robot en el mapa:**
+2. (HECHO el 2026-10-19) **El robot en el mapa:**
    - uno por sector, que viaja **despacio** entre sistemas (es comerciante);
    - icono con la forma de la Hades, renderizado como `Ship.captureFrames`; seguirlo con clic; al alcanzarlo, salto a la nave nodriza;
    - la velocidad de nuestra nave sale de la nave real (`Explorer.shipBytes` ya existe, pero la fórmula del mapa es aproximada:
      usar la del hangar, `Hangar.check().speed`);
    - ojo: `Ship.captureFrames` todavía centra la cámara con `DEFAULT_SHIP`; debería usar la nave actual.
-3. Después: equipo del personaje (mejoras de jetpack, botas, etc.; lista de ejemplos en `PENDIENTES.md` 3b).
+3. Después (sin empezar; ahora en `IDEAS.md`): equipo del personaje (mejoras de jetpack, botas, etc.; lista de ejemplos en `PENDIENTES.md` 3b).
 
 ## Ideas de multijugador de Pvie (apuntadas en PENDIENTES 3c)
 - Naves de jugador de como máximo 17x17x14, que aparcan en bahías.

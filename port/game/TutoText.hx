@@ -2,8 +2,8 @@ import Common;
 
 /**
  * Textos del tutorial (Tutorial) en español, inglés y francés, aparte de Lang para no alargarlo.
- * %bauxite%, %cit%, %eth%, %rock%, %alu% y %hull% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp, %credits% sus creditos
- * y %expl% las licencias de exploracion (Licenses).
+ * %bauxite%, %cit%, %eth%, %rock%, %alu%, %hull% y %chest% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp, %credits% sus creditos
+ * y %expl% las licencias de exploracion (Licenses). %click% es "haz clic" o la tecla elegida para excavar o colocar (Keys.clickVerb).
  */
 class TutoText {
 
@@ -51,9 +51,9 @@ class TutoText {
 			"Go back to the ship: step into the light beam.",
 			"Retourne au vaisseau : place-toi dans le rayon de lumière."],
 		"alu" => [
-			"Pon 1 %bauxite% en la zona del sintetizador (en verde), apunta al sintetizador con la mano vacía y haz clic para fabricar %alu%. Recoge lo que salga.",
-			"Put 1 %bauxite% on the synthesis area (in green), then aim at the synthesizer with an empty hand and click to make %alu%. Pick up what comes out.",
-			"Pose 1 %bauxite% sur la zone de synthèse (en vert), puis vise le synthétiseur main vide et clique pour fabriquer de l'%alu%. Ramasse ce qui en sort."],
+			"Pon 1 %bauxite% en la zona del sintetizador (en verde), apunta al sintetizador con la mano vacía y %click% para fabricar %alu%. Recoge lo que salga.",
+			"Put 1 %bauxite% on the synthesis area (in green), then aim at the synthesizer with an empty hand and %click% to make %alu%. Pick up what comes out.",
+			"Pose 1 %bauxite% sur la zone de synthèse (en vert), puis vise le synthétiseur main vide et %click% pour fabriquer de l'%alu%. Ramasse ce qui en sort."],
 		"plates" => [
 			"Haz lo mismo con el %alu%: el sintetizador lo convierte en %hull%.",
 			"Do the same with the %alu%: the synthesizer turns it into %hull%.",
@@ -66,14 +66,18 @@ class TutoText {
 			"Activa el ordenador de a bordo (en verde) y abre la \"Base de datos ESCorp\": allí quedan los kubes que has identificado con el láser y los que has recuperado, los planetas explorados y las recetas descubiertas.",
 			"Activate the on-board computer (in green) and open the \"ESCorp database\": it keeps the kubes you have identified with your laser and the ones you have collected, the planets you have explored and the recipes you have discovered.",
 			"Active l'ordinateur de bord (en vert) et ouvre la \"Base de données ESCorp\" : elle garde les kubes identifiés avec ton laser et ceux que tu as récupérés, les planètes explorées et les recettes découvertes."],
+		"contracts" => [
+			"Activa el ordenador de a bordo (en verde) y abre los \"Contratos\": son encargos de la ESCorp que te cambian bloques por créditos, y pagan mucho más que vendérselos al robot comerciante. El contrato especial no caduca y te da una %chest%.",
+			"Activate the on-board computer (in green) and open \"Contracts\": these are ESCorp missions that trade your blocks for credits, and they pay much more than selling them to the merchant robot. The special contract never expires and gives you an %chest%.",
+			"Active l'ordinateur de bord (en vert) et ouvre les \"Contrats\" : ce sont des missions de l'ESCorp qui échangent tes blocs contre des crédits, bien plus rentables que de les vendre au robot marchand. Le contrat spécial n'expire pas et te donne un %chest%."],
 		"computer" => [
 			"Activa el ordenador de a bordo (en verde) y elige \"Modificar la nave\".",
 			"Activate the on-board computer (in green) and choose \"Modify the ship\".",
 			"Active l'ordinateur de bord (en vert) et choisis \"Modifier le vaisseau\"."],
 		"hangar" => [
-			"Apunta a la puerta de la nave y haz clic una vez para abrirla. Luego tapa los agujeros del techo (en verde) con tu %hull%: la nave tiene que ser estanca.",
-			"Aim at the ship's door and click once to open it. Then fill the holes in the roof (in green) with your %hull%: the ship must be airtight.",
-			"Vise la porte du vaisseau et clique une fois pour l'ouvrir. Bouche ensuite les trous du toit (en vert) avec ton %hull% : le vaisseau doit être étanche."],
+			"Apunta a la puerta de la nave y %click% una vez para abrirla. Luego tapa los agujeros del techo (en verde) con tu %hull%: la nave tiene que ser estanca.",
+			"Aim at the ship's door and %click% once to open it. Then fill the holes in the roof (in green) with your %hull%: the ship must be airtight.",
+			"Vise la porte du vaisseau et %click% une fois pour l'ouvrir. Bouche ensuite les trous du toit (en vert) avec ton %hull% : le vaisseau doit être étanche."],
 		"hangarearly" => [
 			"Primero necesitas %hull%: sal del hangar y usa el sintetizador.",
 			"You need %hull% first: leave the hangar and use the synthesizer.",
@@ -117,7 +121,7 @@ class TutoText {
 
 	static var NAMES = [
 		"%bauxite%" => BMinAluminium, "%cit%" => BYellowCrystalLight, "%eth%" => BBlueCrystalLight,
-		"%rock%" => BRock, "%alu%" => BAluminium, "%hull%" => BShipHull,
+		"%rock%" => BRock, "%alu%" => BAluminium, "%hull%" => BShipHull, "%chest%" => BChest,
 	];
 
 	/** texto en el idioma elegido; con max >= 0 se le anade el recuento (n/max) */
@@ -126,6 +130,7 @@ class TutoText {
 		var s = a == null ? key : a[Lang.cur];
 		for( k => b in NAMES ) if( s.indexOf(k) >= 0 ) s = s.split(k).join(Block.get(b).getName());
 		s = s.split("%gift%").join("" + TutoSetup.GIFT).split("%credits%").join("" + Market.START_CREDITS).split("%expl%").join("" + (Licenses.MAX - 1));
+		if( s.indexOf("%click%") >= 0 ) s = s.split("%click%").join(Keys.clickVerb());
 		return max >= 0 ? s + " (" + n + "/" + max + ")" : s;
 	}
 }

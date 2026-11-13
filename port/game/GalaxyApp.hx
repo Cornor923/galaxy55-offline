@@ -49,8 +49,13 @@ class SaveRow extends Widget {
 		Theme.text(this, info.name, 2.4, Theme.TEXT, 190, 10);
 		var size = Comets.isComet(info.biome) ? Comets.SIZE : 128 * info.sizeChunks;
 		var where = info.uni != null && info.uni.space == true ? Lang.t("save.space") : Lang.t("biome." + info.biome) + "  ·  " + size + "x" + size;
-		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t("mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
+		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t(info.survival == true ? "mode.creative.survival" : "mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
 		Theme.text(this, Lang.t("played") + " " + Lang.duration(info.playSeconds) + "   " + Lang.t("saved") + " " + Lang.date(info.saved), 1.5, Theme.DIM, 190, 74);
+		var ver = versions(info);
+		if( ver != null ) {
+			var t = Theme.text(this, ver, 1.5, Theme.DIM, 0, 74);
+			t.x = Std.int(w - 14 - t.textWidth * t.scaleX);
+		}
 		// botones de las acciones, arriba a la derecha (el nombre tiene 24 letras como mucho y no llega a ellos)
 		acts = new h2d.Object(this);
 		actBg = [];
@@ -85,6 +90,15 @@ class SaveRow extends Widget {
 			activate();
 		};
 		drawActions();
+	}
+
+	/** versiones del juego de la partida (anadido del port), abajo a la derecha de la fila: la que la creo y la que la guardo por
+	    ultima vez ("?" si se creo antes de que se apuntaran); null en una partida de antes que aun no se ha vuelto a guardar */
+	public static function versions( info : SaveInfo ) : String {
+		if( info.savedWith == null ) return null;
+		if( info.createdWith == info.savedWith ) return Lang.t("save.version").split("%v%").join(info.savedWith);
+		var from = info.createdWith != null ? info.createdWith : "?";
+		return Lang.t("save.versions").split("%c%").join(from).split("%v%").join(info.savedWith);
 	}
 
 	function set_action( v : Int ) {
@@ -183,6 +197,8 @@ class GalaxyApp extends hxd.App {
 	static inline var W = Theme.W;
 	static inline var H = Theme.H;
 	static inline var TITLE = "Galaxy 55 (offline)";
+	/** version del juego: la del menu principal y la que se apunta en las partidas guardadas (SaveData); se cambia en cada release */
+	public static inline var VERSION = "0.8.1";
 	/** el juego corre en pruebas (--script o --shot): no se mueve el cursor del sistema (centerMouse) */
 	static var TEST_RUN = Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--shot=") || StringTools.startsWith(a, "--script="));
 	/** color de fx.Load */
@@ -233,6 +249,8 @@ class GalaxyApp extends hxd.App {
 	var hud : h2d.Text;
 	/** cuenta atras en una cometa (Comets, añadido del port) */
 	var cometHud : h2d.Text;
+	/** modo en curso de una partida creativa (creativo o supervivencia, anadido del port) */
+	var modeHud : h2d.Text;
 	/** F: coordenadas y fps (Game.showFPS del original): ocultos al empezar y sin guardar en settings.json, como en el original */
 	var showFps = false;
 	var msgText : h2d.Text;
@@ -415,6 +433,10 @@ class GalaxyApp extends hxd.App {
 		cometHud = Theme.text(s2d, "", 2.2, 0xFFB050, 14, 24);
 		cometHud.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
 		cometHud.visible = false;
+		// modo en curso de una partida creativa, bajo la cuenta atras de la cometa
+		modeHud = Theme.text(s2d, "", 1.6, Theme.CYAN, 14, 50);
+		modeHud.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
+		modeHud.visible = false;
 		msgText = Theme.text(s2d, "", 2.2, 0xFFFFFF, 0, 0);
 		msgText.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
 		msgText.textAlign = Center;
@@ -430,6 +452,8 @@ class GalaxyApp extends hxd.App {
 		// Base de datos ESCorp: lo nuevo se avisa arriba a la derecha, con un aviso ligero
 		kubNotify = new KubNotify(s2d, atlas);
 		Kubindex.onNews = function(n) if( state == Playing ) kubNotify.push(n);
+		// contrato especial cobrado (desde el panel de contratos): para que sirve el conteneur, al volver al juego
+		Contracts.onSpecial = function() kubNotify.later(Contracts.specialNews());
 
 		if( demoSaves ) makeDemoSaves();
 
@@ -500,6 +524,7 @@ class GalaxyApp extends hxd.App {
 				case "load": buildLoad();
 				case "options": buildOptions();
 				case "options.general", "options.controls", "options.graphics", "options.interface": buildOptionsSection(name.substr(8));
+				case "options.keys": buildKeys();
 				case "firstlang": buildFirstLang();
 				case "pause": buildPause();
 				case "mappause": buildMapPause();
@@ -557,7 +582,7 @@ class GalaxyApp extends hxd.App {
 			var l = saves[0];
 			Theme.text(s, Lang.t("lastgame") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 330);
 		}
-		versionText = Theme.text(s, "v0.8 · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
+		versionText = Theme.text(s, "v" + VERSION + " · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
 		anchorToWindow();
 		s.onBack = null;
 		return s;
@@ -923,7 +948,7 @@ class GalaxyApp extends hxd.App {
 	function buildOptionsSection( sec : String ) : Screen {
 		var rows : Array<Ui.Widget> = [];
 		var onOff = [Lang.t("off"), Lang.t("on")];
-		var count = switch( sec ) { case "general": 2; case "graphics": 5; default: 3; };
+		var count = switch( sec ) { case "general": 2; case "controls": 4; case "graphics": 5; default: 3; };
 		var h = 170 + (count + 1) * 60;
 		var s = panelFor(860, h, Lang.t("options." + sec).toUpperCase());
 		var x = (W - 660) * 0.5;
@@ -963,6 +988,12 @@ class GalaxyApp extends hxd.App {
 			tk.index = Settings.turnKeys ? 1 : 0;
 			tk.onChange = function(i) Settings.turnKeys = i == 1;
 			rows.push(tk);
+			var keys = new Button(s, Lang.t("options.keys"), 660);
+			keys.onActivate = function() {
+				Settings.save();
+				show("options.keys");
+			};
+			rows.push(keys);
 		case "graphics":
 			sel("fullscreen", Settings.fullscreen, function(v) {
 				Settings.fullscreen = v;
@@ -1000,6 +1031,26 @@ class GalaxyApp extends hxd.App {
 		return s;
 	}
 
+	/** Opciones > Controles > Configurar las teclas (KeysScreen, anadido del port) */
+	function buildKeys() : Screen {
+		var w = 1120, h = KeysScreen.TOP + KeysScreen.VISIBLE * KeysScreen.STEP + KeysScreen.BOTTOM;
+		var s = new KeysScreen(ui);
+		var bg = new h2d.Graphics(s);
+		drawPanel(bg, Theme.text(s, Lang.t("keys.title"), 3.2, Theme.TEXT), w, h);
+		s.onReset = function() askConfirm(s, Lang.t("keys.reset.ask"), Lang.t("keys.reset.warn"), Theme.ACCENT, function() {
+			Keys.reset();
+			Settings.save();
+			s.resetDone();
+		});
+		s.build((W - KeysScreen.KeyRow.W) * 0.5 - 8, (H - h) * 0.5 + KeysScreen.TOP, function() {
+			Settings.save();
+			show("options.controls");
+			// de vuelta en el boton Configurar las teclas (el penultimo, antes de Volver)
+			current.setFocus(current.widgets.length - 2);
+		});
+		return s;
+	}
+
 	/** Ordenador de a bordo (Game.openComputerMenu): despegar, modificar la nave, comerciar. Por ahora solo se puede cerrar. */
 	function buildComputer() : Screen {
 		// visitar la nave nodriza solo se ofrece al editarla (editar_nodriza.bat); jugando se llega acoplandose al robot en el mapa
@@ -1022,8 +1073,8 @@ class GalaxyApp extends hxd.App {
 		trade.enabled = !Tutorial.active(game.info);
 		computerTrade = trade;
 		var contracts = new Button(s, Lang.t("computer.contracts"));
-		// en el tutorial los contratos se ven pero no se pueden abrir (se vuelve a mirar en openComputer: el menu se guarda)
-		contracts.enabled = !Tutorial.active(game.info);
+		// en el tutorial los contratos se ven pero no se abren hasta su paso (se vuelve a mirar en openComputer: el menu se guarda)
+		contracts.enabled = Tutorial.contractsAllowed(game.info);
 		computerContracts = contracts;
 		// licencias de la ESCorp y planeta principal (Licenses, anadido del port): como los contratos
 		var licenses = new Button(s, Lang.t("computer.licenses"));
@@ -1259,6 +1310,7 @@ class GalaxyApp extends hxd.App {
 	var hangarOrig : String;
 
 	function leaveGame() {
+		closeInventory();
 		closePalette();
 		closeShop();
 		closeContracts();
@@ -1626,7 +1678,7 @@ class GalaxyApp extends hxd.App {
 		hud.visible = false; msgText.visible = false;
 		showComputer();
 		centerMouse();
-		computerContracts.enabled = !Tutorial.active(game.info);
+		computerContracts.enabled = Tutorial.contractsAllowed(game.info);
 		computerLicenses.enabled = !Tutorial.active(game.info);
 		computerTrade.enabled = !Tutorial.active(game.info);
 		computerDatabase.enabled = Tutorial.databaseAllowed(game.info);
@@ -1984,6 +2036,11 @@ class GalaxyApp extends hxd.App {
 	    en la lista de partidas la desplaza */
 	function onWindowEvent( e : hxd.Event ) {
 		if( e.kind != EWheel ) return;
+		// la lista de teclas (Opciones, desde el menu, la pausa o el mapa)
+		if( current != null && current.active && Std.isOfType(current, KeysScreen) ) {
+			cast(current, KeysScreen).scroll(e.wheelDelta > 0 ? 1 : -1);
+			return;
+		}
 		if( state == Menu && current != null && current.active && Std.isOfType(current, LoadScreen) ) {
 			cast(current, LoadScreen).scroll(e.wheelDelta > 0 ? 1 : -1);
 			return;
@@ -1996,12 +2053,61 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function openPalette() {
-		if( paletteOpen || game == null || !game.creative ) return;
+		if( paletteOpen || game == null || !(game.creative || game.canSwitchMode()) ) return;
+		if( !game.creative ) {
+			// supervivencia en una partida creativa: la pantalla de inventario, con el boton para volver a creativo
+			openInventory();
+			return;
+		}
+		paletteOpen = true;
+		captureMouse(false);
 		palette = new Palette(s2d, atlas);
 		palette.onPick = function(b) game.setSlot(b);
 		palette.onClose = closePalette;
+		if( game.canSwitchMode() ) palette.addCornerButton(ModeSwitch.button(null, true, switchMode));
+	}
+
+	/**
+	 * Bascula creativo <-> supervivencia de una partida creativa (GameView.setSurvival): boton de la paleta y de la pantalla
+	 * de inventario. Cierra lo que estuviera abierto y vuelve al juego.
+	 */
+	public function switchMode() {
+		if( game == null || !game.setSurvival(game.creative) ) return;
+		// en el hangar o la nodriza se juega una copia: el modo pasa tambien a la partida a la que se vuelve
+		if( hangarReturn != null ) hangarReturn.survival = game.info.survival;
+		closePalette();
+		closeInventory();
+		showToast(Lang.t(game.creative ? "mode.now.creative" : "mode.now.survival"));
+	}
+
+	/** pantalla de inventario (InvScreen, anadido del port): I en el modo aventura y en la supervivencia de una partida creativa
+	    (con la bascula arriba a la derecha), a pie. Como la tienda, el juego sigue detras (sin controles): lo que se tira cae y
+	    rueda a la vista */
+	public var invScreen : InvScreen;
+
+	public function openInventory() {
+		if( paletteOpen || game == null || chest != null || game.piloting ) return;
+		invScreen = new InvScreen(s2d, atlas, game.inv);
+		invScreen.onClose = closeInventory;
+		invScreen.onThrow = function(b, n) if( game != null ) game.throwStack(b, n);
+		if( game.canSwitchMode() ) invScreen.addCornerButton(ModeSwitch.button(null, game.creative, switchMode));
 		paletteOpen = true;
 		captureMouse(false);
+		// el panel tiene su ayuda: la de las teclas del juego (hud) no se ve detras
+		hud.visible = false;
+	}
+
+	function closeInventory() {
+		if( invScreen == null ) return;
+		// la pila del cursor no ha salido nunca del inventario (InvScreen): no hay nada que devolver
+		invScreen.remove();
+		invScreen = null;
+		paletteOpen = false;
+		if( game != null && state == Playing ) {
+			hud.visible = true;
+			captureMouse(true);
+			game.releaseAction();
+		}
 	}
 
 	public var shop : Shop;
@@ -2073,11 +2179,12 @@ class GalaxyApp extends hxd.App {
 	public var contracts : ContractPanel;
 
 	public function openContracts() {
-		if( game == null || contracts != null || Tutorial.active(game.info) ) return;
+		if( game == null || contracts != null || !Tutorial.contractsAllowed(game.info) ) return;
 		if( current != null ) resume();
 		contracts = new ContractPanel(s2d, atlas, game.info, game.inv);
 		contracts.onClose = closeContracts;
 		contracts.onAbandon = askAbandonContract;
+		Tutorial.contractsOpened(game.info);
 		paletteOpen = true;
 		captureMouse(false);
 	}
@@ -2431,7 +2538,7 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/** partidas de ejemplo para las capturas (--demo-saves: las 3 primeras) y para probar la lista (devsaves N); de la cuarta en
-	    adelante, una de cada cuatro es creativa */
+	    adelante, una de cada cuatro es creativa, otra se creo con la 0.7 y otra es de antes de que se apuntaran las versiones */
 	function makeDemoSaves( n = 3 ) {
 		var names = ["Base Alfa", "Cráter del Norte", "Mundo helado", "Colonia Beta", "Dunas rojas", "Bosque de ácido", "Mina lunar", "Ciudad perdida", "Puesto Gamma", "Valle oculto"];
 		var biomes = ["BIAutumn", "BIMoon", "BIWinterPeaks", "BIMars", "BIMars", "BIAcidForest", "BIMoon", "BIDeadCity", "BIAutumn", "BIWinterPeaks"];
@@ -2440,6 +2547,8 @@ class GalaxyApp extends hxd.App {
 			var info = SaveData.create(names[k] + (i < names.length ? "" : " " + (1 + Std.int(i / names.length))), 1000 + i * 77, biomes[k], 1 + (i % 2), i % 4 == 3);
 			info.playSeconds = 900 + i * 4100;
 			info.saved = Date.now().getTime() - i * 86400000.0 * 1.3;
+			if( i >= 3 && i % 4 == 1 ) info.createdWith = "0.7";
+			if( i >= 3 && i % 4 == 2 ) info.createdWith = info.savedWith = null;
 			SaveData.write(info, null, false);
 		}
 	}
@@ -2469,8 +2578,9 @@ class GalaxyApp extends hxd.App {
 			var blocks = 0, charges = 0;
 			for( s in i.inv.t ) if( s != null ) blocks += s.n;
 			for( c in i.inv.charges ) charges += c.n;
-			out.push("'" + i.name + "' " + (i.creative == true ? "creativo" : "aventura") + " tutorial=" + i.tutorial + " " + i.biome + "/" + i.sizeChunks
-				+ " bloques=" + blocks + " cargas=" + charges + " miniatura=" + (SaveData.thumb(i.id) != null ? "si" : "no") + " guardado=" + DateTools.format(Date.fromTime(i.saved), "%d/%m %H:%M:%S"));
+			out.push("'" + i.name + "' " + (i.creative == true ? (i.survival == true ? "creativo(supervivencia)" : "creativo") : "aventura") + " tutorial=" + i.tutorial + " " + i.biome + "/" + i.sizeChunks
+				+ " bloques=" + blocks + " cargas=" + charges + " miniatura=" + (SaveData.thumb(i.id) != null ? "si" : "no") + " guardado=" + DateTools.format(Date.fromTime(i.saved), "%d/%m %H:%M:%S")
+				+ " version=" + i.createdWith + "/" + i.savedWith + " fila='" + SaveRow.versions(i) + "'");
 		}
 		return out.length + " partidas:\n  " + out.join("\n  ");
 	}
@@ -2622,12 +2732,18 @@ class GalaxyApp extends hxd.App {
 					contracts.update(dt, pad);
 				} else if( database != null ) {
 					database.update(dt, pad);
+				} else if( invScreen != null ) {
+					// Select del mando: la bascula a creativo (el boton de arriba a la derecha); Y tira, como al jugar
+					if( pad != null && pad.isPressed(pad.config.back) && game.canSwitchMode() ) switchMode();
+					else invScreen.update(dt, pad);
 				} else if( palette != null ) {
-					palette.update(dt, pad);
-				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
+					// Y del mando: la bascula a supervivencia (el boton de abajo a la derecha)
+					if( pad != null && pad.isPressed(pad.config.Y) && game.canSwitchMode() ) switchMode();
+					else palette.update(dt, pad);
+				} else if( K.isPressed(K.ESCAPE) || Keys.pressed("palette") ) closePalette();
 				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
 				// barra de vida se ve bajo el panel
-				if( shop != null || contracts != null || database != null ) {
+				if( shop != null || contracts != null || database != null || invScreen != null ) {
 					game.update(dt, false, pad);
 					if( game == null || state != Playing ) return;
 					updateJetHud(game);
@@ -2637,8 +2753,9 @@ class GalaxyApp extends hxd.App {
 				// anadido del port: Esc o Start dejan la nave donde esta (sin pausar)
 				game.stopPiloting();
 				pausedThisFrame = true;
-			} else if( chest == null && !game.piloting && game.creative && (K.isPressed(K.I) || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
-				openPalette();
+			} else if( chest == null && !game.piloting && (Keys.pressed("palette") || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
+				// I / R3: la paleta en creativo; la pantalla de inventario en aventura y en supervivencia (con la bascula si la partida es creativa)
+				if( game.creative ) openPalette() else openInventory();
 			} else if( chest == null && (K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start))) ) { pause(); pausedThisFrame = true; }
 			else {
 				// con la cantina abierta el juego sigue (Esc o B la cierran, sin pausar)
@@ -2653,7 +2770,8 @@ class GalaxyApp extends hxd.App {
 				// Process.update del original: la cantina se cierra si el jugador se ha alejado
 				if( chest != null && chest.far(game) ) closeChest();
 				game.updateCamera();
-				if( K.isPressed(K.F5) ) saveGame(true);
+				// guardar (F5), coordenadas (F), casco (H) y la ayuda: teclas de Keys
+				if( Keys.pressed("save") ) saveGame(true);
 				autosaveTimer += dt;
 				if( autosaveTimer > 120 ) {
 					autosaveTimer = 0;
@@ -2664,11 +2782,11 @@ class GalaxyApp extends hxd.App {
 				// en pausa y en los menus no se recalcula y se queda quieto
 				hudShake = p.shake <= 0 ? 0 : Math.random() * 10 * p.shake * (Std.random(2) * 2 - 1) * Theme.visibleArea().w / engine.width;
 				// F (Game.checkKeys) muestra u oculta solo la linea de coordenadas y fps; la ayuda en pantalla (anadido del port) va con su opcion
-				if( chest == null && K.isPressed(K.F) ) showFps = !showFps; // con la cantina abierta no (actionKeys = false)
+				if( chest == null && Keys.pressed("fps") ) showFps = !showFps; // con la cantina abierta no (actionKeys = false)
 				var lines = [];
 				if( showFps ) lines.push(Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps");
 				// con la cantina abierta, la ayuda de las teclas del juego no (casi todas estan desactivadas; la ventana tiene la suya)
-				if( Settings.showHelp && chest == null ) lines.push(p.piloting ? Lang.t("hud.pilot") : Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : ""));
+				if( Settings.showHelp && chest == null ) lines.push(Keys.fill(p.piloting ? Lang.t("hud.pilot") : Lang.t("hud.help")) + (p.piloting ? "" : "\n" + Keys.fill(Lang.t(p.creative ? "hud.creative" : p.canSwitchMode() ? "hud.survival" : "hud.inventory"))));
 				hud.text = lines.join("\n");
 				msgText.visible = game.message != null;
 				if( game.message != null ) {
@@ -2677,10 +2795,9 @@ class GalaxyApp extends hxd.App {
 					msgText.maxWidth = 600 / msgText.scaleX;
 					msgText.setPosition(s2d.width * 0.5 - 300, s2d.height * 0.72 + hudShake);
 				}
-				if( chest == null && (K.isPressed(K.H) || (pad != null && pad.isPressed(pad.config.back))) ) toggleHelmet();
+				if( chest == null && (Keys.pressed("helmet") || (pad != null && pad.isPressed(pad.config.back))) ) toggleHelmet();
 				if( !helmet.visible && helmetOn ) helmet.visible = true;
 				updateHelmet(dt, p);
-				layoutHelmet();
 				updateJetHud(p);
 				updateStatus(dt, p);
 					if( invBar != null ) invBar.update(dt);
@@ -2699,6 +2816,10 @@ class GalaxyApp extends hxd.App {
 			}
 			game.updateCamera();
 		}
+		// el casco (y las barras) se recolocan en cada imagen tambien en la pausa, en el ordenador de a bordo y con sus paneles
+		// (licencias, contratos, comercio, Base de datos ESCorp), donde siguen a la vista: antes solo jugando, y al cambiar el
+		// tamano de la ventana con uno de ellos abierto el casco se quedaba con el de antes (bandas sin filtro a los lados)
+		if( (state == Playing || state == Paused) && game != null ) layoutHelmet();
 
 		if( pendingExplorer > 0 && --pendingExplorer == 0 ) buildExplorer();
 		if( state == Exploring && explorer != null ) {
@@ -2782,11 +2903,23 @@ class GalaxyApp extends hxd.App {
 			cometHud.textColor = c.left <= 30 ? 0xFF4C3C : 0xFFB050;
 			cometHud.y = 24 + hudShake;
 		}
+		modeHud.visible = hud.visible && game != null && game.canSwitchMode() && (state == Playing || state == Paused);
+		if( modeHud.visible ) {
+			modeHud.text = Lang.t("mode.hud").split("%m%").join(Lang.t(game.creative ? "mode.creative" : "mode.survival"));
+			modeHud.textColor = game.creative ? Theme.CYAN : Theme.ACCENT;
+			modeHud.y = 50 + hudShake;
+		}
 
 		// F2 (Interface.hx del original): en el planeta, la nave, el hangar y la nodriza, tambien con un menu abierto; no en el mapa
-		if( game != null && (state == Playing || state == Paused) && hxd.Key.isPressed(hxd.Key.F2) ) takeScreen();
+		if( game != null && (state == Playing || state == Paused) && Keys.pressed("screenshot") && !choosingKey() ) takeScreen();
 
 		testShot();
+	}
+
+	/** Configurar las teclas espera una tecla: es para ella, no para el juego */
+	function choosingKey() : Bool {
+		var k = Std.downcast(current, KeysScreen);
+		return k != null && k.capturing;
 	}
 
 	// ---------------------------------------------------------------- fondo del menu
@@ -3187,7 +3320,7 @@ class GalaxyApp extends hxd.App {
 	    el casco y el HUD se ocultan un momento) y mira si queda magenta en algun punto de los cuatro bordes de la ventana. Se
 	    usa un color y no el alfa porque el mapa de estrellas suma sus capas (blend Add): su alfa es 1 aunque deje ver el fondo. */
 	public function devCover( ?name : String ) : String {
-		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
+		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : invScreen != null ? invScreen : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
 		if( top == null ) return "nada abierto";
 		IconMesh.Icons.flush();
 		var hidden = [];

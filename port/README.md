@@ -8,7 +8,7 @@ bugs, see `BUGS.md` in the repository root); the original Flash game, with its b
 ## Play
 
 Build it (see below) and double-click `jugar.bat`, or download the portable zip from the
-[release](../../../releases/tag/v0.8). The start menu offers Continue (the list of saved games: play, rename or delete), New game, Kube editor (port addition: draw new blocks and save them as `.kube` files in the `kubes` folder of the game data), Options and Quit.
+[release](../../../releases/tag/v0.8.1). The start menu offers Continue (the list of saved games: play, rename or delete), New game, Kube editor (port addition: draw new blocks and save them as `.kube` files in the `kubes` folder of the game data), Options and Quit.
 In New game you choose name, seed and mode: **Adventure** (as in the original, with an empty inventory) or **Creative** (our addition, with biome and size).
 Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable), and screenshots (F2) to its `screenshots` folder.
 The game also writes `gpu.txt` there, with the graphics card and driver: attach it when reporting a drawing bug.
@@ -16,7 +16,7 @@ The save format may change between versions: do not count on today's saves worki
 
 ## Controls
 
-They are the original game's (movement and physics are a copy of `ent/Hero.hx` and `Game.moveHero`).
+They can be changed in Options > Controls > Customize keys (port addition). By default they are the original game's (movement and physics are a copy of `ent/Hero.hx` and `Game.moveHero`).
 
 | Action | Keys |
 |---|---|
@@ -131,7 +131,7 @@ A player got it running on Linux this way; we have not tested it.
   stays at the same height, costs nothing, uses a camera behind and above it and lighter fog while it lasts; the light beam
   shows where it will stay (it fades out at full speed and comes back when going slowly, stopping or landing). It speeds up and slows down smoothly, turns to face where it goes and banks in turns; when you
   leave it, it returns to its usual heading before landing (its blocks, chests and synthesizers do not rotate). The spot is saved per planet; if you never pilot it, the ship lands where it always did.
-- Added options: a shadow of the block you are about to place, the name of the targeted block and turning off the water waves.
+- Added options: a shadow of the block you are about to place, the name of the targeted block, hiding the selection frame and turning off the water waves.
 - The mining turbo makes you dig three times faster up to 15 blocks around it (5 in the original) and you get it back when
   you break it (the original lost it).
 - The F2 screenshot is saved straight to the `screenshots` folder and a message says where (the original opened Flash's save dialog).
