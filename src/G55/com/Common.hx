@@ -347,6 +347,7 @@ enum BlockKind {
 	BKubeDesertPhosphomoss;
 	BKubeGreyHavenBasicPlant;
 	BKubeGreyHavenBasicPlantFlowering;
+	BKubeGreyHavenLandCoral;
 }
 
 enum BlockModel {

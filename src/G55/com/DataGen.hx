@@ -315,7 +315,8 @@ class DataGen {
 		{ id : BKubeGreyHavenDirt, type : BTFull, texture : [10,42], texUp : [11,42], texDown : [11,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Terre de Grey Haven", basePrice : 100 },
 		{ id : BKubeDesertPhosphomoss, type : BTFull, texture : [12,42], texUp : [13,42], texDown : [13,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(8.0,2.0),BFNoShade], matter : null, name : "Phosphomousse du désert", basePrice : 100 },
 		{ id : BKubeGreyHavenBasicPlant, type : BTModel2Side, texture : [14,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFModel(MCross)], matter : null, name : "Plante de Grey Haven", basePrice : 100 },
-		{ id : BKubeGreyHavenBasicPlantFlowering, type : BTModel2Side, texture : [15,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFModel(MCross)], matter : null, name : "Plante fleurie de Grey Haven", basePrice : 100 }
+		{ id : BKubeGreyHavenBasicPlantFlowering, type : BTModel2Side, texture : [15,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFModel(MCross)], matter : null, name : "Plante fleurie de Grey Haven", basePrice : 100 },
+		{ id : BKubeGreyHavenLandCoral, type : BTFull, texture : [16,42], texUp : [17,42], texDown : [17,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Corail terrestre de Grey Haven", basePrice : 100 }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [
