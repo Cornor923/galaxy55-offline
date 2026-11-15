@@ -739,15 +739,6 @@ class Dev {
 					if( n > 0 ) cs.push({ c : ck, n : n });
 					g.inv.display();
 				case "hand": g.setSlot(bk(a[1])); // hand Bloque: lo pone en la casilla elegida, como la paleta creativa
-				case "charge":
-					// charge Tipo N: pone el contador de cargas de ese tipo (CYellow, CBlue, CPink, CBonus) a N; 0 lo quita
-					var ck = Type.enumIndex(Type.createEnum(ChargeKind, a[1])), n = Std.parseInt(a[2]);
-					var t = g.inv.inv.charges, e = Lambda.find(t, c -> c.c == ck);
-					if( e == null ) {
-						if( n > 0 ) t.push({ c : ck, n : n });
-					} else if( n > 0 ) e.n = n;
-					else t.remove(e);
-					g.inv.display();
 				case "tploose":
 					// tploose Bloque: pone al jugador a un bloque (x - 1) del primer suelto de ese bloque, como si llegara andando (justo
 					// encima, la atraccion 0.2 / d^2 lo lanzaria lejos)
