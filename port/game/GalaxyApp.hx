@@ -1138,7 +1138,7 @@ class GalaxyApp extends hxd.App {
 		var y = (H - h) * 0.5 + 135;
 		var takeoff = new Button(s, Lang.t("computer.takeoff"), 460, bh);
 		var edit = new Button(s, Lang.t("computer.edit"), 460, bh);
-		// stockage de la nave (ShipStorage, anadido del port): tambien en creativo; desactivado durante el tutorial
+		// stockage de la nave (ShipStorage, anadido del port): tambien en creativo; en el tutorial, desactivado
 		var storageBtn = new Button(s, Lang.t("computer.storage"), 460, bh);
 		storageBtn.enabled = !Tutorial.active(game.info);
 		computerStorage = storageBtn;
