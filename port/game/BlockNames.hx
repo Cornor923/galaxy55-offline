@@ -99,7 +99,8 @@ class BlockNames {
 		"BKubeGreyHavenLeaves" => "Grey Haven Leaves", "BKubeGreyHavenRocks" => "Grey Haven Rocks",
 		"BKubeGreyHavenDirt" => "Grey Haven Dirt", "BKubeDesertPhosphomoss" => "Desert Mushlite",
 		"BKubeGreyHavenBasicPlant" => "Grey Haven Basic Plant", "BKubeGreyHavenBasicPlantFlowering" => "Grey Haven Flowering Plant",
-		"BKubeGreyHavenLandCoral" => "Grey Haven Land Coral",
+		"BKubeGreyHavenLandCoral" => "Grey Haven Land Coral", "BKubeGreyHavenLeavesEasy" => "Grey Haven Simple Leaves",
+		"BKubeGreyHavenCactiStem" => "Grey Haven Cactus Stem", "BKubeGreyHavenCactiFruit" => "Grey Haven Cactus Fruit",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -149,7 +150,8 @@ class BlockNames {
 		"BKubeGreyHavenLeaves" => "Hojas de Grey Haven", "BKubeGreyHavenRocks" => "Rocas de Grey Haven",
 		"BKubeGreyHavenDirt" => "Tierra de Grey Haven", "BKubeDesertPhosphomoss" => "Fosforium del desierto",
 		"BKubeGreyHavenBasicPlant" => "Planta de Grey Haven", "BKubeGreyHavenBasicPlantFlowering" => "Planta en flor de Grey Haven",
-		"BKubeGreyHavenLandCoral" => "Coral terrestre de Grey Haven",
+		"BKubeGreyHavenLandCoral" => "Coral terrestre de Grey Haven", "BKubeGreyHavenLeavesEasy" => "Hojas simples de Grey Haven",
+		"BKubeGreyHavenCactiStem" => "Tallo de cactus de Grey Haven", "BKubeGreyHavenCactiFruit" => "Fruto de cactus de Grey Haven",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */

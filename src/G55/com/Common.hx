@@ -348,6 +348,9 @@ enum BlockKind {
 	BKubeGreyHavenBasicPlant;
 	BKubeGreyHavenBasicPlantFlowering;
 	BKubeGreyHavenLandCoral;
+	BKubeGreyHavenLeavesEasy;
+	BKubeGreyHavenCactiStem;
+	BKubeGreyHavenCactiFruit;
 }
 
 enum BlockModel {
