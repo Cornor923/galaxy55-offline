@@ -234,6 +234,9 @@ class Hangar {
 			collideBits = [for( b in Block.all ) 0];
 			for( b in Block.all ) {
 				if( !b.collide ) continue;
+				// cambio del port: una escalera (Stair), tambien la blindada, deja pasar el aire en los tres ejes: no tapa un agujero
+				// del casco y la que lo toca no es casco
+				if( b.stair >= 0 ) continue;
 				if( b.size == null ) collideBits[b.index] = 7;
 				else {
 					var x = b.size.x1 == 0 && b.size.x2 == 1;

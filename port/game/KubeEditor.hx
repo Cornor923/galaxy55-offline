@@ -305,7 +305,7 @@ class KubeEditor extends Screen {
 		if( b.index == 0 || b.type == BTInvisible || b.type == BTWater || b.propagate != null || b.k == BKubeEditor ) return false;
 		if( b.flip != null && b.flip.index < b.index ) return false;
 		if( b.toggle != null && b.toggle.index < b.index ) return false;
-		if( b.wall > 0 ) return false;
+		if( b.wall > 0 || b.stair > 0 ) return false;
 		return true;
 	}
 

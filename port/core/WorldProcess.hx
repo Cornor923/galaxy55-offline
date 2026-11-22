@@ -223,8 +223,9 @@ class WorldProcess {
 		if( t.k == BArtiBomb && liquid.hasProp(PLava) && lavaBombFn != null ) lavaBombFn(x, y, z, t) else breakFn(x, y, z, t);
 	}
 
+	/** cambio del port: una escalera (Stair) para la cascada y la lava como un muro (las dalles y demas bloques reducidos se rompen) */
 	public function canPropagate( b : Block, bt : Block ) {
-		return bt == null || (!bt.collide && !b.hasProp(PLiquid)) || (switch( bt.type ) { case BTModel, BTModel2Side, BTReduced: true; default: false; }) || (b.hasProp(PLava) && (bt.hasProp(PLiquid) && !bt.hasProp(PLava)));
+		return bt == null || (!bt.collide && !b.hasProp(PLiquid)) || (switch( bt.type ) { case BTModel, BTModel2Side: true; case BTReduced: bt.stair < 0; default: false; }) || (b.hasProp(PLava) && (bt.hasProp(PLiquid) && !bt.hasProp(PLava)));
 	}
 
 	/** Process.onSet: se llama despues de cambiar un bloque del planeta o del hangar (no de la nave) */

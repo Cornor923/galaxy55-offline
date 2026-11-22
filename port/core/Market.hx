@@ -76,6 +76,11 @@ class Market {
 		set(8, "BRockColumn");
 		set(12, "BRockWall BRockWallSquare BHardRockColumn BHardRockWall BHardRockWallSquare BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BWinterWallSquare BAcidWall BAcidWallSquare BLight BLamp");
 		set(15, "BShiningWoodPlank");
+		// escaleras: 3 bloques dan 2, a no mas de la mitad de lo que cuestan esos 3 (planchas a 3, roca a 4, rouge'rosh a 8, blindaje a 100)
+		set(4, "BWoodStairs");
+		set(6, "BRockStairs BWinterStairs BAcidStairs BMarsStairs");
+		set(12, "BHardRockStairs");
+		set(150, "BShipHullStairs");
 		set(22, "BIronLight");
 		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BWoodScrew");
 		set(50, "BIron BAluminium BIronFence BJumper BCascadeSource BFreezer");
@@ -131,6 +136,8 @@ class Market {
 		// cuesta picarla: comprados hechos, daba dinero)
 		"BRockWall", "BHardRockWall", "BMarsWall", "BWinterWall", "BAcidWall",
 		"BRockWallSquare", "BHardRockWallSquare", "BAcidWallSquare", "BWinterWallSquare",
+		// escaleras: como los muros, se fabrican con su material
+		"BWoodStairs", "BRockStairs", "BHardRockStairs", "BShipHullStairs", "BWinterStairs", "BAcidStairs", "BMarsStairs",
 		// nave y aparatos
 		"BShipPlate", "BShipWire", "BShipTubes", "BShipGlass2", "BShipGlassBlack", "BShipLight", "BShipHull", "BShipGlass", "BShipDoor",
 		// las vitres de gema: la gema sale del Cofre de Kube, que el robot no vende

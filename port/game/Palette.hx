@@ -59,6 +59,13 @@ class Palette extends h2d.Object {
 			if( b.index > 0 && (b.basePrice != null || b.k == BChest) && b.charge == null && b.type != BTInvisible )
 				(KubeData.isKube(b.k) ? kubes : all).push(b);
 		for( b in kubes ) all.push(b);
+		// las escaleras (anadidas al final de los bloques) van junto a lo de su material: la dalle en bois, los muros, la dalle blindee
+		for( p in [[BWoodStairs, BWoodPlate], [BRockStairs, BRockWall], [BHardRockStairs, BHardRockWall], [BShipHullStairs, BShipPlate],
+			[BWinterStairs, BWinterWall], [BAcidStairs, BAcidWall], [BMarsStairs, BMarsWall]] ) {
+			var b = Block.get(p[0]), after = Block.get(p[1]);
+			if( all.indexOf(after) < 0 || !all.remove(b) ) continue;
+			all.insert(all.indexOf(after) + 1, b);
+		}
 		// lo que da cargas al romperlo y no tiene precio en los datos: los tres cristales de hexalita (las gemas verdes: 1, 5 y 25
 		// cargas de hexalita), lo que da citronox (planta, estalactita, cactus florido) o etherium (planta, meteorito) y la carga
 		// rosa (la carga misma, que en el mundo es un bloque: como al copiarla con L3). En creativo se pueden poner, justo despues

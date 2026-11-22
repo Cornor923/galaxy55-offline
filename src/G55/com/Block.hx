@@ -47,6 +47,11 @@ class Block {
 	public var wall : Int;
 	public static var WALL_DX = [0, -1, 0, 1];
 	public static var WALL_DY = [1, 0, -1, 0];
+	/**
+	 * Anadido del port: escalera (BFStair, Stair): cuartos de vuelta desde el primero de sus 4 bloques seguidos (-1: no lo es). Su
+	 * respaldo (la parte alta) esta en WALL_DX/WALL_DY[stair] desde el centro de su celda; el escalon, en el lado contrario
+	 */
+	public var stair : Int;
 
 	public var requiredPower : Null<Float>;
 	/** precio base en créditos (los datos originales lo traen; el juego original lo usaba en la tienda ESCorp, web) */
@@ -83,6 +88,7 @@ class Block {
 		anchors = 0;
 		magnets = 7;
 		wall = -1;
+		stair = -1;
 		drop = this;
 		dropCount = 1;
 	}
@@ -143,6 +149,7 @@ class Block {
 	public function isSame( b : Block ) {
 		if( b == null ) return index == 0;
 		if( wall >= 0 && b.wall >= 0 && b.index - b.wall == index - wall ) return true;
+		if( stair >= 0 && b.stair >= 0 && b.index - b.stair == index - stair ) return true;
 		return b == this || covered == b || uncover == b || flip == b || toggle == b;
 	}
 
@@ -154,12 +161,19 @@ class Block {
 		return null;
 	}
 
+	/** escalera (BFStair): el de sus 4 bloques que tiene el respaldo en el giro turn (0..3); null si no es una escalera */
+	public function stairTurn( turn : Int ) : Block {
+		if( stair < 0 ) return null;
+		return all[index - stair + (turn & 3)];
+	}
+
 	public function toString() {
 		return index + "#" + Std.string(k);
 	}
 
 	public function getMain() {
 		if( wall > 0 ) return all[index - wall].getMain();
+		if( stair > 0 ) return all[index - stair].getMain();
 		if( uncover != null ) return uncover.getMain();
 		if( flip != null && flip.index < index ) return flip.getMain();
 		if( toggle != null && toggle.index < index ) return toggle.getMain();
@@ -169,6 +183,7 @@ class Block {
 	public function getDrop() {
 		if( !hasProp(PCanPick) ) return null;
 		if( wall > 0 ) return all[index - wall].getDrop();
+		if( stair > 0 ) return all[index - stair].getDrop();
 		if( uncover != null ) return uncover.getDrop();
 		if( flip != null && flip.index < index ) return flip.getDrop();
 		if( toggle != null && toggle.index < index ) return toggle.getDrop();
@@ -341,6 +356,8 @@ class Block {
 					b.props.set(PContainer);
 				case BFOnWall(t):
 					b.wall = t;
+				case BFStair(t):
+					b.stair = t;
 				case BFAlpha(_), BFColor(_), BFDamage(_), BFSlippy, BFHeal(_), BFJump(_), BFNoOptimize, BFScroll(_):
 					// nothing
 				}

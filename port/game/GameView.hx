@@ -1714,7 +1714,9 @@ class GameView {
 			if( b != null && hand != null && b.canOverride() ) b = null;
 			var bx = b != null ? pickBox(b) : null;
 			var model = b != null && b.size == null && bx != null && Atlas.pixels != null;
+			// una escalera (Stair) se apunta por sus dos cajas: por encima del escalon el rayo sigue hasta el respaldo o lo de detras
 			if( b != null && blocking(b) && (model ? modelHit(b, px0 - ix, py0 - iy, pz0 - iz, x - ix, y - iy, z - iz)
+				: b.stair >= 0 ? Stair.inside(b.stair, x - ix, y - iy, z - iz)
 				: (bx == null || (x - ix >= bx.x1 && x - ix <= bx.x2 && y - iy >= bx.y1 && y - iy <= bx.y2 && z - iz >= bx.z1 && z - iz <= bx.z2))) ) {
 				if( Dev.trace && iz >= World.SHIP_Z ) Sys.println("pick: toca " + b.k + "@" + ix + "," + iy + "," + iz + " antes=" + lx + "," + ly + "," + lz + " mano=" + (hand != null) + " enZona=" + ship.inCraft(lx, ly, lz));
 				// la capa 0 (roca madre) se apunta como en el original (Render.doPick: solo z < 0 queda fuera): se pone encima,
@@ -1998,9 +2000,15 @@ class GameView {
 	/**
 	 * El bloque que pondria place: el de la mano, girado segun hacia donde mira el jugador si tiene BFFlip. Un tableau (BFOnWall)
 	 * cuelga de la cara apuntada: el de sus 4 bloques que tiene la pared en ese lado, o null si no es la de una pared (el suelo,
-	 * un techo o el rayo que llega en diagonal por una esquina).
+	 * un techo o el rayo que llega en diagonal por una esquina). Una escalera (Stair) mira al jugador: el respaldo contra el bloque
+	 * apuntado de lado (como un tableau) y, apuntando a un suelo, a un techo o en diagonal, del lado al que mira el jugador.
 	 */
 	public function placedBlock( s : Select, hand : Block ) : Block {
+		if( hand.stair >= 0 ) {
+			var dx = Std.int(wrapDist(s.x - s.tx)), dy = Std.int(wrapDist(s.y - s.ty));
+			var t = s.z == s.tz ? Stair.turnFor(dx, dy) : -1;
+			return hand.stairTurn(t >= 0 ? t : Stair.turnFromYaw(yaw));
+		}
 		if( hand.wall < 0 ) return hand.getFlip(yaw);
 		if( s.z != s.tz ) return null;
 		return hand.onWall(Std.int(wrapDist(s.x - s.tx)), Std.int(wrapDist(s.y - s.ty)));
@@ -2161,7 +2169,7 @@ class GameView {
 		if( !creative ) return;
 		var s = pick(null);
 		// un tableau se copia como el de la paleta (el primero de sus 4 bloques), que se cuelga de la pared que se apunte
-		if( s != null && s.b != null ) setSlot(s.b.wall > 0 ? s.b.getMain() : s.b);
+		if( s != null && s.b != null ) setSlot(s.b.wall > 0 || s.b.stair > 0 ? s.b.getMain() : s.b);
 	}
 
 	/** Paleta creativa: pone el bloque en la casilla elegida (o en la primera libre si esta el excavador). */

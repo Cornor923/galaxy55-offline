@@ -1,0 +1,148 @@
+# Escaleras (Stair): las 7 recetas del sintetizador (2 bloques abajo y 1 encima de uno de ellos, dan 2) y la escalera blindada en
+# el casco del hangar: deja pasar el aire (hull_hole), no tapa el agujero como el blindaje.
+# Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/escaliers_craft.txt -Timeout 900 -Extra "--lang=fr"
+# Cada receta: print msg (lo que dara), print drops (lo que suelta el ordenador), print inv (lo recogido). Captura escaliers_synthe.png
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+print inv
+# 3 BWoodPlank: 2 abajo (59,62,3 60,62,3) y 1 encima
+setl 59 62 3 BWoodPlank
+setl 60 62 3 BWoodPlank
+setl 59 62 4 BWoodPlank
+wait 5
+print msg
+shot escaliers_synthe
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 60 62 3 none
+setl 59 62 4 none
+wait 5
+# 3 BRock: 2 abajo (59,62,3 60,62,3) y 1 encima
+setl 59 62 3 BRock
+setl 60 62 3 BRock
+setl 60 62 4 BRock
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 60 62 3 none
+setl 60 62 4 none
+wait 5
+# 3 BHardRock: 2 abajo (59,62,3 59,63,3) y 1 encima
+setl 59 62 3 BHardRock
+setl 59 63 3 BHardRock
+setl 59 63 4 BHardRock
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 63 3 none
+setl 59 63 4 none
+wait 5
+# 3 BShipHull: 2 abajo (60,62,3 60,63,3) y 1 encima
+setl 60 62 3 BShipHull
+setl 60 63 3 BShipHull
+setl 60 62 4 BShipHull
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 60 62 3 none
+setl 60 63 3 none
+setl 60 62 4 none
+wait 5
+# 3 BWinterRock: 2 abajo (59,63,3 60,63,3) y 1 encima
+setl 59 63 3 BWinterRock
+setl 60 63 3 BWinterRock
+setl 59 63 4 BWinterRock
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 63 3 none
+setl 60 63 3 none
+setl 59 63 4 none
+wait 5
+# 3 BAcidRock: 2 abajo (59,62,3 60,62,3) y 1 encima
+setl 59 62 3 BAcidRock
+setl 60 62 3 BAcidRock
+setl 59 62 4 BAcidRock
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 60 62 3 none
+setl 59 62 4 none
+wait 5
+# 3 BMarsRock: 2 abajo (59,62,3 60,62,3) y 1 encima
+setl 59 62 3 BMarsRock
+setl 60 62 3 BMarsRock
+setl 60 62 4 BMarsRock
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 60 62 3 none
+setl 60 62 4 none
+wait 5
+# no son escaleras: los 3 en linea, y 2 abajo con el tercero encima pero separado
+setl 59 62 3 BRock
+setl 60 62 3 BRock
+setl 59 63 3 BRock
+wait 5
+print msg
+setl 59 62 3 none
+setl 60 62 3 none
+setl 59 63 3 none
+wait 5
+# hangar: el muro de la puerta (y = 12, x 10..12, z 3): blindaje en (12,12,3). Con una escalera blindada en su sitio, agujero
+hangar
+waitfor ready
+wait 20
+print hangar
+set 12 12 3 BShipHullStairs
+wait 20
+print block 12 12 3
+print hangar
+set 12 12 3 BShipHullStairsTurn2
+wait 20
+print hangar
+set 12 12 3 BShipHull
+wait 20
+print hangar
+# dentro de la nave, una escalera blindada no estorba (el aire pasa) y no cuenta como casco
+set 12 11 3 BShipHullStairsTurn2
+wait 20
+print hangar
+set 12 11 3 none
+wait 20
+quit

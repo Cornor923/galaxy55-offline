@@ -1490,6 +1490,33 @@ class World extends WorldData {
 		faces++;
 	}
 
+	/**
+	 * Escalera (anadido del port, Stair): como un bloque parcial (BTReduced), pero con sus caras: las del borde de la celda se ven
+	 * si el vecino deja verlas (open), la huella y la contrahuella del escalon siempre. Cada cara muestra su trozo de la casilla del
+	 * bloque entero (redB = la celda) y toma la luz de las esquinas de la cara entera de la celda de ese lado, como las demas.
+	 */
+	function addStair( m : ChunkBuf, b : Block, x : Int, y : Int, z : Int, su : Float, sd : Float, sx : Float, sy : Float, neg : Bool ) {
+		var lamp = besideLamp(x, y, z);
+		var fx : Float = x, fy : Float = y, fz : Float = z;
+		var cell = [fx, fy, fx + 1, fy + 1, fz + 1];
+		for( f in Stair.faces(b.stair) ) {
+			var ox = Stair.FACE_DX[f.f], oy = Stair.FACE_DY[f.f], oz = Stair.FACE_DZ[f.f];
+			if( f.edge && !open(x + ox, y + oy, z + oz) ) continue;
+			var x1 = fx + f.x1, y1 = fy + f.y1, z1 = fz + f.z1, x2 = fx + f.x2, y2 = fy + f.y2, z2 = fz + f.z2;
+			redB = cell;
+			redFace = f.f;
+			switch( f.f ) {
+			case 0: addQuadL(m, qp(x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2), b.tu, su, neg, 0, 0, 1, x, y, z, lamp, qp2(fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1));
+			case 1: addQuadL(m, qp(x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1), b.td, sd, neg, 0, 0, -1, x, y, z, lamp, qp2(fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz));
+			case 2: addQuadL(m, qp(x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2), b.tlr, sx, neg, -1, 0, 0, x, y, z, lamp, qp2(fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1));
+			case 3: addQuadL(m, qp(x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2), b.tlr, sx, neg, 1, 0, 0, x, y, z, lamp, qp2(fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1));
+			case 4: addQuadL(m, qp(x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2), b.tlr, sy, neg, 0, -1, 0, x, y, z, lamp, qp2(fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1));
+			default: addQuadL(m, qp(x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2), b.tlr, sy, neg, 0, 1, 0, x, y, z, lamp, qp2(fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1));
+			}
+			redFace = -1;
+		}
+	}
+
 	/** las 12 coordenadas de una cara en un tampon que se reutiliza (addQuadL las usa enseguida): sin un Array por cara */
 	var quadA = [for( i in 0...12 ) 0.];
 	var quadB = [for( i in 0...12 ) 0.];
@@ -1915,7 +1942,9 @@ class World extends WorldData {
 					case BTModel, BTModel2Side, BTSprite:
 						addModel(alphaBuf, b, fx, fy, fz);
 					case BTReduced:
-						if( b.size != null ) {
+						if( b.stair >= 0 )
+							addStair(alphaBuf, b, x, y, z, su, sd, sx, sy, neg);
+						else if( b.size != null ) {
 							// igual que el original: las caras de un bloque parcial se ven si no tapan todo el lado o si el vecino es transparente.
 							// Luz por esquina como la cara entera (addCustomQuad); si la celda de al lado no tiene luz, la mas alta alrededor.
 							// cambio del port: pegado a un bloque que da luz (un neon...), una sola luz por cara, la de la celda de al lado,

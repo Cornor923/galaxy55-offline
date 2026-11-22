@@ -372,7 +372,35 @@ class DataGen {
 		{ id : BKubePortraitWoman, type : BTModel, texture : [15,43], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.3, weight : null, flags : [BFOnWall(0),BFSize(0.09375,0.9375,0.125,0.90625,1.0,0.90625),BFMagnet(None)], matter : null, name : "Portrait de femme", basePrice : 100 },
 		{ id : BKubePortraitWomanTurn1, type : BTModel, texture : [15,43], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.3, weight : null, flags : [BFOnWall(1),BFSize(0.0,0.09375,0.125,0.0625,0.90625,0.90625),BFMagnet(None)], matter : null, name : "-", basePrice : null },
 		{ id : BKubePortraitWomanTurn2, type : BTModel, texture : [15,43], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.3, weight : null, flags : [BFOnWall(2),BFSize(0.09375,0.0,0.125,0.90625,0.0625,0.90625),BFMagnet(None)], matter : null, name : "-", basePrice : null },
-		{ id : BKubePortraitWomanTurn3, type : BTModel, texture : [15,43], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.3, weight : null, flags : [BFOnWall(3),BFSize(0.9375,0.09375,0.125,1.0,0.90625,0.90625),BFMagnet(None)], matter : null, name : "-", basePrice : null }
+		{ id : BKubePortraitWomanTurn3, type : BTModel, texture : [15,43], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.3, weight : null, flags : [BFOnWall(3),BFSize(0.9375,0.09375,0.125,1.0,0.90625,0.90625),BFMagnet(None)], matter : null, name : "-", basePrice : null },
+		{ id : BWoodStairs, type : BTReduced, texture : [35,0], texUp : [34,0], texDown : [34,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFStair(0)], matter : BWoodPlank, name : "Escalier en bois", basePrice : 100 },
+		{ id : BWoodStairsTurn1, type : BTReduced, texture : [35,0], texUp : [34,0], texDown : [34,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFStair(1)], matter : BWoodPlank, name : "-", basePrice : null },
+		{ id : BWoodStairsTurn2, type : BTReduced, texture : [35,0], texUp : [34,0], texDown : [34,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFStair(2)], matter : BWoodPlank, name : "-", basePrice : null },
+		{ id : BWoodStairsTurn3, type : BTReduced, texture : [35,0], texUp : [34,0], texDown : [34,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFStair(3)], matter : BWoodPlank, name : "-", basePrice : null },
+		{ id : BRockStairs, type : BTReduced, texture : [36,0], texUp : [37,0], texDown : [37,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.9, weight : null, flags : [BFStair(0)], matter : BRock, name : "Escalier en rosh", basePrice : 100 },
+		{ id : BRockStairsTurn1, type : BTReduced, texture : [36,0], texUp : [37,0], texDown : [37,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.9, weight : null, flags : [BFStair(1)], matter : BRock, name : "-", basePrice : null },
+		{ id : BRockStairsTurn2, type : BTReduced, texture : [36,0], texUp : [37,0], texDown : [37,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.9, weight : null, flags : [BFStair(2)], matter : BRock, name : "-", basePrice : null },
+		{ id : BRockStairsTurn3, type : BTReduced, texture : [36,0], texUp : [37,0], texDown : [37,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.9, weight : null, flags : [BFStair(3)], matter : BRock, name : "-", basePrice : null },
+		{ id : BHardRockStairs, type : BTReduced, texture : [48,0], texUp : [49,0], texDown : [49,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 1.0, weight : null, flags : [BFStair(0)], matter : BHardRock, name : "Escalier en rouge'rosh", basePrice : 100 },
+		{ id : BHardRockStairsTurn1, type : BTReduced, texture : [48,0], texUp : [49,0], texDown : [49,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 1.0, weight : null, flags : [BFStair(1)], matter : BHardRock, name : "-", basePrice : null },
+		{ id : BHardRockStairsTurn2, type : BTReduced, texture : [48,0], texUp : [49,0], texDown : [49,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 1.0, weight : null, flags : [BFStair(2)], matter : BHardRock, name : "-", basePrice : null },
+		{ id : BHardRockStairsTurn3, type : BTReduced, texture : [48,0], texUp : [49,0], texDown : [49,0], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 1.0, weight : null, flags : [BFStair(3)], matter : BHardRock, name : "-", basePrice : null },
+		{ id : BShipHullStairs, type : BTReduced, texture : [0,2], texUp : [1,2], texDown : [1,2], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFStair(0)], matter : BShipHull, name : "Escalier blindé", basePrice : 100 },
+		{ id : BShipHullStairsTurn1, type : BTReduced, texture : [0,2], texUp : [1,2], texDown : [1,2], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFStair(1)], matter : BShipHull, name : "-", basePrice : null },
+		{ id : BShipHullStairsTurn2, type : BTReduced, texture : [0,2], texUp : [1,2], texDown : [1,2], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFStair(2)], matter : BShipHull, name : "-", basePrice : null },
+		{ id : BShipHullStairsTurn3, type : BTReduced, texture : [0,2], texUp : [1,2], texDown : [1,2], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFStair(3)], matter : BShipHull, name : "-", basePrice : null },
+		{ id : BWinterStairs, type : BTReduced, texture : [45,4], texUp : [46,4], texDown : [46,4], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(0)], matter : BRock, name : "Escalier du frimas", basePrice : 100 },
+		{ id : BWinterStairsTurn1, type : BTReduced, texture : [45,4], texUp : [46,4], texDown : [46,4], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(1)], matter : BRock, name : "-", basePrice : null },
+		{ id : BWinterStairsTurn2, type : BTReduced, texture : [45,4], texUp : [46,4], texDown : [46,4], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(2)], matter : BRock, name : "-", basePrice : null },
+		{ id : BWinterStairsTurn3, type : BTReduced, texture : [45,4], texUp : [46,4], texDown : [46,4], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(3)], matter : BRock, name : "-", basePrice : null },
+		{ id : BAcidStairs, type : BTReduced, texture : [57,2], texUp : [58,2], texDown : [58,2], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(0)], matter : BRock, name : "Escalier de roche douce", basePrice : 100 },
+		{ id : BAcidStairsTurn1, type : BTReduced, texture : [57,2], texUp : [58,2], texDown : [58,2], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(1)], matter : BRock, name : "-", basePrice : null },
+		{ id : BAcidStairsTurn2, type : BTReduced, texture : [57,2], texUp : [58,2], texDown : [58,2], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(2)], matter : BRock, name : "-", basePrice : null },
+		{ id : BAcidStairsTurn3, type : BTReduced, texture : [57,2], texUp : [58,2], texDown : [58,2], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(3)], matter : BRock, name : "-", basePrice : null },
+		{ id : BMarsStairs, type : BTReduced, texture : [29,3], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(0)], matter : BRock, name : "Escalier en briquettes", basePrice : 100 },
+		{ id : BMarsStairsTurn1, type : BTReduced, texture : [29,3], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(1)], matter : BRock, name : "-", basePrice : null },
+		{ id : BMarsStairsTurn2, type : BTReduced, texture : [29,3], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(2)], matter : BRock, name : "-", basePrice : null },
+		{ id : BMarsStairsTurn3, type : BTReduced, texture : [29,3], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [BFStair(3)], matter : BRock, name : "-", basePrice : null }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [
@@ -469,7 +497,14 @@ class DataGen {
 		{ id : 71, schema : [CSSingle(BShipGlass),CSSingle(BKubeRubis)], out : BShipGlassRed, count : null },
 		{ id : 72, schema : [CSSingle(BShipGlass),CSSingle(BKubeSaphir)], out : BShipGlassBlue, count : null },
 		{ id : 73, schema : [CSSingle(BShipGlass),CSSingle(BKubeEmeraude)], out : BShipGlassGreen, count : null },
-		{ id : 74, schema : [CSSingle(BShipGlass),CSSingle(BKubeAmethyste)], out : BShipGlassPink, count : null }
+		{ id : 74, schema : [CSSingle(BShipGlass),CSSingle(BKubeAmethyste)], out : BShipGlassPink, count : null },
+		{ id : 75, schema : [CSLine(BWoodPlank,2),CSSingle(BWoodPlank)], out : BWoodStairs, count : 2 },
+		{ id : 76, schema : [CSLine(BRock,2),CSSingle(BRock)], out : BRockStairs, count : 2 },
+		{ id : 77, schema : [CSLine(BHardRock,2),CSSingle(BHardRock)], out : BHardRockStairs, count : 2 },
+		{ id : 78, schema : [CSLine(BShipHull,2),CSSingle(BShipHull)], out : BShipHullStairs, count : 2 },
+		{ id : 79, schema : [CSLine(BWinterRock,2),CSSingle(BWinterRock)], out : BWinterStairs, count : 2 },
+		{ id : 80, schema : [CSLine(BAcidRock,2),CSSingle(BAcidRock)], out : BAcidStairs, count : 2 },
+		{ id : 81, schema : [CSLine(BMarsRock,2),CSSingle(BMarsRock)], out : BMarsStairs, count : 2 }
 	];
 
 }

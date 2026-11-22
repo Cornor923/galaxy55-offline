@@ -74,6 +74,24 @@ class IconMesh {
 		rb = null;
 	}
 
+	/** escalera (Stair): todas sus caras, cada una con su trozo de la casilla del bloque entero, como en el mundo */
+	static function stair( m : MeshBuf, b : Block ) {
+		var su = Math.sqrt(b.shadeUp), sd = Math.sqrt(b.shadeDown), sx = Math.sqrt(b.shadeX), sy = Math.sqrt(b.shadeY);
+		rb = [0, 0, 1, 1, 1];
+		for( f in Stair.faces(b.stair) ) {
+			var x1 = f.x1, y1 = f.y1, z1 = f.z1, x2 = f.x2, y2 = f.y2, z2 = f.z2;
+			switch( f.f ) {
+			case 0: quad(m, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su, 0);
+			case 1: quad(m, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd, 1);
+			case 2: quad(m, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx, 2);
+			case 3: quad(m, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx, 3);
+			case 4: quad(m, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy, 4);
+			default: quad(m, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy, 5);
+			}
+		}
+		rb = null;
+	}
+
 	static function model( m : MeshBuf, b : Block ) {
 		var md = Models.of(b);
 		var v = md.v;
@@ -122,6 +140,8 @@ class IconMesh {
 		switch( b.type ) {
 		case BTModel, BTModel2Side, BTSprite:
 			model(m, b);
+		case BTReduced if( b.stair >= 0 ):
+			stair(m, b);
 		case BTReduced:
 			var s = b.size;
 			if( s == null ) box(m, b, 0, 0, 0, 1, 1, 1, all) else box(m, b, s.x1, s.y1, s.z1, s.x2, s.y2, s.z2, all, true);

@@ -98,6 +98,10 @@ class BlockNames {
 		"BKubeMystery" => "Mystery Kube",
 		"BShipGlassRed" => "Red Tinted Toughened Glass", "BShipGlassBlue" => "Blue Tinted Toughened Glass",
 		"BShipGlassGreen" => "Green Tinted Toughened Glass", "BShipGlassPink" => "Pink Tinted Toughened Glass", "BShopBarrier" => "-",
+		// escaleras (anadidas del port), con el nombre del muro de su material (Rock Wall, Frost Wall...)
+		"BWoodStairs" => "Wooden Stairs", "BRockStairs" => "Rock Stairs", "BHardRockStairs" => "HardRoq Stairs",
+		"BShipHullStairs" => "Armoured Stairs", "BWinterStairs" => "Frost Stairs", "BAcidStairs" => "Soft Rock Stairs",
+		"BMarsStairs" => "Brick Stairs",
 		// tableaux de CroqueMotel (anadidos del port)
 		"BKubePaintingYellowFlowers" => "Yellow Flowers Painting", "BKubePaintingSculpture" => "Sculpture Painting",
 		"BKubePaintingBush" => "Bush Painting", "BKubePaintingPottedPlant" => "Potted Plant Painting",
@@ -152,6 +156,10 @@ class BlockNames {
 		"BKubeMystery" => "Kube misterioso",
 		"BShipGlassRed" => "Vidrio blindado rojo", "BShipGlassBlue" => "Vidrio blindado azul",
 		"BShipGlassGreen" => "Vidrio blindado verde", "BShipGlassPink" => "Vidrio blindado rosa", "BShopBarrier" => "-",
+		// escaleras (anadidas del port), con el nombre del muro de su material (Muro de piedra, Muro de escarcha...)
+		"BWoodStairs" => "Escalera de madera", "BRockStairs" => "Escalera de piedra", "BHardRockStairs" => "Escalera de volcanita",
+		"BShipHullStairs" => "Escalera blindada", "BWinterStairs" => "Escalera de escarcha", "BAcidStairs" => "Escalera de roca ácida",
+		"BMarsStairs" => "Escalera de ladrillos",
 		// tableaux de CroqueMotel (anadidos del port)
 		"BKubePaintingYellowFlowers" => "Cuadro de las flores amarillas",
 		"BKubePaintingSculpture" => "Cuadro de la escultura", "BKubePaintingBush" => "Cuadro del arbusto",

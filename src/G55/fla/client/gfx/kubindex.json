@@ -353,6 +353,7 @@
     "BShiningWoodPlank",
     "BWoodColumn",
     "BWoodPlate",
+    "BWoodStairs",
     "BWoodWindow",
     "BLamp",
     "BLeavesCurtain",
@@ -363,13 +364,18 @@
    "id": "stone",
    "out": [
     "BRockWall",
+    "BRockStairs",
     "BRockWallSquare",
     "BHardRockWall",
+    "BHardRockStairs",
     "BHardRockColumn",
     "BMoonLightColumn",
     "BWinterWall",
+    "BWinterStairs",
     "BMarsWall",
-    "BAcidWall"
+    "BMarsStairs",
+    "BAcidWall",
+    "BAcidStairs"
    ]
   },
   {
@@ -379,6 +385,7 @@
     "BShipHull",
     "BShipWire",
     "BShipPlate",
+    "BShipHullStairs",
     "BShipTubes",
     "BShipDoor",
     "BShipGlass",

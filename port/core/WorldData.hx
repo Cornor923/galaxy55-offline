@@ -339,6 +339,8 @@ class WorldData {
 		if( id == 0 ) return false;
 		var b = gen.blocks[id];
 		if( b == null || !b.collide ) return false;
+		// cambio del port: una escalera (Stair) choca con sus dos cajas, la dalle de abajo y la mitad alta del lado del respaldo
+		if( b.stair >= 0 ) return Stair.inside(b.stair, x - ix, y - iy, z - iz);
 		if( b.size == null ) return true;
 		var fz = z - iz;
 		// cambio del port: un tableau (BFOnWall) solo choca con su placa; los demas bloques parciales, con todo el ancho de la celda

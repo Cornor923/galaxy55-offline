@@ -409,6 +409,36 @@ enum BlockKind {
 	BKubePortraitWomanTurn1;
 	BKubePortraitWomanTurn2;
 	BKubePortraitWomanTurn3;
+	// anadidos del port: escaleras (BFStair, Stair), cada una son 4 bloques, el de la paleta y sus giros (Turn1..3). Se fabrican con
+	// 3 bloques de su material (2 abajo y 1 encima de uno de ellos) y dan 2; tienen las texturas del muro de ese material
+	BWoodStairs;
+	BWoodStairsTurn1;
+	BWoodStairsTurn2;
+	BWoodStairsTurn3;
+	BRockStairs;
+	BRockStairsTurn1;
+	BRockStairsTurn2;
+	BRockStairsTurn3;
+	BHardRockStairs;
+	BHardRockStairsTurn1;
+	BHardRockStairsTurn2;
+	BHardRockStairsTurn3;
+	BShipHullStairs;
+	BShipHullStairsTurn1;
+	BShipHullStairsTurn2;
+	BShipHullStairsTurn3;
+	BWinterStairs;
+	BWinterStairsTurn1;
+	BWinterStairsTurn2;
+	BWinterStairsTurn3;
+	BAcidStairs;
+	BAcidStairsTurn1;
+	BAcidStairsTurn2;
+	BAcidStairsTurn3;
+	BMarsStairs;
+	BMarsStairsTurn1;
+	BMarsStairsTurn2;
+	BMarsStairsTurn3;
 }
 
 enum BlockModel {
@@ -489,6 +519,9 @@ enum BlockFlag {
 	// anadido del port: tableau colgado de una pared (Painting). Son 4 bloques seguidos, uno por pared; turn = cuartos de vuelta
 	// desde el primero, que tiene la pared detras en +y (0: pared en +y, 1: en -x, 2: en -y, 3: en +x). BFSize: la placa en la celda
 	BFOnWall( turn : Int );
+	// anadido del port: escalera (Stair). Son 4 bloques seguidos; turn = cuartos de vuelta desde el primero, que tiene la parte alta
+	// (el respaldo) en +y y el escalon en -y (0: respaldo en +y, 1: en -x, 2: en -y, 3: en +x, como BFOnWall)
+	BFStair( turn : Int );
 }
 
 typedef BlockData = {
