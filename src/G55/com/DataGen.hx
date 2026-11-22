@@ -319,7 +319,7 @@ class DataGen {
 		{ id : BKubeGreyHavenLandCoral, type : BTFull, texture : [16,42], texUp : [17,42], texDown : [17,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Corail terrestre de Grey Haven", basePrice : 100 },
 		{ id : BKubeGreyHavenLeavesEasy, type : BTFull, texture : [18,42], texUp : [19,42], texDown : [19,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Feuilles simples de Grey Haven", basePrice : 100 },
 		{ id : BKubeGreyHavenCactiStem, type : BTFull, texture : [20,42], texUp : [21,42], texDown : [21,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Tige de cactus de Grey Haven", basePrice : 100 },
-		{ id : BKubeGreyHavenCactiFruit, type : BTFull, texture : [22,42], texUp : [23,42], texDown : [24,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(8.0,2.0),BFNoShade], matter : null, name : "Fruit de cactus de Grey Haven", basePrice : 100 }
+		{ id : BKubeGreyHavenCactiFruit, type : BTFull, texture : [22,42], texUp : [23,42], texDown : [24,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(15.0,3.0),BFNoShade], matter : null, name : "Fruit de cactus de Grey Haven", basePrice : 100 }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [
