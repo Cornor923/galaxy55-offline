@@ -141,8 +141,9 @@ class BiomeGenerator extends Generator {
 
 				addCaves(2, 0.75, BWinterBrokenRock);
 				addCaveCrystals(3.0, BBlueCrystalLight, BBlueCrystalDense, BWinterBrokenRock, CAVE);
-				addCaveMinerals(4.0, 30,100);
-				
+				// version 2: 11 en vez de 4 (unos 80 de mineral por 10 000 columnas en vez de 30)
+				addCaveMinerals(version >= 2 ? 11.0 : 4.0, 30,100);
+
 				addCaveAccesses(30);
 				saveCaveMask();
 				
@@ -1076,8 +1077,12 @@ class BiomeGenerator extends Generator {
 			}, function() {
 				
 				// add minerals
+				// version 2: un filon por vuelta (antes todos los que salian en los 1000 sitios: unos 3400 de rouge'rosh por 10 000
+				// columnas), una vuelta por cada 600 columnas, un bloque mas hondo y tambien en el fondo (roca y tierra): unos 870 de
+				// rouge'rosh y 130 de mineral por 10 000 columnas
 				var rock = alloc(BHardRock);
-				for( i in 0...Math.ceil(size * size / 3000) ) {
+				var v2 = version >= 2;
+				for( i in 0...Math.ceil(size * size / (v2 ? 600 : 3000)) ) {
 					var ntry = 1000;
 					while( ntry-->0 ) {
 						var x = rnd.random(size);
@@ -1095,7 +1100,7 @@ class BiomeGenerator extends Generator {
 						for( i in 0...4 ) {
 							var x = x + rnd.random(5) - 2;
 							var y = y + rnd.random(5) - 2;
-							var z = z - h - 1;
+							var z = z - h - (v2 ? 2 : 1);
 							var sx = 1.3 + rnd.rand() * 1.5;
 							var sy = 1.2 + rnd.rand() * 1.5;
 							var sz = 1 + rnd.rand() * 1.3;
@@ -1105,12 +1110,14 @@ class BiomeGenerator extends Generator {
 						for( e in el )
 							elipse(e.sx, e.sy, e.sz, function(dx, dy, dz) {
 								var x = e.x + dx, y = e.y + dy, z = e.z + dz;
-								if( get(x, y, z) == EMPTY || get(x, y, z) == WATER ) {
+								var c = get(x, y, z);
+								if( c == EMPTY || c == WATER || (v2 && (c == ROCK || c == SOIL)) ) {
 									set(x, y, z, rock);
 									pts.push( { x:x, y:y, z:z } );
 								}
 							});
 						fillMinerals(pts);
+						if( v2 ) break;
 					}
 				}
 			});

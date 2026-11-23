@@ -60,6 +60,7 @@ class DetailsGenerator extends BiomeGenerator {
 	 */
 	override function stageCave() {
 		if( caveMask == null ) return;
+		bonusCaves = true;
 		var total = size * size * HEIGHT;
 		gcFree(true);
 		for( addr in 0...total )
@@ -227,21 +228,77 @@ class DetailsGenerator extends BiomeGenerator {
 	}
 
 	/**
-	 * Cristales de hexalita de la superficie (bonus): los mismos que en el original (15 sueltos y de 0 a 5 paquetes con hierbas),
-	 * cada uno en una region con su propio azar (placeBonus)
+	 * Version 2: cristales de hexalita buscados por 10 000 columnas en un planeta pequeno, normal y grande (128, 256 y 384); en uno
+	 * con grutas (bonusCaves), BONUS_CAVE_EXTRA mas
+	 */
+	static var BONUS_DENSITY = [55., 22., 12.];
+	static inline var BONUS_CAVE_EXTRA = 1.1;
+
+	/**
+	 * Cristales que pone de media la receta del original (version 1) en un planeta pequeno, normal y grande de cada bioma: casi
+	 * los mismos en cualquier tamano, asi que en los grandes salian mucho menos seguidos. Sin grutas solo salen los de la
+	 * superficie; en Marte las grutas son tan pocas que en uno pequeno no sale ninguno en ellas, y en los otros cambian mucho de un
+	 * planeta a otro. Medidos contando los de la etapa de las grutas y los de la de los bonus, de 12 a 40 planetas por caso y sin
+	 * lo que cambia el numero de paquetes que sale (los de las estructuras no llegan a 1), y corregidos con 50 a 100 planetas de la
+	 * version 2 (Grey Haven, Marte); fuera de Marte, uno para los tres tamanos. Lo que sale despues: GenMain --bonus
+	 */
+	static var BONUS_RECIPE : haxe.ds.Map<String, Array<Float>> = [
+		"BIAutumn" => [110., 110., 110.],
+		"BIWinterPeaks" => [110., 110., 110.],
+		"BIGreyHaven" => [112., 112., 112.],
+		"BIMars" => [46., 62., 81.],
+		"BIMoon" => [43., 43., 43.],
+		"BIAcidForest" => [43., 43., 43.],
+		"BIDeadCity" => [48., 48., 48.],
+	];
+	/** la receta de un bioma que no esta en BONUS_RECIPE, con grutas y sin ellas */
+	static inline var BONUS_RECIPE_CAVES = 110.;
+	static inline var BONUS_RECIPE_SURFACE = 44.;
+
+	/** el planeta tiene grutas (stageCave con las celdas de saveCaveMask): sus cristales llevan BONUS_CAVE_EXTRA */
+	var bonusCaves = false;
+
+	/**
+	 * cuantas veces la receta del original: 1 antes de la version 2; desde la 2, los cristales que tocan por la densidad de su
+	 * tamano (BONUS_DENSITY, BONUS_CAVE_EXTRA) entre los que pone la receta en su bioma (BONUS_RECIPE)
+	 */
+	function bonusScale() : Float {
+		if( version < 2 ) return 1.;
+		var i = Std.int(size / 128) - 1;
+		if( i < 0 ) i = 0;
+		if( i >= BONUS_DENSITY.length ) i = BONUS_DENSITY.length - 1;
+		var recipe = BONUS_RECIPE.get(biomeName);
+		var base = recipe != null ? recipe[i] : bonusCaves ? BONUS_RECIPE_CAVES : BONUS_RECIPE_SURFACE;
+		return BONUS_DENSITY[i] * (bonusCaves ? BONUS_CAVE_EXTRA : 1.) * size * size / (10000 * base);
+	}
+
+	/**
+	 * n cristales o paquetes de la receta del original por bonusScale, redondeado al azar con el suyo (stream(name + "/scale")):
+	 * de media justo n * bonusScale, tambien con los pocos (0 a 2 grandes). Con bonusScale 1 (version 1) es n sin tirar nada
+	 */
+	function bonusCount( name : String, n : Int ) : Int {
+		var x = n * bonusScale();
+		var k = Std.int(x);
+		if( x == k ) return k;
+		return k + (stream(name + "/scale").rand() < x - k ? 1 : 0);
+	}
+
+	/**
+	 * Cristales de hexalita de la superficie (bonus): la receta del original (15 sueltos y de 0 a 5 paquetes con hierbas) por
+	 * bonusScale (bonusCount), cada uno en una region con su propio azar (placeBonus)
 	 */
 	override function addBonus() {
 		if( !hasStructures() ) return;
 		var small = alloc(BBonusSmall);
 		var medium = alloc(BBonusMedium);
 		inline function free( x : Int, y : Int, z : Int ) return z > waterLevel && get(x, y, z) == EMPTY && isSolidAt(x, y, z - 1);
-		for( i in 0...15 )
+		for( i in 0...bonusCount("bonus", 15) )
 			placeBonus("bonus", i, false, function(x, y, z) {
 				if( !free(x, y, z) ) return false;
 				set(x, y, z, rnd.random(100) < 66 ? small : medium);
 				return true;
 			});
-		for( i in 0...stream("bonuspacks").random(6) )
+		for( i in 0...bonusCount("bonuspack", stream("bonuspacks").random(6)) )
 			placeBonus("bonuspack", i, false, function(x, y, z) {
 				if( !free(x, y, z) ) return false;
 				elipse(4, 4, 5, function(dx, dy, dz) {
@@ -254,7 +311,10 @@ class DetailsGenerator extends BiomeGenerator {
 			});
 	}
 
-	/** cristales de hexalita de las grutas (bonus): de 0 a 2 grandes y de 3 a 9 paquetes, en el suelo de una gruta (placeBonus) */
+	/**
+	 * cristales de hexalita de las grutas (bonus): de 0 a 2 grandes y de 3 a 9 paquetes por bonusScale (bonusCount), en el suelo de
+	 * una gruta (placeBonus)
+	 */
 	function caveBonus() {
 		var small = alloc(BBonusSmall);
 		var medium = alloc(BBonusMedium);
@@ -266,7 +326,7 @@ class DetailsGenerator extends BiomeGenerator {
 				z--;
 			return get(x, y, z) == CAVE ? z : -1;
 		}
-		for( i in 0...stream("cavebonus").random(3) )
+		for( i in 0...bonusCount("cavebonus", stream("cavebonus").random(3)) )
 			placeBonus("cavebonus", i, true, function(x, y, z) {
 				z = floor(x, y, z);
 				if( z < 0 ) return false;
@@ -274,7 +334,7 @@ class DetailsGenerator extends BiomeGenerator {
 				bonusHerb(x, y, z, CAVE);
 				return true;
 			});
-		for( i in 0...stream("cavebonuspacks").random(7) + 3 )
+		for( i in 0...bonusCount("cavebonuspack", stream("cavebonuspacks").random(7) + 3) )
 			placeBonus("cavebonuspack", i, true, function(x, y, z) {
 				z = floor(x, y, z);
 				if( z < 0 ) return false;

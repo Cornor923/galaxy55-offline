@@ -29,3 +29,27 @@
 5 BIShed 3 1 E1BE6430 -
 1 BICometCinder 1 1 82E465F3 -
 777 BICometCinder 1 1 81C8742F -
+# Version 2 (cristales de hexalita segun el tamano y el bioma del planeta: DetailsGenerator.bonusScale, 55 / 22 / 12 por 10 000
+# columnas en uno pequeno, normal y grande, un 10 % mas con grutas; el rouge'rosh y el mineral del bosque acido y de las cumbres
+# nevadas: BiomeGenerator): los mismos casos. El hangar y las cometas no cambian (no tienen cristales).
+1234 BIAutumn 2 2 8508FBC6 cavegarden,cavelava
+5 BIAutumn 1 2 83E3C743 -
+808 BIAutumn 3 2 9C2C5C35 cavegarden,cavecascade,cavecascade,cavegarden,cavecascade,largepit,crater,invisible,invisible
+7 BIMoon 2 2 91965022 fence
+321 BIMoon 1 2 CF7572CD burned
+9001 BIMoon 3 2 EC80F048 artifact,invisible
+99 BIMars 2 2 BB29DD07 cavelava,cavecascade,ice
+4040 BIMars 1 2 912BCD61 capsule
+2077 BIMars 3 2 6D523313 caveveins,cavegarden,burned,largepit
+4242 BIWinterPeaks 2 2 405084CD cavecascade,cavelava,crater
+15 BIWinterPeaks 1 2 09BC0BF2 meadow
+2026 BIWinterPeaks 3 2 FEA09F46 cavelava,cavecascade,cavegarden,cavelava,cavelava,cavegarden,artifact,tree,meadow
+31 BIAcidForest 2 2 4CBEAA4E -
+600 BIAcidForest 1 2 9CD22994 -
+123 BIAcidForest 3 2 FCD9C3BF ruins,invisible
+1234 BIDeadCity 1 2 7863DFF9 -
+77 BIDeadCity 2 2 98C5E1A7 crater
+2048 BIDeadCity 3 2 E1F2FA01 meadow,meadow
+5 BIShed 3 2 E1BE6430 -
+1 BICometCinder 1 2 82E465F3 -
+777 BICometCinder 1 2 81C8742F -

@@ -19,6 +19,8 @@ import Common;
 	                                                    en cada caso, sin mirar fichero y linea (sale con codigo 1 si cambia algo)
 	  hl port/out/gen.hl --census [CASOS]               anomalias puestas (DetailsGenerator.placed) por nombre y bioma: cuantas y
 	                                                    en cuantos planetas
+	  hl port/out/gen.hl --bonus [CASOS]                cristales de hexalita por bioma y tamano: por planeta (media, menos y mas),
+	                                                    por 10 000 columnas y sus cargas (DetailsGenerator.bonusScale)
 	  hl port/out/gen.hl --locality [CASOS]             generador version 1: cada caso dos veces (igual) y con una estructura de
 	                                                    prueba mas: lo que cambia esta en la caja de lo que cambia (1-10, 1 y 2)
 	  hl port/out/gen.hl --allstructures [--seeds A-B] [--sizes S]
@@ -448,6 +450,49 @@ class GenMain {
 		out("CENSUS " + cases.length + " casos");
 	}
 
+	/**
+	 * --bonus (anadido del port): por bioma y tamano, los bloques de cristal de hexalita de cada planeta (los de los bonus y los de
+	 * las estructuras) y las cargas que dan (1, 5 y 25): media, el que menos y el que mas, y la media por 10 000 columnas
+	 */
+	static function bonus( args : Array<String> ) {
+		var cases = parseCases(args, "1-30", "1,2,3");
+		var stats = new Map<String, { planets : Int, n : Int, min : Int, max : Int, charges : Int, columns : Int }>(), order = [];
+		for( c in cases ) {
+			var g = try generate(c) catch( e : Dynamic ) {
+				out("ERROR " + caseName(c) + ": " + Std.string(e));
+				continue;
+			}
+			var worth = [for( b in g.blocks ) switch( b.k ) { case BBonusSmall: 1; case BBonusMedium: 5; case BBonusLarge: 25; default: 0; }];
+			var bytes = worldBytes(g), n = 0, charges = 0;
+			for( i in 0...bytes.length ) {
+				var id = bytes.get(i) & 127;
+				if( id < worth.length && worth[id] > 0 ) {
+					n++;
+					charges += worth[id];
+				}
+			}
+			var key = c.biome + " " + c.size;
+			var s = stats.get(key);
+			if( s == null ) {
+				stats.set(key, s = { planets : 0, n : 0, min : n, max : n, charges : 0, columns : g.size * g.size });
+				order.push(key);
+			}
+			s.planets++;
+			s.n += n;
+			s.charges += charges;
+			if( n < s.min ) s.min = n;
+			if( n > s.max ) s.max = n;
+		}
+		for( k in order ) {
+			var s = stats.get(k), f = k.split(" ");
+			var mean = s.n / s.planets;
+			out(pad(f[0], 14) + " tamano " + f[1] + ": " + lpad("" + s.planets, 3) + " planetas  cristales " + lpad(ms(mean), 6)
+				+ " (" + s.min + "-" + s.max + ")  por 10 000 columnas " + lpad(ms(mean * 10000 / s.columns), 5)
+				+ "  cargas " + lpad(ms(s.charges / s.planets), 6));
+		}
+		out("BONUS " + cases.length + " casos");
+	}
+
 	// ---------------------------------------------------------------- pruebas del generador version 1 (anadido del port)
 
 	/** el bloque (indice de BlockKind) de cada numero local de un generador: dos mundos se comparan por nombre de bloque */
@@ -760,6 +805,7 @@ class GenMain {
 			case "--steps": stepSums(args);
 			case "--compare" if( args.length >= 3 ): compare(args[1], args[2]);
 			case "--census": census(args);
+			case "--bonus": bonus(args);
 			case "--locality": locality(args);
 			case "--allstructures": allStructures(args);
 			case "--fuzz": fuzz(args);

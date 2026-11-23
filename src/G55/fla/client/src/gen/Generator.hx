@@ -57,10 +57,19 @@ class Generator {
 	 *   partida sale como "Ancienne partie" (World, GalaxyApp).
 	 * - 1: azar por nombre (Rng, Generator.stream), estructuras en un registro (Structures) puestas por regiones, etapas en un
 	 *   orden fijo. Anadir una estructura (Structures: since) solo cambia el planeta dentro de su caja.
+	 * - 2: los cristales de hexalita segun el tamano y el bioma del planeta (DetailsGenerator.bonusScale: 55, 22 y 12 por 10 000
+	 *   columnas en uno pequeno, normal y grande, un 10 % mas con grutas), en vez del mismo numero en todos. El rouge'rosh y el mineral (BiomeGenerator): en el bosque
+	 *   acido unos 870 y 130 por 10 000 columnas (antes unos 3400 y 170), en las cumbres nevadas unos 620 y 80 (antes 235 y 30: filones de gruta 11).
 	 * Reglas: lo que cambie lo que genera el generador sube VERSION y solo se aplica con version >= la nueva (Structures: since /
 	 * until); port/headless/gen_ref.txt: las lineas de las versiones que ya han salido no cambian nunca.
 	 */
-	public static inline var VERSION = 1;
+	public static inline var VERSION = 2;
+
+	/**
+	 * Anadido del port: la version mas antigua que se sigue generando tal cual. Un planeta de una anterior (la 0) se genera con
+	 * esta y la partida sale como "Ancienne partie" (SaveData.isOldGeneration); uno de esta o de una posterior, con la suya
+	 */
+	public static inline var MIN_VERSION = 1;
 
 	public var size(default,null) : Int;
 	/** anadido del port: version con la que se genera este planeta (VERSION si no se dice otra) */
