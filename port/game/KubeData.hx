@@ -1,14 +1,6 @@
 import Common;
 
 /** forma de un kube: tipo de bloque del juego, modelo (BFModel) y caras que usa (indices de KubeData.FACES) */
-typedef KubeShape = {
-	var id : String;
-	var type : BlockType;
-	var model : Null<BlockModel>;
-	var faces : Array<Int>;
-	/** caja parcial (BFSize) que se puede cambiar */
-	var box : Bool;
-}
 
 /**
  * Un kube del editor de kubes (anadido del port): un bloque con el mismo formato que los del juego (DataGen: tipo, BFSize o
@@ -28,46 +20,38 @@ class KubeData {
 	public static inline var RIGHT = 6;
 	public static inline var OPEN = 7;
 	/** nombre del png de cada cara dentro del .kube (y su indice en la tira de la vista previa) */
-	public static var FACES = ["side", "up", "down", "front", "back", "left", "right", "open"];
+	public static var FACES = KubeCore.FACES;
 	static inline var FORMAT = 1;
 	/** prefijo de los kubes en BlockKind: los 77 de Kube y los que se anaden desde el editor (kindName) */
 	static inline var KIND_PREFIX = "BKube";
 
 	/** el bloque es un kube (de Kube o del editor), no un bloque de Galaxy 55 */
-	public static function isKube( k : BlockKind ) : Bool return StringTools.startsWith(Std.string(k), KIND_PREFIX);
+	public static function isKube( k : BlockKind ) : Bool return BlockNames.isKube(k);
 
-	/** las formas del juego: las de los bloques de DataGen y los modelos de Models.hx que el original tenia sin usar */
-	public static var SHAPES : Array<KubeShape> = [
-		{ id : "cube", type : BTFull, model : null, faces : [SIDE, UP, DOWN], box : false },
-		{ id : "cube6", type : BTExtended, model : null, faces : [FRONT, BACK, LEFT, RIGHT, UP, DOWN], box : false },
-		{ id : "box", type : BTReduced, model : null, faces : [SIDE, UP, DOWN], box : true },
-		{ id : "door", type : BTReduced, model : null, faces : [SIDE, UP, DOWN, OPEN], box : true },
-		{ id : "cross", type : BTModel2Side, model : MCross, faces : [SIDE], box : false },
-		{ id : "crosssquare", type : BTModel2Side, model : MCrossSquare, faces : [SIDE], box : false },
-		{ id : "plane", type : BTModel2Side, model : MPlanX, faces : [SIDE], box : false },
-		{ id : "pyramid", type : BTModel2Side, model : MCrossPyramid, faces : [SIDE], box : false },
-		{ id : "column", type : BTModel, model : MColumn, faces : [SIDE, UP, DOWN], box : false },
-		{ id : "bigcolumn", type : BTModel, model : MBigColumn, faces : [SIDE, UP, DOWN], box : false },
-		{ id : "hanging", type : BTModel, model : MMiniTop, faces : [SIDE, UP, DOWN], box : false },
-		{ id : "pipe", type : BTModel, model : MPipeX, faces : [SIDE, UP, DOWN], box : false },
-		{ id : "cage", type : BTModel, model : MCrossBox, faces : [SIDE, UP], box : false },
-	];
+	/** las formas del juego (KubeCore.SHAPES: las de los bloques de DataGen y los modelos de Models.hx sin usar del original) */
+	public static var SHAPES : Array<KubeCore.KubeShape> = KubeCore.SHAPES;
 	/** rendu del cubo: opaco (BTFull), calado como las hojas (BTTransp) o translucido como el cristal (BTAlpha) */
-	public static var RENDERS = [BTFull, BTTransp, BTAlpha];
+	public static var RENDERS = KubeCore.RENDERS;
 	/**
 	 * Potencias de BFLight que se eligen en el editor (las de los bloques del juego): la luz de la celda del bloque, en la escala
 	 * de World (10 = pleno dia, 15 como mucho). Cada kube de distancia le quita la caida: se apaga a potencia / caida kubes.
 	 */
 	public static var LIGHT_POWERS = [6., 8., 10., 12., 15.];
 	public static inline var MAX_REACH = 15;
-	/** cajas de ejemplo en pixeles (x1 y1 z1 x2 y2 z2): dalla, neon de techo, cofrecito, poste, puerta */
+	/**
+	 * Cajas de ejemplo en pixeles (x1 y1 z1 x2 y2 z2): dalla, neon de techo, cofrecito, poste, puerta. Y los tres modelos de tableau
+	 * (Painting.sizes: x de izquierda a derecha vista de frente, y el grosor desde la pared, z de abajo arriba), de 2 pixeles de
+	 * grueso: un cuadrado en el centro de la pared (la mitad del lado), la pared entera y media altura en el centro, de lado a lado
+	 */
 	public static var BOXES = [
 		"slab" => [0, 0, 0, 32, 32, 16], "neon" => [0, 0, 28, 32, 32, 32], "small" => [8, 8, 0, 24, 24, 16],
 		"post" => [13, 8, 0, 19, 24, 32], "door" => [13, 0, 0, 19, 32, 32],
+		"pcenter" => [8, 0, 8, 24, 2, 24], "pfull" => [0, 0, 0, 32, 2, 32], "phalf" => [0, 0, 8, 32, 2, 24],
 	];
+	public static var PAINTING_BOXES = ["pcenter", "pfull", "phalf"];
 
 	public var name : String;
-	public var shape : KubeShape;
+	public var shape : KubeCore.KubeShape;
 	/** indice en RENDERS (solo para el cubo) */
 	public var render = 0;
 	/** caja en pixeles de la celda (0..32): x1 y1 z1 x2 y2 z2 */
@@ -88,18 +72,37 @@ class KubeData {
 		faces = [for( _ in FACES ) new haxe.ds.Vector<Int>(SIZE * SIZE)];
 	}
 
+	/** un kube que manda el servidor (KubeCore.NetKube, ya comprobado): queda solo en memoria, no se escribe nunca */
+	public static function fromNet( n : KubeCore.NetKube ) : KubeData {
+		var k = new KubeData(n.name);
+		k.shape = SHAPES[n.shape];
+		k.render = n.render;
+		k.box = n.box.copy();
+		k.light = n.light > 0 ? [n.light, n.reach] : null;
+		k.noCollide = n.noCollide;
+		for( f in 0...FACES.length )
+			for( i in 0...SIZE * SIZE ) k.faces[f][i] = n.faces.getInt32(f * KubeCore.FACE_BYTES + i * 4);
+		return k;
+	}
+
 	public static function dir() : String {
 		var d = Settings.dir() + "/kubes";
 		if( !sys.FileSystem.exists(d) ) sys.FileSystem.createDirectory(d);
 		return d;
 	}
 
-	public static function shapeById( id : String ) : KubeShape {
+	public static function shapeById( id : String ) : KubeCore.KubeShape {
 		for( s in SHAPES ) if( s.id == id ) return s;
 		return SHAPES[0];
 	}
 
 	public function blockType() : BlockType return shape.id == "cube" ? RENDERS[render] : shape.type;
+
+	/** la caja de un tableau: contra la pared (y1 = 0), con 1 pixel de grueso por lo menos */
+	public function fixPaintingBox() {
+		box[1] = 0;
+		if( box[4] < 1 ) box[4] = 1;
+	}
 
 	public function usesFace( f : Int ) return shape.faces.indexOf(f) >= 0;
 
@@ -170,6 +173,10 @@ class KubeData {
 			b.tlr = (FRONT << 12) | BACK;
 			b.tu = (LEFT << 12) | UP;
 			b.td = (RIGHT << 12) | DOWN;
+		case "painting":
+			// el primero de los 4 (pared en +y): se ve de frente desde la camara de la vista previa y de los iconos
+			b.size = Painting.sizes(box)[0];
+			b.wall = 0;
 		case "box", "door":
 			b.size = { x1 : box[0] / SIZE, y1 : box[1] / SIZE, z1 : box[2] / SIZE, x2 : box[3] / SIZE, y2 : box[4] / SIZE, z2 : box[5] / SIZE };
 			if( open ) {
@@ -193,7 +200,8 @@ class KubeData {
 	}
 
 	/** forma del editor que corresponde a un bloque del juego */
-	public static function shapeOf( b : Block ) : KubeShape {
+	public static function shapeOf( b : Block ) : KubeCore.KubeShape {
+		if( b.wall >= 0 ) return shapeById("painting");
 		return shapeById(switch( b.type ) {
 			case BTExtended: "cube6";
 			case BTReduced: b.toggle != null && b.toggle.model != null ? "door" : "box";
@@ -262,6 +270,7 @@ class KubeData {
 			case BFLight(pow, falloff): k.light = [pow, falloff == null ? 0. : falloff];
 			default:
 			}
+		if( b.wall >= 0 && b.size != null ) k.box = Painting.editorBox(b);
 		k.noCollide = !b.collide;
 		var pix = Atlas.pixels;
 		for( f in 0...FACES.length ) {
@@ -380,6 +389,7 @@ class KubeData {
 			var l : Array<Dynamic> = j.light;
 			if( l != null && l.length >= 1 ) k.light = [Std.parseFloat("" + l[0]), l.length > 1 ? Std.parseFloat("" + l[1]) : 0.];
 			k.noCollide = j.noCollide == true;
+			if( k.shape.id == "painting" ) k.fixPaintingBox();
 			k.base = j.base;
 			for( f in 0...FACES.length ) {
 				var png = files.get(FACES[f] + ".png");
@@ -432,9 +442,9 @@ class KubeData {
 	 * Una linea de DataGen.BLOCKS. Las casillas del atlas van como [?,?] con el png al lado: hay que copiar cada png en una casilla
 	 * libre de texture.png y poner su columna y su fila (de 0 a 63). Mismo orden de campos que las del juego.
 	 */
-	static function line( id : String, type : BlockType, tex : String, up : String, down : String, flags : Array<String>, name : String ) : String {
+	static function line( id : String, type : BlockType, tex : String, up : String, down : String, flags : Array<String>, name : String, price = "100" ) : String {
 		return '\t\t{ id : $id, type : $type, texture : $tex, texUp : $up, texDown : $down, shadeX : null, shadeY : null, shadeUp : null, '
-			+ 'shadeDown : null, power : null, weight : null, flags : [${flags.join(",")}], matter : null, name : $name, basePrice : 100 },';
+			+ 'shadeDown : null, power : null, weight : null, flags : [${flags.join(",")}], matter : null, name : $name, basePrice : $price },';
 	}
 
 	public function dataGen() : String {
@@ -463,13 +473,22 @@ class KubeData {
 			// como BShipDoor: cerrada X (gira a Y con BFFlip), cerrada Y, abierta X y abierta Y; cada cerrada alterna con su abierta
 			var hold = ["BFMagnet(UpDown)", "BFAnchor(Up)", "BFAnchor(Down)"];
 			lines.push(line(id, BTReduced, tile(SIDE), tile(UP), tile(DOWN), flags.concat(hold).concat(["BFSize(" + sz.join(",") + ")", "BFFlip", 'BFToggle(${id}Open)']), quoted));
-			lines.push(line(id + "Y", BTReduced, tile(SIDE), tile(UP), tile(DOWN), flags.concat(hold).concat(["BFSize(" + szY.join(",") + ")", 'BFToggle(${id}YOpen)']), '"-"'));
-			lines.push(line(id + "Open", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenX)", "BFNoCollide"]), '"-"'));
-			lines.push(line(id + "YOpen", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenY)", "BFNoCollide"]), '"-"'));
+			lines.push(line(id + "Y", BTReduced, tile(SIDE), tile(UP), tile(DOWN), flags.concat(hold).concat(["BFSize(" + szY.join(",") + ")", 'BFToggle(${id}YOpen)']), '"-"', "null"));
+			lines.push(line(id + "Open", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenX)", "BFNoCollide"]), '"-"', "null"));
+			lines.push(line(id + "YOpen", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenY)", "BFNoCollide"]), '"-"', "null"));
+		case "painting":
+			// 4 bloques seguidos, uno por pared (BFOnWall): el primero con la pared en +y, cada uno girado un cuarto de vuelta
+			var sizes = Painting.sizes(box);
+			for( t in 0...4 ) {
+				var z = sizes[t];
+				var bs = "BFSize(" + [for( v in [z.x1, z.y1, z.z1, z.x2, z.y2, z.z2] ) num(v)].join(",") + ")";
+				// los giros sin precio: no salen en la paleta (solo el primero)
+				lines.push(line(id + (t == 0 ? "" : "Turn" + t), BTModel, tile(SIDE), "[]", "[]", flags.concat(['BFOnWall($t)', bs, "BFMagnet(None)"]), t == 0 ? quoted : '"-"', t == 0 ? "100" : "null"));
+			}
 		case "plane":
 			// como BWoodWindow: la X gira a la Y (la siguiente) con BFFlip
 			lines.push(line(id, BTModel2Side, tile(SIDE), "[]", "[]", flags.concat(["BFModel(MPlanX)", "BFFlip"]), quoted));
-			lines.push(line(id + "Y", BTModel2Side, tile(SIDE), "[]", "[]", flags.concat(["BFModel(MPlanY)"]), '"-"'));
+			lines.push(line(id + "Y", BTModel2Side, tile(SIDE), "[]", "[]", flags.concat(["BFModel(MPlanY)"]), '"-"', "null"));
 		default:
 			var multi = shape.faces.length > 1;
 			lines.push(line(id, shape.type, tile(SIDE), multi ? tile(UP) : "[]", multi && usesFace(DOWN) ? tile(DOWN) : "[]", flags.concat(["BFModel(" + shape.model + ")"]), quoted));

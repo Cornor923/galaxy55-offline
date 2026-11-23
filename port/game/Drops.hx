@@ -15,8 +15,13 @@ class Drop {
 	public var active = true;
 	/** vista previa del sintetizador: quieto, no se recoge */
 	public var fixed = false;
+	/** contenedor del equipo dejado al morir o con Mayus+K (DeathDrops): lleva bloques y cargas, no `block` x `n` */
+	public var loot : DeathDrops.DeathDropInfo;
 	public var delay = 0.;
 	public var light = 0.;
+	/** multijugador (anadido del port): id del suelto en el servidor (-1 = solo de este juego) y recogida pedida sin respuesta */
+	public var netId = -1;
+	public var pending = false;
 	public var obj : h3d.scene.Object;
 	public var mat : h3d.mat.Material;
 
@@ -50,7 +55,9 @@ class Drops {
 
 	public function add( x : Float, y : Float, z : Float, b : Block ) : Drop {
 		var d = new Drop(x, y, z, b);
-		var poly = IconMesh.polygon(b, true);
+		// el Kube invisible y los que el recorte borraria enteros: translucidos como su icono (IconMesh.seeThrough), con sus 6 caras
+		var clear = IconMesh.seeThrough(b);
+		var poly = IconMesh.polygon(b, true, 1.0, clear);
 		if( poly != null ) {
 			var mat = h3d.mat.Material.create(atlas);
 			mat.shadows = false;
@@ -58,14 +65,21 @@ class Drops {
 			mat.mainPass.culling = None;
 			mat.mainPass.addShader(new h3d.shader.VertexColor());
 			mat.mainPass.addShader(world.sky.fog);
-			mat.textureShader.killAlpha = true;
-			mat.textureShader.killAlphaThreshold = 0.5;
+			if( clear ) {
+				mat.blendMode = Alpha;
+				mat.mainPass.depthWrite = false;
+			} else {
+				mat.textureShader.killAlpha = true;
+				mat.textureShader.killAlphaThreshold = 0.5;
+			}
 			d.mat = mat;
 			d.obj = new h3d.scene.Object(world.root);
 			d.obj.setScale(SCALE);
-			// Render (dummies): centrado en x e y, apoyado por debajo (initTranslate(-0.5, -0.5) sin z)
+			// Render (dummies): centrado en x e y, apoyado por debajo (initTranslate(-0.5, -0.5) sin z). Un tableau gira sobre el
+			// centro de su placa (Painting.center) y se apoya en su borde de abajo
 			var m = new h3d.scene.Mesh(poly, mat, d.obj);
-			m.setPosition(-0.5, -0.5, 0);
+			var c = Painting.center(b);
+			m.setPosition(-c.x, -c.y, b.wall >= 0 && b.size != null ? -b.size.z1 : 0);
 		}
 		d.light = world.lightAt(Std.int(x), Std.int(y), Std.int(z)) / World.LBASE;
 		list.push(d);
@@ -211,22 +225,45 @@ class Drops {
 			} else
 				dz = 0;
 			var dd = Math.sqrt(dx * dx + dy * dy + dz * dz);
-			var picked = false;
-			if( dd < 1.5 && d.active && g.inv.canAddBlock(d.block) ) {
+			var picked = false, got = false;
+			// multijugador: el suelto es del servidor; al llegar al jugador se pide (NetGame.sentPick) y se esconde hasta la respuesta
+			var net = g.net != null && d.netId >= 0;
+			if( net && d.pending ) {
+				i++;
+				continue;
+			}
+			if( dd < 1.5 && d.active && (net && d.block == DeathDrops.block() ? true : d.loot != null ? DeathDrops.canGet(g.inv, d.loot) : g.inv.canAddBlock(d.block)) ) {
 				var s = 0.2 * dt / (dd * dd + 1e-6);
+				// el contenedor del equipo no pasa de largo al jugador (con un tmod alto salia despedido): si se queda con algo que
+				// no cabe, se queda a sus pies
+				if( d.loot != null && s > 1 ) s = 1;
 				d.x += dx * s;
 				d.y += dy * s;
 				d.z += dz * s;
-				if( dd < 0.4 ) {
-					if( d.n <= 1 ) picked = g.inv.addBlock(d.block) >= 0;
+				if( dd < 0.4 && net ) {
+					d.pending = true;
+					if( d.obj != null ) d.obj.visible = false;
+					g.net.sentPick(d.netId);
+				} else if( dd < 0.4 ) {
+					if( d.loot != null ) {
+						// SAddLoot: lo que cabe; si queda algo, el contenedor sigue ahi
+						got = DeathDrops.take(g.inv, d.loot);
+						picked = DeathDrops.isEmpty(d.loot);
+						if( picked ) DeathDrops.done(g.info, d.loot);
+					} else if( d.n <= 1 ) picked = g.inv.addBlock(d.block) >= 0;
 					else {
-						var c = g.inv.addBlocks(d.block, d.n);
+						// cambio del port: una pila de un bloque-carga (Carga rosa...; en creativo puede estar en una casilla: L3 / clic
+						// central) tirada con R, desde el inventario o al romper una cantina: addBlocks no acepta cargas (devuelve 0) y la pila
+						// no se recogia nunca, hasta desaparecer. Como un solo bloque-carga (addBlock), cada uno da una carga, hasta el
+						// maximo del contador; lo que no cabe se queda en el suelo
+						var c = d.block.charge != null ? g.inv.addCharge(d.block.charge, d.n) : g.inv.addBlocks(d.block, d.n);
 						d.n -= c;
 						picked = d.n <= 0;
 					}
 				}
 			}
-			if( picked ) Snd.play("pickupBlock", 0.3);
+			if( d.loot != null && !picked ) DeathDropsPlay.follow(g, d);
+			if( picked || got ) Snd.play("pickupBlock", 0.3);
 			if( picked || d.time <= 0 ) {
 				if( d.obj != null ) {
 					for( c in d.obj.getMeshes() ) c.primitive.dispose();

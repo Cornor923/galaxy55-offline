@@ -1,8 +1,9 @@
 import Common;
+import Msg;
 
 /**
  * Banco de pruebas (solo para desarrollo): ejecuta un guion de ordenes sobre una partida nueva, sin ventana a la vista ni teclado.
- *   hl galaxy55.hl --script=guion.txt [--bgbiome=BIAutumn] [--creative]
+ *   hl galaxy55.hl --script=guion.txt [--bgbiome=BIAutumn] [--creative] [--blockcount]
  * Una orden por linea, "#" = comentario. Las coordenadas son del planeta salvo las de `tpl`, `setl` y `lookl` (locales a la nave).
  *   wait N                  esperar N actualizaciones
  *   until fade|tele X       esperar (600 actualizaciones como mucho) a que la opacidad del fundido o la carga del
@@ -20,8 +21,18 @@ import Common;
  *   dockp dz Bloque|none    poner o romper (como al jugar) en la columna del rayo; dz = 0 es su bloque de arriba
  *   slot N                  elegir casilla (0 = excavador)
  *   give Bloque [n]         meter n bloques (50) en el inventario
+ *   charge CPink N          dejar N cargas de ese tipo (CYellow, CBlue, CPink, CBonus; 0 = ninguna)
+ *   deathdrop on|off        opcion de la partida en curso: dejar el equipo en el suelo al morir y con Mayus+K (SaveInfo.dropOnDeath)
+ *   print deathdrops        equipo dejado al morir o con Mayus+K (DeathDrops): inventario y cargas, creditos, contenedores
+ *                           guardados en la partida y los que hay en el mundo
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
  *   hand Bloque             poner ese bloque en la casilla elegida (como la paleta creativa)
+ *   charge Tipo N           contador de cargas de ese tipo (CYellow, CBlue, CPink, CBonus) a N; 0 lo quita (print charges)
+ *   tploose Bloque          poner al jugador a un bloque (x - 1) del primer suelto de ese bloque
+ *   creative                pasar a creativo solo el modo de juego (la partida no cambia ni se guarda asi)
+ *   creativegame            la partida de prueba pasa a ser creativa, como creada en creativo (se guarda asi)
+ *   mode survival|creative  bascula de una partida creativa, como el boton de la paleta (GalaxyApp.switchMode); print mode
+ *   modebutton              pulsar el boton de la bascula de la paleta o de la pantalla de inventario abiertas
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
  *   breakp x y z            romper un bloque como al jugar (suelta lo suyo); breakl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local; si abre un menu, el guion sigue en el
@@ -46,7 +57,14 @@ import Common;
  *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
+ *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|ids x y z r|select|ship|map [z]|palette|invscreen|time|power|life|fov|sky|menu
+ *   invscreen ORDEN         pantalla de inventario del modo aventura (anadido del port): open, close, drag A B, click N [r],
+ *                           dbl N, rdrag A B..., down|up|move N [r], nav left|right|a|x|y; casillas 0-9, out (fuera), panel
+ *   slots ORDEN             casillas con arrastrar y soltar (SlotGrid: la cantina), como invscreen: click C [r], drag A B, dbl C,
+ *                           rdrag A B..., down|up|move C [r], nav left|right|up|down|a|x; casilla = zona:N, out; print slots
+ *   storage ORDEN           stockage de la nave (ShipStorage): open, close, put Bloque n (al stockage), charge K n (cargas del
+ *                           stockage), invcharge K n (cargas del inventario), forget (sin stockage, como una partida de antes);
+ *                           K = yellow|blue|pink|hexalite; zonas de slots: 0 bloques, 1 cargas, 2 inventario, 3 sus cargas; print storage
  *   fadelog on|off          fundido de color de pantalla imagen por imagen, tal como lo pinta el HUD (opacidad y color); off
  *                           dice cuantas veces subio (destellos) y cuantas como mucho en un segundo (WCAG 2.3.1: 3)
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
@@ -56,17 +74,35 @@ import Common;
  *                           queda en curso), deliver a J al contrato en curso J; contracts abandon J lo abandona (con el panel
  *                           abierto, como su boton: pide confirmacion, button 1 = Si); contracts old los deja como en una
  *                           partida antigua (sin abandonados ni en curso); contracts empty vacia el inventario; print contracts;
- *                           contracts load RUTA lee otro contracts.json
+ *                           contracts load RUTA lee otro contracts.json. Contrato especial: contracts fill s [n] da la tierra roja
+ *                           que falta (o n), deliver s se la da; contracts full llena las casillas vacias (inventario lleno)
  *   kub [close|tab N|pick Bloque|page D|nav dx dy]   Base de datos ESCorp (anadido del port): abrirla, cerrarla, pestana, ficha,
  *                           categoria, flechas; kub forget|visit|see Bloque|got Bloque|break Bloque|load RUTA olvidan todo,
  *                           exploran el planeta, identifican, recuperan o rompen un bloque como al jugar, o leen otro kubindex.json;
  *                           kub anomaly ID cruza una anomalia, kub goanomaly N lleva junto a la N del planeta, kub all lo da todo
  *                           por recuperado; print kub|kubdata|kuborder (orden de las fichas y las recetas)
+ *   escorp [upgrades]       ordenador de a bordo > Contactar con la ESCorp (anadido del port) y, con upgrades, su pantalla de
+ *                           Mejoras ESCorp (close lo cierra todo; print menu); escorp button pulsa Contactar con la ESCorp en el
+ *                           ordenador abierto; escorp hexalite N deja N cargas de hexalita; print upgrades
  *   savegame                guardar la partida (como F5, sin aviso)
+ *   genversion N            el planeta actual pasa a ser de la version N del generador (SaveInfo.genVersion; se nota al volver a
+ *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
- *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
+ *   print prune             poda de los cambios (World.prune): pone una lampara en el suelo delante del jugador y lo vuelve a
+ *                           dejar (la celda sale de los cambios) y quita y vuelve a poner una celda de agua del mar (se queda)
+ *   print paldup            paleta creativa abierta: bloques y paginas, los que salen mas de una vez y donde estan las aguas
+ *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta); con GALAXY55_SHOTS (runall.ps1)
+ *                           las capturas (shot, loadshot, expship, cover) van a esa carpeta
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
+ *   find Bloque [radio]     el bloque mas cercano a los pies del jugador (a menos de radio, 64; Bloque = none: el aire); en las
+ *                           ordenes siguientes fx, fy y fz (o fx+1, fz-2...) son su celda. Solo dice algo si no hay ninguno;
+ *                           print found: la celda encontrada. Sitios en vez de un bloque: find ship (donde aterrizo la nave),
+ *                           find anomaly N|NOMBRE (la invisible: fz = lo alto del cubo), find shore [x y] (la orilla de shore
+ *                           mas cercana a x y); shore tambien deja la suya en fx fy fz
+ *   bench x y r z [Bloque|none] terreno conocido: en el cilindro de radio r alrededor de la columna x y, aire desde z hasta arriba
+ *                           y debajo Bloque (BRock) en 3 celdas y en el aire que siga hasta llegar a algo; none: solo el aire.
+ *                           Como set (cambios del jugador), sin decir nada: donde el terreno ya era asi no cambia la salida
  *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
  *   pause                   menu de pausa como Esc (el guion sigue; close lo cierra)
  *   newgame SEMILLA [acc..] Menu principal > Nueva partida como el jugador: pasa a Creativo, escribe la semilla, maneja la fila del bioma con
@@ -74,31 +110,57 @@ import Common;
  *                           clic en el titulo de la fila) y pulsa Crear; seguir con waitfor planet y print biome
  *   tuto new|notuto [semilla] partida de aventura nueva en el espacio, con o sin tutorial; tuto step N; tuto skip (sin preguntar)
  *                           tuto goto|goin|mine|activate: junto al primer objetivo / dentro de su celda / excavarlo / activarlo
+ *                           tuto spot N: el bloque N del tutorial (orden de print tuto) en fx fy fz, aun despues de pasarlo
  *   print tuto              paso del tutorial, objetivos marcados, sus bloques en el planeta y el texto (tambien en el mapa)
  *   menu                    Menu principal (guarda la partida, como desde la pausa); el guion sigue en los menus de inicio
  *   devsaves N              borra las partidas de la carpeta de datos de prueba y crea N de ejemplo (solo con GALAXY55_DATA)
- *   savecopy RUTA           copia la partida RUTA (.json y su .png) a la carpeta de datos de prueba, la primera de la lista
- *                           (solo con GALAXY55_DATA)
- *   unknownsave NOMBRE      guarda aparte una copia de la partida en curso con bloques que esta version no conoce (UnknownBlocks) en
- *                           cada sitio que guarda numeros de bloque: inventario, cantina, terreno, nave, nave del hangar, planeta
- *                           visitado y precios del robot (como una partida de una version con mas bloques); la primera de la lista
- *   print unknown           bloques desconocidos de cada partida (UnknownBlocks), md5 de su .json y copias de saves/backups
+ *   savecopy RUTA           copia la partida RUTA (.g55, o un .json de antes y su .png, que se migra al jugarla) a la carpeta de
+ *                           datos de prueba, la primera de la lista (solo con GALAXY55_DATA)
+ *   breaksave               corta por la mitad el .g55 de la primera partida de la lista y borra sus copias (.tmp, .bak): ya no se
+ *                           puede leer ni modificar (solo con GALAXY55_DATA; la lista abierta no se entera hasta volver a abrirla)
+ *   unknownsave NOMBRE      guarda aparte una copia de la partida en curso con bloques que esta version no conoce (UnknownBlocks:
+ *                           BDesconocido1..3) en cada sitio que guarda bloques: inventario, cantina, terreno, nave, nave del hangar,
+ *                           planeta visitado y precios del robot (como una partida de una version con mas bloques); la primera de la lista
+ *   print unknown           bloques desconocidos de cada partida (UnknownBlocks), md5 de su .g55 y copias de saves/backups
+ *   migrate ID [upstream|fork] vuelve a migrar la partida .json de antes ID (copia en saves/backups) con la tabla de esa linea
+ *                           (SaveNames; sin linea, la otra que la de este juego)
  *   tap TECLA               pulsar y soltar una tecla: up down left right enter esc tab space pgup pgdown numpad+ numpad- o una letra
  *   type TEXTO              escribir el resto de la linea en el campo de texto en el que se esta escribiendo
+ *   print palnames          bloques que deja la busqueda de la paleta creativa (Tab o clic en ella para escribir, y type)
  *   wheel N                 rueda del raton (N > 0 = hacia abajo), donde lo dejo la ultima orden mouse
+ *   wheelwrap 0|1|old       opcion Rueda del raton en bucle (se guarda); old quita el campo de settings.json, como el de una version
+ *                           anterior (vale al abrir el juego la proxima vez); print wheelwrap: la opcion y lo que dice settings.json
  *   mouse X Y [click|down|up] llevar el raton a ese punto de la zona 1280x720 (y hacer clic, o solo apretar o soltar: arrastrar)
  *   print menu|saves        pantalla de menu abierta y su foco / partidas guardadas (waitfor menu: el menu y su fondo listos)
  *   print mouse             donde cree el juego que esta el puntero (pixeles de la ventana, zona 1280x720) y el cursor del sistema
+ *   print helmet            casco (filtro de la visera): OK si tiene la escala de la ventana actual y tapa sus cuatro bordes,
+ *                           DESAJUSTADO si se quedo con el tamano de una ventana anterior (port/dev/ordinateur_resize.txt)
  *   kube ORDEN              editor de kubes abierto (screen kubes): load BLOQUE (copiar un bloque del juego), shape ID, face NOMBRE,
  *                           paint x0 y0 x1 y1 AARRGGBB (rectangulo de la cara, 0 = borrar), name TEXTO, tab 0|1, file N (cargar el
  *                           .kube N de Mis kubes), save, tile N (mosaico N x N x N de la vista previa), zoom Z (el paso de zoom
  *                           mas cercano), view (vista fija de los iconos, sin girar); print kube
+ *   edkube ORDEN            kubes del editor puestos en una partida creativa (EditorKubes; solo con GALAXY55_DATA): import RUTA
+ *                           [ARCHIVO] copia un .kube a la carpeta kubes, make ARCHIVO FORMA opaque|cutout|blend AARRGGBB NOMBRE
+ *                           crea uno de ese color con el borde oscuro, fill N crea N cubos lot-1..N, delete ARCHIVO, clear vacia
+ *                           la carpeta, refresh la vuelve a leer como al empezar a jugar. En hand, give, set...: kube:ARCHIVO[/variante]
+ *   print edkubes|edsave    kubes del editor cargados / los de la partida guardada en disco (celdas, casillas, de remplazo)
  *   quit
  */
 class Dev {
 
 	static var shoreX = 0;
 	static var shoreY = 0;
+	/** orden mode / print mode: modo en curso, lo que es de la partida y lo que esta abierto */
+	static function modeInfo( app : GalaxyApp, g : GameView ) : String {
+		var palBtn = false;
+		if( app.palette != null ) for( c in app.palette ) if( Std.isOfType(c, Ui.Button) ) palBtn = true;
+		return (g.creative ? "creativo" : "supervivencia") + (g.hangar != null ? " (hangar)" : g.info.mothership == true ? " (nodriza)" : "") + " | partida " + (g.info.creative == true ? "creativa" : "de aventura")
+			+ " survival=" + g.info.survival + " bascula=" + (g.canSwitchMode() ? "si" : "no")
+			+ " licencias=" + (Licenses.unlimited(g.info) ? "sin limite" : "limitadas") + " pilotar=" + (g.pilotLicensed() ? "si" : "no")
+			+ " kubindex=" + (Kubindex.full(g.info) ? "completo" : "parcial") + " | paleta=" + (app.palette != null ? "abierta" + (palBtn ? " con boton" : "") : "cerrada")
+			+ " inventario=" + (app.invScreen != null ? "abierto" + (app.invScreen.corner != null ? " con boton" : "") : "cerrado");
+	}
+
 	/** vida y tiempo de juego del ultimo `print life` (para el ritmo de curacion) */
 	static var lifeV = 0.;
 	static var lifeT = -1.;
@@ -135,13 +197,239 @@ class Dev {
 	}
 
 	static function bk( name : String ) : Block {
+		// kube:ARCHIVO[/variante]: un kube del editor cargado (EditorKubes)
+		if( StringTools.startsWith(name, "kube:") ) {
+			var p = name.substr(5).split("/");
+			var b = EditorKubes.block(p[0], p.length > 1 ? Std.parseInt(p[1]) : 0);
+			if( b == null ) throw "kube del editor no cargado: " + name;
+			return b;
+		}
 		var k = Type.createEnum(BlockKind, name);
 		return Block.get(k);
 	}
 
 	static function f( s : String ) return Std.parseFloat(s);
 
-	/** savecopy: copia una partida (.json y su .png) a la carpeta de datos de prueba, con la fecha de ahora (la primera de la lista) */
+	/** carpeta de las capturas de los guiones: GALAXY55_SHOTS (runall.ps1) o port/out */
+	public static var SHOTS = {
+		var d = Sys.getEnv("GALAXY55_SHOTS");
+		d == null || d == "" ? "port/out" : d;
+	};
+
+	/** ruta de la captura NOMBRE (sin .png) */
+	public static function shotPath( name : String ) return SHOTS + "/" + name + ".png";
+
+	/** celda de la ultima orden find (fx, fy, fz) */
+	var found : { x : Int, y : Int, z : Int };
+	/** bloques del tutorial de la ultima orden tuto spot (TutoInfo.spots: siguen despues de pasar el tutorial) */
+	var tutoSpots : Array<Int>;
+
+	/** fx, fy y fz (con +N o -N, N puede llevar decimales) en una orden: la celda de la ultima orden find */
+	function foundCoord( s : String ) : String {
+		var r = ~/^f([xyz])([+-][0-9.]+)?$/;
+		if( !r.match(s) ) return s;
+		if( found == null ) throw s + " sin una orden find antes";
+		var v = switch( r.matched(1) ) { case "x": found.x; case "y": found.y; default: found.z; };
+		return "" + (v + (r.matched(2) == null ? 0 : Std.parseFloat(r.matched(2))));
+	}
+
+	/**
+	 * orden find: el bloque kb (null = aire) mas cercano a la celda de los pies, en una esfera de radio r. Solo dice algo si no lo
+	 * encuentra (print found): un guion que lo usa en vez de coordenadas fijas dice lo mismo que antes
+	 */
+	function findBlock( w : World, g : GameView, name : String, r : Int ) {
+		var kb = name == "none" ? null : bk(name);
+		var cx = Math.floor(g.px), cy = Math.floor(g.py), cz = Math.floor(g.pz);
+		var best = r * r + 1, bx = 0, by = 0, bz = 0;
+		for( dz in -r...r + 1 ) {
+			var z = cz + dz;
+			if( z < 0 || z >= World.HEIGHT ) continue;
+			for( dy in -r...r + 1 )
+				for( dx in -r...r + 1 ) {
+					var d = dx * dx + dy * dy + dz * dz;
+					if( d >= best || w.block(cx + dx, cy + dy, z) != kb ) continue;
+					best = d;
+					bx = cx + dx;
+					by = cy + dy;
+					bz = z;
+				}
+		}
+		if( best > r * r ) {
+			found = null;
+			Sys.println("find " + name + ": ninguno a menos de " + r);
+			return;
+		}
+		var s = w.size;
+		found = { x : ((bx % s) + s) % s, y : ((by % s) + s) % s, z : bz };
+	}
+
+	/**
+	 * orden find con un sitio en vez de un bloque (sin mover al jugador ni decir nada si lo encuentra):
+	 *   find ship               donde aterrizo la nave (print ship): fz = el suelo
+	 *   find anomaly N|NOMBRE   la anomalia N del planeta o la primera con ese nombre (World.anomalies); fz = su z (la invisible:
+	 *                           lo alto del cubo, z + h)
+	 *   find shore [x y]        la orilla (como shore: agua al nivel del mar con suelo seco al lado en x + 1) mas cercana a x y, o
+	 *                           la primera; fz = el agua de arriba del mar
+	 * false si no es un sitio (find de un bloque)
+	 */
+	function findPlace( w : World, g : GameView, a : Array<String> ) : Bool {
+		switch( a[1] ) {
+		case "ship":
+			found = g.ship == null ? null : { x : Std.int(g.ship.x), y : Std.int(g.ship.y), z : Std.int(g.ship.z) };
+			if( found == null ) Sys.println("find ship: sin nave");
+		case "anomaly":
+			var an = null;
+			for( p in w.anomalies() ) if( an == null && p.n == a[2] ) an = p;
+			if( an == null && ~/^[0-9]+$/.match(a[2]) ) an = w.anomalies()[Std.parseInt(a[2])];
+			// la Invisible: arriba de su cubo (su caja: del suelo a lo mas alto); las demas: su origen
+			found = an == null ? null : { x : an.x, y : an.y, z : an.id == "invisible" ? an.box[5] : an.z };
+			if( found == null ) Sys.println("find anomaly " + a[2] + ": no hay (" + [for( p in w.anomalies() ) p.n].join(" ") + ")");
+		case "shore":
+			var hx = a.length > 3 ? Std.parseInt(a[2]) : -1, hy = a.length > 3 ? Std.parseInt(a[3]) : -1, best = -1;
+			found = null;
+			for( y in 0...w.size )
+				for( x in 0...w.size ) {
+					if( (found != null && hx < 0) || !isShore(w, x, y) ) continue;
+					var dx = Std.int(Math.abs(x - hx)), dy = Std.int(Math.abs(y - hy));
+					if( dx > w.size >> 1 ) dx = w.size - dx;
+					if( dy > w.size >> 1 ) dy = w.size - dy;
+					var d = hx < 0 ? 0 : dx * dx + dy * dy;
+					if( found != null && d >= best ) continue;
+					best = d;
+					found = { x : x, y : y, z : w.waterLevel() - 1 };
+				}
+			if( found == null ) Sys.println("find shore: no hay orilla");
+		default:
+			return false;
+		}
+		return true;
+	}
+
+	/** orilla de shore: agua al nivel del mar en x y, suelo en x + 1 a esa altura y aire dos mas arriba */
+	static function isShore( w : World, x : Int, y : Int ) : Bool {
+		var wl = w.waterLevel();
+		var b = w.block(x, y, wl - 1);
+		if( b == null || b.type != BTWater ) return false;
+		var s = w.block(x + 1, y, wl - 1);
+		return s != null && s.collide && w.block(x + 1, y, wl + 1) == null;
+	}
+
+	/**
+	 * orden bench: aire desde z hasta arriba en el cilindro y, si floor no es null, floor en las 3 celdas de debajo y en el aire
+	 * que siga debajo hasta llegar a algo (una meseta maciza, sin cuevas justo debajo). No dice nada: donde el terreno ya era asi
+	 * no cambia ni la salida del guion (lo cambiado se ve con count / top / print block)
+	 */
+	static function bench( w : World, x : Int, y : Int, r : Int, z : Int, floor : Block ) {
+		for( dy in -r...r + 1 )
+			for( dx in -r...r + 1 ) {
+				if( dx * dx + dy * dy > r * r ) continue;
+				var cx = x + dx, cy = y + dy;
+				for( zz in z...World.HEIGHT - 1 )
+					if( zz >= 1 && w.block(cx, cy, zz) != null ) w.setBlock(cx, cy, zz, null);
+				if( floor == null ) continue;
+				var zz = z - 1;
+				while( zz >= 1 && (zz >= z - 3 || w.block(cx, cy, zz) == null) ) {
+					if( w.block(cx, cy, zz) != floor ) w.setBlock(cx, cy, zz, floor);
+					zz--;
+				}
+			}
+	}
+
+	/** orden edkube: los .kube de la carpeta kubes de los datos de prueba (EditorKubes) */
+	static function editorKube( app : GalaxyApp, g : GameView, a : Array<String> ) {
+		var data = Sys.getEnv("GALAXY55_DATA");
+		if( a[1] != "refresh" && (data == null || data == "") ) {
+			Sys.println("edkube: solo con GALAXY55_DATA (devrun.ps1)");
+			return;
+		}
+		var dir = KubeData.dir();
+		switch( a[1] ) {
+		case "import":
+			var id = a.length > 3 ? a[3] : EditorKubes.idOf(a[2]);
+			sys.io.File.copy(a[2], dir + "/" + id + ".kube");
+			Sys.println("edkube: " + a[2] + " -> kubes/" + id + ".kube");
+		case "make":
+			// la forma pedida, de un color y con el borde mas oscuro en todas sus caras
+			var k = new KubeData(a.slice(6).join(" "));
+			k.shape = KubeData.shapeById(a[3]);
+			k.render = ["opaque", "cutout", "blend"].indexOf(a[4]);
+			if( k.render < 0 ) k.render = 0;
+			if( k.shape.id == "door" ) k.box = KubeData.BOXES.get("door").copy();
+			if( k.shape.id == "box" ) k.box = KubeData.BOXES.get("slab").copy();
+			if( k.shape.id == "painting" ) k.box = KubeData.BOXES.get("pcenter").copy();
+			var c = (Std.parseInt("0x" + a[5].substr(0, 2)) << 24) | Std.parseInt("0x" + a[5].substr(2));
+			var edge = (c & 0xFF000000) | ((c >> 1) & 0x7F7F7F);
+			for( f in 0...KubeData.FACES.length )
+				for( y in 0...KubeData.SIZE ) for( x in 0...KubeData.SIZE )
+					k.faces[f][y * KubeData.SIZE + x] = x < 2 || y < 2 || x > KubeData.SIZE - 3 || y > KubeData.SIZE - 3 ? edge : c;
+			var path = dir + "/" + a[2] + ".kube";
+			// KubeData.save escribe en k.file si ya existe en la carpeta: asi el archivo se llama como se pide
+			sys.io.File.saveContent(path, "");
+			k.file = path;
+			k.save(null, [for( _ in KubeData.FACES ) false]);
+			Sys.println("edkube: kubes/" + a[2] + ".kube '" + k.name + "' " + k.shape.id + " " + k.blockType());
+		case "fill":
+			// fill N: N cubos de prueba (lot-1 ... lot-N), para pasar de EditorKubes.MAX
+			var n = Std.parseInt(a[2]);
+			for( i in 0...n ) {
+				var k = new KubeData("Lot " + (i + 1));
+				for( f in 0...KubeData.FACES.length ) for( p in 0...KubeData.SIZE * KubeData.SIZE ) k.faces[f][p] = 0xFF000000 | ((i * 37) & 0xFF) << 16 | ((i * 91) & 0xFF) << 8 | 0x80;
+				var path = dir + "/lot-" + (i + 1) + ".kube";
+				sys.io.File.saveContent(path, "");
+				k.file = path;
+				k.save(null, [for( _ in KubeData.FACES ) false]);
+			}
+			Sys.println("edkube: " + n + " kubes lot-N en kubes/");
+		case "delete":
+			sys.FileSystem.deleteFile(dir + "/" + a[2] + ".kube");
+			Sys.println("edkube: kubes/" + a[2] + ".kube borrado");
+		case "clear":
+			for( p in KubeData.list() ) sys.FileSystem.deleteFile(p);
+			Sys.println("edkube: carpeta kubes vacia");
+		case "refresh":
+			if( g != null ) EditorKubes.attach(g.info) else EditorKubes.refresh();
+			Sys.println(EditorKubes.devInfo());
+		default:
+			Sys.println("edkube: orden desconocida " + a[1]);
+		}
+	}
+
+	/**
+	 * print edsave: los kubes del editor de la partida guardada en disco (SaveArchive: sus nombres "editor:<archivo>#<variante>" en
+	 * la tabla de bloques), cuantas celdas y casillas los usan, y cuantos quedan en bloques de remplazo al leerla ahora
+	 */
+	static function editorSave( app : GalaxyApp ) {
+		var info = app.curInfo();
+		if( info == null ) {
+			Sys.println("edsave: sin partida");
+			return;
+		}
+		var disk = SaveData.read(info.id);
+		if( disk == null ) {
+			Sys.println("edsave: no se puede leer: " + SaveData.lastError);
+			return;
+		}
+		var ids = [], cells = 0, slots = 0, waiting = 0;
+		SaveNames.mapBlocks(disk, function(k, where) {
+			var b = Block.all[k];
+			var n = SaveNames.placeholderName(b);
+			var e = n != null ? SaveNames.parseEditor(n) : null;
+			var id = e != null ? e.id : EditorKubes.idOfBlock(b);
+			if( id == null ) return k;
+			if( ids.indexOf(id) < 0 ) ids.push(id);
+			if( where == "items" ) slots++ else cells++;
+			if( e != null ) waiting++;
+			return k;
+		});
+		ids.sort(Reflect.compare);
+		Sys.println("edsave: " + (ids.length == 0 ? "sin kubes del editor" : "kubes " + ids.join(",") + " | celdas " + cells + " | casillas " + slots
+			+ " | en bloques de remplazo " + waiting) + " | desconocidos " + UnknownBlocks.total(UnknownBlocks.count(disk)));
+	}
+
+	/**
+	 * savecopy: copia una partida (.g55, o un .json de antes y su .png) a la carpeta de datos de prueba, con la fecha de ahora (la
+	 * primera de la lista). Un .json se queda asi: se migra al jugarla
+	 */
 	static function saveCopy( path : String ) {
 		var data = Sys.getEnv("GALAXY55_DATA");
 		if( data == null || data == "" ) {
@@ -153,6 +441,13 @@ class Dev {
 			return;
 		}
 		var id = haxe.io.Path.withoutExtension(haxe.io.Path.withoutDirectory(path));
+		if( StringTools.endsWith(path, ".g55") ) {
+			var info = SaveArchive.decode(sys.io.File.getBytes(path), id);
+			info.saved = Date.now().getTime();
+			SaveArchive.writeFile(SaveData.archivePath(id), SaveArchive.encode(info, null, sys.io.File.getBytes(path)));
+			Sys.println("savecopy: " + id + " '" + info.name + "'");
+			return;
+		}
 		var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(path));
 		o.id = id;
 		o.saved = Date.now().getTime();
@@ -162,67 +457,272 @@ class Dev {
 		Sys.println("savecopy: " + id + " '" + o.name + "'");
 	}
 
-	/** unknownsave: la partida en curso, guardada aparte con bloques que esta version no conoce en cada sitio (UnknownBlocks) */
+	/** breaksave: la primera partida de la lista deja de poder leerse (prueba de los errores al modificarla: Continuar > Modificar) */
+	static function breakSave() {
+		var data = Sys.getEnv("GALAXY55_DATA");
+		if( data == null || data == "" ) {
+			Sys.println("breaksave: solo con GALAXY55_DATA (devrun.ps1)");
+			return;
+		}
+		var l = SaveData.list();
+		if( l.length == 0 ) {
+			Sys.println("breaksave: no hay partidas");
+			return;
+		}
+		var p = SaveData.archivePath(l[0].id);
+		var b = sys.io.File.getBytes(p);
+		sys.io.File.saveBytes(p, b.sub(0, b.length >> 1));
+		for( e in [".tmp", ".bak"] ) if( sys.FileSystem.exists(p + e) ) sys.FileSystem.deleteFile(p + e);
+		Sys.println("breaksave: '" + l[0].name + "' cortada (" + (b.length >> 1) + " de " + b.length + " bytes)");
+	}
+
+	/**
+	 * unknownsave: la partida en curso, guardada aparte con bloques que esta version no conoce (nombres BDesconocido1..3) en cada
+	 * sitio que guarda bloques (UnknownBlocks): inventario, cantina, terreno, nave, nave del hangar, planeta visitado y precios
+	 */
 	static function unknownSave( g : GameView, name : String ) {
 		if( g == null ) {
 			Sys.println("unknownsave: no hay partida en curso");
 			return;
 		}
 		var info : SaveData.SaveInfo = haxe.Json.parse(haxe.Json.stringify(g.toInfo()));
-		// el primer numero de bloque que esta version no conoce
-		var u = Block.all.length;
+		var u = [for( i in 1...4 ) SaveNames.resolve("BDesconocido" + i).index];
 		info.id = SaveData.newId();
 		info.name = name;
 		info.saved = Date.now().getTime();
 		while( info.inv.t.length < 2 ) info.inv.t.push(null);
-		info.inv.t[0] = { k : u, n : 64 };
-		info.inv.t[1] = { k : u + 1, n : 10 };
+		info.inv.t[0] = { k : u[0], n : 64 };
+		info.inv.t[1] = { k : u[1], n : 10 };
 		if( info.chests == null ) info.chests = [];
-		info.chests.push({ key : "p0:1,1,1", t : [{ k : u + 2, n : 5 }, null, null, null] });
+		info.chests.push({ key : "p0:1,1,1", t : [{ k : u[2], n : 5 }, null, null, null] });
 		// terreno: delante del jugador, una celda y la de encima con nivel de agua (bits altos: World.applySaved)
 		var s = g.world.size;
 		inline function cell( x : Int, y : Int, z : Int, size : Int ) return ((((x % size) + size) % size + (((y % size) + size) % size) * size) << World.ZBITS) | z;
 		var x = Std.int(g.px + Math.cos(g.yaw) * 3), y = Std.int(g.py + Math.sin(g.yaw) * 3), z = Std.int(g.pz) + 1;
-		info.edits = info.edits.concat([cell(x, y, z, s), u, cell(x, y, z + 1, s), (u + 1) | (3 << 16)]);
+		info.edits = info.edits.concat([cell(x, y, z, s), u[0], cell(x, y, z + 1, s), u[1] | (3 << 16)]);
 		// nave: un cambio a bordo y una celda de la nave del hangar (la primera que no hace falta para jugar)
-		info.shipEdits = (info.shipEdits != null ? info.shipEdits : []).concat([cell(10, 10, 5, Const.SIZE), u + 2]);
+		info.shipEdits = (info.shipEdits != null ? info.shipEdits : []).concat([cell(10, 10, 5, Const.SIZE), u[2]]);
 		var raw = haxe.zip.Uncompress.run(Hangar.currentShip(info));
 		var p = 3;
 		while( p + 1 < raw.length ) {
 			var id = raw.get(p) | (raw.get(p + 1) << 8);
-			if( id != 0 && id < u && !Block.all[id].k.match(BShipEntry | BShipComputer | BCrafter | BCrafterComputer) ) break;
+			if( id != 0 && !SaveNames.isPlaceholder(Block.all[id]) && !Block.all[id].k.match(BShipEntry | BShipComputer | BCrafter | BCrafterComputer) ) break;
 			p += 2;
 		}
-		raw.set(p, (u + 1) & 0xFF);
-		raw.set(p + 1, (u + 1) >> 8);
+		raw.set(p, u[1] & 0xFF);
+		raw.set(p + 1, u[1] >> 8);
 		info.shipData = haxe.crypto.Base64.encode(haxe.zip.Compress.run(raw, 9));
 		// un planeta ya visitado y los precios del robot (la partida de prueba, creativa, aun no tiene universo ni robot: se crean)
 		if( info.uni == null )
 			info.uni = { seed : info.seed, planetId : 0, pos : [2, 0], start : { seed : info.seed, biome : info.biome, size : info.sizeChunks }, planets : [],
 				licenses : [0], main : 0, mainChanges : 0, abandoned : [], gone : [] };
-		if( info.uni.planets.length == 0 ) info.uni.planets.push({ id : 1, edits : [] });
-		info.uni.planets[0].edits = info.uni.planets[0].edits.concat([cell(1, 1, 60, 128), u]);
+		if( info.uni.planets.length == 0 ) info.uni.planets.push({ id : 1, edits : [], genVersion : gen.Generator.VERSION });
+		info.uni.planets[0].edits = info.uni.planets[0].edits.concat([cell(1, 1, 60, 128), u[0]]);
 		if( info.market == null ) info.market = Market.create();
-		info.market.items.push({ key : "b" + u, bought : 1., sold : 0. });
+		info.market.items.push({ key : "b" + u[0], bought : 1., sold : 0. });
 		SaveData.write(info, null, false);
-		Sys.println("unknownsave: " + info.id + " '" + name + "' " + UnknownBlocks.where(UnknownBlocks.count(info)) + " numeros " + UnknownBlocks.count(info).ids.join(","));
+		var r = UnknownBlocks.count(info);
+		Sys.println("unknownsave: " + info.id + " '" + name + "' " + UnknownBlocks.where(r) + " nombres " + r.names.join(","));
 	}
 
-	/** print unknown: bloques desconocidos de cada partida, md5 de su .json y copias hechas antes de borrarlos */
+	/** print unknown: bloques desconocidos de cada partida (leida entera), md5 de su archivo y copias en backups */
 	static function unknownInfo() : String {
 		var out = [];
 		var md5 = function(p : String) return haxe.crypto.Md5.make(sys.io.File.getBytes(p)).toHex();
-		for( i in SaveData.list() ) {
+		for( l in SaveData.list() ) {
+			var i = SaveData.peek(l.id);
+			if( i == null ) {
+				out.push("'" + l.name + "' " + l.id + " ilegible: " + SaveData.lastError);
+				continue;
+			}
 			var r = UnknownBlocks.count(i);
-			var prices = i.market == null ? 0 : [for( it in i.market.items ) if( it.key.charAt(0) == "b" && Std.parseInt(it.key.substr(1)) >= Block.all.length ) it].length;
-			out.push("'" + i.name + "' " + i.id + " desconocidos=" + UnknownBlocks.total(r) + " (" + UnknownBlocks.where(r) + ") numeros=" + r.ids.join(",")
-				+ " precios=" + prices + " md5=" + md5(SaveData.jsonPath(i.id)));
+			var prices = i.market == null ? 0 : [for( it in i.market.items ) if( it.key.charAt(0) == "b" && SaveNames.isUnknown(Block.all[Std.parseInt(it.key.substr(1))]) ) it].length;
+			out.push("'" + i.name + "' " + i.id + " desconocidos=" + UnknownBlocks.total(r) + " (" + UnknownBlocks.where(r) + ") nombres=" + r.names.join(",")
+				+ " precios=" + prices + " md5=" + md5(l.legacy == true ? SaveData.jsonPath(i.id) : SaveData.archivePath(i.id)));
 		}
 		var dir = SaveData.dir() + "/" + UnknownBlocks.BACKUPS;
 		var copies = sys.FileSystem.exists(dir) ? sys.FileSystem.readDirectory(dir) : [];
 		copies.sort(Reflect.compare);
 		return out.length + " partidas:\n  " + out.join("\n  ") + "\ncopias en " + UnknownBlocks.BACKUPS + ": "
 			+ (copies.length == 0 ? "ninguna" : [for( c in copies ) c + (StringTools.endsWith(c, ".json") ? " md5=" + md5(dir + "/" + c) : "")].join(", "));
+	}
+
+	/**
+	 * migrate ID upstream|fork: vuelve a migrar la partida .json de antes ID (desde saves/backups) con la tabla de esa linea
+	 * (SaveNames.legacyTable), por si se migro con la que no era; sin linea, la otra que la de este juego
+	 */
+	static function remigrate( a : Array<String> ) {
+		var id = a[1];
+		if( id == null ) {
+			Sys.println("migrate: falta el id de la partida");
+			return;
+		}
+		var lineage = a.length > 2 ? a[2] : (SaveNames.lineage() == "fork" ? "upstream" : "fork");
+		try {
+			var info = SaveData.migrate(id, lineage);
+			Sys.println("migrate: " + id + " con la tabla " + lineage + " | desconocidos " + UnknownBlocks.total(UnknownBlocks.count(info)));
+		} catch( e : Dynamic ) {
+			Sys.println("migrate: " + id + " no se puede migrar: " + e);
+		}
+	}
+
+	/**
+	 * invscreen ORDEN: pantalla de inventario del modo aventura (InvScreen) con eventos del raton de verdad, como la orden mouse.
+	 * Las casillas son 0-9; "out" = un punto fuera del panel, "panel" = dentro del panel sin casilla. r = boton derecho.
+	 *   open | close | move N | down N [r] | up N [r] | click N [r] | drag A B (apretar en A, pasar a B, soltar) | dbl N (doble clic)
+	 *   rdrag A B... (clic derecho apretado en A y arrastrado por las demas) | nav left|right|a|x|y (flechas, A, X, Y del mando)
+	 */
+	function invScreen( app : GalaxyApp, a : Array<String> ) {
+		if( a[1] == "open" ) {
+			app.openInventory();
+			if( app.invScreen == null ) Sys.println("invscreen: no se ha abierto");
+			return;
+		}
+		var s = app.invScreen;
+		if( s == null ) {
+			Sys.println("invscreen: la pantalla de inventario no esta abierta");
+			return;
+		}
+		inline function pt( n : String ) return s.devPoint(n == "out" ? -1 : n == "panel" ? -2 : Std.parseInt(n));
+		var right = a[a.length - 1] == "r" ? 1 : 0;
+		switch( a[1] ) {
+		case "close": @:privateAccess app.closeInventory();
+		case "move": mouseAt(pt(a[2]), EMove);
+		case "down":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush, right);
+		case "up":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), ERelease, right);
+		case "click", "dbl":
+			for( i in 0...(a[1] == "dbl" ? 2 : 1) ) {
+				mouseAt(pt(a[2]), EMove);
+				mouseAt(pt(a[2]), EPush, right);
+				mouseAt(pt(a[2]), ERelease, right);
+			}
+		case "drag":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush);
+			mouseAt(pt(a[3]), EMove);
+			mouseAt(pt(a[3]), ERelease);
+		case "rdrag":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush, 1);
+			for( n in a.slice(3) ) mouseAt(pt(n), EMove);
+			mouseAt(pt(a[a.length - 1]), ERelease, 1);
+		case "nav":
+			var k = a[2];
+			s.nav(k == "left" ? -1 : k == "right" ? 1 : 0, k == "a", k == "x", k == "y");
+		default: Sys.println("invscreen: orden desconocida " + a[1]);
+		}
+	}
+
+	/** casillas con arrastrar y soltar abiertas (SlotGrid): las del stockage de la nave o las de la cantina; null = ninguna */
+	function openGrid( app : GalaxyApp ) : SlotGrid {
+		return app.storage != null ? app.storage.grid : app.chest != null ? app.chest.grid : null;
+	}
+
+	/** tipo de carga de un nombre: yellow|blue|pink|hexalite (CBonus) o el de ChargeKind (CYellow...); -1 = ninguno */
+	static function chargeOf( n : String ) : Int {
+		var i = ["yellow", "blue", "pink", "hexalite"].indexOf(n);
+		return i >= 0 ? i : Type.getEnumConstructs(ChargeKind).indexOf(n);
+	}
+
+	/** deja n cargas de tipo k en la lista (0 = la quita) */
+	static function setCharge( list : Protocol.UserCharges, k : Int, n : Int ) {
+		for( c in list.copy() ) if( c.c == k ) list.remove(c);
+		if( n > 0 ) list.push({ c : k, n : n });
+	}
+
+	/** storage ORDEN: stockage de la nave (ShipStorage), ver la cabecera */
+	function storage( app : GalaxyApp, a : Array<String> ) {
+		var info = app.curInfo();
+		switch( a[1] ) {
+		case "open":
+			app.openStorage();
+			if( app.storage == null ) Sys.println("storage: no se ha abierto");
+		case "close": app.closeStorage();
+		case "forget": if( info != null ) info.storage = null;
+		case "put":
+			var st = StorageData.ensure(info);
+			var n = a.length > 3 ? Std.parseInt(a[3]) : 1;
+			var got = new Inventory({ maxWeight : 64, t : st.t, charges : st.charges }).addBlocks(bk(a[2]), n);
+			if( got < n ) Sys.println("storage put: solo caben " + got);
+		case "charge", "invcharge":
+			var k = chargeOf(a[2]);
+			if( k < 0 ) {
+				Sys.println("storage: carga desconocida " + a[2]);
+				return;
+			}
+			var g = @:privateAccess app.game;
+			if( a[1] == "charge" ) setCharge(StorageData.ensure(info).charges, k, Std.parseInt(a[3]));
+			else if( g != null ) {
+				setCharge(g.inv.inv.charges, k, Std.parseInt(a[3]));
+				g.inv.display();
+			}
+		default: Sys.println("storage: orden desconocida " + a[1]);
+		}
+	}
+
+	/**
+	 * slots ORDEN: las casillas abiertas (SlotGrid) con eventos del raton de verdad, como invscreen. Una casilla es Z:N (zona Z,
+	 * casilla N; en la cantina 0 = la cantina y 1 = el inventario); "out" = un punto fuera de todas. r = boton derecho.
+	 *   move C | down C [r] | up C [r] | click C [r] | drag A B (apretar en A, pasar a B, soltar) | dbl C (doble clic)
+	 *   rdrag A B... (clic derecho apretado en A y arrastrado por las demas) | nav left|right|up|down|a|x (flechas, A, X del mando)
+	 */
+	function slots( app : GalaxyApp, a : Array<String> ) {
+		var g = openGrid(app);
+		if( g == null ) {
+			Sys.println("slots: no hay casillas abiertas");
+			return;
+		}
+		function pt( n : String ) : h2d.col.Point {
+			if( n == "out" ) return g.devPoint(-1, -1);
+			var p = n.split(":");
+			return g.devPoint(Std.parseInt(p[0]), Std.parseInt(p[1]));
+		}
+		var right = a[a.length - 1] == "r" ? 1 : 0;
+		switch( a[1] ) {
+		case "move": mouseAt(pt(a[2]), EMove);
+		case "down":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush, right);
+		case "up":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), ERelease, right);
+		case "click", "dbl":
+			for( i in 0...(a[1] == "dbl" ? 2 : 1) ) {
+				mouseAt(pt(a[2]), EMove);
+				mouseAt(pt(a[2]), EPush, right);
+				mouseAt(pt(a[2]), ERelease, right);
+			}
+		case "drag":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush);
+			mouseAt(pt(a[3]), EMove);
+			mouseAt(pt(a[3]), ERelease);
+		case "rdrag":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush, 1);
+			for( n in a.slice(3) ) mouseAt(pt(n), EMove);
+			mouseAt(pt(a[a.length - 1]), ERelease, 1);
+		case "nav":
+			var k = a[2];
+			g.nav(k == "left" ? -1 : k == "right" ? 1 : 0, k == "up" ? -1 : k == "down" ? 1 : 0, k == "a", k == "x");
+		default: Sys.println("slots: orden desconocida " + a[1]);
+		}
+	}
+
+	/** evento del raton de verdad en el punto p de la zona W x H (como la orden mouse) */
+	function mouseAt( p : h2d.col.Point, kind : hxd.Event.EventKind, button = 0 ) {
+		var area = Ui.Theme.visibleArea(), eng = h3d.Engine.getCurrent();
+		var mx = (p.x - area.x) * eng.width / area.w, my = (p.y - area.y) * eng.height / area.h;
+		var win = hxd.Window.getInstance();
+		@:privateAccess { win.curMouseX = Std.int(mx); win.curMouseY = Std.int(my); }
+		mousePos = [mx, my];
+		var e = new hxd.Event(kind, mx, my);
+		e.button = button;
+		win.event(e);
 	}
 
 	/** codigo de una tecla de press, release y tap: un nombre o una letra */
@@ -232,6 +732,10 @@ class Dev {
 			case "shift": K.SHIFT;
 			case "ctrl": K.CTRL;
 			case "backspace": K.BACKSPACE;
+			case "delete": K.DELETE;
+			case "alt": K.ALT;
+			case "f2": K.F2;
+			case "f5": K.F5;
 			case "up": K.UP;
 			case "down": K.DOWN;
 			case "left": K.LEFT;
@@ -272,13 +776,20 @@ class Dev {
 			case "ready": playing || (g == null && app.explorer != null);
 			case "ground": g != null && g.onGround();
 			case "menu": Type.enumConstructor(@:privateAccess app.state) == "Menu" && @:privateAccess app.bgWorlds.length > 0;
+			// multijugador (anadido del port): dentro de la partida, el fin de la conexion, y N jugadores conectados (mpplayers3)
+			case "mp": app.mp != null && app.mp.isPlaying();
+			case "mpend": app.mp == null || app.mp.ended != null; // al acabar, GalaxyApp.endMulti la quita enseguida
+			case "mpforeign": app.mp != null && app.mp.foreign.length > 0;
+			case w if( StringTools.startsWith(w, "mpremotes") ): g != null && g.net != null && g.net.remotes.count() >= Std.parseInt(w.substr(9));
+			case w if( StringTools.startsWith(w, "mpplayers") ): app.mp != null && Lambda.count(app.mp.players) >= Std.parseInt(w.substr(9));
+			case w if( StringTools.startsWith(w, "mpchat") ): app.mp != null && app.mp.chat.length >= Std.parseInt(w.substr(6));
 			default: true;
 		}
 	}
 	/** en cada imagen de la carga de un planeta (orden loadshot) */
 	public function loadingFrame( app : GalaxyApp ) {
 		if( loadShot == null || --loadShotWait > 0 ) return;
-		app.capture("port/out/" + loadShot + ".png", false);
+		app.capture(shotPath(loadShot), false);
 		loadShot = null;
 	}
 
@@ -322,6 +833,7 @@ class Dev {
 			var w = g != null ? g.world : null;
 			var sdx = w != null ? w.shipDX : 0, sdy = w != null ? w.shipDY : 0, sz = World.SHIP_Z;
 			try {
+				if( a[0] != "type" ) a = a.map(foundCoord);
 				switch( a[0] ) {
 				case "wait":
 					waiting = Std.parseInt(a[1]);
@@ -329,6 +841,8 @@ class Dev {
 				case "waitfor":
 					waitCond = a[1];
 					waitMax = a.length > 2 ? Std.parseInt(a[2]) : 2000;
+				case "mp":
+					mpCommand(a, app);
 				case "until":
 					untilWhat = a[1];
 					untilValue = f(a[2]);
@@ -408,7 +922,30 @@ class Dev {
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
+				case "deathdrop": g.info.dropOnDeath = a[1] == "on"; // deathdrop on|off: la opcion de la partida en curso
+				case "charge":
+					// charge CPink N: deja N cargas de ese tipo (0 = ninguna)
+					var ck = Type.enumIndex(Type.createEnum(ChargeKind, a[1])), n = Std.parseInt(a[2]);
+					var cs = g.inv.inv.charges;
+					for( c in cs.copy() ) if( c.c == ck ) cs.remove(c);
+					if( n > 0 ) cs.push({ c : ck, n : n });
+					g.inv.display();
 				case "hand": g.setSlot(bk(a[1])); // hand Bloque: lo pone en la casilla elegida, como la paleta creativa
+				case "find":
+					if( !findPlace(w, g, a) ) findBlock(w, g, a[1], a.length > 2 ? Std.parseInt(a[2]) : 64);
+				case "bench":
+					bench(w, Std.parseInt(a[1]), Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]), a.length < 6 ? Block.get(BRock) : a[5] == "none" ? null : bk(a[5]));
+				case "tploose":
+					// tploose Bloque: pone al jugador a un bloque (x - 1) del primer suelto de ese bloque, como si llegara andando (justo
+					// encima, la atraccion 0.2 / d^2 lo lanzaria lejos)
+					var b = bk(a[1]);
+					for( d in @:privateAccess g.drops.list )
+						if( d.block == b ) {
+							g.px = d.x - 1;
+							g.py = d.y;
+							g.pz = d.z + 0.01;
+							break;
+						}
 				case "set", "setl":
 					var l = a[0] == "setl";
 					var x = Std.parseInt(a[1]) + (l ? sdx : 0), y = Std.parseInt(a[2]) + (l ? sdy : 0), z = Std.parseInt(a[3]) + (l ? sz : 0);
@@ -426,7 +963,8 @@ class Dev {
 					} else {
 						var nb = a[4] == "none" ? null : bk(a[4]);
 						if( nb != null && nb.type == BTWater ) w.setWater(x, y, z, nb, WorldProcess.PLACED) else w.setBlock(x, y, z, nb);
-						g.process.onSet(x, y, z, old, nb);
+						// multijugador: como al poner jugando, lo pone el servidor (casilla 1 si no es creativo)
+						if( g.net != null && nb != null ) g.net.sentPlace(x, y, z, nb, 0, 1) else g.process.onSet(x, y, z, old, nb);
 					}
 					Sys.println(a[0] + " " + x + "," + y + "," + z + " antes=" + (old == null ? "aire" : "" + old.k));
 				case "shore":
@@ -441,6 +979,7 @@ class Dev {
 							g.px = x + 1.5; g.py = y + 0.5; g.pz = w.topCollide(x + 1, y) + 0.01;
 							g.yaw = Math.PI; g.pitch = -0.6;
 							shoreX = x; shoreY = y;
+							this.found = { x : x, y : y, z : wl - 1 };
 							Sys.println("shore agua=" + x + "," + y + "," + (wl - 1) + " suelo=" + (x + 1) + " top=" + Std.int(g.pz) + " mar=" + wl);
 							found = true;
 							break;
@@ -514,6 +1053,12 @@ class Dev {
 				case "palhover":
 					// palhover N [out]: el raton entra en la casilla N de la pagina de la paleta (out: sale de ella)
 					if( app.palette != null ) app.palette.devHover(Std.parseInt(a[1]), a[2] != "out");
+				case "invscreen":
+					invScreen(app, a);
+				case "slots":
+					slots(app, a);
+				case "storage":
+					storage(app, a);
 				case "row":
 					// row X1 X2 Y Z: nivel del agua en una fila (m = mar, p = puesta, 1..4 = pasos, . = sin agua)
 					var y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), out = [];
@@ -615,7 +1160,7 @@ class Dev {
 				case "expgo": app.explorer.devClickPoint(f(a[1]), f(a[2]));
 				case "expgor": app.explorer.devClickPoint(f(a[1]), f(a[2]), true); // expgor DX DY: punto relativo a la nave
 				case "expangle": Sys.println(app.explorer.devShipAngle());
-				case "expship": app.explorer.devDumpShip("port/out/" + a[1] + ".png");
+				case "expship": app.explorer.devDumpShip(shotPath(a[1]));
 				case "expinfo": Sys.println(app.explorer.devInfo());
 				case "exprobot": app.explorer.devClickRobot();
 				case "exprsys": app.explorer.devClickRobotSystem(); // el sistema abierto mas cercano al robot
@@ -679,10 +1224,20 @@ class Dev {
 					inMenu = true;
 				case "devsaves": app.devSaves(Std.parseInt(a[1]));
 				case "savecopy": saveCopy(a[1]);
+				case "breaksave": breakSave();
 				case "unknownsave": unknownSave(g, l.substr(l.indexOf(" ") + 1));
+				case "migrate": remigrate(a);
 				case "trace": trace = true;
 				case "shop": app.openShop();
 				case "screen": @:privateAccess app.show(a[1]);
+				case "keyrow":
+					// keyrow ACCION CASILLA: en Configurar las teclas (KeysScreen), el foco en esa casilla de esa accion
+					var ks = Std.downcast(@:privateAccess app.current, KeysScreen);
+					if( ks == null ) Sys.println("keyrow: la pantalla de teclas no esta abierta");
+					else for( i in 0...ks.rows.length ) if( ks.rows[i].id == a[1] ) {
+						ks.setFocus(i);
+						ks.rows[i].slot = Std.parseInt(a[2]);
+					}
 				case "kube":
 					var k = Std.downcast(@:privateAccess app.current, KubeEditor);
 					if( k == null ) Sys.println("kube: el editor de kubes no esta abierto");
@@ -702,6 +1257,8 @@ class Dev {
 						case "view": k.devView();
 						default: Sys.println("kube: orden desconocida " + a[1]);
 					}
+				case "edkube":
+					editorKube(app, g, a);
 				case "winsize":
 					// winsize ANCHO ALTO: tamano de la ventana, para probar ventanas mas anchas o mas altas que 16:9
 					hxd.Window.getInstance().resize(Std.parseInt(a[1]), Std.parseInt(a[2]));
@@ -709,9 +1266,11 @@ class Dev {
 					// cover NOMBRE: lo abierto tapa toda la ventana? (y guarda port/out/cover_NOMBRE.png con solo eso dibujado)
 					Sys.println("cover " + (a.length > 1 ? a[1] + " " : "") + app.devCover(a[1]));
 				case "close":
-					// close: cierra la tienda, el cofre, la paleta, el mapa de estrellas o el menu abierto (como Esc)
+					// close: cierra la tienda, el cofre, el inventario, la paleta, el mapa de estrellas o el menu abierto (como Esc)
 					@:privateAccess {
 						app.closeChest();
+						app.closeStorage();
+						app.closeInventory();
 						app.closeShop();
 						app.closeContracts();
 						app.closePalette();
@@ -731,6 +1290,21 @@ class Dev {
 						win.event(e);
 					}
 				case "creative": @:privateAccess g.creative = true;
+				case "creativegame":
+					g.info.creative = true;
+					@:privateAccess g.creative = true;
+				case "mode":
+					// mode survival|creative: si no esta ya en ese modo, la bascula como desde el boton (en aventura no hace nada)
+					if( g.creative == (a[1] == "survival") ) app.switchMode();
+					Sys.println("modo: " + modeInfo(app, g));
+				case "modebutton":
+					if( app.invScreen != null && app.invScreen.corner != null ) cast(app.invScreen.corner, Ui.Button).activate();
+					else if( app.palette != null )
+						for( c in app.palette )
+							if( Std.isOfType(c, Ui.Button) ) {
+								cast(c, Ui.Button).activate();
+								break;
+							}
 				case "fadelog":
 					if( a[1] == "on" ) fadeLog = { frames : 0, t0 : g.playSeconds, a : 0., col : 0, low : 0., riseCol : 0, rises : [], steps : [], max : 0. };
 					else if( fadeLog != null ) {
@@ -739,7 +1313,29 @@ class Dev {
 					}
 				case "maxfps": Settings.maxFps = Std.parseInt(a[1]);
 				case "fps": Sys.println("fps " + Std.int(hxd.Timer.fps()));
-				case "helptext": Settings.showHelp = a[1] == "1"; // helptext 0|1: opcion de ayuda en pantalla
+				case "helptext":
+					// helptext 0|1: opcion de ayuda en pantalla (no se guarda); helptext old: settings.json como el de una version
+					// anterior (showHelp true, sin helpText), que se lee la proxima vez que se abra el juego
+					if( a[1] == "old" ) {
+						var path = Settings.dir() + "/settings.json";
+						var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(path));
+						Reflect.deleteField(o, "helpText");
+						Reflect.setField(o, "showHelp", true);
+						sys.io.File.saveContent(path, haxe.Json.stringify(o, null, "  "));
+					} else
+						Settings.showHelp = a[1] == "1";
+				case "wheelwrap":
+					// wheelwrap 0|1: opcion Rueda del raton en bucle (se guarda); wheelwrap old: quita el campo de settings.json, como el
+					// de una version anterior (la proxima vez que se abra el juego, la opcion vuelve a la de por defecto)
+					if( a[1] == "old" ) {
+						var path = Settings.dir() + "/settings.json";
+						var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(path));
+						Reflect.deleteField(o, "wheelWrap");
+						sys.io.File.saveContent(path, haxe.Json.stringify(o, null, "  "));
+					} else {
+						Settings.wheelWrap = a[1] == "1";
+						Settings.save();
+					}
 				case "hangar": app.startHangar();
 				case "talk":
 					// talk: como el clic sobre el robot comerciante: dice si se le apunta (GameView.aimedMerchant) y, si si, abre el panel
@@ -754,12 +1350,39 @@ class Dev {
 					// el menu del ordenador de a bordo, como al activarlo (el guion sigue; close lo cierra)
 					@:privateAccess app.openComputer();
 					inPause = true;
+				case "escorp":
+					// escorp [upgrades]: el submenu Contactar con la ESCorp abierto desde el ordenador de a bordo, como el jugador (y su
+					// pantalla de Mejoras ESCorp); el guion sigue, close lo cierra. escorp button: pulsa el boton Contactar con la ESCorp
+					// del ordenador abierto (su sitio cambia con Pilotar la nave). escorp hexalite N: deja N cargas de hexalita (CBonus)
+					if( a[1] == "hexalite" ) {
+						while( g.inv.useCharge(CBonus) ) {}
+						if( Std.parseInt(a[2]) > 0 ) g.inv.addCharge(CBonus, Std.parseInt(a[2]));
+					} else if( a[1] == "button" ) {
+						var b = @:privateAccess app.computerEscorp;
+						if( b != null && @:privateAccess app.current != null && @:privateAccess app.current.widgets.indexOf(b) >= 0 ) b.activate();
+						else Sys.println("escorp button: el ordenador de a bordo no esta abierto");
+					} else {
+						@:privateAccess {
+							app.openComputer();
+							app.openEscorp();
+							if( a[1] == "upgrades" ) app.openUpgrades();
+						}
+						inPause = true;
+					}
 				case "tuto":
 					// tuto new|notuto [semilla]: partida de aventura nueva, en el espacio (con o sin tutorial); tuto step N; tuto skip
 					switch( a[1] ) {
 					case "new", "notuto": app.devNewGame(a[1] == "new", a.length > 2 ? Std.parseInt(a[2]) : 1234);
 					case "step": if( app.curInfo().tuto != null ) app.curInfo().tuto.step = Std.parseInt(a[2]);
 					case "skip": app.skipTutorial();
+					case "spot":
+						// tuto spot N: el bloque N del tutorial (TutoInfo.spots, en el orden de print tuto) en fx fy fz; tras pasar o
+						// acabar el tutorial (sin bloques), los de la ultima lista vista
+						var info = app.curInfo(), sp = info.tuto == null ? null : info.tuto.spots;
+						if( sp != null && sp.length > 0 ) tutoSpots = sp.copy();
+						var i = Std.parseInt(a[2]) * 4;
+						found = tutoSpots == null || i + 2 >= tutoSpots.length ? null : { x : tutoSpots[i], y : tutoSpots[i + 1], z : tutoSpots[i + 2] };
+						if( found == null ) Sys.println("tuto spot " + a[2] + ": no hay");
 					case "ask": @:privateAccess app.askSkip(app.current); // la ventana de confirmacion (con la pausa abierta)
 					case "rule":
 						// tuto rule place|break x y z Bloque: lo que dicen las reglas del hangar del tutorial (null = se puede)
@@ -805,7 +1428,9 @@ class Dev {
 					w.setBlock(x, y, z + 1, bk(a[3]));
 					Sys.println("settop " + x + "," + y + "," + (z + 1));
 				case "hangarexit": if( g != null && g.onHangarExit != null ) g.onHangarExit(); // sin partida (en el mapa) no hace nada
-				case "chestclick": if( app.chest != null ) app.chest.click(Std.parseInt(a[1]), Std.parseInt(a[2]));
+				case "chestclick":
+					// chestclick LADO N: clic de verdad en la casilla N de la cantina (0) o del inventario (1), como slots click
+					if( app.chest != null ) slots(app, ["slots", "click", a[1] + ":" + a[2]]);
 				case "chestfocus": if( app.chest != null ) app.chest.devFocus(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "shopclose": if( app.shop != null ) @:privateAccess app.closeShop();
 				case "contracts":
@@ -816,8 +1441,12 @@ class Dev {
 						var s = Std.parseInt(a[2]);
 						Contracts.devSlot = s < 0 ? null : s;
 					case "fill":
-						// fill i [n]: bloques del contrato i del tablero; fill a J [n]: los que faltan al contrato en curso J
-						if( a[2] == "a" ) {
+						// fill i [n]: bloques del contrato i del tablero; fill a J [n]: los que faltan al contrato en curso J; fill s [n]:
+						// tierra roja, la que falta al contrato especial (o n)
+						if( a[2] == "s" ) {
+							g.inv.addBlocks(Contracts.specialBlock(), a[3] != null ? Std.parseInt(a[3]) : Contracts.SPECIAL_N - Contracts.specialGiven(g.info));
+							if( app.contracts != null ) @:privateAccess app.contracts.refresh();
+						} else if( a[2] == "a" ) {
 							var ac = Contracts.active(g.info)[Std.parseInt(a[3])];
 							g.inv.addBlocks(Contracts.blockOf(ac), a[4] != null ? Std.parseInt(a[4]) : ac.n - ac.given);
 						} else {
@@ -832,6 +1461,11 @@ class Dev {
 						// empty: vacia las casillas del inventario (la partida de prueba empieza casi llena), para probar los dones parciales
 						for( k in 0...g.inv.inv.t.length ) g.inv.inv.t[k] = null;
 						g.inv.display();
+					case "full":
+						// full: llena las casillas vacias del inventario con una roca cada una (contrato especial con el inventario lleno)
+						for( k in 0...g.inv.inv.t.length ) if( g.inv.inv.t[k] == null ) g.inv.inv.t[k] = { k : Block.get(BRock).index, n : 1 };
+						g.inv.display();
+						if( app.contracts != null ) @:privateAccess app.contracts.refresh();
 					case "old":
 						// old: los contratos como en una partida de antes de los contratos en curso (sin abandonados ni en curso), para
 						// probar que se leen tras savegame y reload
@@ -896,11 +1530,16 @@ class Dev {
 					default:
 					}
 				case "savegame": @:privateAccess app.saveGame(false); // guardar la partida como F5 (sin aviso)
+				case "genversion": app.curInfo().genVersion = Std.parseInt(a[1]);
 				case "deliver":
 					// deliver i: da lo que llevas a la linea i del tablero; deliver a J: al contrato en curso J (con el panel abierto, como
 					// su boton)
 					var ok : Bool, what : String;
-					if( a[1] == "a" ) {
+					if( a[1] == "s" ) {
+						// deliver s: al contrato especial
+						what = "especial";
+						ok = app.contracts != null ? app.contracts.giveSpecial() : Contracts.giveSpecial(g.info, g.inv);
+					} else if( a[1] == "a" ) {
 						var ac = Contracts.active(g.info)[Std.parseInt(a[2])];
 						what = "en curso " + a[2];
 						ok = ac != null && (app.contracts != null ? app.contracts.give(ac) : Contracts.give(g.info, g.inv, ac));
@@ -934,7 +1573,7 @@ class Dev {
 					loadShotWait = a.length > 2 ? Std.parseInt(a[2]) : 5;
 				case "shot":
 					// "%b" = bioma: un mismo guion sirve para varios biomas (--bgbiome)
-					app.capture("port/out/" + (w != null ? StringTools.replace(a[1], "%b", w.biomeName) : a[1]) + ".png", false);
+					app.capture(shotPath(w != null ? StringTools.replace(a[1], "%b", w.biomeName) : a[1]), false);
 				case "quit":
 					return true;
 				default:
@@ -953,7 +1592,7 @@ class Dev {
 	function newGame( app : GalaxyApp, args : Array<String> ) @:privateAccess {
 		if( app.game != null || app.explorer != null ) app.toMainMenu();
 		app.show("new");
-		var biome : Ui.Selector = null, seed : Ui.TextField = null, create : Ui.Widget = null;
+		var biome : Ui.Selector = null, create : Ui.Widget = null;
 		for( w in app.current.widgets ) {
 			// el bioma solo se elige en creativo (PR 54): se pasa el modo a Creativo antes
 			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("mode") ) {
@@ -962,10 +1601,11 @@ class Dev {
 				m.onChange(1);
 			}
 			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("biome") ) biome = cast w;
-			else if( Std.isOfType(w, Ui.TextField) && cast(w, Ui.TextField).title == Lang.t("seed") ) seed = cast w;
 			else if( w.label.text == Lang.t("create") ) create = w;
 		}
-		seed.input.text = args[0];
+		// la semilla se elige en Personalizar (askCustom): aqui se deja como si se hubiera aceptado alli
+		app.nSeed = args[0];
+		app.refreshCustom();
 		// un clic del raton en la fila del bioma a la altura x (h2d.Interactive.onClick con relX)
 		function click( x : Float ) {
 			app.current.setFocus(app.current.widgets.indexOf(biome));
@@ -985,7 +1625,7 @@ class Dev {
 			}
 			Sys.println("newgame " + act + ": " + before + " -> " + biome.choices[biome.index]);
 		}
-		Sys.println("formulario: bioma " + biome.choices[biome.index] + " (" + biome.index + "), semilla " + seed.input.text);
+		Sys.println("formulario: bioma " + biome.choices[biome.index] + " (" + biome.index + "), semilla " + app.nSeed);
 		create.activate();
 		Sys.println("partida creada: " + app.loadInfo.name + " bioma " + app.loadInfo.biome + " semilla " + app.loadInfo.seed);
 	}
@@ -1044,7 +1684,93 @@ class Dev {
 		Sys.println("fadelog: destellos a los " + [for( t in L.rises ) r3(t - L.t0)].join(" ") + " s");
 	}
 
+	/**
+	 * Multijugador (anadido del port): mp host PUERTO (hospeda en 127.0.0.1 con sus archivos en la carpeta de datos, mp_serveur),
+	 * mp join PUERTO [contrasena], mp say TEXTO, mp pm ID TEXTO, mp admin OP ID [ARG], mp mode 0|1, mp leave
+	 */
+	function mpCommand( a : Array<String>, app : GalaxyApp ) {
+		var rest = a.slice(2).join(" ");
+		switch( a[1] ) {
+		case "host":
+			var m = MultiSession.host(Settings.dir() + "/mp_serveur", Std.parseInt(a[2]), "127.0.0.1");
+			m.autoNewGame = false;
+			app.startMulti(m);
+		case "join":
+			var m = MultiSession.join("127.0.0.1", Std.parseInt(a[2]), a.length > 3 ? a[3] : "", null, 0);
+			m.autoNewGame = false;
+			app.startMulti(m);
+		case "joinat":
+			// mp joinat HOST PUERTO: un servidor de otro equipo o sistema (pruebas entre Windows, Linux y macOS)
+			var m = MultiSession.join(a[2], Std.parseInt(a[3]), "", null, 0);
+			m.autoNewGame = false;
+			app.startMulti(m);
+		case "say":
+			app.mp.say(rest);
+		case "pm":
+			app.mp.say(a.slice(3).join(" "), CPrivate, Std.parseInt(a[2]));
+		case "admin":
+			app.mp.client.send(CAdmin(Std.parseInt(a[2]), Std.parseInt(a[3]), a.length > 4 ? a[4] : ""));
+		case "access":
+			app.mp.client.send(CAccess(Std.parseInt(a[2]), a[3] == "1", a.length > 4 && a[4] == "1", a.length > 5 && a[5] == "1", a.length > 6 ? Std.parseInt(a[6]) : 0));
+		case "invite":
+			app.mp.client.send(CInvite(Std.parseInt(a[2]), Std.parseInt(a[3]), a.length > 4 ? Std.parseInt(a[4]) : 0));
+		case "give":
+			// mp give ID Bloque [n]: solo el anfitrion, directo a su servidor (el inventario es del servidor)
+			var s = app.mp.server == null ? null : app.mp.server.sessionById(Std.parseInt(a[2]));
+			if( s == null ) Sys.println("mp give: no hospeda o no hay jugador " + a[2]);
+			else app.mp.server.worlds.items.devGive(s, bk(a[3]), a.length > 4 ? Std.parseInt(a[4]) : 50);
+		case "landforeign":
+			app.devLandForeign();
+		case "mode":
+			app.mp.client.send(CSetMode(a[2] == "1"));
+		case "leave":
+			app.mp.close();
+		default:
+			Sys.println("mp desconocido: " + a[1]);
+		}
+	}
+
+	/** lo desplazada que esta cada zona (KubScroll) de una pestana de la Base de datos ESCorp, en el orden del arbol */
+	static function kubScrolls( o : h2d.Object ) : Array<Int> {
+		var out = [];
+		for( c in o ) {
+			if( Std.isOfType(c, KubScroll) ) out.push(Std.int(cast(c, KubScroll).top));
+			out = out.concat(kubScrolls(c));
+		}
+		return out;
+	}
+
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
+		if( a[1] == "mploots" ) {
+			// el anfitrion: los sueltos de su servidor (id bloque x n en x,y,z; espera; contenedor)
+			if( app.mp == null || app.mp.server == null ) Sys.println("mploots: no hospeda");
+			else for( inst in @:privateAccess app.mp.server.worlds.instances ) {
+				var l = [for( d in inst.items.drops ) d.id + " " + d.b.k + "x" + d.n + " @" + r3(d.x) + "," + r3(d.y) + "," + r3(d.z) + (d.delay > 0 ? " espera " + r3(d.delay) : "") + (d.loot != null ? " contenedor" : "")];
+				l.sort(Reflect.compare);
+				Sys.println("mploots " + inst.key + ": " + l.length + (l.length > 0 ? " " + l.join(" | ") : ""));
+			}
+			return;
+		}
+		if( a[1] == "mpworld" ) {
+			// el anfitrion: los planetas cargados en su servidor y su suma (la misma que print cellhash si el terreno coincide)
+			if( app.mp == null || app.mp.server == null ) Sys.println("mpworld: no hospeda");
+			else for( inst in @:privateAccess app.mp.server.worlds.instances ) Sys.println("mpworld " + inst.key + " " + (inst.ready() ? inst.world.cellHash() : "generando") + " jugadores " + inst.players.length);
+			return;
+		}
+		if( a[1] == "remotes" ) {
+			Sys.println(g == null || g.net == null ? "remotos: sin partida multijugador" : g.net.devInfo());
+			return;
+		}
+		if( a[1] == "mp" ) {
+			// y si el juego tiene el raton (sin cursor): al acabar la sesion en plena partida tiene que soltarlo
+			Sys.println((app.mp == null ? "mp ninguno" : app.mp.devInfo()) + " raton=" + (@:privateAccess app.captured ? "capturado" : "libre"));
+			return;
+		}
+		if( a[1] == "cellhash" && g != null ) {
+			// multijugador: la misma suma que da el servidor (server.hl --gen SEMILLA BIOMA TAMANO) para el terreno generado
+			Sys.println("cellhash " + g.world.seed + " " + g.world.biomeName + " " + (g.world.size >> 7) + ": " + g.world.cellHash());
+			return;
+		}
 		if( a[1] == "screen" ) {
 			Sys.println("pantalla " + @:privateAccess app.currentName);
 			return;
@@ -1163,6 +1889,12 @@ class Dev {
 			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "upgrades":
+			// Mejoras ESCorp: cargas de hexalita, cada mejora (precio, desbloqueada o se puede), las desbloqueadas y si se abren
+			Sys.println("mejoras: cargas de hexalita " + EscorpUpgrades.hexalite(g.inv) + " | lista " + (EscorpUpgrades.ALL.length == 0 ? "vacia"
+				: [for( u in EscorpUpgrades.ALL ) u.id + " " + u.cost + (EscorpUpgrades.has(g.info, u.id) ? " DESBLOQUEADA" : EscorpUpgrades.canBuy(g.info, g.inv, u) ? " se puede" : "")].join(", "))
+				+ " | desbloqueadas " + (g.info.upgrades == null ? "-" : g.info.upgrades.join(",")) + " | se abren " + Tutorial.upgradesAllowed(g.info)
+				+ " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step));
 		case "contracts":
 			// periodo, tablero (bloque, cantidad, recompensa, lo que llevas, entregado, abandonado, en curso u oculto por los
 			// contratos en curso), contratos en curso (bloque, dado / pedido, recompensa, periodo y linea de origen), tiempo hasta
@@ -1174,7 +1906,10 @@ class Dev {
 					+ (Contracts.isAbandoned(g.info, i) ? " ABANDONADO" : "") + (Contracts.isActive(g.info, i) ? " EN CURSO" : offered.indexOf(i) < 0 ? " OCULTO" : "");
 			}].join(" | ") + " | en curso: " + [for( ac in Contracts.active(g.info) ) ac.block + " " + ac.given + "/" + ac.n + " +" + ac.reward + " (periodo " + ac.slot + " linea " + ac.index + ")"].join(", ")
 				+ " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts == null ? "no" : "si foco " + app.contracts.devFocus() + (app.contracts.paused ? " (confirmando)" : ""))
-				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled));
+				+ " boton=" + (@:privateAccess app.computerEscorp == null ? "-" : "" + @:privateAccess app.computerEscorp.enabled)
+				+ " | especial " + Contracts.specialGiven(g.info) + "/" + Contracts.SPECIAL_N + (Contracts.specialDone(g.info) ? " CUMPLIDO" : "")
+				+ " llevas " + Contracts.have(g.inv, Contracts.specialBlock()) + " conteneurs " + Contracts.have(g.inv, Contracts.specialReward())
+				+ " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step) + " avisos=" + app.kubNotify.devInfo());
 		case "kub":
 			// Base de datos ESCorp: localizados, recuperados, nuevos, planetas y cometas explorados, recetas fabricadas, estadisticas
 			// y, con el panel abierto, la pestana
@@ -1184,8 +1919,8 @@ class Dev {
 				+ " recetas=" + [for( c in k.crafts ) c.id + "x" + c.n].join(",") + " stats=" + [for( s in k.stats ) s.k + ":" + s.p + "/" + s.b + (s.r == null ? "" : "/azar" + s.r)].join(",")
 				+ " anomalias=" + k.anomalies.join(",") + (g == null ? "" : " (planeta: " + [for( an in g.world.anomalies() ) an.n + "@" + an.x + "," + an.y + "," + an.z].join(" ") + ")")
 				+ " descubiertas=" + [for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r].length + "/" + Data.CRAFT.length
-				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step)
-				+ " avisos=" + app.kubNotify.devInfo());
+				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab + " desplazado=" + kubScrolls(app.database.view).join("/"))
+				+ " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step) + " avisos=" + app.kubNotify.devInfo());
 		case "roll":
 			// roll [N]: tira N veces (10000) cada receta al azar (Data.craftRoll) y dice cuantos de cada resultado han salido
 			var n = a.length > 2 ? Std.parseInt(a[2]) : 10000;
@@ -1205,6 +1940,9 @@ class Dev {
 			Sys.println("fichas: " + [for( e in d.sortEntries(d.entries.copy()) ) e.getName()].join(", "));
 			Sys.println("fabricados: " + [for( e in d.sortEntries([for( e in d.entries ) if( d.has(e, CCraft) ) e], true) ) e.getName()].join(", "));
 			Sys.println("recetas: " + [for( r in d.sortRecipes(Data.CRAFT.copy()) ) Block.get(r.out).getName()].join(", "));
+		case "paldup":
+			// paleta creativa: cuantos bloques tiene, los que salen mas de una vez y donde estan las aguas
+			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devRepeated()));
 		case "kubdata":
 			// fichas del Kubindex con sus sitios y categorias (para revisar kubindex.json)
 			var d = KubData.get();
@@ -1213,8 +1951,17 @@ class Dev {
 		case "menu":
 			// botones del menu abierto (etiqueta y y), de arriba abajo
 			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));
+		case "edkubes":
+			Sys.println(EditorKubes.devInfo());
+		case "edsave":
+			editorSave(app);
+		case "palnames":
+			// nombres de los bloques que deja la busqueda de la paleta
+			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devNames()));
 		case "palette":
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
+		case "invscreen":
+			Sys.println("inventario: " + (app.invScreen == null ? "cerrado" : app.invScreen.devInfo()));
 		case "time":
 			Sys.println("tiempo: " + Std.int(g.playSeconds));
 		case "life":
@@ -1234,6 +1981,39 @@ class Dev {
 				+ " trozos pendientes " + @:privateAccess w.seaChunks.length + (@:privateAccess w.seaJob != null ? " (luz a medias)" : ""));
 		case "lightcheck":
 			Sys.println("luz: " + w.debugLightCheck());
+		case "prune":
+			// poda de los cambios (World.prune): el suelo delante del jugador cambiado y vuelto a lo generado sale de editMap; el agua
+			// del mar quitada y vuelta a poner se queda (initSea y la bajada del mar quitan capas generadas)
+			inline function count() return [for( k in w.editMap.keys() ) if( k >= 0 ) k].length;
+			inline function key( x : Int, y : Int, z : Int ) return ((x + y * w.size) << World.ZBITS) | z;
+			var x = Math.floor(g.px) + 2, y = Math.floor(g.py);
+			var z = w.topCollide(x, y) - 1, orig = w.block(x, y, z);
+			var n0 = count();
+			w.setBlock(x, y, z, Block.get(BLamp));
+			var n1 = count();
+			w.setBlock(x, y, z, orig);
+			var out = "poda: suelo " + x + "," + y + "," + z + " (" + (orig == null ? "aire" : "" + orig.k) + ") cambios " + n0 + " -> " + n1 + " -> " + count()
+				+ (w.editMap.exists(key(x, y, z)) ? " GUARDADA" : " podada");
+			if( w.seaBlock == null ) out += " | sin mar";
+			else {
+				// la capa de arriba del mar (print sea: en z = nivel - 1)
+				var wl = w.waterLevel() - 1, sx = -1, sy = -1;
+				for( yy in 0...w.size ) {
+					for( xx in 0...w.size ) if( w.block(xx, yy, wl) == w.seaBlock ) {
+						sx = xx;
+						sy = yy;
+						break;
+					}
+					if( sx >= 0 ) break;
+				}
+				if( sx < 0 ) out += " | mar sin agua en z" + wl;
+				else {
+					w.setBlock(sx, sy, wl, Block.get(BRock));
+					w.setWater(sx, sy, wl, w.seaBlock, 0);
+					out += " | mar " + sx + "," + sy + "," + wl + (w.editMap.exists(key(sx, sy, wl)) ? " guardada" : " PODADA");
+				}
+			}
+			Sys.println(out);
 		case "hangar":
 			Sys.println("hangar: " + (g.hangar == null ? "no" : "valida=" + g.hangarValid + " error=" + g.hangar.error + " velocidad=" + g.hangar.speed) + " mensaje=" + g.message);
 		case "wares":
@@ -1243,9 +2023,32 @@ class Dev {
 			// lo que vende el robot, en el orden de su parte de la tienda
 			Sys.println("shelf: " + [for( m in Market.shelf ) Std.string(m.block.k)].join(" "));
 		case "inv":
-			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
+			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : EditorKubes.label(Block.all[s.k]) + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
+		case "helptext":
+			// opcion de ayuda en pantalla, lo que dice settings.json y cuantas lineas tiene el texto de arriba a la izquierda
+			var path = Settings.dir() + "/settings.json";
+			var o : Dynamic = sys.FileSystem.exists(path) ? haxe.Json.parse(sys.io.File.getContent(path)) : null;
+			var hud = @:privateAccess app.hud.text;
+			Sys.println("helptext=" + (Settings.showHelp ? 1 : 0) + " settings.json=" + (o == null ? "no existe" : "helpText " + o.helpText + " showHelp " + o.showHelp)
+				+ " hud=" + (hud == "" ? 0 : hud.split("
+").length) + " lineas");
+		case "wheelwrap":
+			// opcion Rueda del raton en bucle y lo que dice settings.json (sin el campo: ajustes de una version anterior)
+			var path = Settings.dir() + "/settings.json";
+			var o : Dynamic = sys.FileSystem.exists(path) ? haxe.Json.parse(sys.io.File.getContent(path)) : null;
+			Sys.println("wheelwrap=" + (Settings.wheelWrap ? 1 : 0) + " settings.json=" + (o == null ? "no existe" : o.wheelWrap == null ? "sin campo" : "" + o.wheelWrap));
 		case "pos":
 			Sys.println("pos: " + g.px + "," + g.py + "," + g.pz + "  yaw=" + g.yaw + " pitch=" + g.pitch + "  suelo=" + (g.standingBlock == null ? "-" : "" + g.standingBlock.k));
+		case "keys":
+			// teclas de cada accion (Keys); ! = la usa tambien otra accion en el mismo sitio
+			Sys.println("teclas: " + [for( x in Keys.ACTIONS ) x.id + "=" + [for( k in Keys.get(x.id) ) if( k != Keys.NONE ) Keys.name(k) + (Keys.conflicts(x.id, k).length > 0 ? "!" : "")].join("/")].join(" "));
+		case "tutotext":
+			// textos del tutorial (TutoText) tal como salen, con las teclas elegidas: print tutotext alu hangar
+			for( k in a.slice(2) ) Sys.println("tuto " + k + ": " + TutoText.get(k));
+		case "keyinfo":
+			// linea de abajo de Configurar las teclas: ayuda, tecla esperada o conflicto
+			var ks = Std.downcast(@:privateAccess app.current, KeysScreen);
+			Sys.println("teclas info: " + (ks == null ? "cerrada" : @:privateAccess ks.info.text));
 		case "hud":
 			// texto de arriba a la izquierda (coordenadas y fps de la tecla F, ayuda en pantalla) en una linea
 			Sys.println("hud: " + @:privateAccess app.hud.text.split("\n").join(" | "));
@@ -1278,7 +2081,14 @@ class Dev {
 				if( b != null ) out.push(b.k + "@" + (c.x + dx) + "," + (c.y + dy) + "," + (c.z + dz));
 			}
 			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
+		case "mode": Sys.println("modo: " + modeInfo(app, g));
 		case "hit": Sys.println(g.debugPick());
+		case "charges":
+			// contadores de cargas (cantidad / maximo), el aviso que hay junto a ellas (InvBar: lo recogido en el tutorial) y los de
+			// arriba a la derecha (KubNotify: la carga que falta para minar)
+			var bar = @:privateAccess app.invBar;
+			Sys.println("cargas: " + [for( c in g.inv.inv.charges ) { var k = Type.createEnumIndex(ChargeKind, c.c); k + "x" + c.n + "/" + Data.getCharge(k).max; }].join(" ")
+				+ " aviso=" + (bar == null ? "-" : bar.devNotice() == null ? "ninguno" : bar.devNotice()) + " avisos=" + app.kubNotify.devInfo());
 		case "power":
 			// potencia de excavacion (turbo minero) y el icono "power" del casco
 			var ic = @:privateAccess app.statusIcon;
@@ -1291,16 +2101,47 @@ class Dev {
 			var w = g.world;
 			Sys.println("sueltos: " + [for( d in @:privateAccess g.drops.list ) d.block.k + "x" + d.n + "@" + Math.round(d.x * 100) / 100 + "," + Math.round(d.y * 100) / 100 + "," + Math.round(d.z * 100) / 100
 				+ (d.z >= World.SHIP_Z ? " local " + (Math.round((d.x - w.shipDX) * 100) / 100) + "," + (Math.round((d.y - w.shipDY) * 100) / 100) : "")].join(" "));
+		case "storage":
+			// stockage de la nave guardado en la partida, las cargas del inventario y si el boton del ordenador esta activo
+			var cs = g.inv.inv.charges.copy();
+			cs.sort(function(a, b) return a.c - b.c);
+			var btn = @:privateAccess app.computerStorage;
+			Sys.println("stockage: " + ShipStorage.devInfo(g.info.storage) + (app.storage == null ? " (cerrado)" : " (abierto)") + "  inv cargas ["
+				+ [for( c in cs ) Type.getEnumConstructs(ChargeKind)[c.c] + "x" + c.n].join(" ") + "]  boton=" + (btn == null ? "-" : "" + btn.enabled));
+		case "slots":
+			// casillas con arrastrar y soltar abiertas (SlotGrid): lo que se ve en cada zona, el cursor y la linea de informacion
+			var sg = openGrid(app);
+			Sys.println("casillas: " + (sg == null ? "cerradas" : sg.devInfo()));
 		case "chest":
 			// ventana de la cantina (abierta o no) y las cantinas de la partida con lo que tienen
-			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ");
+			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : EditorKubes.label(Block.all[s.k]) + "x" + s.n].join(" ");
 			var c = app.chest;
 			Sys.println("cantina: " + (c == null ? "cerrada" : "abierta [" + items(c.box) + "]") + "  guardadas: " + (g.info.chests == null ? "" : [for( e in g.info.chests ) e.key + " [" + items(e.t) + "]"].join(", ")));
+		case "deathdrops": Sys.println("dejado: " + DeathDropsPlay.devInfo(g));
 		case "shake":
 			// temblor, subida de la camara y del HUD (en pixeles de la ventana) de este fotograma, y segundos de juego
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
 			var hudPx = @:privateAccess app.hudShake * h3d.Engine.getCurrent().width / Ui.Theme.visibleArea().w;
 			Sys.println("temblor " + r(g.shake) + " camara " + r(g.shakeZ) + " hud " + r(hudPx) + " px  t=" + r(g.playSeconds));
+		case "helmet":
+			// casco (filtro de la visera): OK si tiene la escala de la ventana actual (ancho/974, alto/624, como layoutHelmet) y
+			// tapa sus cuatro bordes; DESAJUSTADO si se quedo con el tamano de una ventana anterior (bandas sin filtro a los lados)
+			var h = @:privateAccess app.helmet, va = Ui.Theme.visibleArea();
+			if( !h.visible ) {
+				Sys.println("casco oculto");
+				return;
+			}
+			var e = h3d.Engine.getCurrent(), px = e.width / va.w;
+			var x0 = h.x, x1 = h.x + h.tile.width * h.scaleX, y0 = h.y, y1 = h.y + h.tile.height * h.scaleY;
+			var bad = [];
+			if( Math.abs(h.scaleX / (va.w / 974) - 1) > 0.001 || Math.abs(h.scaleY / (va.h / 624) - 1) > 0.001 ) bad.push("escala");
+			if( x0 > va.x ) bad.push("izquierda");
+			if( x1 < va.x + va.w ) bad.push("derecha");
+			if( y0 > va.y ) bad.push("arriba");
+			if( y1 < va.y + va.h ) bad.push("abajo");
+			inline function p( v : Float ) return Math.round(v * px);
+			Sys.println("casco " + e.width + "x" + e.height + " " + (bad.length == 0 ? "OK" : "DESAJUSTADO: " + bad.join(", "))
+				+ " (de " + p(x0 - va.x) + "," + p(y0 - va.y) + " a " + p(x1 - va.x) + "," + p(y1 - va.y) + " px)");
 		case "cam":
 			// altura de la camara y distancia hasta el primer bloque que choca encima (negativa = la camara esta dentro de el)
 			var cz = @:privateAccess g.s3d.camera.pos.z, top = Math.floor(cz);
@@ -1315,7 +2156,7 @@ class Dev {
 			// blockl: coordenadas locales de la nave
 			var l = a[1] == "blockl";
 			var b = w.block(Std.parseInt(a[2]) + (l ? w.shipDX : 0), Std.parseInt(a[3]) + (l ? w.shipDY : 0), Std.parseInt(a[4]) + (l ? World.SHIP_Z : 0));
-			Sys.println("bloque: " + (b == null ? "nada" : "" + b.k));
+			Sys.println("bloque: " + (b == null ? "nada" : EditorKubes.label(b)));
 		case "around":
 			// print around X Y Z R: bloques en el cubo de lado 2R+1 (planeta, nave y roca madre) y bombas por explotar
 			var x = Std.parseInt(a[2]), y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), r = Std.parseInt(a[5]);
@@ -1328,6 +2169,19 @@ class Dev {
 				if( zz >= World.SHIP_Z ) s++ else if( b.k == BBedrock ) bed++ else n++;
 			}
 			Sys.println("alrededor " + x + "," + y + "," + z + " r" + r + ": planeta " + n + " roca madre " + bed + " nave " + s + "  bombas en cola " + @:privateAccess g.bombQueue.length);
+		case "ids":
+			// print ids X Y Z R: bloques distintos del mundo (World.cells) y, en el cubo de lado 2R+1, los distintos, las celdas con
+			// id local > 255 (no cabrian en un byte) y la suma de los numeros de bloque (para comparar tras guardar y cargar)
+			var x = Std.parseInt(a[2]), y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), r = Std.parseInt(a[5]);
+			var kinds = new Map<Int, Bool>(), high = 0, sum = 0;
+			for( dz in -r...r + 1 ) for( dy in -r...r + 1 ) for( dx in -r...r + 1 ) {
+				var b = w.block(x + dx, y + dy, z + dz);
+				if( b == null ) continue;
+				kinds.set(b.index, true);
+				sum += b.index;
+				if( w.voxel(x + dx, y + dy, z + dz) > 255 ) high++;
+			}
+			Sys.println("ids: mundo " + (@:privateAccess w.gen.blocks.length - 1) + " bloques distintos; cubo " + Lambda.count(kinds) + " distintos, " + high + " con id > 255, suma " + sum);
 		case "fade":
 			var f = g.fadeFX;
 			Sys.println(f == null ? "fundido: ninguno" : "fundido: color " + StringTools.hex(f.col, 6) + " t=" + Math.round(f.t * 100) / 100 + " opacidad " + Math.round(g.fadeAlpha() * 100) / 100 + " bloqueo " + f.lock);
@@ -1336,7 +2190,11 @@ class Dev {
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
 			Sys.println("aterrizaje: suelo " + (g.standingBlock == null ? "-" : "" + g.standingBlock.k) + " gravedad " + r(g.gravity) + " aturdido " + r(@:privateAccess g.stun)
 				+ " casco " + r(g.bobY) + " temblor " + r(g.shake) + " fundido " + r(g.fadeAlpha()) + " vida " + r(g.life) + " creativo " + g.creative);
-		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poner=" + g.select.tx + "," + g.select.ty + "," + g.select.tz + " poder=" + g.select.power));
+		case "select":
+			// con un bloque en la mano: el que pondria (el giro de BFFlip o, un tableau, el de la pared apuntada) y si se puede
+			var s = g.select, hand = g.inv.getCurrentBlock(), put = s == null || hand == null ? null : g.placedBlock(s, hand);
+			Sys.println("select: " + (s == null ? "ninguno" : EditorKubes.label(s.b) + " @" + s.x + "," + s.y + "," + s.z + " poner=" + s.tx + "," + s.ty + "," + s.tz + " poder=" + s.power
+				+ (hand == null ? "" : " pone=" + (put == null ? "nada" : EditorKubes.label(put)) + " puede=" + g.canPlace(s, hand))));
 		case "sky":
 			// giro de las estrellas (Sky.follow): a donde apuntan los ejes x y z del cubo de estrellas
 			var m = @:privateAccess w.sky.starRot;
@@ -1350,6 +2208,13 @@ class Dev {
 				Sys.println("cielo: " + (flat == null ? "degradado" : "color " + StringTools.hex(flat.color.toColor() & 0xFFFFFF, 6))
 					+ ", estrellas " + (st != null && st.visible ? "si" : "no"));
 			}
+		case "found":
+			Sys.println("find: " + (found == null ? "nada" : found.x + " " + found.y + " " + found.z));
+		case "gen":
+			var u = g.info.uni;
+			var visited = u == null ? "-" : [for( p in u.planets ) p.id + ":" + SaveData.genVersion(p.genVersion)].join(" ");
+			Sys.println("generador: mundo " + @:privateAccess w.gen.version + " actual " + gen.Generator.VERSION + " partida " + g.info.genVersion
+				+ " planeta " + (u == null ? "-" : "" + u.planetId) + " visitados " + (visited == "" ? "-" : visited));
 		case "biome":
 			// bioma del mundo cargado, el de la partida y el de salida del universo; y el suelo que mas se ve (una columna de cada 8x8)
 			var u = g.info.uni;

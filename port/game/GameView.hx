@@ -40,6 +40,8 @@ class GameView {
 	static inline var CAMERA_GAP = 0.12;
 	/** con los pies en la arena movediza todo va a 0.3 (Hero.doMove: dt *= 0.3) */
 	static inline var SAND_SLOW = 0.3;
+	/** escalon mas alto que se sube andando (cambio del port, canStepOn): media altura, la de una dalle */
+	static inline var STEP_UP = 0.5;
 
 	public var world(default, null) : World;
 	public var info(default, null) : SaveInfo;
@@ -63,7 +65,8 @@ class GameView {
 	/** Hero.miningPower: 3 cerca de un turbo minero (WorldProcess.updateTrack), si no 1 */
 	public var miningPower(get, never) : Float;
 	inline function get_miningPower() return process.miningPower;
-	/** modo creativo (anadido nuestro): bloques sin limite, rotura instantanea y jetpack infinito */
+	/** modo creativo (anadido nuestro): bloques sin limite, rotura instantanea y jetpack infinito. Es el modo en curso: una
+	    partida creada en creativo puede pasar a supervivencia y volver (setSurvival); lo de la partida va con info.creative */
 	public var creative(default, null) = false;
 	/** --editnodriza: la nave nodriza se puede editar (en creativo) y al salir se guarda en mothership.bin */
 	public static var editMother = Sys.args().indexOf("--editnodriza") >= 0;
@@ -81,6 +84,8 @@ class GameView {
 	var hand : Hand;
 	/** Process.hx del original: agua y lava que fluyen, hierba, anclas... */
 	public var process : WorldProcess;
+	/** partida multijugador (anadido del port): manda lo que hace el jugador y aplica lo que llega; null en solo */
+	public var net : NetGame;
 	/** la nave: el jugador empieza dentro y baja al planeta por el teletransportador (Game.placeShip) */
 	public var ship(default, null) : Ship;
 	/** progreso del teletransporte (Hero.enteringShip): -1 = recien llegado, 0..1.5 = entrando; a 1.5 se transporta */
@@ -142,7 +147,7 @@ class GameView {
 		playSeconds = info.playSeconds;
 		// Game.init: con la vida a 0 se vuelve a la nave (hero.hit(0)); aqui directamente con la vida llena
 		life = info.life != null && info.life > 0 ? info.life : 100;
-		creative = info.creative == true || Sys.args().indexOf("--creative") >= 0 || (editMother && info.mothership == true);
+		creative = (info.creative == true && info.survival != true) || Sys.args().indexOf("--creative") >= 0 || (editMother && info.mothership == true);
 		inv = new Inv(info.inv != null ? Inv.copy(info.inv) : Inv.defaults());
 		// solo pruebas: --inv=BIron,BGlass,... llena el inventario con esos bloques
 		for( a in Sys.args() )
@@ -226,7 +231,13 @@ class GameView {
 			pz = info.pz;
 			yaw = info.yaw;
 			pitch = info.pitch;
+			// anadido del port: si el sitio guardado ha quedado dentro de algo solido (una partida migrada con la tabla que no era, un
+			// planeta que ahora se genera distinto), el jugador sube a la superficie
+			var ix = Math.floor(px), iy = Math.floor(py), iz = Math.floor(pz);
+			if( world.solid(ix, iy, iz) || world.solid(ix, iy, iz + 1) ) pz = world.topCollide(ix, iy) + 0.01;
 		}
+		// el equipo dejado aqui al morir o con Mayus+K, en el planeta o la cometa y en la nave
+		DeathDropsPlay.spawnAll(this);
 	}
 
 	/** mercado del robot comerciante (se crea al abrir la tienda por primera vez) */
@@ -255,7 +266,10 @@ class GameView {
 		hangarMsg = hangarValid ? Lang.t("hangar.ship_valid").split("%speed%").join("" + hangar.speed) : Lang.t("hangar." + hangar.error);
 	}
 	var hangarMsg = "";
-	/** aviso (ya traducido) de un bloque que no se puede poner (Hangar.forbidden, hangarRule) y cuanto le queda en pantalla */
+	/**
+	 * aviso (ya traducido) de un bloque que no se puede poner (Hangar.forbidden, hangarRule; en la nave, Tutorial.synthRule) y
+	 * cuanto le queda en pantalla
+	 */
 	var hangarRefused : String;
 	/** reglas del hangar durante el tutorial (Tutorial.hangarRule): (poner, x, y, z, bloque) -> aviso, o null si se puede */
 	public var hangarRule : Bool -> Int -> Int -> Int -> Block -> String;
@@ -359,7 +373,6 @@ class GameView {
 		if( realDt > 0.1 ) realDt = 0.1;
 		playSeconds += realDt;
 		var tmod = realDt * FPS;
-		var K = hxd.Key;
 		if( fadeFX != null && fadeFX.lock ) controls = false; // hero.lock del original mientras se vuelve a la nave
 		// pilotando (anadido del port): los controles mueven la nave, no al jugador
 		if( piloting ) {
@@ -374,17 +387,17 @@ class GameView {
 		walking = false;
 		if( controls ) {
 			// A/D y flechas izquierda/derecha: en el original giran al personaje, con aceleracion
-			// (Settings.turnKeys); por defecto se desplazan de lado
+			// (Settings.turnKeys); por defecto se desplazan de lado. Las teclas son las de Keys (configurables)
 			var move = false;
 			var turnMode = Settings.turnKeys;
 			var arrows = actionKeys;
-			if( (arrows && K.isDown(K.RIGHT)) || K.isDown(K.D) || K.isDown(K.NUMPAD_6) ) {
+			if( Keys.down("right", arrows) ) {
 				if( turnSpeed < 0 ) turnSpeed = 0;
 				if( turnMode ) turnSpeed += 0.008 * tmod;
 				else strafe += 0.15;
 				move = true;
 			}
-			if( (arrows && K.isDown(K.LEFT)) || K.isDown(K.A) || K.isDown(K.Q) || K.isDown(K.NUMPAD_4) ) {
+			if( Keys.down("left", arrows) ) {
 				if( turnSpeed > 0 ) turnSpeed = 0;
 				if( turnMode ) turnSpeed -= 0.008 * tmod;
 				else strafe -= 0.15;
@@ -396,12 +409,13 @@ class GameView {
 			if( turnSpeed > tmax ) turnSpeed = tmax;
 			var turn = turnSpeed;
 
-			walkingSlow = K.isDown(K.X);
-			if( (arrows && K.isDown(K.UP)) || K.isDown(K.W) || K.isDown(K.Z) || K.isDown(K.X) || K.isDown(K.NUMPAD_8) ) {
+			// caminar despacio (X) tambien hace avanzar
+			walkingSlow = Keys.down("slow", arrows);
+			if( Keys.down("forward", arrows) || walkingSlow ) {
 				speed += 0.15;
 				walking = true;
 			} else pushPower = 0.0;
-			if( (arrows && K.isDown(K.DOWN)) || K.isDown(K.S) || K.isDown(K.NUMPAD_2) ) {
+			if( Keys.down("back", arrows) ) {
 				speed -= 0.15;
 				walking = true;
 			}
@@ -433,7 +447,7 @@ class GameView {
 				strafe *= 0.4;
 				turn *= 0.4;
 			}
-			if( actionKeys && (K.isDown(K.SPACE) || K.isDown(K.CTRL)) ) useJetpack = true;
+			if( actionKeys && Keys.down("jump") ) useJetpack = true;
 			yaw += turn;
 			clampPitch();
 		} else
@@ -467,6 +481,12 @@ class GameView {
 			ship.update(this, tmod);
 			if( piloting ) enteringShip = -1; // sin teletransporte mientras se pilota (ship.update lo pondria a 0 lejos del rayo viejo)
 			message = ship.message(this);
+			// lo que no se puede poner en la zona del sintetizador (tutorial, place): en rojo un momento, como en el hangar
+			if( hangarRefusedTime > 0 ) {
+				hangarRefusedTime -= tmod;
+				message = hangarRefused;
+				messageRed = true;
+			}
 			// cometa (añadido del port): sobre el teletransportador, por que ya no baja
 			if( message == null && cometOver() && cometBeamWait <= 0 && pz >= World.SHIP_Z && standingBlock != null && standingBlock.k == BShipEntry ) {
 				message = Lang.t("comet.beamoff");
@@ -514,7 +534,9 @@ class GameView {
 			var c = bombQueue.shift();
 			explodeBomb(c.x, c.y, c.z);
 		}
-		process.update(realDt, px, py, pz + viewZ * 0.5);
+		// en multijugador el proceso del mundo corre en el servidor: aqui llegan sus cambios (NetGame)
+		if( net == null ) process.update(realDt, px, py, pz + viewZ * 0.5);
+		else net.update(realDt);
 		world.flush();
 		if( !piloting ) drops.update(this, tmod); // pilotando, los sueltos de la nave van con ella (pilotMove)
 		fx.update(this, realDt, tmod);
@@ -565,6 +587,7 @@ class GameView {
 
 	public function dispose() {
 		stopSounds();
+		if( net != null ) net.dispose();
 		if( ship != null ) ship.dispose();
 		fx.dispose();
 		parts.dispose();
@@ -644,6 +667,45 @@ class GameView {
 
 	var fallBob = 0.;
 
+	// ---------------------------------------------------------------- modo creativo / supervivencia (anadido del port)
+
+	/** solo una partida creada en creativo pasa a supervivencia y vuelve; una de aventura nunca */
+	/** multijugador: puede bascular su modo (gestionnaire; el modo lo decide el servidor, SMode) */
+	public var netSwitch = false;
+
+	public function canSwitchMode() : Bool return net != null ? netSwitch : info.creative == true;
+
+	/** multijugador: el modo que dice el servidor (SWelcome, SMode), como setSurvival pero sin tocar la partida */
+	public function netSetMode( c : Bool ) {
+		if( creative == c ) return;
+		creative = c;
+		if( !c ) {
+			life = 100;
+			oxygen = 100;
+			jetpack = 1;
+		}
+		laserCharge = null;
+	}
+
+	/**
+	 * Partida creativa: pasa a supervivencia (on) o vuelve a creativo. Sigue al modo lo que mira `creative`: dano, oxigeno,
+	 * jetpack, rotura y botin, bloques gastados al ponerlos, paleta. La partida sigue siendo creativa (info.creative): licencias,
+	 * Base de datos ESCorp completa. Mismo inventario en los dos modos; al pasar a supervivencia, vida y oxigeno llenos. El modo
+	 * queda en info.survival y se guarda con la partida. Devuelve false si no ha cambiado nada.
+	 */
+	public function setSurvival( on : Bool ) : Bool {
+		if( !canSwitchMode() || creative != on ) return false;
+		creative = !on;
+		info.survival = on ? true : null;
+		if( on ) {
+			life = 100;
+			oxygen = 100;
+			jetpack = 1;
+		}
+		laserCharge = null;
+		return true;
+	}
+
 	// ---------------------------------------------------------------- vida (Hero.hit, Hero.heal, Hero.update)
 
 	/** Hero.hit: quita vida y aturde; a 0, fundido rojo y vuelta a la nave con la vida y el oxigeno llenos (Game.returnToShip, modo local) */
@@ -663,16 +725,26 @@ class GameView {
 
 	/** Game.returnToShip (modo local): fundido sin controles, rojo al morir y blanco con Mayus+K; al acabar, de vuelta en la
 	    nave con la vida y el oxigeno llenos; los ojos bajan 0.8 al morir y suben 0.5 con Mayus+K. Sustituye a un fundido de
-	    golpe o de curacion */
-	public function returnToShip( manual : Bool ) {
+	    golpe o de curacion. Como en el juego en linea (CReturnShip), el equipo se queda en el sitio (DeathDrops); lose = false
+	    para la vuelta de emergencia de la cometa */
+	public function returnToShip( manual : Bool, lose = true ) {
 		if( fadeFX != null && fadeFX.lock ) return; // hero.lock: ya se esta volviendo
+		// multijugador: en el planeta el contenedor lo deja el servidor (NetGame.sentDeath)
+		var netDeath = lose && net != null && pz < World.SHIP_Z;
+		if( netDeath && !creative && info.tuto == null ) net.sentDeath(manual);
+		var left = lose && !netDeath ? DeathDropsPlay.leave(this, manual) : null;
+		if( left != null ) onEquipmentLeft();
 		fadeFX = { t : 0., col : manual ? 0xFFFFFF : 0xFF0000, speed : 2., alpha : null, lock : true, dz : manual ? -0.5 : 0.8, done : function() {
 			life = 100;
 			oxygen = 100;
 			gravity = 0;
 			gotoShip(true);
+			if( left != null ) DeathDropsPlay.spawn(this, left);
 		} };
 	}
+
+	/** el equipo se acaba de quedar en el sitio (DeathDrops.leave), al empezar el fundido */
+	public dynamic function onEquipmentLeft() {}
 
 	// ---------------------------------------------------------------- cometa (Comets, añadido del port)
 
@@ -697,13 +769,18 @@ class GameView {
 	 * Base de datos ESCorp: una anomalia queda identificada al pasar cerca de ella (16 bloques; en las cuevas, a su altura). La
 	 * Invisible, que flota, desde el suelo de debajo hasta su altura (h)
 	 */
+	/** cuantos bloques alrededor de la caja de una anomalia se identifica (Base de datos ESCorp) */
+	static inline var ANOMALY_MARGIN = 12;
+
 	function updateAnomalies( dt : Float ) {
 		if( (anomalyCheck -= dt) > 0 || hangar != null || info.mothership == true || pz >= World.SHIP_Z ) return;
 		anomalyCheck = 0.5;
+		// en la caja de la anomalia (lo que cambio el generador al ponerla, respecto a su origen), con un margen alrededor
+		var m = ANOMALY_MARGIN;
 		for( a in world.anomalies() ) {
-			var dx = wrapDist(a.x + 0.5 - px), dy = wrapDist(a.y + 0.5 - py);
-			var top = a.z + (a.h == null ? 0 : a.h);
-			if( dx * dx + dy * dy <= 16 * 16 && pz >= a.z - 12 && pz <= top + 12 ) Kubindex.encounter(info, a.n);
+			var b = a.box, dx = wrapDist(px - a.x), dy = wrapDist(py - a.y);
+			if( dx >= b[0] - m && dx <= b[3] + 1 + m && dy >= b[1] - m && dy <= b[4] + 1 + m && pz >= b[2] - m && pz <= b[5] + 1 + m )
+				Kubindex.encounter(info, a.n);
 		}
 	}
 
@@ -719,7 +796,7 @@ class GameView {
 			cometBeamWait = COMET_OVER_TOAST;
 			onCometOver();
 		}
-		if( pz < World.SHIP_Z ) returnToShip(true);
+		if( pz < World.SHIP_Z ) returnToShip(true, false);
 	}
 
 	/** Hero.heal */
@@ -836,6 +913,19 @@ class GameView {
 		if( hitPow > threshold ) hitPow = threshold;
 		shake += 0.7 * hitPow * hitPow;
 		return -1;
+	}
+
+	/**
+	 * Escalon (cambio del port): lo que una sonda de las paredes toca en (x, y) a la altura de los pies se sube andando si acaba
+	 * como mucho STEP_UP mas arriba y deja sitio encima para el cuerpo (las otras sondas) y la cabeza. El original paraba contra
+	 * cualquier bloque, tambien uno de media altura, y habia que saltar. Una dalle y luego un bloque entero, medio bloque mas alto
+	 * cada uno, se suben seguidos; un bloque entero desde el suelo no.
+	 */
+	function canStepOn( x : Float, y : Float ) : Bool {
+		var top = pz + STEP_UP + 0.01;
+		for( dz in [0., 0.5, 1., 1.3, VIEW_Z + 0.13] )
+			if( collide(x, y, top + dz) ) return false;
+		return true;
 	}
 
 	function doMove( dt : Float, speed : Float, strafe : Float, useJetpack : Bool ) {
@@ -961,6 +1051,9 @@ class GameView {
 					if( !found ) break;
 					h += 1 / 32;
 				}
+				// cambio del port: al subir un escalon andando (canStepOn) los ojos se quedan a la misma altura y luego suben despacio
+				// hasta la de siempre (updateViewZ), en vez de saltar de golpe con los pies. Al aterrizar (sin suelo antes) no
+				if( standingBlock != null && h > pz ) viewZ -= h - pz;
 				pz = h;
 			}
 			if( jetpack < 1 ) jetpack += jconsume * 7 * dt;
@@ -1045,6 +1138,9 @@ class GameView {
 					var a2 = a + ((k & 1) * 2 - 0.99) * (k >> 1) * Math.PI / 8;
 					var px2 = px + Math.cos(a2) * 0.45, py2 = py + Math.sin(a2) * 0.45;
 					if( collide(px2, py2, qz) == (dz < 0) ) continue;
+					// cambio del port: con los pies en el suelo, un escalon no frena; el cuerpo pasa por encima hasta que los pies lo
+					// pisan y suben (recolocar los pies sobre el suelo)
+					if( dz == 0 && col && canStepOn(px2, py2) ) continue;
 					px -= Math.cos(a2) * dist / 20;
 					py -= Math.sin(a2) * dist / 20;
 					pushPower += dist / 20;
@@ -1101,12 +1197,13 @@ class GameView {
 	/** solo en los planetas jugables: no en la nave nodriza, el hangar ni el tutorial, y no durante un fundido */
 	public function canPilot() : Bool {
 		return ship != null && hangar == null && info.mothership != true && !Tutorial.active(info) && (fadeFX == null || !fadeFX.lock)
-			&& life > 0 && pz >= World.SHIP_Z;
+			&& life > 0 && pz >= World.SHIP_Z && (net == null || netOwner);
 	}
 
-	/** licencias (Licenses, anadido del port): en aventura solo se pilota sobre el planeta principal; en creativo, sobre todos */
+	/** licencias (Licenses, anadido del port): en aventura solo se pilota sobre el planeta principal; en creativo, sobre todos
+	    (tambien en supervivencia en una partida creativa: las licencias son de la partida) */
 	public function pilotLicensed() : Bool {
-		return creative || info.uni == null || Licenses.isMain(info.uni, info.uni.planetId);
+		return creative || info.creative == true || info.uni == null || Licenses.isMain(info.uni, info.uni.planetId);
 	}
 
 	public function startPiloting() {
@@ -1146,6 +1243,24 @@ class GameView {
 		// de pie sobre el teletransportador: como al aparecer en la nave (gotoShip), no transporta hasta que te apartas y vuelves
 		enteringShip = -1;
 		releaseAction();
+		// multijugador: el punto de aterrizaje del planeta (los invitados llevan alli su nave)
+		if( net != null ) net.sentShipMove(ship.x, ship.y);
+	}
+
+	/** multijugador: solo el propietario del planeta pilota (mueve el punto de aterrizaje de todos) */
+	public var netOwner = true;
+
+	/** multijugador: el propietario ha llevado su nave a (x, y) (SShipMove): la nuestra va alli, y con ella quien vaya dentro */
+	public function netShipMoved( x : Int, y : Int ) {
+		if( ship == null || piloting ) return;
+		var s = world.size;
+		inline function wrapD( v : Int ) { v = ((v % s) + s) % s; return v > s >> 1 ? v - s : v; }
+		var dx = wrapD(x - ship.x), dy = wrapD(y - ship.y);
+		if( dx == 0 && dy == 0 ) return;
+		var aboard = pz >= World.SHIP_Z;
+		ship.slide(dx, dy);
+		var d = ship.land();
+		if( aboard ) moveRiders(dx + d.dx, dy + d.dy);
 	}
 
 	/** lo que va dentro de la nave se mueve con ella: el jugador y los bloques sueltos (las vistas previas de los sintetizadores) */
@@ -1157,20 +1272,19 @@ class GameView {
 
 	/**
 	 * WASD / flechas / palanca izquierda: hacia donde acelera la nave, segun la camara (raton y palanca derecha la giran).
-	 * Devuelve la velocidad buscada; E o B piden dejar la nave (Esc y Start, en GalaxyApp).
+	 * Devuelve la velocidad buscada; Dejar la nave (E, Keys) o B la dejan (Esc y Start, en GalaxyApp).
 	 */
 	function pilotInput( tmod : Float, pad : hxd.Pad ) : { x : Float, y : Float } {
-		var K = hxd.Key;
-		if( K.isPressed(K.E) || (pad != null && pad.isPressed(pad.config.B)) ) {
+		if( Keys.pressed("leave") || (pad != null && pad.isPressed(pad.config.B)) ) {
 			stopPiloting();
 			return { x : 0., y : 0. };
 		}
 		var speed = 0., strafe = 0.;
 		var arrows = actionKeys;
-		if( (arrows && K.isDown(K.UP)) || K.isDown(K.W) || K.isDown(K.Z) || K.isDown(K.NUMPAD_8) ) speed += 1;
-		if( (arrows && K.isDown(K.DOWN)) || K.isDown(K.S) || K.isDown(K.NUMPAD_2) ) speed -= 1;
-		if( (arrows && K.isDown(K.RIGHT)) || K.isDown(K.D) || K.isDown(K.NUMPAD_6) ) strafe += 1;
-		if( (arrows && K.isDown(K.LEFT)) || K.isDown(K.A) || K.isDown(K.Q) || K.isDown(K.NUMPAD_4) ) strafe -= 1;
+		if( Keys.down("forward", arrows) ) speed += 1;
+		if( Keys.down("back", arrows) ) speed -= 1;
+		if( Keys.down("right", arrows) ) strafe += 1;
+		if( Keys.down("left", arrows) ) strafe -= 1;
 		if( pad != null ) {
 			var dead = 0.2;
 			if( Math.abs(pad.xAxis) > dead ) strafe += pad.xAxis;
@@ -1315,6 +1429,8 @@ class GameView {
 	/** texto de recetas del sintetizador cercano (se muestra en pantalla) */
 	public var message : String;
 	public var messageRed = false;
+	/** se ha minado un bloque que pide esta carga y no se tiene (mine); GalaxyApp lo lee, lo avisa y lo vuelve a poner a null */
+	public var lackCharge : Null<ChargeKind>;
 
 	/** ShipLogic.activateBlock, Process.onActivate y Process.toggle: ordenador de a bordo, cantinas, bomba antigua y bloques
 	    que se abren o cierran (puertas) */
@@ -1328,12 +1444,18 @@ class GameView {
 			if( !ok ) return;
 			switch( b.k ) {
 			case BShipComputer: lastComputer = { x : x, y : y, z : z }; onComputer();
-			case BCrafterComputer: if( ship != null ) ship.activateCraft(x, y, z, this);
+			// multijugador: fabrica el servidor (ServerShip.craft); el resultado llega como sueltos de la nave
+			case BCrafterComputer: if( ship != null ) { if( net != null ) net.sentShipCraft(x, y, z) else ship.activateCraft(x, y, z, this); }
 			// cambio del port: en el hangar (EditShip) y en la nave nodriza no explota, para no romper la nave
-			case BArtiBomb: if( hangar == null && info.mothership != true ) explodeBomb(x, y, z);
+			case BArtiBomb: if( net != null && z < World.SHIP_Z ) net.sentActivate(x, y, z) else if( hangar == null && info.mothership != true ) explodeBomb(x, y, z);
 			default:
-				if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
+				// multijugador: las cantinas son del servidor (las del planeta, una persona a la vez; las de la nave, ServerShip)
+				if( b.hasProp(PContainer) && net != null ) net.sentChestOpen(x, y, z);
+				else if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
 			}
+		} else if( b.toggle != null && net != null && z < World.SHIP_Z ) {
+			// multijugador: la puerta del planeta la cambia el servidor (todos la ven)
+			net.sentActivate(x, y, z);
 		} else if( b.toggle != null ) {
 			// Process.toggle: se cambia toda la columna del mismo bloque (una puerta mide varios bloques de alto)
 			while( world.block(x, y, z - 1) == b ) z--;
@@ -1396,6 +1518,22 @@ class GameView {
 	 * borde) a rojo (en el centro; ver bombFlash), y vacia una esfera de radio 8 sin soltar nada. Al activarla se explota; si
 	 * se excava hasta el final se recoge, como cualquier bloque (Game.checkToggle / checkAction).
 	 */
+	/** multijugador: el servidor ha hecho explotar una bomba aqui (los bloques llegan aparte): temblor y particulas */
+	public function netBomb( x : Float, y : Float, z : Float ) {
+		shake = 1;
+		Snd.play("destroyBlock", 0.6);
+	}
+
+	/** multijugador: dano de una bomba calculado por el servidor, con su fundido como en explodeBomb */
+	public function netHit( dmg : Float ) {
+		if( dmg <= 0 ) return;
+		var prev = fadeFX != null && fadeFX == bombFade ? fadeFX : null;
+		var dying = fadeFX != null && fadeFX.lock;
+		hit(dmg);
+		var pow = Math.max(0, Math.min(1, (dmg - 20) / 130));
+		if( !dying ) bombFlash(pow, prev);
+	}
+
 	function explodeBomb( x : Int, y : Int, z : Int ) {
 		var ray = 8;
 		var hx = wrapDist(px - x), hy = wrapDist(py - y), hz = pz - z;
@@ -1459,7 +1597,7 @@ class GameView {
 	 * en coordenadas de la celda, cruza alguna cara del modelo en un pixel no transparente de su textura.
 	 */
 	static function modelHit( b : Block, ax : Float, ay : Float, az : Float, bx : Float, by : Float, bz : Float ) : Bool {
-		var md = Models.get(b.model != null ? b.model : MCross);
+		var md = Models.of(b);
 		var v = md.v, pix = Atlas.pixels;
 		var n = Std.int(v.length / 24);
 		for( q in 0...n ) {
@@ -1513,7 +1651,7 @@ class GameView {
 		if( b.type != BTModel && b.type != BTModel2Side && b.type != BTSprite ) return null;
 		var c = pickBoxes.get(b.index);
 		if( c != null ) return c;
-		var v = Models.get(b.model != null ? b.model : MCross).v;
+		var v = Models.of(b).v;
 		var x1 = 1., y1 = 1., z1 = 1., x2 = 0., y2 = 0., z2 = 0.;
 		var i = 0;
 		while( i < v.length ) {
@@ -1568,7 +1706,9 @@ class GameView {
 			// cascada y la arena movediza si lo paran: se pone contra ellas (Render.pick del original)
 			// la celda de la camara no cuenta: el original empieza el rayo en su borde (Render.pick), asi con la cabeza dentro de
 			// una fuente de cascada o de arena movediza se apunta a lo de delante
-			var b = ix == sx && iy == sy && iz == sz ? null : world.block(ix, iy, iz);
+			// cambio del port: salvo un tableau (BFOnWall), una placa contra la pared: se puede estar en su celda, pegado a el, y apuntarlo
+			var b = world.block(ix, iy, iz);
+			if( ix == sx && iy == sy && iz == sz && (b == null || b.wall < 0) ) b = null;
 			// con un bloque en la mano tampoco lo paran las hierbas ni las estalactitas: se pisan al poner (Block.canOverride), como
 			// en el original, donde BFDetail les quita PCanPick (aqui se apuntan para romperlas, PortRules)
 			if( b != null && hand != null && b.canOverride() ) b = null;
@@ -1616,10 +1756,10 @@ class GameView {
 	}
 
 	function updateAction( tmod : Float, controls : Bool, pad : hxd.Pad ) {
-		var K = hxd.Key;
 		var held = false, forceEmpty = false;
 		if( controls && actionKeys ) {
-			held = K.isDown(K.MOUSE_LEFT) || K.isDown(K.E) || K.isDown(K.SHIFT);
+			// teclas de Keys (por defecto clic / E / Mayus, clic central = copiar, 1-0 casillas, Tab excavador, R / Supr tirar)
+			held = Keys.down("action");
 			if( pad != null ) {
 				var rt = pad.isDown(pad.config.RT), lt = pad.isDown(pad.config.LT);
 				if( rt || lt ) held = true;
@@ -1631,18 +1771,18 @@ class GameView {
 				if( pad.isPressed(pad.config.Y) && inv.getCurrentBlock() != null ) dropCurrent();
 				if( pad.isPressed(pad.config.analogClick) ) copyTarget();
 			}
-			if( hxd.Key.isPressed(hxd.Key.MOUSE_MIDDLE) ) copyTarget();
+			if( Keys.pressed("copy") ) copyTarget();
 			// casillas: TAB = excavador, 1..9 y 0 = los 10 bloques. El original (Game.checkKeys) ponia el excavador tambien en 1
 			// y dejaba la ultima casilla sin atajo; aqui se corrige a peticion de los jugadores
 			for( i in 1...11 )
-				if( K.isPressed(K.NUMBER_0 + (i % 10)) && inv.inv.t.length >= i ) inv.select(i);
-			if( K.isPressed(K.TAB) ) inv.select(0);
+				if( Keys.pressed(Keys.SLOT_IDS[i - 1]) && inv.inv.t.length >= i ) inv.select(i);
+			if( Keys.pressed("digger") ) inv.select(0);
 			// Mayus + K: volver a la nave (Game.checkKeys); sin nave (nave nodriza) gotoShip sale de ella al momento
-			if( K.isDown(K.SHIFT) && K.isPressed(K.K) ) {
+			if( Keys.pressed("ship") ) {
 				if( ship != null ) returnToShip(true);
 				else gotoShip(true);
 			}
-			if( (K.isPressed(K.R) || K.isPressed(K.DELETE)) && inv.getCurrentBlock() != null ) dropCurrent();
+			if( Keys.pressed("drop") && inv.getCurrentBlock() != null ) dropCurrent();
 		}
 		if( debugAction || (debugKey != null && actionKeys) ) {
 			held = true;
@@ -1682,7 +1822,8 @@ class GameView {
 		}
 		if( s != null ) {
 			var cx = hand == null ? s.x : s.tx, cy = hand == null ? s.y : s.ty, cz = hand == null ? s.z : s.tz;
-			if( cx == Std.int(px) && cy == Std.int(py) && (cz == Std.int(pz) || cz == Std.int(pz) + 1) ) s = null;
+			// cambio del port: un tableau en la celda del jugador se puede romper (no se pone nada en ella)
+			if( cx == Std.int(px) && cy == Std.int(py) && (cz == Std.int(pz) || cz == Std.int(pz) + 1) && (hand != null || s.b.wall < 0) ) s = null;
 		}
 		if( s != null && prev != null && prev.x == s.x && prev.y == s.y && prev.z == s.z && prev.b == s.b ) {
 			// misma celda: se conserva lo acumulado
@@ -1697,7 +1838,7 @@ class GameView {
 		select = s;
 		synthAimed = hand == null && isSynth(s);
 		// cambio del port: el clic derecho (no hacia nada) tambien usa el ordenador del sintetizador, con o sin bloque en la mano
-		if( synthAimed && controls && actionKeys && K.isPressed(K.MOUSE_RIGHT) ) activateBlock(s.x, s.y, s.z, s.b);
+		if( synthAimed && controls && actionKeys && Keys.pressed("synth") ) activateBlock(s.x, s.y, s.z, s.b);
 
 		if( !laserActive ) {
 			if( activatePending != null ) {
@@ -1747,7 +1888,8 @@ class GameView {
 					break;
 				}
 		if( creative ) laserCharge = null;
-		if( req > 0 && (!matter.hasProp(PRequireCharge) || laserCharge != null || creative || inCraft) ) {
+		var noCharge = req > 0 && matter.hasProp(PRequireCharge) && laserCharge == null && !creative && !inCraft;
+		if( req > 0 && !noCharge ) {
 			canBreak = true;
 			if( actionPause > 0 ) {
 				if( s.power == 0 ) s.power = 1e-8;
@@ -1757,6 +1899,8 @@ class GameView {
 		} else
 			canBreak = false;
 		if( debugDeny || (info.mothership == true && !editMother) ) canBreak = false;
+		// sin la carga que pide (cambio del port: el original no decia nada): GalaxyApp lo avisa (KubNotify.missingCharge)
+		else if( noCharge && matter.quickBreaks != null ) lackCharge = matter.quickBreaks[0].c;
 		// en tu nave, ordenador y puertas solo se usan, no se rompen (ShipLogic.checkSelect: allowBreak = false)
 		if( s.z >= World.SHIP_Z && !inCraft && (b.activable != null || b.toggle != null) ) canBreak = false; // la nave nodriza no se rompe
 		// tutorial: en el hangar no se rompe nada; lo que se activa (puertas, ordenador) se sigue usando, sin aviso
@@ -1772,7 +1916,10 @@ class GameView {
 		}
 		actionPause = 1;
 		if( s.power < 1 || !canBreak ) return;
-		if( laserCharge != null ) inv.useCharge(laserCharge);
+		if( laserCharge != null ) {
+			inv.useCharge(laserCharge);
+			if( net != null ) net.sentCharge(laserCharge);
+		}
 		activatePending = null;
 		breakBlock(s.x, s.y, s.z, b);
 		Kubindex.broke(info, b);
@@ -1823,18 +1970,20 @@ class GameView {
 	 */
 	public function canPlace( s : Select, hand : Block ) : Bool {
 		var x = s.tx, y = s.ty, z = s.tz;
+		// un tableau solo va contra una pared apuntada, que lo sujeta (y en la nave, contra lo que sea)
+		var put = placedBlock(s, hand);
+		if( put == null ) return false;
 		// en la nave solo se coloca dentro de las zonas de sintetizador (el casco se edita en el hangar) y alli no hace falta apoyo
 		var inShip = z >= World.SHIP_Z;
 		if( inShip && !ship.inCraft(x, y, z) ) return false;
 		// fuera del rango del planeta World.setBlock no pone nada: tampoco se gasta el bloque
 		if( !inShip && (z < 1 || z >= World.HEIGHT - 1) ) return false;
-		// mundo con 255 bloques distintos ya puestos: el bloque no se guardaria (World.hasRoom)
-		if( !world.hasRoom(hand.getFlip(yaw), z) ) return false;
 		// celda ocupada (p. ej. por lo que se acaba de poner): no se gasta nada
 		var here = world.block(x, y, z);
 		if( here != null && !overridable(here) ) return false;
 		if( inShip ) return true; // select.ignoreMagnets del original
 		var tmp : Block;
+		if( put.wall >= 0 ) return (tmp = world.block(s.x, s.y, s.z)) != null && tmp.hasMagnet(LeftRight);
 		if( hand.canPut(Up) && (tmp = world.block(x, y, z + 1)) != null && tmp.hasMagnet(Down) ) return true;
 		if( hand.canPut(Down) && (tmp = world.block(x, y, z - 1)) != null && tmp.hasMagnet(Up) ) return true;
 		if( hand.canPut(LeftRight) ) {
@@ -1846,12 +1995,25 @@ class GameView {
 		return false;
 	}
 
+	/**
+	 * El bloque que pondria place: el de la mano, girado segun hacia donde mira el jugador si tiene BFFlip. Un tableau (BFOnWall)
+	 * cuelga de la cara apuntada: el de sus 4 bloques que tiene la pared en ese lado, o null si no es la de una pared (el suelo,
+	 * un techo o el rayo que llega en diagonal por una esquina).
+	 */
+	public function placedBlock( s : Select, hand : Block ) : Block {
+		if( hand.wall < 0 ) return hand.getFlip(yaw);
+		if( s.z != s.tz ) return null;
+		return hand.onWall(Std.int(wrapDist(s.x - s.tx)), Std.int(wrapDist(s.y - s.ty)));
+	}
+
 	/** Game.checkAction con un bloque en la mano: se coloca si algo lo sujeta (anclas e imanes). */
 	function place( hand : Block ) {
 		var s = select;
 		// hangar: ni liquidos ni la bomba exotica a bordo (cambio del port); no se pone y se dice por que
 		var refused = hangar != null ? Hangar.forbidden(hand) : null;
 		var why = refused != null ? Lang.t("hangar." + refused) : (hangar != null && hangarRule != null ? hangarRule(true, s.tx, s.ty, s.tz, hand) : null);
+		// tutorial: en la zona del sintetizador, solo la bauxita y el aluminio (Tutorial.synthRule)
+		if( why == null && hangar == null && s.tz >= World.SHIP_Z && ship.inCraft(s.tx, s.ty, s.tz) ) why = Tutorial.synthRule(info, hand);
 		if( why != null ) {
 			if( !placedHold ) {
 				hangarRefused = why;
@@ -1859,8 +2021,8 @@ class GameView {
 			}
 			return;
 		}
-		var put = hand.getFlip(yaw);
 		if( !canPlace(s, hand) || actionPause > 0 ) return;
+		var put = placedBlock(s, hand);
 		var x = s.tx, y = s.ty, z = s.tz;
 		var inShip = z >= World.SHIP_Z;
 		var here = world.block(x, y, z);
@@ -1880,8 +2042,14 @@ class GameView {
 		// el agua puesta por el jugador se extiende como la cascada (si no, inundaria como el mar)
 		if( put.type == BTWater && !inShip && hangar == null ) world.setWater(x, y, z, put, WorldProcess.PLACED);
 		else world.setBlock(x, y, z, put);
-		if( !inShip ) process.onSet(x, y, z, here, put);
-		if( inShip ) ship.craft(x, y, z, put, this);
+		if( !inShip ) {
+			if( net != null ) net.sentPlace(x, y, z, put, put.type == BTWater && hangar == null ? WorldProcess.PLACED : 0, @:privateAccess inv.blockIndex);
+			else process.onSet(x, y, z, here, put);
+		}
+		if( inShip ) {
+			ship.craft(x, y, z, put, this);
+			if( net != null ) net.sentShipSet(x, y, z, null, put, @:privateAccess inv.blockIndex);
+		}
 		Kubindex.placed(info, put);
 		select = null;
 	}
@@ -1934,9 +2102,10 @@ class GameView {
 
 	public function breakBlock( x : Int, y : Int, z : Int, b : Block, isProcess = false ) {
 		shake += 0.05 * Math.random(); // temblor (Game.blockBreak)
-		if( b.hasProp(PContainer) ) breakChest(x, y, z);
+		if( b.hasProp(PContainer) && net == null ) breakChest(x, y, z);
 		var get = b.getDrop();
-		if( get != null && !creative ) {
+		// multijugador: lo que se suelta lo crea el servidor (en el planeta, ServerItems; en la nave, ServerShip)
+		if( get != null && !creative && net == null ) {
 			// cambio del port: lo que suelta con probabilidad (BFDropChance: BCoal, BBlackIce, hierbas...) se recupera
 			// siempre en una zona de sintetizador y en el hangar; si no, puesto alli para fabricar o rehacer la nave, se perdia al quitarlo
 			var chance = inCraftZone(x, y, z) ? 100 : b.getMain().getDropChance();
@@ -1949,7 +2118,10 @@ class GameView {
 		}
 		world.setBlock(x, y, z, null);
 		parts.doBreak(x, y, z, b);
-		if( z >= World.SHIP_Z ) ship.craft(x, y, z, null, this);
+		if( z >= World.SHIP_Z ) {
+			ship.craft(x, y, z, null, this);
+			if( net != null ) net.sentShipSet(x, y, z, b, null, 0);
+		} else if( net != null ) { if( !isProcess ) net.sentBreak(x, y, z, b); }
 		else process.onSet(x, y, z, b, null);
 	}
 
@@ -1960,12 +2132,25 @@ class GameView {
 	}
 
 	/** Game.dropCurrent: tira la pila de la casilla elegida delante del jugador. */
+	/** multijugador, en la nodriza: no se tira nada (no hay servidor que lleve lo tirado: se perderia) */
+	public var noThrow = false;
+
 	function dropCurrent() {
+		if( noThrow ) return;
 		var index = inv.blockIndex - 1;
 		var s = inv.drop(index);
-		if( s == null || creative ) return; // en creativo tirar solo vacia la casilla
-		var d = drops.add(px + Math.cos(yaw), py + Math.sin(yaw), pz + 1.2, Block.all[s.k]);
-		d.n = s.n;
+		// multijugador: en el planeta lo tira el servidor (el suelto es suyo)
+		// multijugador: lo tira el servidor (en el planeta o en la nave)
+		if( s != null && net != null ) net.sentThrow(index + 1, s.n);
+		else if( s != null ) throwStack(Block.all[s.k], s.n);
+	}
+
+	/** tira n bloques b delante del jugador, como R (dropCurrent; tambien la pantalla de inventario): un solo suelto con todos,
+	    que se recoge entero. En creativo no cae nada: tirar solo vacia la casilla */
+	public function throwStack( b : Block, n : Int ) {
+		if( creative || n <= 0 ) return;
+		var d = drops.add(px + Math.cos(yaw), py + Math.sin(yaw), pz + 1.2, b);
+		d.n = n;
 		d.vx = Math.cos(yaw) * 0.3;
 		d.vy = Math.sin(yaw) * 0.3;
 		d.active = false;
@@ -1975,7 +2160,8 @@ class GameView {
 	function copyTarget() {
 		if( !creative ) return;
 		var s = pick(null);
-		if( s != null && s.b != null ) setSlot(s.b);
+		// un tableau se copia como el de la paleta (el primero de sus 4 bloques), que se cuelga de la pared que se apunte
+		if( s != null && s.b != null ) setSlot(s.b.wall > 0 ? s.b.getMain() : s.b);
 	}
 
 	/** Paleta creativa: pone el bloque en la casilla elegida (o en la primera libre si esta el excavador). */
@@ -1991,12 +2177,14 @@ class GameView {
 			inv.blockIndex = idx + 1;
 		}
 		inv.inv.t[idx] = { k : b.index, n : inv.maxBlock(b) };
+		// multijugador: la paleta la aplica el servidor (que mira que este en creativo)
+		if( net != null ) net.sentCreative(idx + 1, b, inv.maxBlock(b));
 		inv.display();
 	}
 
-	/** rueda del raton */
+	/** rueda del raton: da la vuelta en los extremos si la opcion Rueda del raton en bucle (Settings.wheelWrap) esta activada */
 	public function scrollInventory( delta : Int ) {
-		inv.scroll(delta);
+		inv.scroll(delta, Settings.wheelWrap);
 	}
 
 	// ---------------------------------------------------------------- camara

@@ -2,6 +2,142 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## v0.9 — pre-release
+- PRs 130-139 acoplados: contrato especial el primero en Contratos (130), Contenedor ESCorp con arrastrar y soltar (131),
+  almacén de la nave en el ordenador de a bordo (132), al morir lo que llevas queda en un contenedor y opción para quitarlo (133),
+  los clics fuera de una ventana ya no llegan al menú de debajo (134), cristales verdes de bonus y demás bloques de carga en la
+  paleta creativa (135, 136), rueda del ratón en bucle (137), la pila tirada de bloques de carga se puede recoger (138) y menú
+  "Contactar con la ESCorp" con Comerciar, contratos y mejoras (139). Todo añadido o cambio del port.
+- Ordenador de a bordo (cambio del port, al acoplar 132 y 139): Almacén queda como botón propio y Comerciar y Contratos pasan al
+  submenú de la ESCorp.
+- **Nuevo generador de planetas** (cambio del port, PR 143 y 146): sigue los pasos del original, pero cada paso, cada estructura
+  y cada bonus tienen su propio azar, y las estructuras se ponen por regiones en un orden fijo; así, una estructura nueva solo
+  cambiará el planeta dentro de su caja, y cada planeta recuerda la versión del generador con la que se visitó por primera vez.
+  Los planetas ya no son idénticos a los de la versión Flash. **Las partidas de antes cambian**: sus planetas se generan con el
+  generador nuevo, lo construido sigue ahí, pero el terreno de alrededor puede cambiar (agujeros, bloques que flotan o quedan
+  enterrados); la lista las marca como "Partida antigua" y avisa al abrirlas.
+- **Partidas en archivos `.g55`** (cambio del port, PR 146): cada partida es un solo archivo en `saves`, que guarda los bloques
+  por su nombre. Una partida con bloques de una versión más nueva ya no pierde nada: se ven como kubes misteriosos y se guardan
+  tal cual (antes se borraban, con una copia). Ocupa mucho menos (una partida de prueba pasa de 791 KB a 1,9 KB) y se guarda y
+  se lee más deprisa; el archivo anterior solo se sustituye cuando el nuevo está entero (si el juego se cierra a mitad, queda el
+  anterior). Las partidas `.json` de antes se convierten al jugarlas, y el `.json` y su miniatura pasan a `saves/backups`. Una
+  partida que no se puede leer sale como "Partida ilegible".
+- **Cuadros** (añadido del port, PR 141): los 16 cuadros de CroqueMotel (Motion Twin) están en la paleta creativa. Un cuadro es
+  una placa fina pegada a la pared que se apunta, girada hacia el jugador; en el suelo o en el techo no se pone. Deja pasar la
+  luz, el agua y la lava lo rompen y, si se quita su pared, cae con su bloque. El editor de kubes tiene una forma nueva,
+  "Cuadro (en la pared)", con tres modelos.
+- **Kubes del editor en tu mundo** (añadido del port, PR 129): en una partida creativa, los `.kube` de la carpeta `kubes` (hechos
+  en el editor de kubes o dejados ahí) salen al final de la paleta, con una esquina cian, y se ponen y se rompen como los demás
+  bloques, con todas las formas del editor (también la puerta que se abre y el plano que gira). Hasta 128 por partida. Un kube
+  retocado se ve nuevo al volver a cargar la partida; uno borrado pasa a kube misterioso y vuelve con su archivo. Las partidas de aventura no los cargan y en el
+  hangar no se pueden poner.
+- **Versión de cada partida** (añadido del port, PR 127): la lista de partidas muestra, abajo a la derecha, la versión del juego
+  que creó la partida y la que la guardó por última vez ("Versión 0.8.1", o "Versiones 0.7 a 0.8.1" si no coinciden; "?" para
+  una partida de antes de este cambio).
+- Andando se suben las planchas sin saltar (cambio del port, PR 140; en el original paraban como un muro): Plancha de madera,
+  Plancha blindada, y una plancha y después un bloque entero en dos pasos. La vista sube con suavidad. Un bloque entero, o una
+  plancha bajo un techo sin sitio para la cabeza, siguen parando.
+- Carga más rápida (PR 146): el planeta se genera 2-3 veces más deprisa y en segundo plano, sin parones de 0,5-1 s en la pantalla
+  de carga, y la malla de un planeta grande se sube en 0,2-0,8 s (antes 2,6-3,7 s).
+- El mapa de estrellas se abre sin congelar el juego (PR 144): al despegar se paraba unos 9 s; ahora la pantalla de carga sigue
+  respondiendo y su barra avanza mientras se dibujan los fondos (8-12 s en el PC de pruebas). Entrar en un sistema tarda
+  también menos (unos 130 ms, antes 200).
+- Con una Intel HD 4600 en Linux (Mesa), las cascadas y las gemas ya no son invisibles ni se ven negras, el vidrio ya no
+  muestra solo su marco y el menú principal se dibuja (PR 126 y 128, comprobado en el PC afectado). Las estrellas tienen el
+  mismo aspecto.
+- El agua ácida vista de refilón ya no se cubre de rayas finas, como de lluvia (PR 148): de refilón, el agua toma el color medio
+  de su textura; vista desde arriba no cambia. Las demás aguas pierden también su moaré a lo lejos.
+- Editor de kubes: el `datagen.txt` ya no da precio a las variantes de una puerta (girada, abierta) ni de un plano (girado),
+  que así no salen en la paleta creativa, como las puertas y ventanas del juego (PR 142).
+- En francés, la opción "Equipo al suelo" se llama « Dépôt de l'équipement à la mort » (antes « Équipement à terre », PR 147).
+- Banco de pruebas (PR 145 y 146): `port/dev/runall.ps1` pasa todos los guiones y compara dos compilaciones; los guiones buscan
+  lo generado (`find`) en vez de usar coordenadas fijas; las pruebas ya no se paran en su primer fotograma.
+
+## v0.8.1 — pre-release
+- **Pantalla de inventario** (añadido del port, PR 125): en aventura, I (o R3) abre un panel con las 10 casillas de la barra:
+  arrastrar, partir montones, tirar fuera del panel, como en Minecraft. En creativo, I sigue abriendo la paleta.
+- **De creativo a supervivencia** (añadido del port, PR 121 y 125): una partida creada en creativo puede pasar a supervivencia y
+  volver (botón en la paleta y en la pantalla de inventario). El modo se guarda con la partida.
+- **Buscar en la paleta** (añadido del port, PR 122): un campo en la paleta creativa filtra bloques y kubes por su nombre.
+- **Contrato especial de la ESCorp** (añadido del port, PR 123): una vez por partida, 16 de Tierra roja dan un Contenedor ESCorp,
+  sin límite de tiempo. Nuevo paso "Contratos" en el tutorial.
+- El visor del casco sigue el tamaño de la ventana al cambiarla con el ordenador de a bordo, la pausa o un panel abiertos (cambio
+  del port, PR 120); antes quedaban bandas oscuras o los bordes fuera de la pantalla.
+- La paleta creativa ya no muestra dos veces el Agua ácida (PR 124).
+- **Teclas a tu gusto** (añadido del port, PR 118): Opciones > Controles > Personalizar teclas. 28 acciones, hasta 4 teclas o botones
+  del ratón cada una; avisa en rojo si una tecla ya la usa otra acción y hay un botón para volver a las de siempre. Se guardan en
+  `settings.json`. Las ayudas en pantalla y el tutorial muestran las teclas elegidas. Esc, las teclas de los menús, la rueda y el
+  mando no cambian. La opción "A/D y flechas" pasa a llamarse "Izquierda y derecha".
+- **Marco de selección** (añadido del port, PR 117): nueva opción en Opciones > Interfaz para quitar el marco naranja del bloque
+  apuntado. Viene activada.
+- **Más de 255 bloques distintos por mundo** (cambio del port, PR 116): cada celda guarda su bloque en dos bytes. Ya no hay bloques
+  que no se puedan poner por falta de sitio. Las partidas guardadas no cambian. El mundo ocupa el doble de memoria.
+- El kube invisible se ve translúcido cuando está tirado en el suelo y en la mano (cambio del port, PR 119); antes no se veía.
+- Repositorio: se borró la rama `port-hashlink`, que era una copia de `main`. Todo el trabajo está en `main`.
+
+## v0.8 — pre-release
+- **Kubes de Kube** (añadido del port): los 77 bloques de Kube (Motion Twin, 2010) están en el juego como bloques enteros,
+  con sus texturas, su luz y su transparencia, en la paleta creativa y en la Base de datos ESCorp. El agua y la lava de Kube
+  corren por sus caras como en Kube, pero no fluyen ni hacen daño. Cada uno está también en `port/kubes` como archivo `.kube`
+  para retocarlo en el editor de kubes. Un mundo solo guarda 255 bloques distintos: si uno nuevo ya no cabe, no se pone y no
+  se gasta.
+- **Anomalía invisible** (añadido del port): en 1 de cada 8 planetas normales, más o menos (no en los cometas), flota a 10-20
+  bloques del suelo un cubo de 4x4x4: 8 Cofres de Kube rodeados de kubes Invisibles. El kube invisible se ve como el cielo de
+  detrás y tapa lo que hay más lejos; a través del vidrio blindado oscuro o del hielo negro se ve como bajo una luz negra, con
+  los bordes en azul. La Base de datos ESCorp la cuenta como anomalía (se identifica al pasar por debajo o al lado). Los
+  planetas sin ella no cambian y las partidas siguen valiendo.
+- **Gemas de Kube** (añadido del port): en el sintetizador, un Cofre de Kube da al azar un Rubí, un Zafiro, una Esmeralda o
+  una Amatista (antes de fabricarlo se ve un Kube misterioso); 8 gemas iguales dan una Sombra y 8 Sombras un Teletransporte,
+  que de momento no hace nada. En la Base de datos, la receta del cofre muestra sus cuatro resultados posibles.
+- **Vidrio blindado de color** (añadido del port): un vidrio blindado con una gema encima da un vidrio blindado rojo (Rubí),
+  azul (Zafiro), verde (Esmeralda) o rosa (Amatista). Son bloques de la nave, más claros que el vidrio blindado oscuro y, a
+  diferencia de él, no dejan ver los kubes invisibles. El robot comerciante los compra a 100 y no los vende.
+- **Tienda de la nave nodriza** (añadido del port): el puesto del robot comerciante está en el centro del hangar, entre las
+  dos filas de bahías (antes en la proa, lejos de todo). Es un puesto abierto, hecho con bloques de la nave, con una pared
+  que no se ve sobre el mostrador. Ya no hay ordenador: el robot se gira hacia ti y, al hacer clic en él, se habla con él en
+  una ventana como la de los contratos: 1. comerciar (la tienda), 2. charlar (consejos, rumores y chistes de robot) y
+  3. adiós, con las teclas de número, el ratón, las flechas o el mando. Durante el tutorial no se puede comerciar.
+- Una partida guardada dentro de la nave nodriza se carga dentro, donde estabas (antes se abría en el mapa de estrellas).
+- Sintetizador (cambio del port): las recetas dan más. La madera (también la de Grozarb y la escarchada) da 4 tablas (antes
+  2), 4 tablas en cuadrado dan 4 planchas de madera (antes 1) y muchas recetas dan 2 en vez de 1 (vallas de madera, pilares,
+  zócalo de piedra, cortina de hojas, vidrio, puerta y plancha blindadas, conglomerados...).
+- Recetas y bloques nuevos (añadido del port): **pilar de piedra** (2 piedras una sobre otra) y **zócalos de volcanita, de
+  roca ácida y de escarcha** (8 de su roca en dos capas de 2x2), 2 por receta. La **cantina de ESCorp** se fabrica con 8 de
+  hierro en dos capas de 2x2 y sale en la paleta creativa (antes no había manera de tenerla). El tronco de lunimosa se hace con
+  2 lunimosas muertas (antes 2 rocas lunares), que siempre se sueltan, así que la receta sirve en aventura.
+- Robot comerciante (cambio del port): lo que se fabrica con lo que él vende ya no se revende por más de lo que cuestan sus
+  ingredientes (tablas a 3, vidrio a 4, lux y linterna a 12, blindaje y vidrio blindado a 100...). Las cargas de citronox
+  cuestan 20 (antes 120), el motor espacial 1000 y la cantina de ESCorp 400. Ya no vende, aunque los sigue comprando, los
+  muros y zócalos, los pilares, las piezas de la nave (queda el aluminio para fabricarlas), los minerales y cristales que se
+  encuentran, lo que solo dan las anomalías y otras cosas raras. Ni vende ni compra los kubes, los bloques especiales (salvo
+  el motor espacial y la cantina), el citronox seco ni los fragmentos de cristal azul.
+- **Contratos de la ESCorp por partes**: con solo parte de los bloques, "Dar" entrega los que lleves y el contrato queda en
+  curso arriba del panel. Ya no caduca con el tablero, se completa cuando quieras y la recompensa entera se cobra con el
+  último bloque. Ocupa una línea del tablero (con 3 en curso, está lleno). "Abandonar" pide confirmación: los bloques dados
+  se pierden y no se cobra nada. Se guarda con la partida.
+- Base de datos ESCorp: los kubes siguen un orden más cercano al original: primero los de los planetas, planeta por planeta
+  (en el orden de la pestaña Espacio), luego los de los cometas y los de las anomalías, los fabricados en el orden de sus
+  recetas, los especiales y los kubes. Las recetas van por material: madera, piedra, nave, vidrio y luz, conglomerados,
+  hierro y aparatos, cargas.
+- Editor de kubes: un botón junto a "Girar solo" muestra un bloque de 2x2x2 o de 3x3x3 del mismo kube, para ver cómo se
+  juntan sus caras. La rueda del ratón acerca hacia el punto bajo el cursor (de 50 % a 600 %), y + y - del teclado numérico,
+  hacia el centro. Al arrastrar la vista, el kube gira hacia donde va el ratón (antes al revés). El vidrio y el hielo se ven
+  como en el mundo, solo con las caras de delante (antes las de detrás salían por encima).
+- Los iconos de los bloques se ven lisos en toda la interfaz (barra del inventario, paleta, cofre, tienda, contratos, editor
+  de kubes), como en la Base de datos: ya no saltan píxeles ni salen dentados en una ventana pequeña, y los translúcidos
+  (vidrio, hielo, agua, arena movediza, pantalla blindada, campo de fuerza...) ya no se ven huecos ni oscuros.
+- El fundido de pantalla de la bomba exótica ya no parpadea (cambio del port, por las personas con epilepsia): en una cadena
+  o con varias bombas seguidas se alarga en vez de volver a empezar y sube otra vez como mucho una vez por segundo (antes,
+  hasta 15-17 destellos rojos y blancos por segundo). El daño y el temblor no cambian.
+- Cargar una partida guardada por una versión más nueva, con bloques que esta no conoce, ya no cierra el juego: pregunta
+  antes y, si se acepta, guarda una copia en `saves/backups`, borra esos bloques y dice lo que ha borrado y dónde está la copia.
+- La versión DirectX ya no se cierra al abrir la Base de datos ESCorp con algo nuevo dentro.
+- Al llegar a un planeta, la escena ya no debería parpadear unos segundos en algunos PC (por confirmar en uno donde pasaba):
+  los iconos de reserva de la Base de datos se terminan en la pantalla de carga. El juego escribe `gpu.txt` (tarjeta gráfica
+  y controlador) en su carpeta de datos, para adjuntarlo al avisar de un fallo de dibujo.
+- En francés, la cantina se llama "Conteneur ESCorp" (antes "EScorp").
+- `jugar.bat` y `jugar_dx.bat` (al compilar) encuentran también `hl.exe` directamente en `tools-portable\hashlink`.
+
 ## v0.7 — pre-release
 - **Base de datos ESCorp** (añadido del port), en el ordenador de a bordo, con tres pestañas: el **Kubindex**, con todos los
   kubes del juego por categorías (apuntar uno con el láser lo localiza; tenerlo en el inventario lo recupera, con las veces

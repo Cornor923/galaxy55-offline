@@ -1,15 +1,15 @@
-# Traspaso para seguir en otra PC (2026-10-16)
+# Traspaso para seguir en otra PC (2026-10-16, al día el 2026-11-12)
 
 Léelo entero antes de tocar nada. El usuario es **Pvie** (Pv1E en GitHub): habla español,
 quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Twin, sin inventar**. Lo que añadimos nosotros se marca como
 "cambio del port" o "añadido del port".
 
 ## Dónde está todo
-- Repo: https://github.com/Pv1E/galaxy55-offline. Las ramas `main` y `port-hashlink` van iguales: se sube con
-  `git push origin HEAD:main HEAD:port-hashlink`. Licencia CC BY-NC-SA 4.0.
+- Repo: https://github.com/Pv1E/galaxy55-offline. Se trabaja solo en la rama `main` y se sube con `git push origin main`
+  (la rama `port-hashlink`, copia de `main`, se borró el 2026-11-12). Licencia CC BY-NC-SA 4.0.
 - Resumen técnico largo del port: `port/RESUMEN.md`.
 - La versión Flash (con `client*.hxml`, `build.*`, `release/`, `libs/heaps`, `libs/format_old`) vive solo en la rama `flash`:
-  se quitaron de `main`/`port-hashlink` el 2026-10-26 porque el port no los usa. `src/`, `libs/libs-haxe*`, `stubs/`, `tools/` y `data/` se quedan.
+  se quitaron de `main` el 2026-10-26 porque el port no los usa. `src/`, `libs/libs-haxe*`, `stubs/`, `tools/` y `data/` se quedan.
 - Lista de lo que falta: `PENDIENTES.md` / `TODO.md`.
 - Errores conocidos: `ERRORES.md` / `BUGS.md`.
 - Novedades: `CHANGELOG.md`.
@@ -66,6 +66,14 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
    - Cielo de espacio con nebulosas, galaxias que giran, estrellas de colores y estrellas fugaces (`Sky.makeSpace`).
    - Se visita acoplándose al robot en el mapa; el atajo del ordenador "Visitar la nave nodriza (prueba)" solo sale con `editar_nodriza.bat`. Mayús+K vuelve. Nada se guarda dentro.
    - `Mothership.hx` conserva el diseño generado antiguo como reserva, si no hay `mothership.bin`.
+
+## PRs 130-139 acoplados (2026-11-16, cambio del port)
+- Acoplados en orden 130..139 sobre `main` (que ya tenia 126-129). Solo choco 139 en `GalaxyApp.hx` (buildComputer, openComputer):
+  se deja el boton Almacen de 132 y Comerciar/Contratos quedan solo en el submenu "Contactar con la ESCorp" de 139
+  (n = 6 botones + Pilotar + Nodriza, mismo alto bh). Se quitan `computerTrade` y `computerContracts`.
+- `Dev.hx`: 136 y 138 anadian cada uno la orden `charge`; se deja la de 136 (la de 138 quedaba inalcanzable, aviso WUnusedPattern).
+- Verificado: compilan SDL y DX; pasan los scripts `port/dev/` de los PRs (cantine_glisser, charge_pile_jetee, molette_boucle,
+  mort_conteneur, palette_bonus, palette_charges, partida_opciones, stockage_vaisseau, ventana_clics). 139 no trae script.
 
 ## PR de Cornor923 integrados (2026-10-21, cambio del port)
 Los PR 17-30 se fusionaron en local en `port-hashlink`, en orden (publicados en GitHub el 2026-10-22). Un solo conflicto: `Dev.hx` entre el PR 20
@@ -237,19 +245,110 @@ ayuda de teclas, FPS ni nombre del bloque (settings.json con "showHelp": false y
 Notas de la release v0.7 rehechas con el texto largo de Cornor (en inglés, comprobado contra el código: licencias, 1000
 créditos y 24 h, abandonar, categorías del Kubindex, cometas), formato limpio, cómo jugar, créditos y traducción ES/FR, en
 `port/RELEASE.md`; Pvie guarda el cambio en la página de la release.
-## Lo siguiente (orden acordado)
-1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
+## PR 96-112 de Cornor923 integrados (2026-11-06 a 2026-11-11)
+Cornor fusionó en GitHub los PR 96-98 (2026-11-06), 99-106 (2026-11-09), 111 y 112 (2026-11-11); Pvie fusionó a mano los
+107-110 (ramas `pr-107` a `pr-110`, 2026-11-10). El 97 lleva dentro el 96 (`fix/kube-blocks` fusionó
+`fix/smooth-block-icons`). El 101 movió sus funciones de orden junto a `placeOf` para no chocar con el 100 (`51141f8`) y el
+103 fusionó `main` en su rama antes de entrar (`cb88840`). Cada PR trae su guion en `port/dev/` (ver su entrada en RESUMEN).
+Añadidos del port: 97 (kubes de Kube), 100 (recetas y bloques nuevos), 105 (preguntar antes de cargar bloques desconocidos),
+106 (contratos por partes), 107 (anomalía invisible), 108 (gemas del Cofre de Kube) y 109 (vidrios blindados de color).
+Cambios del port respecto al original: 100 (rendimientos del sintetizador; tronco de lunimosa con lunimosas muertas, antes con
+roca lunar), 103 (precios y estante del robot) y 104 (fundido de la bomba, WCAG 2.3.1).
+A tener en cuenta:
+- Los bloques nuevos van al final de `BlockKind`: las partidas guardadas no cambian. Pero una partida que los use puede
+  cerrar la v0.7 al cargarla (bloque nulo en `InvBar.refresh`); desde el 105, el juego pregunta y quita lo que no conoce.
+- Con los kubes de Kube hay más de 255 tipos de bloque y la celda guarda su id local en un byte: `World.hasRoom` no deja
+  poner un bloque que ya no cabe en ese mundo (la nave tiene el suyo).
+- `texture.png`: filas 40 y 41 para los kubes de Kube y el Kube misterioso ([62,41] y [63,41]), fila 42 para los pilares y
+  zócalos nuevos. Los vidrios de color se pintan al cargar en [54,61] a [57,61]: no están en el archivo.
+- Las texturas de los kubes de Kube son de Motion Twin (CC BY-NC-SA 4.0), en `NOTICE`, como `recent.png`.
+- El Teletransporte de Kube (8 Sombras) todavía no hace nada.
+- 99: un recurso nuevo con `-resource` va en `game.hxml` y en `game_dx.hxml`.
+- 110: el parpadeo al llegar a un planeta no se ha comprobado en un PC donde pasaba; para los fallos de dibujo, pedir el
+  `gpu.txt` de la carpeta de datos.
+## v0.8 preparada (2026-11-11)
+Changelogs ES/EN/FR y ERRORES/BUGS pasan de "Sin publicar" a v0.8; enlaces de los README a `releases/tag/v0.8`; menú
+"v0.8 · port nativo"; notas en `port/RELEASE.md` (3 idiomas). En el README, las novedades de la v0.8 con 4 fotos nuevas en
+`docs/img` (kubes de Kube, anomalía invisible, tienda de la nave nodriza, contrato en curso), sacadas en inglés y sin la
+ayuda de teclas (`helptext 0`) con los guiones `kube_blocks`, `anomalia_invisible`, `tienda_centro` y `contrats_parciales`;
+la v0.7 queda en una línea con su enlace. Entra también el PR 113 (ESCorp en las frases del robot en francés), sin línea en
+el changelog porque esas frases son nuevas de esta versión.
+Zips con `package.ps1 -Version 0.8 -HashLink ..\tools-portable\hashlink\hashlink-1.16.0-win` en `port/out/release`
+(Windows 8,6 MB, Linux/macOS 3,2 MB). Compilados con la toolchain portable de Cornor923: su hldx 1.16 no tiene
+`dx.Window.NO_ACTIVATE`, así que `game_dx.hxml` se compiló con una copia de `dx/Window.hx` que lo define a 0 (fuera del
+repositorio). Probado el de Windows descomprimido en una carpeta vacía: OpenGL y DirectX crean partida, cargan el planeta y
+abren la base de datos (249 fichas). Falta: etiqueta `v0.8` y crear la release (pre-release) con los dos zips.
+## PR 116-119 de Cornor923 integrados (2026-11-12)
+Fusionados en local en `main`, en orden 116, 117, 119, 118. Un conflicto en `Settings.save` (117 añade `selectBox`, 118 añade
+`keys`): se dejaron los dos campos. Compilan SDL, DX y headless. #116 (celdas de dos bytes) no toca el generador, así que los
+hashes de referencia no cambian; una partida guardada con `main` anterior (bb31545+) carga con los mismos bloques y `lightcheck`
+0; `mas_de_255.txt` da 288 distintos, 33 con id > 255, misma suma antes y después de cargar, `lightcheck` 0. #117, #118 y #119
+no se probaron aquí más allá de compilar (Cornor describe sus guiones en cada PR). Changelogs ES/EN/FR y LEEME/README/LISEZMOI
+actualizados (la sección "Controles" de LEEME/README dice que se pueden cambiar). Después, revisión de los `.md`: en
+`RESUMEN.md` entran los PR 116-119 y sus órdenes de Dev, y las secciones antiguas "Siguiente paso acordado" y "Pendiente"
+quedan marcadas como plan de octubre ya hecho en gran parte; en este archivo, "Lo siguiente" marca lo hecho.
+
+## v0.8.1 preparada (2026-11-13)
+Traídos los PR 120-125 de Cornor923 (visor del casco al redimensionar, creativo/supervivencia, buscador de la paleta, contrato
+especial ESCorp, Agua ácida doble en la paleta, pantalla de inventario), que no traían changelog: se añadieron a los changelogs
+ES/EN/FR y a ERRORES/BUGS. Todo pasa de "Sin publicar" a v0.8.1; enlaces de los README a `releases/tag/v0.8.1` con un párrafo
+de novedades; menú "v0.8.1 · port nativo"; notas en `port/RELEASE.md` (3 idiomas) con todo lo nuevo desde la v0.8 (PR 116-125). Compilan SDL y DX. Zips con
+`package.ps1 -Version 0.8.1 -HashLink ..\tools-portable\hashlink\hashlink-1.16.0-win` en `port/out/release`.
+
+## PR 126-129 y 140-148 de Cornor923 integrados (2026-11-13 a 2026-11-22)
+Cornor fusionó en GitHub los PR 126, 127 y 128 (2026-11-13), 129 (2026-11-14), 140, 141, 143 y 142 (2026-11-17), 144
+(2026-11-19), 147 (2026-11-21), y 148, 146 y 145 (2026-11-22). El 142 fusionó `main` en su rama antes de entrar (`b32c5f2`:
+las variantes de puerta sin precio junto a la forma de cuadro del 141) y el 146 también (#144: solo chocó el guardado al
+cerrar la ventana, se dejaron los dos cambios). Los 130-139 entraron en medio (sección de arriba). Cada PR trae su guion en
+`port/dev/` (ver su entrada en RESUMEN).
+Añadidos del port: 127 (versión en las partidas), 129 (kubes del editor en las partidas creativas), 141 (cuadros y los 16 de
+CroqueMotel) y 143 (versión del generador por planeta). Cambios del port respecto al original: 140 (subir planchas andando) y
+146 (generador versión 1 y partidas `.g55`). Arreglos: 126 y 128 (Intel HD 4600 con Mesa), 142 (precio de las variantes del
+editor), 144 (mapa sin congelar), 147 (texto en francés) y 148 (rayas del agua ácida de refilón). 145 solo toca las pruebas.
+Al preparar la v0.9 se añadieron también a LEEME/README/LISEZMOI los PR 120-125 y 130-139 que faltaban (almacén, equipo al
+morir, "Contactar con la ESCorp", cantina con arrastrar y soltar, rueda en bucle, pantalla de inventario), y a ERRORES/BUGS los
+arreglos 134 y 138.
+A tener en cuenta:
+- 126 + 128: el jugador con la Intel HD 4600 (Ubuntu, Mesa 25.2, crocus) confirmó que con el 128 se ve bien. La causa era el
+  cube map de las estrellas, no las pasadas de profundidad del 126, que se quedan (no cambian la imagen en otros PC).
+- 146: las partidas de la v0.8.1 y anteriores cambian. Sus planetas eran de la versión 0 del generador, que ya no existe: se
+  generan con la 1, así que lo construido sigue en su sitio pero el terreno de alrededor cambia. La lista las marca como
+  "Partida antigua" y avisan al abrirlas. Al jugarlas se migran a `.g55` y el `.json` pasa a `saves/backups`; una versión
+  anterior no lee los `.g55`.
+- 146: los bloques y las cargas se guardan por nombre, así que los bloques nuevos al final de `BlockKind` (los cuadros del 141,
+  por ejemplo) ya no rompen las partidas; un bloque desconocido se ve como kube misterioso y se guarda con su nombre. Los kubes
+  del editor van como `editor:<archivo>#<variante>`; el campo `editorKubes` del 129 solo sirve para migrar los `.json`.
+- 146: `Generator.VERSION = 1`. Lo que cambie lo que genera el generador sube `VERSION` y solo se aplica desde esa versión
+  (`Structures`: `since` / `until`); las líneas de `port/headless/gen_ref.txt` de una versión publicada no cambian nunca
+  (hoy 21 casos de la versión 1, también el Shed de tamaño 3, que antes no acababa).
+- 146: `mothership.bin` pasa al formato `G55P` (nombres de bloque), así que el editor de la nave nodriza ya no corta los
+  bloques por encima de 255.
+- 145: las referencias de `runall.ps1` hechas antes del 145 tienen la línea del recuento de bloques en cada guion: hay que
+  hacerlas otra vez.
+- 144: la pantalla de carga del mapa dura lo que tardan los fondos (8-12 s en el PC de Cornor), pero el juego responde.
+
+## v0.9 preparada (2026-11-22)
+Changelogs ES/EN/FR y ERRORES/BUGS pasan de "Sin publicar" a v0.9; enlaces de los README a `releases/tag/v0.9`;
+`GalaxyApp.VERSION = "0.9"` (menú "v0.9 · port nativo" y versión de las partidas); notas en `port/RELEASE.md` (3 idiomas)
+con todo lo nuevo desde la v0.8.1 (PR 126-148). En el README, las novedades de la v0.9 con 4 fotos nuevas en `docs/img`
+(`cuadros`, `kubes-editor-mundo`, `almacen-nave`, `equipo-muerte`), sacadas en inglés, a 1280x720 y sin la ayuda de teclas
+(`setlang en`, `helptext 0`) con guiones cortos hechos a partir de `tableaux`, `kubes_editeur_monde`, `stockage_vaisseau` y
+`mort_conteneur`, con el 146 ya dentro; la v0.8.1, la v0.8 y la v0.7 quedan en una línea con su enlace. Compila SDL.
+Falta: los zips (`package.ps1 -Version 0.9`), probarlos, la etiqueta `v0.9` y crear la release (pre-release) con los dos zips.
+
+## Lo siguiente (orden acordado en octubre; la lista al día es `PENDIENTES.md`)
+1. (HECHO: bahías del hangar y tienda en el centro, v0.8) **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
    - marcas: **bloque de esmeralda** en el centro de cada bahía y **bloque de diamante** en el mostrador del robot.
    Cuando mande el zip nuevo: convertir, leer esas marcas en el conversor (guardarlas en el .bin), aparcar la nave del jugador
    en una bahía, poner el robot y abrir la tienda en el mostrador. Las otras bahías quedan para el multijugador.
-2. **El robot en el mapa:**
+2. (HECHO el 2026-10-19) **El robot en el mapa:**
    - uno por sector, que viaja **despacio** entre sistemas (es comerciante);
    - icono con la forma de la Hades, renderizado como `Ship.captureFrames`; seguirlo con clic; al alcanzarlo, salto a la nave nodriza;
    - la velocidad de nuestra nave sale de la nave real (`Explorer.shipBytes` ya existe, pero la fórmula del mapa es aproximada:
      usar la del hangar, `Hangar.check().speed`);
    - ojo: `Ship.captureFrames` todavía centra la cámara con `DEFAULT_SHIP`; debería usar la nave actual.
-3. Después: equipo del personaje (mejoras de jetpack, botas, etc.; lista de ejemplos en `PENDIENTES.md` 3b).
+3. Después (sin empezar; ahora en `IDEAS.md`): equipo del personaje (mejoras de jetpack, botas, etc.; lista de ejemplos en `PENDIENTES.md` 3b).
 
 ## Ideas de multijugador de Pvie (apuntadas en PENDIENTES 3c)
 - Naves de jugador de como máximo 17x17x14, que aparcan en bahías.

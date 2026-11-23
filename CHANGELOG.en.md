@@ -2,6 +2,139 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## v0.9 — pre-release
+- PRs 130-139 merged: special contract listed first (130), ESCorp Container drag and drop (131), ship storage on the board
+  computer (132), dying leaves your gear in a container plus an option to turn it off (133), clicks outside a dialog no longer
+  reach the menu below (134), green bonus crystals and other charge blocks in the creative palette (135, 136), mouse wheel wraps
+  around (137), a thrown stack of charge blocks can be picked up (138) and a "Contact ESCorp" menu with trade, contracts and
+  upgrades (139). All port additions or changes.
+- Board computer (port change, merging 132 and 139): Storage keeps its own button; Trade and Contracts move into the ESCorp submenu.
+- **New planet generator** (port change, PRs 143 and 146): it follows the original's steps, but each step, structure and bonus
+  has its own randomness, and structures are placed by region in a fixed order; so a new structure will only change the planet
+  inside its box, and each planet remembers the generator version it was first visited with. Planets are no longer identical
+  to the Flash version's. **Older saves change**: their planets are generated with the new generator, what you built is still
+  there, but the terrain around it may change (holes, blocks floating or buried); the list marks them as "Old save" and warns
+  when they are opened.
+- **Saves as `.g55` files** (port change, PR 146): each game is a single file in `saves` that stores blocks by name. A save with
+  blocks from a newer version no longer loses anything: they show as mystery kubes and are saved as they are (they used to be
+  deleted, with a copy). Much smaller (a test save goes from 791 KB to 1.9 KB) and faster to save and read; the previous file
+  is only replaced once the new one is complete (if the game closes halfway, the previous one stays). Older `.json` saves are
+  converted when played, and the `.json` and its thumbnail move to `saves/backups`. A save that can't be read is listed as
+  "Unreadable save".
+- **Paintings** (port addition, PR 141): the 16 paintings of CroqueMotel (Motion Twin) are in the creative palette. A painting is
+  a thin plate stuck to the wall you aim at, turned towards the player; it can't go on a floor or a ceiling. Light goes through
+  it, water and lava break it and, if its wall is removed, it falls with its block. The kube editor has a new shape,
+  "Painting (on a wall)", with three models.
+- **Kube editor kubes in your world** (port addition, PR 129): in a creative game, the `.kube` files of the `kubes` folder (made
+  in the kube editor or dropped there) come last in the palette, with a cyan corner, and are placed and broken like the other
+  blocks, with every shape of the editor (the door that opens and the plane that turns too). Up to 128 per game. A retouched
+  kube shows its new look the next time the game is loaded; a deleted one turns into a mystery kube and comes back with its file. Adventure games don't load them
+  and they can't be placed in the hangar.
+- **Version of each save** (port addition, PR 127): the saves list shows, at the bottom right, the game version that created the
+  save and the one that last saved it ("Version 0.8.1", or "Versions 0.7 to 0.8.1" when they differ; "?" for a save made before
+  this change).
+- Walking climbs plates without jumping (port change, PR 140; in the original they stopped you like a wall): Wood Plating,
+  Armour Plate, and a plate then a full block in two steps. The view rises smoothly. A full block, or a plate under a ceiling
+  with no room for the head, still stop you.
+- Faster loading (PR 146): the planet is generated 2-3 times faster and in the background, with no 0.5-1 s stops on the loading
+  screen, and the mesh of a large planet is uploaded in 0.2-0.8 s (2.6-3.7 s before).
+- The star map opens without freezing the game (PR 144): taking off stopped it for about 9 s; now the loading screen keeps
+  responding and its bar moves while the backgrounds are drawn (8-12 s on the test PC). Entering a system is faster too
+  (about 130 ms, 200 before).
+- With an Intel HD 4600 on Linux (Mesa), waterfalls and gems are no longer invisible or black, glass no longer shows only its
+  frame and the main menu is drawn (PRs 126 and 128, checked on the affected PC). The stars look the same.
+- Acid water seen at a grazing angle is no longer covered in thin streaks, like rain (PR 148): at a grazing angle the water takes
+  the mean colour of its texture; seen from above it is unchanged. The other waters also lose their far-away moiré.
+- Kube editor: `datagen.txt` no longer gives a price to the variants of a door (turned, open) or of a plane (turned), so they
+  stay out of the creative palette, like the game's own doors and windows (PR 142).
+- In French, the "Drop equipment" option is called « Dépôt de l'équipement à la mort » (« Équipement à terre » before, PR 147).
+- Test bench (PRs 145 and 146): `port/dev/runall.ps1` runs every script and compares two builds; scripts find what was generated
+  (`find`) instead of using fixed coordinates; test runs no longer stop on their first frame.
+
+## v0.8.1 — pre-release
+- **Inventory screen** (port addition, PR 125): in adventure, I (or R3) opens a panel with the 10 slots of the bar: drag, split
+  stacks, throw outside the panel, Minecraft style. In creative, I still opens the palette.
+- **Creative to survival** (port addition, PRs 121 and 125): a game created in creative can switch to survival and back (button in
+  the palette and in the inventory screen). The mode is saved with the game.
+- **Palette search** (port addition, PR 122): a field in the creative palette filters blocks and kubes by name.
+- **ESCorp special contract** (port addition, PR 123): once per game, 16 Red Earth give an ESCorp Container, no time limit. New
+  "Contracts" step in the tutorial.
+- The helmet visor follows window resizes with the on-board computer, the pause menu or a panel open (port change, PR 120); there
+  were dark bands or its edges went off-screen.
+- The creative palette no longer lists Acid Water twice (PR 124).
+- **Custom key bindings** (port addition, PR 118): Options > Controls > Customize keys. 28 actions, up to 4 keys or mouse buttons
+  each; a key another action already uses turns red, and a button puts back the default keys. Saved in `settings.json`. The
+  on-screen help and the tutorial show the chosen keys. Esc, menu keys, the mouse wheel and the gamepad do not change. The
+  "A/D and arrow keys" option is renamed "Left and right".
+- **Selection frame** (port addition, PR 117): new option in Options > Interface to hide the orange frame on the targeted block.
+  On by default.
+- **More than 255 different blocks per world** (port change, PR 116): each cell stores its block on two bytes. No more blocks
+  refused for lack of room. Saves do not change. The world uses twice the memory.
+- The invisible kube shows translucent when dropped on the ground and in the hand (port change, PR 119); it could not be seen.
+- Repository: the `port-hashlink` branch, a copy of `main`, was deleted. All work is on `main`.
+
+## v0.8 — pre-release
+- **The kubes of Kube** (port addition): its 77 blocks (Motion Twin, 2010) are in the game as full blocks, with their
+  textures, light and transparency, in the creative palette and the ESCorp database. Kube Water and Kube Lava run down their
+  sides as in Kube, but they do not flow nor hurt. Each one is also in `port/kubes` as a `.kube` file, to retouch it in the
+  kube editor. A world only holds 255 different blocks: if a new one no longer fits, it is not placed and not used up.
+- **Invisible anomaly** (port addition): on about 1 normal planet in 8 (not on comets), a 4x4x4 cube floats 10 to 20 blocks
+  above the ground: 8 Kube Chests wrapped in Invisible kubes. The invisible kube looks like the sky behind it and hides what
+  lies further; through Tinted Toughened Glass or Black Ice it shows as under a black light, with blue edges. The ESCorp
+  database counts it as an anomaly (identified when passing below or beside it). Planets without it are unchanged and saves
+  stay valid.
+- **Kube gems** (port addition): in the synthesizer, a Kube Chest gives a random Ruby, Sapphire, Emerald or Amethyst (a
+  Mystery Kube shows before crafting); 8 matching gems make a Shade and 8 Shades a Teleport, which does nothing yet. In the
+  database, the chest recipe shows its four possible results.
+- **Coloured Toughened Glass** (port addition): Toughened Glass with a gem on top makes Red (Ruby), Blue (Sapphire), Green
+  (Emerald) or Pink (Amethyst) Tinted Toughened Glass. They are ship blocks, lighter than the Tinted Toughened Glass and,
+  unlike it, they do not reveal invisible kubes. The merchant robot buys them at 100 and does not sell them.
+- **Mothership shop** (port addition): the merchant robot's stall is in the middle of the hangar, between the two rows of
+  bays (it was in the nose, far from everything). It is an open stall built from ship blocks, with an invisible wall over the
+  counter. No more computer: the robot turns to face you and, when you click on it, you talk to it in a window like the
+  Contracts one: 1. trade (the shop), 2. chat (tips, rumours and robot jokes) and 3. goodbye, with the number keys, the
+  mouse, the arrows or the gamepad. Trading is off during the tutorial.
+- A game saved inside the mothership loads inside, where you were (it used to open on the star map).
+- Synthesizer (port change): recipes give more. Wood (Grozarb and Frost Wood too) makes 4 planks (2 before), 4 planks in a
+  square make 4 wood platings (1 before) and many recipes make 2 instead of 1 (window frames, columns, rock tiles, leaf
+  curtain, glass, armoured door and plate, aggregates...).
+- New recipes and blocks (port addition): **Rock Column** (2 rock stacked) and **HardRoq, Soft Rock and Frost Tiles** (8 of
+  their rock in two 2x2 layers), 2 per recipe. The **ESCorp Canteen** is crafted from 8 iron in two 2x2 layers and shows in
+  the creative palette (there was no way to get one). The Lumen Rock Trunk is made from 2 Dead Lumen Rocks (2 moon rock
+  before), which always drop, so the recipe works in adventure.
+- Merchant robot (port change): what is crafted from what it sells no longer resells for more than its ingredients cost
+  (planks 3, basic glass 4, lumine and lantern 12, hull plating and toughened glass 100...). Citronox charges cost 20 (120
+  before), the space engine 1000 and the ESCorp Canteen 400. It no longer sells, though it still buys them, walls and tiles,
+  columns, ship parts (aluminium stays on sale to craft them), the ores and crystals found on planets, what only anomalies
+  give and other rare finds. It neither sells nor buys kubes, special blocks (except the space engine and the canteen), old
+  citronox and blue etherium fragments.
+- **ESCorp contracts in parts**: with only some of the blocks, "Give" hands over what you carry and the contract stays in
+  progress at the top of the panel. It no longer expires with the board, can be finished whenever you want and the full
+  reward is paid with the last block. It takes one line of the board (with 3 in progress, it is full). "Abandon" asks for
+  confirmation: the blocks given are lost and nothing is paid. It is saved with the game.
+- ESCorp database: kubes follow an order closer to the original one: first those of the planets, planet by planet (in the
+  Space tab order), then those of comets and those only anomalies give, crafted blocks in the order of their recipes,
+  special blocks and the kubes. Recipes go by material: wood, stone, ship, glass and light, aggregates, iron and devices,
+  charges.
+- Kube editor: a button next to "Auto-rotate" shows a 2x2x2 or 3x3x3 block of the same kube, to see how its faces join. The
+  mouse wheel zooms toward the point under the cursor (50% to 600%), and numpad + and - toward the centre. Dragging the view
+  turns the kube the way the mouse goes (it went the opposite way). Glass and ice look as in the world, front faces only (the
+  back ones used to show on top).
+- Block icons are smooth in the whole interface (inventory bar, palette, chest, shop, contracts, kube editor), as in the
+  database: no more skipped pixels or jagged icons in a small window, and translucent ones (glass, ice, water, quicksand,
+  armoured HUD, force field...) no longer look hollow or dark.
+- The ancient bomb screen fade no longer flickers (port change, for people with epilepsy): in a chain or with several bombs
+  in a row it lasts longer instead of starting again and rises again at most once per second (before, up to 15-17 red and
+  white flashes per second). Damage and shake are unchanged.
+- Loading a game saved by a newer version, with blocks this one does not know, no longer closes the game: it asks first and,
+  if accepted, keeps a copy in `saves/backups`, deletes those blocks and tells what it deleted and where the copy is.
+- The DirectX build no longer closes when the ESCorp database opens with something new in it.
+- On arrival on a planet, the scene should no longer flicker for a few seconds on some PCs (to be confirmed on one where it
+  happened): the spare database icons are finished on the loading screen. The game writes `gpu.txt` (graphics card and
+  driver) in its data folder, to attach it when reporting a drawing bug.
+- In French, the canteen is named "Conteneur ESCorp" ("EScorp" before).
+- `jugar.bat` and `jugar_dx.bat` (when building) also find `hl.exe` directly in `tools-portable\hashlink`.
+
 ## v0.7 — pre-release
 - **ESCorp database** (port addition), on the on-board computer, with three tabs: the **Kubindex**, with every kube of the
   game by category (pointing the laser at one spots it; having it in the inventory collects it, with how many times it was

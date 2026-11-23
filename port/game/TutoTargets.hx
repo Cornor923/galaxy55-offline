@@ -10,7 +10,7 @@ class TutoTargets {
 		var s = g.info.tuto.step;
 		if( g.hangar != null ) {
 			if( s == Tutorial.LEAVE ) return g.hangar.spawnCell == null ? [] : [g.hangar.spawnCell];
-			return [for( c in TutoSetup.hangarCells() ) if( !isHull(g.world.block(c.x, c.y, c.z)) ) c];
+			return [for( c in TutoSeed.hangarCells() ) if( !isHull(g.world.block(c.x, c.y, c.z)) ) c];
 		}
 		var ship = g.ship;
 		var inShip = g.pz >= World.SHIP_Z;
@@ -20,7 +20,7 @@ class TutoTargets {
 			case Tutorial.ETHERIUM: nearest(g, BBlueCrystalLight);
 			case Tutorial.BAUXITE: nearest(g, BMinAluminium);
 			case Tutorial.ALU, Tutorial.PLATES if( inShip ): craftTarget(g);
-			case Tutorial.COMPUTER, Tutorial.DATABASE if( inShip ): computerCell(g);
+			case Tutorial.COMPUTER, Tutorial.DATABASE, Tutorial.CONTRACTS if( inShip ): computerCell(g);
 			case Tutorial.HULL: [];
 			// la base del rayo de luz
 			default: inShip ? [] : [{ x : ship.x, y : ship.y, z : Std.int(ship.z) }];

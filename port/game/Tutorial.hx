@@ -12,11 +12,13 @@ typedef TutoTarget = { x : Int, y : Int, z : Int };
  * BAUXITE  minar 2 bauxitas                        RETURN   volver a la nave por el rayo
  * ALU      bauxita -> aluminio en el sintetizador  PLATES   aluminio -> blindaje
  * DATABASE ordenador de a bordo, Base de datos ESCorp (Kubindex: lo que ya has localizado y recuperado)
+ * CONTRACTS ordenador de a bordo, Contactar con la ESCorp, Contratos ESCorp: basta con abrirlos (encargos de la ESCorp, y el
+ *          contrato especial)
  * COMPUTER ordenador de a bordo, Modificar la nave HANGAR   tapar los agujeros (solo ahi y solo blindaje)
  * LEAVE    salir del hangar con la nave estanca    DONE     la ESCorp envia cargas y creditos, el planeta pasa a ser el
  *                                                           principal (Licenses) y se acaba
- * Mientras dura no se despega (GalaxyApp.buildComputer). El paso se guarda en SaveInfo.tuto. DATABASE va entre PLATES y
- * COMPUTER pero lleva el numero siguiente a DONE: las partidas guardadas con el tutorial a medias conservan su paso.
+ * Mientras dura no se despega (GalaxyApp.buildComputer). El paso se guarda en SaveInfo.tuto. DATABASE y CONTRACTS van entre
+ * PLATES y COMPUTER pero llevan los numeros siguientes a DONE: las partidas guardadas con el tutorial a medias conservan su paso.
  */
 class Tutorial {
 
@@ -34,6 +36,7 @@ class Tutorial {
 	public static inline var LEAVE = 11;
 	public static inline var DONE = 12;
 	public static inline var DATABASE = 13;
+	public static inline var CONTRACTS = 14;
 
 	static inline var NEED_CITRONOX = 3;
 	static inline var NEED_ETHERIUM = 2;
@@ -61,14 +64,14 @@ class Tutorial {
 		var t = g.info.tuto;
 		if( t == null || g.info.mothership == true ) return;
 		if( g.hangar != null ) {
-			// sin pasar por la base de datos tambien vale: el paso solo la presenta
-			if( t.step == COMPUTER || t.step == DATABASE ) t.step = HANGAR;
+			// sin pasar por la base de datos ni por los contratos tambien vale: esos pasos solo los presentan
+			if( t.step == COMPUTER || t.step == DATABASE || t.step == CONTRACTS ) t.step = HANGAR;
 			if( t.step == HANGAR && holesFilled(g) && g.hangarValid ) t.step = LEAVE;
 			else if( t.step == LEAVE && !holesFilled(g) ) t.step = HANGAR;
 			return;
 		}
 		if( t.spots == null && g.ship != null ) {
-			TutoSetup.seedPlanet(g);
+			TutoSeed.seedPlanet(g);
 			if( t.step == SPACE ) t.step = EXIT;
 		}
 		switch( t.step ) {
@@ -88,6 +91,8 @@ class Tutorial {
 	}
 
 	function finish( g : GameView ) {
+		// multijugador: el envio lo da el servidor (ServerEcon, EEndTutorial); aqui se hace igual en la copia para verlo ya
+		if( g.net != null ) g.net.sentEcon(EEndTutorial, "", 0);
 		g.inv.addCharge(CBlue, TutoSetup.GIFT);
 		g.inv.addCharge(CYellow, TutoSetup.GIFT);
 		g.info.credits = (g.info.credits == null ? 0 : g.info.credits) + Market.START_CREDITS;
@@ -109,10 +114,22 @@ class Tutorial {
 	 * PLATES). Si no, el aluminio se podia gastar en otra receta (tubos, malla, dalle blindados...) y el tutorial se quedaba sin
 	 * salida: no hay mas bauxita que la que pone.
 	 */
-	public static function craftAllowed( info : SaveInfo, r : CraftRule ) : Bool {
-		if( !active(info) ) return true;
-		var out = Block.get(r.out).k;
-		return out == BAluminium || out == BShipHull;
+	public static function craftAllowed( info : SaveInfo, r : CraftRule ) : Bool return TutoSetup.craftAllowed(info, r);
+
+	/**
+	 * Mientras dura, en la zona del sintetizador solo se ponen los ingredientes de lo que fabrica (craftAllowed): la bauxita (ALU)
+	 * y el aluminio (PLATES). Con otro bloque no se fabricaba nada y el jugador no sabia que hacer. Devuelve el aviso (GameView.place
+	 * lo pone en rojo), o null si se puede.
+	 */
+	public static function synthRule( info : SaveInfo, b : Block ) : String {
+		if( !active(info) ) return null;
+		for( r in Data.CRAFT )
+			if( craftAllowed(info, r) )
+				for( s in r.schema )
+					switch( s ) {
+					case CSSingle(k), CSBase(k, _), CSLine(k, _): if( k == b.k ) return null;
+					}
+		return TutoText.get("synthonly");
 	}
 
 	/**
@@ -121,8 +138,21 @@ class Tutorial {
 	 */
 	public static function databaseAllowed( info : SaveInfo ) return !active(info) || info.tuto.step >= COMPUTER;
 
-	/** se abre la Base de datos ESCorp: el paso DATABASE esta hecho */
-	public static function databaseOpened( info : SaveInfo ) if( active(info) && info.tuto.step == DATABASE ) info.tuto.step = COMPUTER;
+	/** se abre la Base de datos ESCorp: el paso DATABASE esta hecho, toca CONTRACTS */
+	public static function databaseOpened( info : SaveInfo ) if( active(info) && info.tuto.step == DATABASE ) info.tuto.step = CONTRACTS;
+
+	/**
+	 * Los Contratos ESCorp, y el boton Contactar con la ESCorp que lleva a ellos, se abren desde su paso (CONTRACTS, tras la Base
+	 * de datos ESCorp) hasta el final: COMPUTER y los numeros de despues menos DATABASE. Antes, los botones salen desactivados.
+	 * No hace falta cumplir ninguno: el paso solo los presenta.
+	 */
+	public static function contractsAllowed( info : SaveInfo ) return !active(info) || (info.tuto.step >= COMPUTER && info.tuto.step != DATABASE);
+
+	/** se abren los Contratos ESCorp: el paso CONTRACTS esta hecho (abrir solo Contactar con la ESCorp no basta) */
+	public static function contractsOpened( info : SaveInfo ) if( active(info) && info.tuto.step == CONTRACTS ) info.tuto.step = COMPUTER;
+
+	/** las Mejoras ESCorp (EscorpUpgrades) no se abren durante el tutorial: el boton se ve, desactivado */
+	public static function upgradesAllowed( info : SaveInfo ) return !active(info);
 
 	/** al salir del hangar con la nave guardada (valida y cambiada): se acaba en la siguiente actualizacion */
 	public static function repaired( info : SaveInfo ) if( active(info) ) info.tuto.step = DONE;
@@ -135,7 +165,7 @@ class Tutorial {
 	/** reglas del hangar durante el tutorial (GameView.hangarRule): no se rompe nada y solo se pone blindaje en los agujeros */
 	public static function hangarRule( info : SaveInfo ) : Bool -> Int -> Int -> Int -> Block -> String {
 		if( !active(info) ) return null;
-		var cells = TutoSetup.hangarCells();
+		var cells = TutoSeed.hangarCells();
 		return function( place : Bool, x : Int, y : Int, z : Int, b : Block ) : String {
 			if( !place ) return TutoText.get("nobreak");
 			for( c in cells )
@@ -162,6 +192,7 @@ class Tutorial {
 			case ALU: TutoText.get(g.pz < World.SHIP_Z ? "return" : "alu", count(g, [BAluminium, BShipHull]), holes());
 			case PLATES: TutoText.get(g.pz < World.SHIP_Z ? "return" : "plates", count(g, [BShipHull]), holes());
 			case DATABASE: TutoText.get(g.pz < World.SHIP_Z ? "return" : "database");
+			case CONTRACTS: TutoText.get(g.pz < World.SHIP_Z ? "return" : "contracts");
 			default: TutoText.get(g.pz < World.SHIP_Z ? "return" : "computer");
 		}
 	}
@@ -171,7 +202,7 @@ class Tutorial {
 
 	// ---------------------------------------------------------------- recuentos
 
-	function filled( g : GameView ) return [for( c in TutoSetup.hangarCells() ) if( TutoTargets.isHull(g.world.block(c.x, c.y, c.z)) ) c].length;
+	function filled( g : GameView ) return [for( c in TutoSeed.hangarCells() ) if( TutoTargets.isHull(g.world.block(c.x, c.y, c.z)) ) c].length;
 
 	function holesFilled( g : GameView ) return filled(g) >= holes();
 

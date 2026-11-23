@@ -75,8 +75,7 @@ class IconMesh {
 	}
 
 	static function model( m : MeshBuf, b : Block ) {
-		var mk = b.model != null ? b.model : MCross;
-		var md = Models.get(mk);
+		var md = Models.of(b);
 		var v = md.v;
 		for( q in 0...Std.int(v.length / 24) ) {
 			var sel = Std.int(v[q * 24 + 3]);
@@ -147,6 +146,26 @@ class IconMesh {
 	}
 
 	/**
+	 * Cambio del port: bloque translucido que el recorte de los objetos sueltos y de la mano (killAlpha 0.5) borraria entero,
+	 * porque ningun pixel de sus casillas llega a la mitad de opacidad (Kube invisible, BFAlpha(0.25); Kube de niebla, BFAlpha(0.5)
+	 * da 127). Al romperlo, lo que caia al suelo no se veia: esos se dibujan translucidos, como su icono (Icons.draw).
+	 */
+	public static function seeThrough( b : Block ) : Bool {
+		var pix = Atlas.pixels;
+		if( pix == null || b.type != BTAlpha ) return false;
+		var ts = Std.int(pix.width / 64), tiles = 0;
+		for( t in [b.tu, b.td, b.tlr] ) {
+			if( t < 0 || t >= 0xFFF ) continue;
+			tiles++;
+			var x0 = (t & 63) * ts, y0 = (t >> 6) * ts;
+			for( y in 0...ts )
+				for( x in 0...ts )
+					if( (pix.getPixel(x0 + x, y0 + y) >>> 24) >= 128 ) return false;
+		}
+		return tiles > 0;
+	}
+
+	/**
 	 * n x n x n bloques iguales pegados, en las celdas (0..n) (mosaico del editor de kubes). Las caras entre dos vecinos se
 	 * quitan como en World.buildChunk: un bloque lleno tapa la cara de su vecino lleno (open) y uno con alfa la de su vecino con
 	 * alfa (openAlphaNear); las cajas, los de 6 caras, los calados y los modelos se dibujan enteros, tambien por dentro.
@@ -211,6 +230,8 @@ class Icons {
 	static var scene : h3d.scene.Scene;
 	/** el icono del original (45 px) por dos: el contorno se calcula en proporcion */
 	static inline var SIZE = 90;
+	/** lado mayor de un tableau en su icono, en bloques (anadido del port) */
+	static inline var PAINTING_SPAN = 1.45;
 	/** tamano de los iconos: 256 px con mipmaps, para dibujarlos lisos a cualquier tamano */
 	static inline var HIRES = 256;
 
@@ -281,6 +302,14 @@ class Icons {
 		bm.smooth = true;
 		bm.setScale(size / HIRES);
 		return bm;
+	}
+
+	/**
+	 * Olvida el icono de b (un kube del editor que ha cambiado, EditorKubes): el siguiente bitmap lo vuelve a hacer. La textura
+	 * vieja no se libera: algun h2d.Bitmap de la interfaz aun puede tenerla
+	 */
+	public static function forget( b : Block ) {
+		hiresCache.remove(b.index);
 	}
 
 	/** iconos grandes de reserva (los de la Base de datos ESCorp, antes de abrirla): pump los hace despues de los pedidos */
@@ -441,7 +470,17 @@ class Icons {
 			mat.textureShader.killAlpha = true;
 			mat.textureShader.killAlphaThreshold = 0.5;
 		}
-		var mesh = new h3d.scene.Mesh(poly, mat, scene);
+		// tableau (BFOnWall): de frente, girado hacia la camara, con su placa en el centro y del tamano de un cubo (de lado, en el
+		// fondo de la celda, salia diminuto)
+		var pivot = new h3d.scene.Object(scene);
+		var mesh = new h3d.scene.Mesh(poly, mat, pivot);
+		if( b.wall >= 0 && b.size != null ) {
+			var c = Painting.center(b), s = b.size;
+			pivot.setPosition(0.5, 0.5, 0.5);
+			pivot.setRotation(0, 0, Math.PI * 0.25 - Math.PI * 0.5 * b.wall);
+			pivot.setScale(Math.min(2.5, PAINTING_SPAN / Math.max(Math.max(s.x2 - s.x1, s.y2 - s.y1), s.z2 - s.z1)));
+			mesh.setPosition(-c.x, -c.y, -c.z);
+		}
 		var cam = scene.camera;
 		// vista isometrica aproximada: perspectiva con angulo muy estrecho, desde +x, -y y arriba
 		cam.orthoBounds = null;
@@ -456,7 +495,7 @@ class Icons {
 		engine.clear(0x00000000, 1, 0);
 		scene.render(engine);
 		engine.popTarget();
-		mesh.remove();
+		pivot.remove();
 		poly.dispose();
 		return true;
 	}

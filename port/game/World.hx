@@ -31,6 +31,34 @@ class WaterDepthBias extends hxsl.Shader {
 }
 
 /**
+	Cambio del port: el agua vista de refilon toma el color medio de su casilla (el ultimo nivel de Atlas.mipped, un texel por
+	casilla). La textura del agua acida son bandas en diagonal; con el agua translucida, a ras de la superficie se estiraban en
+	rayas finas y regulares sobre el fondo, como lluvia (en el original era opaca: su casilla no tiene transparencia). De cara
+	se sigue viendo la textura.
+	c: coseno del angulo entre la vista y la cara; la textura se va de 0.5 (60 grados) a 0.1 (84 grados). Antes de la niebla.
+**/
+class WaterGrazing extends hxsl.Shader {
+	static var SRC = {
+		@global var camera : {
+			var position : Vec3;
+		};
+		var transformedPosition : Vec3;
+		var transformedNormal : Vec3;
+		var calculatedUV : Vec2;
+		var pixelColor : Vec4;
+		@param var texture : Sampler2D;
+		@param var flatLod : Float;
+		function fragment() {
+			var c = abs(dot(normalize(camera.position - transformedPosition), transformedNormal));
+			var k = 1.0 - smoothstep(0.1, 0.5, c);
+			var t = texture.get(calculatedUV);
+			var m = texture.getLod(calculatedUV, flatLod);
+			pixelColor *= mix(vec4(1.0), m / max(t, vec4(1.0 / 255.0)), k);
+		}
+	};
+}
+
+/**
 	Textura que corre por su casilla del atlas (BFScroll, anadido del port), como el agua y la lava de Kube (Level.updateTextures):
 	4 veces por segundo y a saltos de 2 pixeles (uno de sus texturas de 16), hacia abajo en los lados. speed: pixeles por segundo.
 	Cada fragmento vuelve a su casilla con fract, por eso va sin mipmaps: con ellos, donde la textura da la vuelta se elegiria
@@ -52,6 +80,28 @@ class TileScroll extends hxsl.Shader {
 	};
 }
 
+/**
+	Recorte por el alfa con el umbral como parametro, para las tres pasadas de los bloques BTAlpha (pixeles solidos, profundidad y
+	color). Con textureShader.killAlpha, que es una constante de hxsl, cada pasada era otro programa GLSL, y OpenGL solo asegura
+	la misma profundidad para el mismo programa: la pasada de color (depth LessEqual) podia quedar detras de la de profundidad.
+	En un PC con "Mesa Intel(R) HD Graphics 4600 (HSW GT2)" (Mesa 25.2, crocus) la cascada no se veia. Con este shader las tres
+	pasadas comparten programa y solo cambia el umbral (0 en la de color: no descarta nada).
+**/
+class AlphaCut extends hxsl.Shader {
+	static var SRC = {
+		var pixelColor : Vec4;
+		@param var threshold : Float;
+		function fragment() {
+			if( pixelColor.a < threshold ) discard;
+		}
+	};
+
+	public function new( threshold : Float ) {
+		super();
+		this.threshold = threshold;
+	}
+}
+
 /** Geometria acumulada de un chunk para un material. */
 class MeshBuf {
 	public var pts = new Array<h3d.col.Point>();
@@ -62,15 +112,86 @@ class MeshBuf {
 }
 
 /**
- * Malla de un trozo del mundo (anadido del port): un Polygon que, al subirse a la tarjeta, suelta sus puntos, normales, uvs y
- * colores (cuatro objetos por vertice) y se queda solo con los floats ya preparados, por si hubiera que volver a subirlos.
- * Con los de todo el planeta vivos, cada pasada del recolector de memoria de HashLink tardaba decenas de ms (al construir
- * los trozos en la carga y al jugar)
+ * Malla de un trozo mientras se construye (anadido del port, paso 5 de la refundicion): los floats de cada vertice tal como los
+ * sube ChunkPrim (posicion, normal, uv y color: 11; el mismo orden que Polygon.getCPUBuffer) y sus indices, sin un objeto por
+ * vertice. Antes cada cara eran 4 Point, 4 UV y 4 colores, y luego otra pasada para las normales y otra para los floats: mas de
+ * la mitad del tiempo de las mallas en la carga. Lo que se sube a la tarjeta es lo mismo (las normales, que el shader no usa,
+ * se suman por triangulo como Polygon.addNormals)
+ */
+class ChunkBuf {
+	public static inline var STRIDE = 11;
+	public var data = new hxd.FloatBuffer();
+	public var idx = new hxd.IndexBuffer();
+	public var verts = 0;
+	public var bounds = new h3d.col.Bounds();
+	public function new() {}
+
+	/** un vertice (la normal se suma despues con sus triangulos: tri) */
+	public inline function vertex( x : Float, y : Float, z : Float, u : Float, v : Float, c : Float ) {
+		data.push(x);
+		data.push(y);
+		data.push(z);
+		data.push(0.);
+		data.push(0.);
+		data.push(0.);
+		data.push(u);
+		data.push(v);
+		data.push(c);
+		data.push(c);
+		data.push(c);
+		bounds.addPos(x, y, z);
+		verts++;
+	}
+
+	/** un triangulo: sus indices y su normal sumada en sus tres vertices (Polygon.addNormals) */
+	public function tri( i0 : Int, i1 : Int, i2 : Int ) {
+		idx.push(i0);
+		idx.push(i1);
+		idx.push(i2);
+		var a = i0 * STRIDE, b = i1 * STRIDE, c = i2 * STRIDE;
+		var ux = data[b] - data[a], uy = data[b + 1] - data[a + 1], uz = data[b + 2] - data[a + 2];
+		var vx = data[c] - data[a], vy = data[c + 1] - data[a + 1], vz = data[c + 2] - data[a + 2];
+		var nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+		data[a + 3] += nx; data[a + 4] += ny; data[a + 5] += nz;
+		data[b + 3] += nx; data[b + 4] += ny; data[b + 5] += nz;
+		data[c + 3] += nx; data[c + 4] += ny; data[c + 5] += nz;
+	}
+
+	/** las normales de longitud 1 (como h3d.Vector.normalize), al acabar */
+	public function finish() {
+		var o = 3;
+		for( i in 0...verts ) {
+			var x = data[o], y = data[o + 1], z = data[o + 2];
+			var k = x * x + y * y + z * z;
+			k = k < hxd.Math.EPSILON2 ? 0 : 1 / Math.sqrt(k);
+			data[o] = x * k;
+			data[o + 1] = y * k;
+			data[o + 2] = z * k;
+			o += STRIDE;
+		}
+	}
+}
+
+/**
+ * Malla de un trozo del mundo (anadido del port): un Polygon que solo guarda los floats ya preparados (ofBuf: los de ChunkBuf; si
+ * no, al subirse a la tarjeta suelta sus puntos, normales, uvs y colores), por si hubiera que volver a subirlos. Con los objetos
+ * de todo el planeta vivos, cada pasada del recolector de memoria de HashLink tardaba decenas de ms (al construir los trozos en la
+ * carga y al jugar)
  */
 class ChunkPrim extends h3d.prim.Polygon {
 	var data : hxd.FloatBuffer;
 	var format : hxd.BufferFormat;
 	var verts = 0;
+
+	/** la malla de un ChunkBuf, ya con sus floats, su caja y sus indices (posicion, normal, uv, color: Polygon con los cuatro) */
+	public static function ofBuf( b : ChunkBuf ) : ChunkPrim {
+		var p = new ChunkPrim(null, b.idx);
+		p.data = b.data;
+		p.verts = b.verts;
+		p.format = hxd.BufferFormat.POS3D.append("normal", DVec3).append("uv", DVec2).append("color", DVec3);
+		p.bounds = b.bounds;
+		return p;
+	}
 
 	override function alloc( engine : h3d.Engine ) {
 		if( data == null ) {
@@ -124,17 +245,15 @@ class SeaLight {
 /**
 	Un planeta: lo genera con los generadores originales y construye su geometria.
 	Se carga por tandas (step) para poder mostrar una barra de progreso sin congelar la ventana.
+	Los datos (celdas, cambios, agua) estan en WorldData (port/core, anadido del port para el multijugador); aqui la luz, las
+	mallas y el cielo, que se enteran de los cambios por los ganchos de WorldData.
 **/
-class World {
+class World extends WorldData {
 
-	public static inline var CSIZE = 16;
-	public static inline var ZBITS = 7;
-	public static inline var HEIGHT = 128;
+	public static inline var CSIZE = WorldData.CSIZE;
+	public static inline var ZBITS = WorldData.ZBITS;
+	public static inline var HEIGHT = WorldData.HEIGHT;
 	static inline var TE = 0.999;
-
-	public var seed(default, null) : Int;
-	public var biomeName(default, null) : String;
-	public var size(default, null) : Int;
 
 	/**
 	 * Curvatura del planeta. El original usa curve = 2 / totalSize (AbstractGame); el port la reduce (CURVE_K) porque se notaba
@@ -149,10 +268,10 @@ class World {
 	public var sky(default, null) : Sky;
 	/** olas del agua (animWater del original); null en la nave y en el hangar. GameView avanza su tiempo */
 	public var wave(default, null) : WaterWave;
+	/** el agua de refilon con el color medio de su casilla (emitMesh); uno para todos los trozos */
+	var waterGrazing : WaterGrazing;
 	/** altura de las olas: animWater.scale * 0.5 */
 	public static inline var WAVE_AMP = 0.3 * 0.5;
-	var gen : gen.DetailsGenerator;
-	var bytes : haxe.io.Bytes;
 	var atlas : h3d.mat.Texture;
 	var phase = 0;
 	var chunk = 0;
@@ -167,6 +286,20 @@ class World {
 	var wrapY = -1e9;
 	var genStarted : Float;
 
+	/**
+	 * --loadtime (anadido del port): lo que ha costado cada fase de la carga, en segundos, y cuantos pasos (step) ha llevado; se
+	 * escribe al acabar (loadTime)
+	 */
+	public static var LOAD_TIME = Sys.args().indexOf("--loadtime") >= 0;
+	/**
+	 * Anadido del port (HashLink): el planeta se genera en otro hilo y la pantalla de carga sigue a su ritmo (antes, por tandas en
+	 * cada imagen, un paso largo del generador la paraba hasta casi un segundo). --nothread lo hace como antes; --gencheck vuelve a
+	 * generarlo en el hilo principal al acabar y dice si sale igual. Cada generador tiene su propio tampon (paso 2 de la
+	 * refundicion): no comparte nada con el resto del juego mientras trabaja. El hilo lo lleva WorldData.genStep (genThread)
+	 */
+	public static var GEN_THREAD = #if hl Sys.args().indexOf("--nothread") < 0 #else false #end;
+	var menuFog : Bool;
+
 	// luz (Builder.relight del original): 0..15 por celda; LBASE = 10 equivale a luz plena
 	public static inline var LBASE = 10;
 	static inline var NOLIGHT = 8; // enumIndex(BTReduced): a partir de aqui el bloque no deja pasar la luz
@@ -178,35 +311,8 @@ class World {
 	var lightInfos : Array<{ p : Int, f : Float, pw : Float }>;
 	var mask : haxe.io.Bytes;
 	var useMask = false;
-	/** cambios del jugador sobre el terreno: celda -> indice global de bloque (0 = aire); se guardan con la partida */
-	public var editMap = new Map<Int, Int>();
-	var savedEdits : Array<Int>;
-	/**
-	 * Nivel del agua que fluye (anadido del port, como Minecraft): celda -> 1..7 (cada vez mas baja) u 8 (cayendo).
-	 * Sin entrada = fuente (llena, como todo el agua del original). Se guarda en editMap junto al bloque: indice | nivel << 16.
-	 */
-	public var waterLvl = new Map<Int, Int>();
-
-	/**
-	 * Mar del planeta (planet.waterLevel, waterTotal y waterFlood del original). Cada bloque del agua del bioma que pone Process
-	 * suma uno a waterFlood (net/Local.processBlock); al llegar al volumen de una capa (waterTotal / nivel) la capa de arriba
-	 * desaparece en todo el planeta y el nivel baja 1 (Local.reduceWater y Game.onCommand(SReduceWater)).
-	 * El nivel y el contador se guardan con los cambios del terreno, con las claves negativas SEA_LEVEL y SEA_FLOOD.
-	 */
-	var seaLevel = 0;
-	public var waterTotal(default, null) = 0;
-	public var waterFlood = 0;
-	/** agua del bioma (Local.waterId); null en la nave y en el hangar */
-	public var seaBlock(default, null) : Block;
-	var seaId = -1;
-	/** agua del mar que puso el generador en cada altura (lo que descuenta Local.reduceWater) */
-	var seaCount : Array<Int>;
-	/** floodFlag de Local: hay una bajada pendiente */
-	public var floodFlag(default, null) = false;
 	/** trozos que rehacer tras una bajada, los mas cercanos primero */
 	var seaChunks = new Array<Int>();
-	static inline var SEA_LEVEL = -1;
-	static inline var SEA_FLOOD = -2;
 	/** posicion de la camara (updateWrap): para rehacer primero lo que se ve */
 	var viewX = 0.;
 	var viewY = 0.;
@@ -219,30 +325,20 @@ class World {
 	var lightChunks = new Array<Int>();
 
 	// la nave (ShipLogic/Level.extra del original): un volumen de 128x128x128 colgado sobre el planeta, desde z = SHIP_Z
-	public static inline var SHIP_Z = 130;
+	public static inline var SHIP_Z = WorldData.SHIP_Z;
 	/** la nave de este planeta (solo en el mundo del planeta) */
 	public var ship : World;
-	/** desplazamiento (x, y) de la nave respecto al planeta: celda de la nave + desplazamiento = posicion en el planeta */
-	public var shipDX = 0;
-	public var shipDY = 0;
-	/** se llama tras cambiar una celda del planeta con setBlock (x, y ya dentro del planeta): la nave vigila la columna de su rayo */
-	public var onSetBlock : Int -> Int -> Int -> Void;
-	/** true en el mundo de la nave: no da la vuelta y usa el cielo del planeta */
-	public var isShip(default, null) = false;
 	/** altura desde la que entra el sol (-1 = desde arriba del todo); el hangar la pone bajo el techo (EditShip: planet.lightHeight) */
 	public var lightTop = -1;
-	var wraps = true;
 	var ownSky = true;
 
-	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int>, ?shipData : ShipData.ShipDataInfo, ?sharedSky : Sky ) {
-		this.savedEdits = savedEdits;
-		this.seed = seed;
-		this.biomeName = biomeName;
+	/** genVersion: version del generador del planeta (SaveInfo.genVersion); null = la actual (gen.Generator.VERSION) */
+	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int>, ?shipData : ShipData.ShipDataInfo, ?sharedSky : Sky, ?genVersion : Null<Int> ) {
+		var tNew = haxe.Timer.stamp();
+		super(seed, biomeName, sizeChunks, savedEdits, shipData, genVersion);
+		this.menuFog = menuFog;
+		genThread = GEN_THREAD;
 		this.atlas = atlas;
-		// las cometas (Comets, añadido del port) son mas pequenas: su tamano no va en trozos de 128 (la nave, con el bioma del
-		// planeta, sigue en 128)
-		var comet = shipData == null && Comets.isComet(biomeName);
-		size = comet ? Comets.SIZE : sizeChunks << Const.BITS;
 		chunkMeshes = [for( i in 0...(size >> 4) * (size >> 4) ) null];
 		root = new h3d.scene.Object(parent);
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
@@ -264,25 +360,26 @@ class World {
 			wave.amp = Settings.waterWaves ? WAVE_AMP : 0;
 			wave.time = 0;
 		}
-		gen = comet ? new CometGenerator(size, seed) : new gen.DetailsGenerator(size, seed);
 		var bd = Data.getBiome(biome);
 		sunP = bd.sunPower;
 		sunF = bd.sunFalloff == null ? 1 : bd.sunFalloff;
-		gen.alloc(bd.water);
-		gen.alloc(BMinIron);
-		gen.alloc(BMinAluminium);
-		for( s in bd.soils ) gen.alloc(s);
-		if( shipData == null ) {
-			gen.startGenerate(biome);
-			seaLevel = gen.getWaterInfos().level;
-			seaBlock = Block.get(bd.water);
-		}
-		else initShip(shipData);
-		// como Builder.init: los modelos sin BFSize usan su propia caja para las colisiones
-		for( b in Block.all )
-			if( b.model != null && b.size == null ) b.size = Models.get(b.model).box;
 		genStarted = haxe.Timer.stamp();
+		load.init = genStarted - tNew;
 	}
+
+	/** --loadtime: una linea con el tiempo de cada fase de la carga de este mundo (ms) */
+	function loadTime() {
+		if( !LOAD_TIME ) return;
+		inline function t( v : Float ) return Std.int(v * 1000);
+		var l = load;
+		Sys.println("carga " + biomeName + (isShip ? " (nave)" : "") + (menuFog ? " (menu)" : "") + " " + size + ": inicio " + t(l.init)
+			+ " ms, " + (isShip ? "celdas de la nave " : "generacion ") + t(l.gen) + " ms, celdas " + t(l.cells) + " ms, mar " + t(l.sea)
+			+ " ms, cambios guardados " + t(l.edits) + " ms (" + l.editCells + " celdas), luz " + t(l.light) + " ms, mallas "
+			+ t(l.mesh) + " ms (" + chunk + " trozos; de ellos " + t(l.meshEmit) + " ms en hacer y subir las mallas), en " + l.steps + " pasos; " + t(haxe.Timer.stamp() - genStarted)
+			+ " ms desde el final del inicio");
+	}
+
+	override function shipWorld() : WorldData return ship;
 
 	public inline function isReady() return phase >= 2;
 
@@ -297,6 +394,7 @@ class World {
 		while( more && (haxe.Timer.stamp() - t0) * 1000 < budgetMs )
 			more = lighting();
 		lightSpent += haxe.Timer.stamp() - t1;
+		load.light = lightSpent;
 		if( more ) return false;
 		lighting = null;
 		lightTime();
@@ -315,34 +413,14 @@ class World {
 			+ StringTools.hex(a, 4) + StringTools.hex(b, 4));
 	}
 
-	/** anomalias puestas por el generador (DetailsGenerator.placed: posicion y tipo), para la Base de datos ESCorp */
-	public function anomalies() return gen.placed;
-
 	/** Avanza la carga durante budgetMs milisegundos; devuelve el progreso de 0 a 1. */
 	public function step( budgetMs : Float ) : Float {
+		if( unbounded ) budgetMs = 1e9;
 		var t0 = haxe.Timer.stamp();
-		if( phase == 0 && isShip ) {
-			if( shipCells != null && !placeCells(t0, budgetMs) ) return progress = 0.25;
-			if( lighting == null ) {
-				applySaved();
-				lighting = lightTask();
-			}
-			if( lightSteps(t0, budgetMs) ) phase = 1;
-			return progress = 0.75;
-		}
+		if( phase < 2 ) load.steps++;
 		if( phase == 0 ) {
 			if( lighting == null ) {
-				var p0 = gen.progress;
-				var busy = gen.process(Std.int(budgetMs));
-				if( Sys.args().indexOf("--frametime") >= 0 && haxe.Timer.stamp() - t0 > 0.2 )
-					Sys.println("generador: " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
-				if( busy ) return progress = gen.progress * 0.75;
-				bytes = gen.getBytes().b;
-				initLightTables();
-				// el sitio de la nave se elige antes de aplicar los cambios guardados: si no, con el suelo cavado o construido bajo
-				// la nave, al cargar la partida la nave aparecia en otro sitio
-				if( savedEdits != null && savedEdits.length > 0 ) shipPlace();
-				applySaved();
+				if( !genStep(t0, budgetMs) ) return progress = isShip ? 0.25 : gen.progress * 0.75;
 				lighting = lightTask();
 			}
 			if( lightSteps(t0, budgetMs) ) phase = 1;
@@ -350,18 +428,25 @@ class World {
 		}
 		if( phase == 1 ) {
 			var n = size >> 4;
+			var t1 = haxe.Timer.stamp();
 			while( chunk < n * n ) {
 				buildChunk(chunk % n, Std.int(chunk / n));
 				chunk++;
 				if( (haxe.Timer.stamp() - t0) * 1000 >= budgetMs ) break;
 			}
-			if( chunk >= n * n ) phase = 2;
+			load.mesh += haxe.Timer.stamp() - t1;
+			if( chunk >= n * n ) {
+				phase = 2;
+				loadTime();
+			}
 			return progress = 0.75 + 0.25 * chunk / (n * n);
 		}
 		return progress = 1;
 	}
 
 	public function dispose() {
+		// un hilo de generacion que no ha acabado para en el siguiente paso (el generador sigue vivo en el hasta entonces)
+		genCancel = true;
 		if( ship != null ) ship.dispose();
 		if( ownSky ) sky.dispose();
 		for( m in meshes ) {
@@ -379,15 +464,8 @@ class World {
 		root.remove();
 	}
 
-	// ---------------------------------------------------------------- consulta de bloques
+	// ---------------------------------------------------------------- consulta de bloques (las de los datos, en WorldData)
 
-	public inline function voxel( x : Int, y : Int, z : Int ) : Int {
-		if( x < 0 ) x += size else if( x >= size ) x -= size;
-		if( y < 0 ) y += size else if( y >= size ) y -= size;
-		if( z < 0 ) return 1;
-		if( z >= HEIGHT ) return 0;
-		return bytes.get(((x + y * size) << ZBITS) | z);
-	}
 
 	/**
 	 * true si la cara contra este voxel se ve (aire o bloque que deja pasar la luz). Cambio del port: el Kube invisible tapa como
@@ -473,101 +551,13 @@ class World {
 		return t != BTFull && t != BTWater;
 	}
 
-	/** tipo de bloque a efectos de mallado (las hojas sin BFNoOptimize cuentan como bloque lleno, igual que el original) */
-	function tagOf( id : Int ) : BlockType {
-		var b = gen.blocks[id];
-		// con tarjeta grafica el original NO trata las hojas como bloques llenos (solo el modo por software lo hacia):
-		// asi las caras que hay detras de una hoja se dibujan y se ven a traves de sus huecos transparentes
-		return b.type;
-	}
-
-	/** bloque con el que se choca: usa el atributo collide del original (hojas si, agua y detalles no) */
-	public inline function solid( x : Int, y : Int, z : Int ) : Bool {
-		var id = voxel(x, y, z);
-		if( id == 0 ) return false;
-		var b = gen.blocks[id];
-		return b != null && b.collide;
-	}
-
-	/** suelo opaco (para elegir el punto de aparicion) */
-	public inline function opaque( x : Int, y : Int, z : Int ) : Bool {
-		var id = voxel(x, y, z);
-		return id != 0 && !gen.btrans[id];
-	}
-
-	/** bloque en una celda (null si es aire) */
-	/** nivel del mar actual (planet.waterLevel del original): el del generador menos las capas que han desaparecido */
-	public function waterLevel() : Int {
-		return seaLevel;
-	}
-
-	public function block( x : Int, y : Int, z : Int ) : Block {
-		if( z >= SHIP_Z ) return shipBlock(x, y, z);
-		var id = voxel(x, y, z);
-		return id <= 0 ? null : gen.blocks[id];
-	}
-
-	/** Igual que Level.collide del original: consulta de un punto, con la caja de los bloques parciales. */
-	public function collidePoint( x : Float, y : Float, z : Float ) : Bool {
-		if( z >= SHIP_Z ) {
-			if( ship == null ) return false;
-			var lx = shipLocal(x, shipDX), ly = shipLocal(y, shipDY);
-			if( lx >= ship.size || ly >= ship.size ) return false;
-			return ship.collidePoint(lx, ly, z - SHIP_Z);
-		}
-		var ix = Math.floor(x), iy = Math.floor(y), iz = Std.int(z);
-		if( z < 0 || iz >= HEIGHT ) return false;
-		var id = voxel(ix, iy, iz);
-		if( id == 0 ) return false;
-		var b = gen.blocks[id];
-		if( b == null || !b.collide ) return false;
-		if( b.size == null ) return true;
-		var fz = z - iz;
-		return fz >= b.size.z1 && fz < b.size.z2;
-	}
-
-	/** altura de la superficie mas alta con colision (incluye copas de arboles) */
-	public function topCollide( x : Int, y : Int ) : Int {
-		var z = HEIGHT - 1;
-		while( z > 1 && !solid(x, y, z) ) z--;
-		return z + 1;
-	}
-
-	/** celdas libres de colision a partir de z (cabe el jugador: 3 bloques de alto) */
-	function free( x : Int, y : Int, z : Int ) : Bool {
-		for( k in 0...3 ) {
-			var id = voxel(x, y, z + k);
-			if( id != 0 && gen.blocks[id].collide ) return false;
-		}
-		return true;
-	}
-
-	public function spawnPoint(): { x : Float, y : Float, z : Float } {
-		// busca en espiral desde el centro una columna cuyo punto mas alto sea suelo firme (no hojas ni modelos)
-		var cx = size >> 1, cy = size >> 1;
-		for( r in 0...40 )
-			for( dy in -r...r + 1 )
-				for( dx in -r...r + 1 ) {
-					if( Math.abs(dx) != r && Math.abs(dy) != r ) continue;
-					var x = cx + dx, y = cy + dy;
-					var top = topCollide(x, y) - 1;
-					var b = block(x, y, top);
-					if( b != null && b.type == BTFull && !b.hasFlag(BFIsLava) && free(x, y, top + 1) )
-						return { x : x + 0.5, y : y + 0.5, z : top + 1.01 };
-				}
-		var x = cx, y = cy;
-		var z = HEIGHT - 1;
-		while( z > 1 && !opaque(x, y, z) ) z--;
-		return { x : x + 0.5, y : y + 0.5, z : z + 1.01 };
-	}
-
 	// ---------------------------------------------------------------- luz
 
 	/** diagnostico: recuento de celdas por bloque y tipo (solo para pruebas) */
 	public function debugStats() : String {
 		var counts = new Map<Int, Int>();
-		for( i in 0...bytes.length ) {
-			var id = bytes.get(i);
+		for( i in 0...cells.length >> 1 ) {
+			var id = cell(i);
 			if( id != 0 ) counts.set(id, (counts.exists(id) ? counts.get(id) : 0) + 1);
 		}
 		var s = "";
@@ -714,7 +704,7 @@ class World {
 			var z = top;
 			while( z >= 0 ) {
 				var p = base | z;
-				var t = idTag[bytes.get(p)];
+				var t = idTag[cell(p)];
 				if( t != 0 ) {
 					if( t < NOLIGHT ) {
 						light.set(p, lsun);
@@ -725,12 +715,12 @@ class World {
 				light.set(p, lmax);
 				// la luz se cuela hacia los vecinos -x e -y que aun no la tienen
 				var q = (cxm << ZBITS) | z;
-				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+				if( light.get(q) == 0 && idTag[cell(q)] < NOLIGHT ) {
 					light.set(q, lsun);
 					seeds.push(q);
 				}
 				q = (cym << ZBITS) | z;
-				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+				if( light.get(q) == 0 && idTag[cell(q)] < NOLIGHT ) {
 					light.set(q, lsun);
 					seeds.push(q);
 				}
@@ -739,7 +729,7 @@ class World {
 			// bajo el primer bloque: aire/bloques con luz directa a su lado
 			while( z > 0 ) {
 				var p = base | z;
-				if( idTag[bytes.get(p)] < NOLIGHT && (isSunAir((cxm << ZBITS) | z, lmax) || isSunAir((cym << ZBITS) | z, lmax)) ) {
+				if( idTag[cell(p)] < NOLIGHT && (isSunAir((cxm << ZBITS) | z, lmax) || isSunAir((cym << ZBITS) | z, lmax)) ) {
 					light.set(p, lsun);
 					seeds.push(p);
 				}
@@ -751,7 +741,7 @@ class World {
 	/** las lamparas de las celdas p0 ... end - 1 (lightTask): cada una ilumina su entorno */
 	function lamps( p0 : Int, end : Int, lightIdx : Array<Int>, infos : Array<{ p : Int, f : Float }>, powers : Array<Float> ) {
 		for( p in p0...end ) {
-			var id = bytes.get(p);
+			var id = cell(p);
 			var li = lightIdx[id];
 			if( li < 0 ) continue;
 			var info = infos[li];
@@ -762,7 +752,7 @@ class World {
 	}
 
 	inline function isSunAir( p : Int, lmax : Int ) : Bool {
-		return light.get(p) == lmax && idTag[bytes.get(p)] == 0;
+		return light.get(p) == lmax && idTag[cell(p)] == 0;
 	}
 
 	/** onda expansiva: cada anillo baja la luz en delta (Builder.processLight) */
@@ -840,126 +830,22 @@ class World {
 	}
 
 	inline function spread( q : Int, l : Int, next : Array<Int> ) {
-		if( light.get(q) < l && idTag[bytes.get(q)] < NOLIGHT && (!useMask || mask.get(q >> ZBITS) != 0) ) {
+		if( light.get(q) < l && idTag[cell(q)] < NOLIGHT && (!useMask || mask.get(q >> ZBITS) != 0) ) {
 			light.set(q, l);
 			next.push(q);
 		}
 	}
 
-	// ---------------------------------------------------------------- nave
+	// ---------------------------------------------------------------- tablas por id (luz y tipo)
 
-	function initShip( d : ShipData.ShipDataInfo ) {
-		isShip = true;
-		wraps = false;
-		bytes = haxe.io.Bytes.alloc(size * size * HEIGHT);
-		initLightTables();
-		// las celdas se ponen en los primeros pasos de la carga (placeCells): las ~390 000 de la nave nodriza tardaban ~100 ms
-		shipCells = d.cells;
-		shipCell = 0;
-	}
-
-	/** celdas de la nave aun por poner (initShip) y la siguiente */
-	var shipCells : Array<ShipData.ShipCell>;
-	var shipCell = 0;
-
-	/** pone celdas de la nave, en orden, hasta acabarlas o gastar el tiempo de este paso (empezado en t0); true si estan todas */
-	function placeCells( t0 : Float, budgetMs : Float ) : Bool {
-		var cells = shipCells;
-		while( shipCell < cells.length ) {
-			if( (haxe.Timer.stamp() - t0) * 1000 >= budgetMs ) return false;
-			var end = shipCell + 8192 < cells.length ? shipCell + 8192 : cells.length;
-			for( i in shipCell...end ) {
-				var c = cells[i];
-				bytes.set(((c.x + c.y * size) << ZBITS) | c.z, localId(Block.all[c.id]));
-			}
-			shipCell = end;
-		}
-		shipCells = null;
-		return true;
-	}
-
-	/** coordenada de la nave que corresponde a una del planeta (el planeta da la vuelta) */
-	function shipLocal( v : Float, d : Int ) : Float {
-		var l = (v - d) % size;
-		if( l < 0 ) l += size;
-		return l;
-	}
-
-	function shipBlock( x : Int, y : Int, z : Int ) : Block {
-		if( ship == null ) return null;
-		var lx = Std.int(shipLocal(x, shipDX)), ly = Std.int(shipLocal(y, shipDY));
-		if( lx >= ship.size || ly >= ship.size ) return null;
-		return ship.block(lx, ly, z - SHIP_Z);
-	}
-
-	/** Level.getStartPlace del original: un sitio de tierra llana fuera del agua donde aterriza la nave (fijo por semilla) */
-	public function startPlace( rnd : mt.Rand ) : { x : Int, y : Int, z : Int } {
-		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
-		var binf = Data.getBiome(biome);
-		// cambio del port: con el nivel del mar del generador, no con el actual (el original usa planet.waterLevel): si no, tras
-		// una bajada la nave podia aterrizar en otro sitio y una partida guardada dentro de ella quedaba en el aire
-		var water = gen.getWaterInfos().level;
-		// en una cometa (añadido del port) sobre su roca, que no tiene capa de tierra, y lejos del borde del mundo: la nave (17 de
-		// ancho) solo se dibuja donde aterrizo, no en las copias del mundo que dan la vuelta (updateWrap)
-		var comet = Comets.isComet(biomeName);
-		var soil = Block.get(binf.soils[comet ? 0 : 1]);
-		var margin = comet ? 12 : 1;
-		var through = new Map<Int, Bool>();
-		for( b in binf.startThrough ) through.set(Block.get(b).index, true);
-		var ntry = 10000;
-		while( --ntry > 0 ) {
-			var x = rnd.random(size - margin * 2) + margin;
-			var y = rnd.random(size - margin * 2) + margin;
-			var z = HEIGHT - 1;
-			while( z > water ) {
-				var b = block(x, y, z);
-				if( b != null && !through.exists(b.index) ) break;
-				z--;
-			}
-			if( z <= water ) continue;
-			if( !block(x, y, z).isSame(soil) ) continue;
-			z++;
-			if( !freePlace(x, y, z) ) continue;
-			return { x : x, y : y, z : z };
-		}
-		return null;
-	}
-
-	/** sitio de aterrizaje de la nave (Game.placeShip): fijo por semilla, elegido sobre el terreno generado */
-	public function shipPlace() : { x : Int, y : Int, z : Int } {
-		if( shipSpot == null ) shipSpot = startPlace(new mt.Rand(seed ^ 0x5A17));
-		return shipSpot;
-	}
-	var shipSpot : { x : Int, y : Int, z : Int };
-
-	/** casi plano: pocos huecos alrededor (Level.freePlace) */
-	function freePlace( x : Int, y : Int, z : Int ) : Bool {
-		var count = 0;
-		for( dx in -1...2 )
-			for( dy in -1...2 )
-				if( block(x + dx, y + dy, z) != null ) count++;
-		z--;
-		for( dx in -1...2 )
-			for( dy in -1...2 )
-				if( block(x + dx, y + dy, z) == null ) count++;
-		return count < 3;
-	}
-
-	// ---------------------------------------------------------------- edicion
-
-	inline function wrapC( v : Int ) : Int {
-		return v < 0 ? v + size : (v >= size ? v - size : v);
-	}
-
-	function initLightTables() {
+	override function resetTables() {
 		idTag = [];
 		lightIdx = [];
 		lightInfos = [];
-		for( i in 0...gen.blocks.length ) registerId(i);
 	}
 
 	/** tablas de tipo y de luz de un id local de bloque */
-	function registerId( id : Int ) {
+	override function registerId( id : Int ) {
 		while( idTag.length <= id ) idTag.push(0);
 		while( lightIdx.length <= id ) lightIdx.push(-1);
 		var b = gen.blocks[id];
@@ -979,129 +865,24 @@ class World {
 			}
 	}
 
-	/** id local (de este planeta) de un bloque global; lo da de alta si el mundo no lo tenia */
-	public function localId( b : Block ) : Int {
-		if( b == null ) return 0;
-		var id = gen.alloc(b.k);
-		for( i in idTag.length...gen.blocks.length ) registerId(i);
-		return id > 255 ? 0 : id;
-	}
-
-	/**
-	 * Cabe el bloque en la celda z (la nave tiene su propio mundo): cada celda guarda su id local en un byte, asi que un mundo
-	 * solo tiene 255 bloques distintos. Con los kubes de Kube hay mas en el juego; sin esto, el que no cabe se pondria como aire.
-	 */
-	public function hasRoom( b : Block, z : Int ) : Bool {
-		if( z >= SHIP_Z && ship != null ) return ship.hasRoom(b, z - SHIP_Z);
-		if( b == null ) return true;
-		// gen.alloc da de alta el bloque aunque no quepa (localId lo pone entonces como aire)
-		var id = gen.hblocks.get(Type.enumIndex(b.k));
-		return id != null ? id <= 255 : gen.blocks.length <= 255;
-	}
-
-	function applySaved() {
-		// el mar va antes que los cambios: las capas quitadas son del terreno generado y lo puesto despues se queda
-		if( seaBlock != null ) {
-			var level = seaLevel, flood = 0;
-			if( savedEdits != null ) {
-				var i = 0;
-				while( i + 1 < savedEdits.length ) {
-					if( savedEdits[i] == SEA_LEVEL ) level = savedEdits[i + 1];
-					else if( savedEdits[i] == SEA_FLOOD ) flood = savedEdits[i + 1];
-					i += 2;
-				}
-			}
-			initSea(level, flood);
-		}
-		if( savedEdits == null ) return;
-		var i = 0;
-		while( i + 1 < savedEdits.length ) {
-			var key = savedEdits[i], gi = savedEdits[i + 1];
-			i += 2;
-			if( key < 0 ) continue;
-			var lvl = gi >> 16;
-			var b = (gi & 0xFFFF) == 0 ? null : Block.all[gi & 0xFFFF];
-			bytes.set(key, localId(b));
-			editMap.set(key, gi);
-			if( lvl > 0 ) waterLvl.set(key, lvl);
-		}
-		savedEdits = null;
-	}
-
-	/** cambios para guardar: pares [celda, bloque, celda, bloque, ...] */
-	public function editsFlat() : Array<Int> {
-		var out = [];
-		for( k in editMap.keys() ) {
-			out.push(k);
-			out.push(editMap.get(k));
-		}
-		// el mar, si ha cambiado (las partidas sin estas claves cargan el del generador)
-		if( seaBlock != null && (seaLevel != gen.getWaterInfos().level || waterFlood != 0) ) {
-			out.push(SEA_LEVEL);
-			out.push(seaLevel);
-			out.push(SEA_FLOOD);
-			out.push(waterFlood);
-		}
-		return out;
-	}
-
 	// ---------------------------------------------------------------- nivel del mar
 
-	/**
-	 * Al terminar de generar: el total de agua (Offline: planet.waterTotal), el agua de cada altura y, si la partida tenia el
-	 * mar mas bajo, las capas que ya habian desaparecido (solo el agua del generador: lo cambiado despues esta en editMap).
+	/*
+	 * Bajada del mar (WorldData.reduceWater): el original rehace todas las celdas (cada una recalcula su luz al rehacerse). Aqui
+	 * la luz solo cambia donde la capa quitada recibia el sol, con las mismas reglas que computeLight: el sol baja hasta el nuevo
+	 * primer bloque, da luz de sol a los lados y se reparte desde ahi (stepSeaLight, en varios fotogramas si es mucho). Luego se
+	 * rehacen solo los trozos con celdas quitadas o con otra luz y los que dan a ellos, los mas cercanos a la camara primero.
 	 */
-	function initSea( level : Int, flood : Int ) {
-		var gl = gen.getWaterInfos().level;
-		waterTotal = gen.getWaterInfos().total;
-		waterFlood = flood;
-		seaId = localId(seaBlock);
-		if( gl > HEIGHT - 2 ) gl = HEIGHT - 2;
-		seaLevel = level < 0 ? 0 : (level > gl ? gl : level);
-		seaCount = [for( _ in 0...gl + 1 ) 0];
-		if( seaId <= 0 ) return;
-		for( col in 0...size * size ) {
-			var base = col << ZBITS;
-			for( z in 1...gl + 1 ) {
-				if( bytes.get(base | z) != seaId ) continue;
-				seaCount[z]++;
-				if( z > seaLevel ) bytes.set(base | z, 0);
-			}
-		}
-	}
+	var seaT0 = 0.;
 
-	/** Local.processBlock: Process ha puesto un bloque del agua del bioma */
-	public function addFlood() {
-		waterFlood++;
-		// cambio del port: sin mar (waterTotal = 0) el umbral seria 0 y cada bloque de agua bajaria un mar que no existe
-		if( !floodFlag && waterTotal > 0 && waterFlood >= waterTotal / seaLevel ) floodFlag = true;
-	}
-
-	/** bloques de agua que faltan para la siguiente bajada (pruebas) */
-	public function floodThreshold() : Int {
-		return seaLevel <= 0 ? 0 : Math.ceil(waterTotal / seaLevel);
-	}
-
-	/**
-	 * Local.reduceWater + Game.onCommand(SReduceWater): desaparece el agua del bioma de la capa z = nivel del mar en todo el
-	 * planeta y el nivel baja 1; el contador pierde el agua que el generador puso en esa capa.
-	 * El original rehace todas las celdas (cada una recalcula su luz al rehacerse). Aqui la luz solo cambia donde la capa
-	 * quitada recibia el sol, con las mismas reglas que computeLight: el sol baja hasta el nuevo primer bloque, da luz de sol a
-	 * los lados y se reparte desde ahi (stepSeaLight, en varios fotogramas si es mucho). Luego se rehacen solo los trozos con
-	 * celdas quitadas o con otra luz y los que dan a ellos, los mas cercanos a la camara primero.
-	 */
-	public function reduceWater() {
-		floodFlag = false;
-		var z = seaLevel;
-		if( z <= 0 || seaCount == null ) return;
+	override function beforeSeaDrop() {
 		// una bajada anterior a medias se termina antes
 		while( seaJob != null ) stepSeaLight(1e9);
-		// cambio del port: Local.reduceWater cuenta Type.enumIndex(BWater), no el agua del bioma, y en los otros biomas el
-		// contador no bajaba nunca (cada bloque nuevo volvia a bajar el mar); aqui se cuenta el agua del bioma
-		waterFlood -= z < seaCount.length ? seaCount[z] : 0;
-		seaLevel--;
+	}
+
+	override function seaDropStart( z : Int ) {
 		var cols = size * size;
-		var t0 = haxe.Timer.stamp();
+		seaT0 = haxe.Timer.stamp();
 		var j = seaJob = new SeaLight();
 		j.z = z;
 		j.top = lightTop >= 0 ? lightTop : HEIGHT - 1;
@@ -1110,32 +891,29 @@ class World {
 		j.sky = haxe.io.Bytes.alloc(cols);
 		j.sky.fill(0, cols, 255);
 		j.seen = haxe.io.Bytes.alloc((cols << ZBITS) >> 3);
-		// las celdas de esa capa cambiadas en la partida (pocas) quedan como aire en el guardado; las del generador las vuelve a
-		// quitar initSea al cargar
-		for( k in [for( k in editMap.keys() ) if( (k & (HEIGHT - 1)) == z && bytes.get(k) == seaId ) k] ) {
-			editMap.set(k, 0);
-			waterLvl.remove(k);
-		}
 		j.cand = [];
-		for( col in 0...cols ) {
-			var p = (col << ZBITS) | z;
-			var id = bytes.get(p);
-			if( id != seaId ) {
-				// agua del mar bajo un bloque en la nueva capa de arriba: con olas tiene cara de arriba (Builder.hx: anim && z == waterLevel)
-				if( id != 0 && bytes.get(p - 1) == seaId ) j.chg.set(col, 1);
-				continue;
-			}
-			bytes.set(p, 0);
-			j.removed++;
-			j.chg.set(col, 1);
-			// puede estar al sol si encima hay luz plena (la tiene todo el aire al sol); se mira en stepSeaLight
-			if( z == j.top || light.get(p + 1) >= j.lmax ) j.cand.push(col);
-		}
+	}
+
+	override function seaKept( col : Int, p : Int, id : Int ) {
+		// agua del mar bajo un bloque en la nueva capa de arriba: con olas tiene cara de arriba (Builder.hx: anim && z == waterLevel)
+		if( id != 0 && cell(p - 1) == seaId ) seaJob.chg.set(col, 1);
+	}
+
+	override function seaRemoved( col : Int, p : Int ) {
+		var j = seaJob;
+		j.removed++;
+		j.chg.set(col, 1);
+		// puede estar al sol si encima hay luz plena (la tiene todo el aire al sol); se mira en stepSeaLight
+		if( j.z == j.top || light.get(p + 1) >= j.lmax ) j.cand.push(col);
+	}
+
+	override function seaDropEnd() {
+		var j = seaJob;
 		j.lsun = Std.int(sunP - sunF);
 		if( j.lsun < 0 ) j.lsun = 0;
 		j.cur = [];
 		j.lvalue = sunP - sunF * 2;
-		j.time = haxe.Timer.stamp() - t0;
+		j.time = haxe.Timer.stamp() - seaT0;
 		if( FLUSH_TIME ) Sys.println("flush: capa del mar quitada " + Std.int(j.time * 1000) + " ms");
 		stepSeaLight(SEA_BUDGET);
 	}
@@ -1148,7 +926,7 @@ class World {
 			var base = col << ZBITS;
 			s = j.top + 1;
 			while( s > 0 ) {
-				var id = bytes.get(base | (s - 1));
+				var id = cell(base | (s - 1));
 				if( id != 0 && idTag[id] != 0 ) break;
 				s--;
 			}
@@ -1185,7 +963,7 @@ class World {
 	 */
 	function sunSide( q : Int ) {
 		var j = seaJob;
-		var t = idTag[bytes.get(q)];
+		var t = idTag[cell(q)];
 		if( t >= NOLIGHT || (j.seen.get(q >> 3) & (1 << (q & 7))) != 0 || (t == 0 && (q & (HEIGHT - 1)) >= skyZ(q >> ZBITS)) ) return;
 		j.seen.set(q >> 3, j.seen.get(q >> 3) | (1 << (q & 7)));
 		if( light.get(q) < j.lsun ) {
@@ -1201,6 +979,7 @@ class World {
 	 * no cruza el aire al sol; cada celda una vez, en el anillo mas cercano. Al acabar pone a rehacer los trozos tocados.
 	 */
 	function stepSeaLight( budget : Float ) {
+		if( unbounded ) budget = 1e9;
 		var j = seaJob;
 		var ts = haxe.Timer.stamp();
 		var sz = size, n = 0;
@@ -1277,7 +1056,7 @@ class World {
 
 	inline function seaSpread( q : Int, l : Int ) {
 		var j = seaJob;
-		var t = idTag[bytes.get(q)];
+		var t = idTag[cell(q)];
 		if( t < NOLIGHT && (j.seen.get(q >> 3) & (1 << (q & 7))) == 0 ) {
 			var v = light.get(q);
 			if( !(t == 0 && v >= j.lmax && (q & (HEIGHT - 1)) >= skyZ(q >> ZBITS)) ) {
@@ -1291,33 +1070,14 @@ class World {
 		}
 	}
 
-	inline function cellKey( x : Int, y : Int, z : Int ) : Int {
-		return ((wrapC(x) + wrapC(y) * size) << ZBITS) | z;
-	}
-
-	/** nivel del agua de la celda: 0 = fuente (llena), 1..7 = fluye (cada vez mas baja), 8 = cae */
-	public function waterLevelAt( x : Int, y : Int, z : Int ) : Int {
-		if( z < 1 || z >= HEIGHT ) return 0;
-		var v = waterLvl.get(cellKey(x, y, z));
-		return v == null ? 0 : v;
-	}
-
-	/** pone agua con su nivel (0 = fuente) */
-	public function setWater( x : Int, y : Int, z : Int, b : Block, level : Int ) {
-		if( z < 1 || z >= HEIGHT - 1 || z >= SHIP_Z ) return;
-		var key = cellKey(x, y, z);
-		if( block(x, y, z) != b ) setBlock(x, y, z, b);
-		else {
-			// mismo bloque, otro nivel: solo hay que rehacer la malla
-			var n = size >> 4;
-			for( dy in -1...2 )
-				for( dx in -1...2 ) {
-					var id = (wrapC(x + dx) >> 4) + (wrapC(y + dy) >> 4) * n;
-					if( immediate.indexOf(id) < 0 ) immediate.push(id);
-				}
-		}
-		if( level > 0 ) waterLvl.set(key, level) else waterLvl.remove(key);
-		editMap.set(key, b.index | (level << 16));
+	/** WorldData.setWater: mismo bloque, otro nivel: solo hay que rehacer la malla */
+	override function levelChanged( x : Int, y : Int ) {
+		var n = size >> 4;
+		for( dy in -1...2 )
+			for( dx in -1...2 ) {
+				var id = (wrapC(x + dx) >> 4) + (wrapC(y + dy) >> 4) * n;
+				if( immediate.indexOf(id) < 0 ) immediate.push(id);
+			}
 	}
 
 	/**
@@ -1370,7 +1130,7 @@ class World {
 	}
 
 	/** caras de un liquido con la superficie inclinada; open dice que lados se ven */
-	function addLiquid( m : MeshBuf, b : Block, fam : Int, x : Int, y : Int, z : Int, open : Int -> Int -> Int -> Bool, su : Float, sd : Float, sx : Float, sy : Float, neg : Bool ) {
+	function addLiquid( m : ChunkBuf, b : Block, fam : Int, x : Int, y : Int, z : Int, open : Int -> Int -> Int -> Bool, su : Float, sd : Float, sx : Float, sy : Float, neg : Bool ) {
 		var fx = x, fy = y, fz = z;
 		var full = liquidFull(x, y, z, fam);
 		var h00 = fz + (full ? 1. : liquidCorner(x, y, z, fam)), h10 = fz + (full ? 1. : liquidCorner(x + 1, y, z, fam));
@@ -1395,20 +1155,8 @@ class World {
 		}
 	}
 
-	/** Cambia un bloque (null = aire). El trozo se rehace al momento; la luz y los vecinos, en los siguientes fotogramas. */
-	public function setBlock( x : Int, y : Int, z : Int, b : Block ) : Void {
-		if( z >= SHIP_Z ) {
-			// la nave tiene su propio volumen
-			if( ship != null ) ship.setBlock(Std.int(shipLocal(x, shipDX)), Std.int(shipLocal(y, shipDY)), z - SHIP_Z, b);
-			return;
-		}
-		x = wrapC(x);
-		y = wrapC(y);
-		if( z < 1 || z >= HEIGHT - 1 ) return;
-		var key = ((x + y * size) << ZBITS) | z;
-		bytes.set(key, localId(b));
-		editMap.set(key, b == null ? 0 : b.index);
-		waterLvl.remove(key);
+	/** WorldData.setBlock ha cambiado la celda key: el trozo se rehace al momento; la luz y los vecinos, en los siguientes fotogramas */
+	override function cellChanged( x : Int, y : Int, z : Int, key : Int ) {
 		var n = size >> 4;
 		for( dy in -1...2 )
 			for( dx in -1...2 ) {
@@ -1417,7 +1165,7 @@ class World {
 				if( immediate.indexOf(id) < 0 ) immediate.push(id);
 			}
 		// mientras tanto, un hueco nuevo toma la luz de su vecino mas claro (si no, se veria negro hasta recalcular)
-		if( idTag[bytes.get(key)] < NOLIGHT ) {
+		if( idTag[cell(key)] < NOLIGHT ) {
 			var best = light.get(key);
 			inline function nb( q : Int ) { var v = light.get(q); if( v > best ) best = v; }
 			nb(((wrapC(x - 1) + y * size) << ZBITS) | z);
@@ -1432,7 +1180,6 @@ class World {
 		// la luz de la zona se recalcula cuando se deja de editar un momento: al excavar seguido (creativo) no se
 		// recalcula en cada bloque, que en la nave nodriza (miles de luces) bajaba mucho los fotogramas
 		editQuiet = 8;
-		if( onSetBlock != null ) onSetBlock(x, y, z);
 	}
 
 	var editQuiet = 0;
@@ -1494,13 +1241,15 @@ class World {
 				var id = seaChunks.shift();
 				buildChunk(id % n, Std.int(id / n));
 				k++;
-			} while( seaChunks.length > 0 && haxe.Timer.stamp() - ts < SEA_BUDGET );
+			} while( seaChunks.length > 0 && (unbounded || haxe.Timer.stamp() - ts < SEA_BUDGET) );
 			if( FLUSH_TIME ) Sys.println("flush: " + k + " trozos del mar " + Std.int((haxe.Timer.stamp() - ts) * 1000) + " ms (quedan " + seaChunks.length + ")");
 		}
 	}
 
 	/** tiempo por fotograma para la luz y los trozos de una bajada del mar (s) */
 	static inline var SEA_BUDGET = 0.006;
+	/** --fixeddt (pruebas): la carga y los trabajos repartidos acaban en un paso, sin depender de lo deprisa que va la maquina */
+	public static var unbounded = Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--fixeddt="));
 
 	public inline function hasPending() : Bool {
 		return immediate.length > 0 || pendingRelight.length > 0 || lightChunks.length > 0 || seaChunks.length > 0 || seaJob != null;
@@ -1544,7 +1293,7 @@ class World {
 			var base = col << ZBITS;
 			for( z in 1...HEIGHT ) {
 				var p = base | z;
-				var li = lightIdx[bytes.get(p)];
+				var li = lightIdx[cell(p)];
 				if( li < 0 ) continue;
 				var info = lightInfos[li];
 				if( light.get(p) >= info.p ) continue;
@@ -1598,7 +1347,7 @@ class World {
 		var z = lightTop >= 0 ? lightTop : HEIGHT - 1;
 		while( z >= 0 ) {
 			var p = base | z;
-			var t = idTag[bytes.get(p)];
+			var t = idTag[cell(p)];
 			if( t != 0 ) {
 				if( t < NOLIGHT ) {
 					light.set(p, lsun);
@@ -1609,14 +1358,14 @@ class World {
 			light.set(p, lmax);
 			if( okx ) {
 				var q = (cxm << ZBITS) | z;
-				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+				if( light.get(q) == 0 && idTag[cell(q)] < NOLIGHT ) {
 					light.set(q, lsun);
 					seeds.push(q);
 				}
 			}
 			if( oky ) {
 				var q = (cym << ZBITS) | z;
-				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+				if( light.get(q) == 0 && idTag[cell(q)] < NOLIGHT ) {
 					light.set(q, lsun);
 					seeds.push(q);
 				}
@@ -1625,7 +1374,7 @@ class World {
 		}
 		while( z > 0 ) {
 			var p = base | z;
-			if( idTag[bytes.get(p)] < NOLIGHT && ((okx && isSunAir((cxm << ZBITS) | z, lmax)) || (oky && isSunAir((cym << ZBITS) | z, lmax))) ) {
+			if( idTag[cell(p)] < NOLIGHT && ((okx && isSunAir((cxm << ZBITS) | z, lmax)) || (oky && isSunAir((cym << ZBITS) | z, lmax))) ) {
 				light.set(p, lsun);
 				seeds.push(p);
 			}
@@ -1639,7 +1388,7 @@ class World {
 	var redFace = -1;
 	var redB : Array<Float>;
 
-	function addQuad( m : MeshBuf, p : Array<Float>, tile : Int, shade : Float ) {
+	function addQuad( m : ChunkBuf, p : Array<Float>, tile : Int, shade : Float ) {
 		shv[0] = shv[1] = shv[2] = shv[3] = shade;
 		addQuad4(m, p, tile);
 	}
@@ -1649,7 +1398,7 @@ class World {
 	 * en el plano exterior de la cara, multiplicada por la sombra de la cara. Con BFNoShade (neg) no depende de la luz.
 	 * (cx,cy,cz) es la celda del bloque y (ox,oy,oz) la normal de la cara; uniform usa solo la celda exterior.
 	 */
-	function addQuadL( m : MeshBuf, p : Array<Float>, tile : Int, shade : Float, neg : Bool, ox : Int, oy : Int, oz : Int, cx : Int, cy : Int, cz : Int, uniform = false, ?lp : Array<Float> ) {
+	function addQuadL( m : ChunkBuf, p : Array<Float>, tile : Int, shade : Float, neg : Bool, ox : Int, oy : Int, oz : Int, cx : Int, cy : Int, cz : Int, uniform = false, ?lp : Array<Float> ) {
 		if( tile < 0 || tile >= 0xFFF ) return;
 		if( neg ) {
 			shv[0] = shv[1] = shv[2] = shv[3] = shade;
@@ -1696,16 +1445,12 @@ class World {
 		return Std.int(Math.max(Math.max(lightAt(x + 1, y, z), lightAt(x - 1, y, z)), Math.max(Math.max(lightAt(x, y + 1, z), lightAt(x, y - 1, z)), Math.max(lightAt(x, y, z + 1), lightAt(x, y, z - 1)))));
 	}
 
-	function addQuad4( m : MeshBuf, p : Array<Float>, tile : Int ) {
+	function addQuad4( m : ChunkBuf, p : Array<Float>, tile : Int ) {
 		if( tile < 0 || tile >= 0xFFF ) return;
 		var tx = tile & 63, ty = tile >> 6;
 		var u0 = tx / 64 + (1 - TE) / 128, v0 = ty / 64 + (1 - TE) / 128;
 		var u1 = u0 + TE / 64, v1 = v0 + TE / 64;
-		var b = m.pts.length;
-		m.pts.push(new h3d.col.Point(p[0], p[1], p[2]));
-		m.pts.push(new h3d.col.Point(p[3], p[4], p[5]));
-		m.pts.push(new h3d.col.Point(p[6], p[7], p[8]));
-		m.pts.push(new h3d.col.Point(p[9], p[10], p[11]));
+		var b = m.verts;
 		if( redFace >= 0 ) {
 			// bloque parcial (BTReduced): como Builder.addCustomQuad, la cara muestra un RECORTE de la casilla del tamano de la cara
 			// (en bloques), desde su esquina superior izquierda, en vez de la casilla entera estirada
@@ -1719,31 +1464,63 @@ class World {
 				case 4: u = redB[2] - px; v = redB[4] - pz;
 				default: u = px - redB[0]; v = redB[4] - pz;
 				}
-				m.uvs.push(new h3d.prim.UV((tx + u * TE) / 64, (ty + v * TE) / 64));
+				m.vertex(px, py, pz, (tx + u * TE) / 64, (ty + v * TE) / 64, shv[k]);
 			}
 			redFace = -1;
 		} else {
-		m.uvs.push(new h3d.prim.UV(u0, v1));
-		m.uvs.push(new h3d.prim.UV(u1, v1));
-		m.uvs.push(new h3d.prim.UV(u1, v0));
-		m.uvs.push(new h3d.prim.UV(u0, v0));
+			m.vertex(p[0], p[1], p[2], u0, v1, shv[0]);
+			m.vertex(p[3], p[4], p[5], u1, v1, shv[1]);
+			m.vertex(p[6], p[7], p[8], u1, v0, shv[2]);
+			m.vertex(p[9], p[10], p[11], u0, v0, shv[3]);
 		}
-		for( i in 0...4 ) m.cols.push(new h3d.col.Point(shv[i], shv[i], shv[i]));
 		// la diagonal se elige segun la luz para evitar costuras raras
 		if( shv[0] + shv[2] >= shv[1] + shv[3] ) {
-			m.idx.push(b); m.idx.push(b + 1); m.idx.push(b + 2);
-			m.idx.push(b); m.idx.push(b + 2); m.idx.push(b + 3);
+			m.tri(b, b + 1, b + 2);
+			m.tri(b, b + 2, b + 3);
 		} else {
-			m.idx.push(b + 1); m.idx.push(b + 2); m.idx.push(b + 3);
-			m.idx.push(b + 1); m.idx.push(b + 3); m.idx.push(b);
+			m.tri(b + 1, b + 2, b + 3);
+			m.tri(b + 1, b + 3, b);
 		}
 		faces++;
 	}
 
+	/** las 12 coordenadas de una cara en un tampon que se reutiliza (addQuadL las usa enseguida): sin un Array por cara */
+	var quadA = [for( i in 0...12 ) 0.];
+	var quadB = [for( i in 0...12 ) 0.];
+	inline function qp( a : Float, b : Float, c : Float, d : Float, e : Float, f : Float, g : Float, h : Float, i : Float, j : Float, k : Float, l : Float ) {
+		var q = quadA;
+		q[0] = a; q[1] = b; q[2] = c; q[3] = d; q[4] = e; q[5] = f; q[6] = g; q[7] = h; q[8] = i; q[9] = j; q[10] = k; q[11] = l;
+		return q;
+	}
+	inline function qp2( a : Float, b : Float, c : Float, d : Float, e : Float, f : Float, g : Float, h : Float, i : Float, j : Float, k : Float, l : Float ) {
+		var q = quadB;
+		q[0] = a; q[1] = b; q[2] = c; q[3] = d; q[4] = e; q[5] = f; q[6] = g; q[7] = h; q[8] = i; q[9] = j; q[10] = k; q[11] = l;
+		return q;
+	}
+
+	/** raices de las sombras de cada bloque del generador (shadeUp, shadeDown, shadeX, shadeY: 4 por numero local), una vez */
+	var shadeTab : Array<Float> = [];
+	inline function shadeIndex( id : Int ) : Int {
+		if( (id << 2) >= shadeTab.length ) fillShades();
+		return id << 2;
+	}
+	function fillShades() {
+		for( i in (shadeTab.length >> 2)...gen.blocks.length ) {
+			var b = gen.blocks[i];
+			if( b == null ) {
+				for( k in 0...4 ) shadeTab.push(1);
+				continue;
+			}
+			shadeTab.push(Math.sqrt(b.shadeUp));
+			shadeTab.push(Math.sqrt(b.shadeDown));
+			shadeTab.push(Math.sqrt(b.shadeX));
+			shadeTab.push(Math.sqrt(b.shadeY));
+		}
+	}
+
 	/** modelos de Builder.hx (plantas en cruz, planos, columnas, cajas): se copia la geometria del original */
-	function addModel( m : MeshBuf, b : Block, x : Int, y : Int, z : Int ) {
-		var mk = b.model != null ? b.model : MCross;
-		var md = Models.get(mk);
+	function addModel( m : ChunkBuf, b : Block, x : Int, y : Int, z : Int ) {
+		var md = Models.of(b);
 		var v = md.v;
 		var n = Std.int(v.length / 24);
 		// los modelos usan la luz de su propia celda (Builder: getLight(p) / LBASE)
@@ -1753,17 +1530,15 @@ class World {
 			var tile = !md.multi || sel == 0 ? b.tlr : (sel == 1 ? b.tu : b.td);
 			if( tile < 0 || tile >= 0xFFF ) continue;
 			var tx = tile & 63, ty = tile >> 6;
-			var base = m.pts.length;
+			var base = m.verts;
 			for( k in 0...4 ) {
 				var o = q * 24 + k * 6;
 				var u = v[o + 3];
 				var s = v[o + 5] * lt;
-				m.pts.push(new h3d.col.Point(x + v[o], y + v[o + 1], z + v[o + 2]));
-				m.uvs.push(new h3d.prim.UV(tx / 64 + (1 - TE) / 128 + (u - Std.int(u)), ty / 64 + (1 - TE) / 128 + v[o + 4]));
-				m.cols.push(new h3d.col.Point(s, s, s));
+				m.vertex(x + v[o], y + v[o + 1], z + v[o + 2], tx / 64 + (1 - TE) / 128 + (u - Std.int(u)), ty / 64 + (1 - TE) / 128 + v[o + 4], s);
 			}
-			m.idx.push(base); m.idx.push(base + 1); m.idx.push(base + 2);
-			m.idx.push(base + 2); m.idx.push(base + 1); m.idx.push(base + 3);
+			m.tri(base, base + 1, base + 2);
+			m.tri(base + 2, base + 1, base + 3);
 			faces++;
 		}
 	}
@@ -1781,17 +1556,28 @@ class World {
 	public static inline var LAYER_ALPHA_DEPTH = -2;
 	public static inline var LAYER_ALPHA = -1;
 
-	function emitMesh( m : MeshBuf, kind : Int, scroll = 0. ) {
-		if( m.pts.length == 0 ) return;
+	/**
+	 * Pasada que solo escribe la profundidad o el stencil: el color queda como estaba con la mezcla Zero, One (0 * nuevo +
+	 * 1 * lo que habia), con la mascara de color abierta. Antes era setColorMask(false, false, false, false), y en un PC con
+	 * "Mesa Intel(R) HD Graphics 4600 (HSW GT2)" (Mesa 25.2, controlador crocus) la cascada salia de un negro puro, sin la
+	 * niebla de lo lejano (nada de lo que pinta el mundo da ese negro), tambien a traves de las hojas, despues de un rato de
+	 * juego. La pasada de profundidad con la mascara cerrada era lo unico que no usaba nada mas. En las demas tarjetas el
+	 * resultado es el mismo.
+	 */
+	public static function keepColor( p : h3d.mat.Pass ) {
+		p.blend(Zero, One);
+	}
+
+	function emitMesh( m : ChunkBuf, kind : Int, scroll = 0. ) {
+		if( m.verts == 0 ) return;
 		var ts = null;
 		if( scroll != 0 ) {
 			ts = new TileScroll();
 			ts.speed = scroll;
 		}
-		var poly = new ChunkPrim(m.pts, m.idx);
-		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
-		poly.uvs = m.uvs;
-		poly.colors = m.cols;
+		// con normales: DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
+		m.finish();
+		var poly = ChunkPrim.ofBuf(m);
 		// sus buffers se crean y se suben ya, con el trozo (en la carga, dentro del tiempo de cada paso): si no, se hacian en el
 		// primer dibujo, los de todo el planeta en la misma imagen (~280 buffers y 350-730 ms al aparecer el menu o el planeta)
 		poly.alloc(h3d.Engine.getCurrent());
@@ -1805,6 +1591,15 @@ class World {
 		mat.mainPass.enableLights = false;
 		mat.mainPass.culling = None;
 		mat.mainPass.addShader(new h3d.shader.VertexColor());
+		if( kind == 2 && mat.texture == Atlas.mipped ) {
+			// antes de sky.fog (mezcla el color con el del cielo)
+			if( waterGrazing == null ) {
+				waterGrazing = new WaterGrazing();
+				waterGrazing.texture = Atlas.mipped;
+				waterGrazing.flatLod = Atlas.MIP_LEVELS - 1;
+			}
+			mat.mainPass.addShader(waterGrazing);
+		}
 		mat.mainPass.addShader(sky.fog);
 		if( ts != null ) mat.mainPass.addShader(ts);
 		if( kind == 1 ) {
@@ -1823,6 +1618,8 @@ class World {
 			// solo la cara translucida mas cercana, como el original (pasada de profundidad y luego color con depth Equal)
 			mat.mainPass.depthTest = LessEqual;
 			mat.mainPass.layer = LAYER_ALPHA;
+			// el mismo programa que las pasadas de los pixeles solidos y de profundidad (ver AlphaCut); umbral 0: no descarta nada
+			mat.mainPass.addShader(new AlphaCut(0));
 		} else if( kind == 2 ) {
 			// agua: translucida; escribe profundidad como la primera pasada del original (water0)
 			mat.blendMode = Alpha;
@@ -1846,11 +1643,10 @@ class World {
 			cut.mainPass.addShader(new h3d.shader.VertexColor());
 			cut.mainPass.addShader(sky.fog);
 			if( ts != null ) cut.mainPass.addShader(ts);
-			cut.textureShader.killAlpha = true;
-			cut.textureShader.killAlphaThreshold = 0.9;
+			cut.mainPass.addShader(new AlphaCut(0.9));
 			addChunkMesh(poly, cut);
-			// profundidad de la cara translucida mas cercana (AlphaShader0 del original), antes del color: mismos shaders de
-			// vertices que el color, para que la profundidad coincida. El hielo tiene alfa >= 0.28 en toda su textura; el cristal
+			// profundidad de la cara translucida mas cercana (AlphaShader0 del original), antes del color: el mismo programa que el
+			// color (AlphaCut), para que la profundidad coincida. El hielo tiene alfa >= 0.28 en toda su textura; el cristal
 			// es casi todo < 0.25 y no la escribe, asi lo que hay detras de un cristal se sigue viendo
 			var depth = h3d.mat.Material.create(atlas);
 			depth.shadows = false;
@@ -1859,10 +1655,9 @@ class World {
 			depth.mainPass.addShader(new h3d.shader.VertexColor());
 			depth.mainPass.addShader(sky.fog);
 			if( ts != null ) depth.mainPass.addShader(ts);
-			depth.textureShader.killAlpha = true;
-			depth.textureShader.killAlphaThreshold = 0.25;
+			depth.mainPass.addShader(new AlphaCut(0.25));
 			depth.mainPass.setPassName("alpha");
-			depth.mainPass.setColorMask(false, false, false, false);
+			keepColor(depth.mainPass);
 			depth.mainPass.layer = LAYER_ALPHA_DEPTH;
 			addChunkMesh(poly, depth);
 		}
@@ -1900,7 +1695,7 @@ class World {
 			// como sus pasadas normales de BTAlpha: solo la cara de delante
 			mk.mainPass.culling = Back;
 			mk.mainPass.depthWrite = false;
-			mk.mainPass.setColorMask(false, false, false, false);
+			keepColor(mk.mainPass);
 			mk.mainPass.stencil.setFunc(Always, STENCIL_REVEAL, 0xFF, STENCIL_REVEAL);
 			mk.mainPass.stencil.setOp(Keep, Keep, Replace);
 			addChunkMesh(poly, mk);
@@ -1987,18 +1782,18 @@ class World {
 	}
 
 	function buildChunk( cx : Int, cy : Int ) {
-		var solidBuf = new MeshBuf();
-		var alphaBuf = new MeshBuf();
-		var waterBuf = new MeshBuf();
-		var blendBuf = new MeshBuf();
+		var solidBuf = new ChunkBuf();
+		var alphaBuf = new ChunkBuf();
+		var waterBuf = new ChunkBuf();
+		var blendBuf = new ChunkBuf();
 		// Kube invisible: caras que pintan el cielo, y caras de los cristales que lo revelan (emitInvisible)
-		var invisBuf = new MeshBuf();
-		var markBuf = new MeshBuf();
+		var invisBuf = new ChunkBuf();
+		var markBuf = new ChunkBuf();
 		// caras de los bloques con BFScroll: un material por tipo y velocidad (TileScroll)
-		var scrollBufs = new Array<{ kind : Int, speed : Float, buf : MeshBuf }>();
-		function scrollBuf( kind : Int, speed : Float ) : MeshBuf {
+		var scrollBufs = new Array<{ kind : Int, speed : Float, buf : ChunkBuf }>();
+		function scrollBuf( kind : Int, speed : Float ) : ChunkBuf {
 			for( s in scrollBufs ) if( s.kind == kind && s.speed == speed ) return s.buf;
-			var buf = new MeshBuf();
+			var buf = new ChunkBuf();
 			scrollBufs.push({ kind : kind, speed : speed, buf : buf });
 			return buf;
 		}
@@ -2033,8 +1828,8 @@ class World {
 					if( id == 0 ) continue;
 					var b = gen.blocks[id];
 					if( b == null ) continue;
-					var su = Math.sqrt(b.shadeUp), sd = Math.sqrt(b.shadeDown);
-					var sx = Math.sqrt(b.shadeX), sy = Math.sqrt(b.shadeY);
+					var si = shadeIndex(id);
+					var su = shadeTab[si], sd = shadeTab[si + 1], sx = shadeTab[si + 2], sy = shadeTab[si + 3];
 					var fx = x, fy = y, fz = z;
 					var neg = b.hasFlag(BFNoShade);
 					var role = invisRole[id];
@@ -2059,16 +1854,17 @@ class World {
 						var oE = al ? openAlphaNear(x + 1, y, z) : open(x + 1, y, z);
 						var oS = al ? openAlphaNear(x, y - 1, z) : open(x, y - 1, z);
 						var oN = al ? openAlphaNear(x, y + 1, z) : open(x, y + 1, z);
+						if( !(oU || oD || oW || oE || oS || oN) ) continue;
 						// la vitre teintee y la glace noire tambien marcan donde dejan ver los Kubes invisibles (emitInvisible)
 						var reps = role == INV_REVEAL ? 2 : 1;
 						for( r in 0...reps ) {
 							if( r == 1 ) m = markBuf;
-							if( oU ) addQuadL(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su, neg, 0, 0, 1, x, y, z);
-							if( oD ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
-							if( oW ) addQuadL(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr, sx, neg, -1, 0, 0, x, y, z);
-							if( oE ) addQuadL(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx, neg, 1, 0, 0, x, y, z);
-							if( oS ) addQuadL(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy, neg, 0, -1, 0, x, y, z);
-							if( oN ) addQuadL(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy, neg, 0, 1, 0, x, y, z);
+							if( oU ) addQuadL(m, qp(fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1), b.tu, su, neg, 0, 0, 1, x, y, z);
+							if( oD ) addQuadL(m, qp(fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz), b.td, sd, neg, 0, 0, -1, x, y, z);
+							if( oW ) addQuadL(m, qp(fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1), b.tlr, sx, neg, -1, 0, 0, x, y, z);
+							if( oE ) addQuadL(m, qp(fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1), b.tlr, sx, neg, 1, 0, 0, x, y, z);
+							if( oS ) addQuadL(m, qp(fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1), b.tlr, sy, neg, 0, -1, 0, x, y, z);
+							if( oN ) addQuadL(m, qp(fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1), b.tlr, sy, neg, 0, 1, 0, x, y, z);
 						}
 					case BTModel, BTModel2Side, BTSprite:
 						addModel(alphaBuf, b, fx, fy, fz);
@@ -2082,25 +1878,26 @@ class World {
 							var s = b.size;
 							var x1 = fx + s.x1, y1 = fy + s.y1, z1 = fz + s.z1, x2 = fx + s.x2, y2 = fy + s.y2, z2 = fz + s.z2;
 							redB = [x1, y1, x2, y2, z2];
-							if( s.z2 < 1 || open(x, y, z + 1) ) { redFace = 0; addQuadL(alphaBuf, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su, neg, 0, 0, 1, x, y, z, lamp, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1]); }
-							if( s.z1 > 0 || open(x, y, z - 1) ) { redFace = 1; addQuadL(alphaBuf, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd, neg, 0, 0, -1, x, y, z, lamp, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz]); }
-							if( s.x1 > 0 || open(x - 1, y, z) ) { redFace = 2; addQuadL(alphaBuf, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx, neg, -1, 0, 0, x, y, z, lamp, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1]); }
-							if( s.x2 < 1 || open(x + 1, y, z) ) { redFace = 3; addQuadL(alphaBuf, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx, neg, 1, 0, 0, x, y, z, lamp, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1]); }
-							if( s.y1 > 0 || open(x, y - 1, z) ) { redFace = 4; addQuadL(alphaBuf, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy, neg, 0, -1, 0, x, y, z, lamp, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1]); }
-							if( s.y2 < 1 || open(x, y + 1, z) ) { redFace = 5; addQuadL(alphaBuf, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy, neg, 0, 1, 0, x, y, z, lamp, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1]); }
+							if( s.z2 < 1 || open(x, y, z + 1) ) { redFace = 0; addQuadL(alphaBuf, qp(x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2), b.tu, su, neg, 0, 0, 1, x, y, z, lamp, qp2(fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1)); }
+							if( s.z1 > 0 || open(x, y, z - 1) ) { redFace = 1; addQuadL(alphaBuf, qp(x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1), b.td, sd, neg, 0, 0, -1, x, y, z, lamp, qp2(fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz)); }
+							if( s.x1 > 0 || open(x - 1, y, z) ) { redFace = 2; addQuadL(alphaBuf, qp(x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2), b.tlr, sx, neg, -1, 0, 0, x, y, z, lamp, qp2(fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1)); }
+							if( s.x2 < 1 || open(x + 1, y, z) ) { redFace = 3; addQuadL(alphaBuf, qp(x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2), b.tlr, sx, neg, 1, 0, 0, x, y, z, lamp, qp2(fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1)); }
+							if( s.y1 > 0 || open(x, y - 1, z) ) { redFace = 4; addQuadL(alphaBuf, qp(x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2), b.tlr, sy, neg, 0, -1, 0, x, y, z, lamp, qp2(fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1)); }
+							if( s.y2 < 1 || open(x, y + 1, z) ) { redFace = 5; addQuadL(alphaBuf, qp(x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2), b.tlr, sy, neg, 0, 1, 0, x, y, z, lamp, qp2(fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1)); }
 						}
 					case BTExtended:
 						// caras con texturas distintas empaquetadas de a 12 bits (BFTextures)
-						if( open(x, y, z + 1) ) addQuadL(alphaBuf, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu & 0xFFF, su, neg, 0, 0, 1, x, y, z);
-						if( open(x, y, z - 1) ) addQuadL(alphaBuf, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td & 0xFFF, sd, neg, 0, 0, -1, x, y, z);
-						if( open(x - 1, y, z) ) addQuadL(alphaBuf, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr & 0xFFF, sx, neg, -1, 0, 0, x, y, z);
-						if( open(x + 1, y, z) ) addQuadL(alphaBuf, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr >> 12, sx, neg, 1, 0, 0, x, y, z);
-						if( open(x, y - 1, z) ) addQuadL(alphaBuf, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tu >> 12, sy, neg, 0, -1, 0, x, y, z);
-						if( open(x, y + 1, z) ) addQuadL(alphaBuf, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.td >> 12, sy, neg, 0, 1, 0, x, y, z);
+						if( open(x, y, z + 1) ) addQuadL(alphaBuf, qp(fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1), b.tu & 0xFFF, su, neg, 0, 0, 1, x, y, z);
+						if( open(x, y, z - 1) ) addQuadL(alphaBuf, qp(fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz), b.td & 0xFFF, sd, neg, 0, 0, -1, x, y, z);
+						if( open(x - 1, y, z) ) addQuadL(alphaBuf, qp(fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1), b.tlr & 0xFFF, sx, neg, -1, 0, 0, x, y, z);
+						if( open(x + 1, y, z) ) addQuadL(alphaBuf, qp(fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1), b.tlr >> 12, sx, neg, 1, 0, 0, x, y, z);
+						if( open(x, y - 1, z) ) addQuadL(alphaBuf, qp(fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1), b.tu >> 12, sy, neg, 0, -1, 0, x, y, z);
+						if( open(x, y + 1, z) ) addQuadL(alphaBuf, qp(fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1), b.td >> 12, sy, neg, 0, 1, 0, x, y, z);
 					default:
 					}
 				}
 
+		var te = haxe.Timer.stamp();
 		emitMesh(solidBuf, 0);
 		emitMesh(alphaBuf, 1);
 		emitMesh(waterBuf, 2);
@@ -2108,5 +1905,6 @@ class World {
 		for( s in scrollBufs ) emitMesh(s.buf, s.kind, s.speed);
 		emitMesh(invisBuf, 4);
 		emitMesh(markBuf, 5);
+		load.meshEmit += haxe.Timer.stamp() - te;
 	}
 }

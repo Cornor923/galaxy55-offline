@@ -144,6 +144,85 @@ class Button extends Widget {
 	}
 }
 
+/** Boton con un valor a la derecha (anadido del port): Personalizar en Nueva partida, con lo elegido dentro. */
+class InfoButton extends Button {
+	var value : h2d.Text;
+
+	public function new( parent : h2d.Object, text : String, w = 560, h = 54 ) {
+		super(parent, text, w, h);
+		value = Theme.text(this, "", 1.8, Theme.CYAN);
+		redraw();
+	}
+
+	public function setValue( s : String ) {
+		value.text = s;
+		redraw();
+	}
+
+	public function getValue() : String return value.text;
+
+	override function redraw() {
+		super.redraw();
+		if( value == null ) return;
+		// mas pequeno si no cabe entre el texto del boton y el borde (la semilla y la opcion, en los tres idiomas)
+		var room = w - 22 - (label.x + label.textWidth * label.scaleX) - 24;
+		value.setScale(Math.max(1.1, Math.min(1.8, room / Math.max(1, value.textWidth))));
+		value.x = w - 22 - value.textWidth * value.scaleX;
+		value.y = (h - value.textHeight * value.scaleY) * 0.5;
+		value.textColor = !enabled ? Theme.DISABLED : (focused ? Theme.ACCENT : Theme.CYAN);
+	}
+}
+
+/** Casilla para marcar (anadido del port): Intro, Espacio, A, izquierda, derecha o un clic la marcan o desmarcan. */
+class CheckBox extends Widget {
+	public var checked(default, set) = false;
+	public var onChange : Bool -> Void;
+	var box : h2d.Graphics;
+
+	public function new( parent : h2d.Object, text : String, checked : Bool, w = 560, h = 54 ) {
+		super(parent, w, h);
+		box = new h2d.Graphics(this);
+		setLabel(text);
+		this.checked = checked;
+		onActivate = toggle;
+		onLeft = toggle;
+		onRight = toggle;
+	}
+
+	public function toggle() {
+		if( !enabled ) return;
+		checked = !checked;
+		if( onChange != null ) onChange(checked);
+	}
+
+	function set_checked( v : Bool ) {
+		checked = v;
+		redraw();
+		return v;
+	}
+
+	override function redraw() {
+		super.redraw();
+		if( box == null ) return;
+		box.clear();
+		var s = 30., x = w - 22 - s, y = (h - s) * 0.5;
+		var col = !enabled ? Theme.DISABLED : (focused ? Theme.ACCENT : Theme.CYAN);
+		Theme.rect(box, x, y, s, s, 0x000000, 0.35);
+		Theme.rect(box, x, y, s, 2, col);
+		Theme.rect(box, x, y + s - 2, s, 2, col);
+		Theme.rect(box, x, y, 2, s, col);
+		Theme.rect(box, x + s - 2, y, 2, s, col);
+		if( checked ) {
+			// la marca: una V
+			box.lineStyle(4, col);
+			box.moveTo(x + 7, y + s * 0.52);
+			box.lineTo(x + s * 0.42, y + s - 8);
+			box.lineTo(x + s - 6, y + 7);
+			box.lineStyle();
+		}
+	}
+}
+
 /** Elige entre varias opciones con izquierda/derecha. */
 class Selector extends Widget {
 	public var title : String;
@@ -376,7 +455,14 @@ class Screen extends h2d.Object {
 	public var widgets = new Array<Widget>();
 	public var focus(default, null) = 0;
 	public var onBack : Void -> Void;
-	public var active = true;
+	/**
+	 * false mientras hay una ventana encima (GalaxyApp: renombrar, borrar, confirmar...): la pantalla no atiende al teclado ni al
+	 * mando (update) y, cambio del port, tampoco al raton: un Interactive que la tapa entera se queda con los clics y el paso del
+	 * puntero. Sin el, un clic fuera de los controles de la ventana llegaba al control de debajo (sobre una fila de la lista de
+	 * partidas, la jugaba; sobre Volver, volvia al menu) y el raton movia el foco de la pantalla de detras.
+	 */
+	public var active(default, set) = true;
+	var blocker : h2d.Interactive;
 	var navCooldown = 0.;
 	/** punto de la ventana donde se ha dejado el puntero (holdHover) */
 	var heldX = -1;
@@ -384,6 +470,24 @@ class Screen extends h2d.Object {
 
 	public function new( parent : h2d.Object ) {
 		super(parent);
+	}
+
+	function set_active( v : Bool ) {
+		active = v;
+		if( v ) {
+			if( blocker != null ) {
+				blocker.remove();
+				blocker = null;
+			}
+		} else if( blocker == null ) {
+			// encima de todo lo de esta pantalla y mas grande que cualquier ventana (las que son mas anchas o altas que 16:9)
+			blocker = new h2d.Interactive(Theme.W * 5, Theme.H * 5, this);
+			blocker.x = -Theme.W * 2;
+			blocker.y = -Theme.H * 2;
+			blocker.enableRightButton = true;
+			blocker.cursor = Default;
+		}
+		return v;
 	}
 
 	/** el control que queda bajo el puntero no se lleva el foco hasta que se mueva el raton (GalaxyApp.centerMouse) */
