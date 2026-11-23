@@ -323,6 +323,7 @@ class Lang {
 		"biome.BIDeadCity" => ["Ciudad muerta", "Dead city", "Cité morte"],
 		// cometas (Comets, añadido del port): un bioma por tipo
 		"biome.BICometCinder" => ["Cometa calcinado", "Cinder comet", "Comète calcinée"],
+		"biome.BIGreyHaven" => ["Grey Haven", "Grey Haven", "Grey Haven"],
 		"biome.random" => ["Aleatorio", "Random", "Aléatoire"],
 		// mapa de estrellas (textos de exp.OfflineData)
 		"exp.system" => ["Sistema", "System", "Système"],

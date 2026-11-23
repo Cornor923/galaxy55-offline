@@ -226,7 +226,7 @@ class GalaxyApp extends hxd.App {
 	static inline var LOAD_COLOR = 0xC93814;
 	static var BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
 	/** se pueden elegir pero no salen al azar: en el original la Ciudad Muerta tenia probabilidad 0 */
-	static var EXTRA_BIOMES = ["BIDeadCity"];
+	static var EXTRA_BIOMES = ["BIDeadCity", "BIGreyHaven"];
 
 	var state : State = Boot;
 	var atlas : h3d.mat.Texture;

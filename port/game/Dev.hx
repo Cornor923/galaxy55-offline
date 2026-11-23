@@ -1621,6 +1621,8 @@ class Dev {
 			case "clic<": click(v.x + 6);
 			case "clic>": click(v.x + v.textWidth * v.scaleX - 6);
 			case "clicfila": click(40);
+			// t1..t3: tamano del planeta (Pequeno, Normal, Grande)
+			case "t1", "t2", "t3": app.nSize.index = Std.parseInt(act.substr(1)) - 1;
 			default: Sys.println("newgame: accion desconocida " + act);
 			}
 			Sys.println("newgame " + act + ": " + before + " -> " + biome.choices[biome.index]);

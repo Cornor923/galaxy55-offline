@@ -222,6 +222,37 @@ class BiomeGenerator extends Generator {
 				addDeadDetails();
 			});
 					
+		case BIGreyHaven:
+			// anadido del port: el planeta de los kubes de Grey Haven (agua 15 %, mesetas 15 %, bosque 50 %, llano 20 %)
+			waterLevel = 32;
+			globalScale = 2;
+			Macro.generate({
+				var t = 0.;
+				t += addHeight(1, 1);
+				t += addHeight(2, 0.5);
+				t += addHeight(3, 0.333);
+				t += addHeight(6, 0.15);
+				addMulHeight(t, 0.5 / t);
+				ghHeights();
+				ghCuesta();
+				ghSmooth();
+				ghSmooth();
+				fillSoil(0);
+				ghTopsoil();
+				ghLakeBed();
+				addCaves(0.6, 1, BKubeGreyHavenRocks);
+				ghCaveRoof();
+				ghCaveEntrances();
+				ghCaveGlow();
+				addCaveMinerals(0.3, 5, 60);
+				saveCaveMask();
+				removeBlobs();
+				addMineralsRocks(1);
+				addSand(BKubeGreyHavenSand);
+				ghForestMask();
+				ghSoilCover();
+			});
+
 		default:
 			waterLevel = 64;
 			globalScale = 5;
@@ -1652,6 +1683,459 @@ class BiomeGenerator extends Generator {
 			return true;
 		});
 	}
-		
-}
 
+	// ---------------------------------------------------------------- Grey Haven (anadido del port)
+
+	/** primera altura de las mesetas (lo de debajo y por encima del agua son las tierras bajas) */
+	var ghFoot : Int;
+	/** bosque de cada columna: 0 = llano o meseta, 1..255 = cada vez mas espeso */
+	var ghForest : haxe.io.Bytes;
+	/** troncos y tallos de cactus puestos, para dejar sitio entre ellos */
+	var ghTaken : haxe.io.Bytes;
+
+	static function ghSorted( v : Array<Float> ) {
+		v.sort(function(a, b) return a < b ? -1 : (a > b ? 1 : 0));
+		return v;
+	}
+
+	/**
+	 * Alturas por cuantiles del ruido, asi cada planeta tiene las mismas proporciones: el 15 % mas bajo bajo el agua, las tierras
+	 * bajas onduladas y una cuesta suave hasta el pie de las mesetas; el 15 % mas alto se queda en ese pie y ghCuesta lo levanta
+	 */
+	function ghHeights() {
+		var n = size * size;
+		var v = ghSorted([for( p in 0...n ) realHeight(p)]);
+		inline function q( f : Float ) return v[Std.int(f * (n - 1))];
+		var lo = v[0] - 0.001, hi = v[n - 1] + 0.001;
+		var levels = [
+			{ v : lo, h : -14 }, { v : q(0.07), h : -5 }, { v : q(0.15), h : 1 }, { v : q(0.55), h : 4 }, { v : q(0.80), h : 8 },
+			{ v : q(0.845), h : 12 }, { v : hi, h : 12 },
+		];
+		// cuantiles iguales (planeta muy liso): cada nivel un poco por encima del anterior
+		for( i in 1...levels.length )
+			if( levels[i].v <= levels[i - 1].v ) levels[i].v = levels[i - 1].v + 1e-6;
+		fillHeight(levels);
+		ghFoot = waterLevel + 12;
+	}
+
+	/** la roca que fillSoil deja arriba (sobre todo en las mesetas) se tapa con 1 a 3 de tierra; las paredes y el borde de las mesetas se quedan en roca */
+	function ghTopsoil() {
+		for( y in 0...size )
+			for( x in 0...size ) {
+				var p = x + y * size;
+				var h = hval(p);
+				if( h <= waterLevel ) continue;
+				var a = (p << HBITS) + h - 1;
+				var low = height(x - 1, y);
+				for( d in [height(x + 1, y), height(x, y - 1), height(x, y + 1)] ) if( d < low ) low = d;
+				if( h - low >= 4 ) {
+					for( i in 0...8 )
+						if( fget(a - i) == SOIL ) fset(a - i, ROCK);
+					continue;
+				}
+				if( fget(a) != ROCK ) continue;
+				for( i in 0...1 + rnd.random(3) )
+					if( fget(a - i) == ROCK ) fset(a - i, SOIL);
+			}
+	}
+
+	/**
+	 * Las mesetas en cuesta: por un lado suben suave (0,7 por bloque) hasta su meseta, a unos 24 por encima de su pie, y por el otro
+	 * caen de golpe. El lado suave mira hacia una direccion que cambia despacio por el planeta (cada meseta la suya); la subida se
+	 * mide hacia atras en tres direcciones (de frente y a 50 grados a cada lado) y se toma la mas corta, asi los lados bajan tambien
+	 */
+	function ghCuesta() {
+		var n = size * size;
+		var foot = ghFoot;
+		var mount = haxe.io.Bytes.alloc(n);
+		for( p in 0...n ) if( hval(p) >= foot ) mount.set(p, 1);
+		var ang = new Array<Float>();
+		initPerlin(0.4);
+		for( p in 0...n ) ang.push(mount.get(p) == 0 ? 0. : (perlin2D(p % size, Std.int(p / size)) + 1) * Math.PI * 1.5);
+		var bump = new Array<Float>();
+		initPerlin(3);
+		for( p in 0...n ) bump.push(mount.get(p) == 0 ? 0. : (perlin2D(p % size, Std.int(p / size)) + 1) * 1.5);
+		var maxRun = 48;
+		for( y in 0...size )
+			for( x in 0...size ) {
+				var p = x + y * size;
+				if( mount.get(p) == 0 ) continue;
+				var run = maxRun;
+				for( da in [0., 0.87, -0.87] ) {
+					var a = ang[p] + da, dx = -Math.cos(a), dy = -Math.sin(a);
+					var k = 1;
+					while( k < run ) {
+						var q = real(x + Math.round(dx * k)) + real(y + Math.round(dy * k)) * size;
+						if( mount.get(q) == 0 ) break;
+						k++;
+					}
+					if( k - 1 < run ) run = k - 1;
+				}
+				var rise = Math.min(24 + bump[p], run * 0.7);
+				setHeight(x, y, foot + Std.int(rise));
+			}
+	}
+
+	/** el fondo del agua: 2 bloques de arena y 3 de tierra por encima de la roca (fillSoil dejaba roca al aire bajo el agua) */
+	function ghLakeBed() {
+		var sand = alloc(BKubeGreyHavenSand);
+		for( p in 0...size * size ) {
+			var h = hval(p);
+			if( h > waterLevel ) continue;
+			var a = (p << HBITS) + h - 1;
+			for( i in 0...5 )
+				if( h - 1 - i > 0 && fget(a - i) != EMPTY && fget(a - i) != WATER ) fset(a - i, i < 2 ? sand : SOIL);
+		}
+	}
+
+	/** smoothHeight solo lejos de las mesetas: su corte se queda brusco */
+	function ghSmooth() {
+		var n = size * size;
+		var src = haxe.io.Bytes.alloc(n);
+		for( p in 0...n ) src.set(p, hval(p));
+		for( y in 0...size )
+			for( x in 0...size ) {
+				inline function at( dx : Int, dy : Int ) return src.get(real(x + dx) + real(y + dy) * size);
+				var h = at(0, 0), a = at(-1, 0), b = at(1, 0), c = at(0, -1), d = at(0, 1);
+				if( h >= ghFoot || a >= ghFoot || b >= ghFoot || c >= ghFoot || d >= ghFoot ) continue;
+				perlin.setByte(outHeight + x + y * size, ((h << 2) + (a + b + c + d) * 3 + 7) >> 4);
+			}
+	}
+
+	inline function ghLowland( h : Int ) return h > waterLevel && h < ghFoot;
+
+	/** bosque y llano: un ruido grande con algo de detalle; el llano es 2/7 de las tierras bajas (20 % del planeta frente a 50 %) */
+	function ghForestMask() {
+		var n = size * size;
+		initPerlin(1.5);
+		var f = [for( p in 0...n ) perlin2D(p % size, Std.int(p / size))];
+		initPerlin(5);
+		for( p in 0...n ) f[p] += 0.35 * perlin2D(p % size, Std.int(p / size));
+		var low = ghSorted([for( p in 0...n ) if( ghLowland(hval(p)) ) f[p]]);
+		ghForest = haxe.io.Bytes.alloc(n);
+		if( low.length == 0 ) return;
+		var t = low[Std.int(low.length * 2 / 7)];
+		var dense = low[Std.int((low.length - 1) * 0.97)];
+		var spread = dense > t ? dense - t : 1.;
+		for( p in 0...n ) {
+			if( !ghLowland(hval(p)) || f[p] <= t ) continue;
+			var k = 1 + Std.int((f[p] - t) / spread * 254);
+			ghForest.set(p, k > 255 ? 255 : k);
+		}
+	}
+
+	/** columnas de las anomalias de la superficie (stageDecor): la vegetacion no se pone en ellas */
+	var ghBlocked : haxe.io.Bytes;
+
+	/**
+	 * La vegetacion, despues de las anomalias (DetailsGenerator.stageDecor) y fuera de sus cajas: arboles, cactus, corales y
+	 * plantas, cada uno con su azar
+	 */
+	function ghDecor( blocked : haxe.io.Bytes ) {
+		ghBlocked = blocked;
+		// coverAll ya ha cubierto la tierra al aire: el suelo de arriba es el suelo de Grey Haven
+		ghCovered = alloc(BKubeGreyHavenSoil);
+		rnd = stream(biomeName + "/decor/trees");
+		ghTrees();
+		rnd = stream(biomeName + "/decor/cacti");
+		ghCacti();
+		rnd = stream(biomeName + "/decor/corals");
+		ghCorals();
+		rnd = stream(biomeName + "/decor/plants");
+		ghPlants();
+		ghBlocked = null;
+	}
+
+	/** la tierra cubierta (suelo de Grey Haven) en stageDecor, que va despues de coverAll; -1 antes */
+	var ghCovered = -1;
+
+	/** una columna de suelo libre: tierra (o suelo) arriba, aire encima y fuera de las anomalias */
+	inline function ghGround( p : Int, h : Int ) {
+		var g = fget((p << HBITS) + h - 1);
+		return h > waterLevel && (g == SOIL || g == ghCovered) && fget((p << HBITS) + h) == EMPTY && (ghBlocked == null || ghBlocked.get(p) == 0);
+	}
+
+	/** algo puesto en ghTaken a menos de d columnas */
+	function ghNear( x : Int, y : Int, d : Int ) {
+		for( dy in -d...d + 1 )
+			for( dx in -d...d + 1 )
+				if( ghTaken.get(real(x + dx) + real(y + dy) * size) != 0 )
+					return true;
+		return false;
+	}
+
+	/** suelo casi llano alrededor (los arboles no se ponen al borde de una meseta) */
+	function ghFlat( x : Int, y : Int, h : Int ) {
+		for( d in [[1, 0], [-1, 0], [0, 1], [0, -1]] ) {
+			var dh = height(x + d[0], y + d[1]) - h;
+			if( dh > 2 || dh < -2 ) return false;
+		}
+		return true;
+	}
+
+	/** arboles cerca unos de otros en el bosque (mas en lo espeso, con huecos en el borde); en el llano y las mesetas, alguno suelto */
+	function ghTrees() {
+		var trunk = alloc(BKubeGreyHavenTreeTrunk), leaves = alloc(BKubeGreyHavenLeaves), easy = alloc(BKubeGreyHavenLeavesEasy);
+		ghTaken = haxe.io.Bytes.alloc(size * size);
+		for( y in 0...size )
+			for( x in 0...size ) {
+				var p = x + y * size;
+				var h = hval(p);
+				if( !ghGround(p, h) ) continue;
+				var f = ghForest.get(p);
+				var chance = f == 0 ? 0.0015 : 0.02 + 0.05 * f / 255;
+				if( rnd.rand() >= chance ) continue;
+				if( ghNear(x, y, f == 0 ? 6 : (f > 150 ? 3 : 4)) || !ghFlat(x, y, h) ) continue;
+				ghTaken.set(p, 1);
+				if( rnd.random(4) == 0 )
+					ghRoundTree(x, y, h, trunk, leaves);
+				else
+					ghCrossTree(x, y, h, trunk, easy);
+			}
+	}
+
+	/**
+	 * El arbol recto de Grey Haven, de hojas simples y sin huecos: alrededor del tronco, capas de 3 x 3 llenas que alternan con
+	 * capas en cruz (con brazos de 2 en la mitad de abajo); arriba una cruz y la punta
+	 */
+	function ghCrossTree( x : Int, y : Int, h : Int, trunk : Int, easy : Int ) {
+		var height = 10 + rnd.random(4);
+		var top = h + height;
+		for( z in h...top ) set(x, y, z, trunk);
+		inline function leaf( dx : Int, dy : Int, z : Int ) oset(x + dx, y + dy, z, easy);
+		var start = h + 3 + rnd.random(2);
+		for( z in start...top ) {
+			var wide = z < start + ((top - start) >> 1);
+			if( (top - 1 - z) & 1 == 0 ) {
+				for( dx in -1...2 )
+					for( dy in -1...2 )
+						if( dx != 0 || dy != 0 ) leaf(dx, dy, z);
+			} else
+				for( d in [[1, 0], [-1, 0], [0, 1], [0, -1]] ) {
+					leaf(d[0], d[1], z);
+					if( wide ) leaf(d[0] * 2, d[1] * 2, z);
+				}
+		}
+		for( d in [[1, 0], [-1, 0], [0, 1], [0, -1]] ) leaf(d[0], d[1], top);
+		leaf(0, 0, top);
+		leaf(0, 0, top + 1);
+	}
+
+	/** el arbol redondo: tronco algo mas bajo y una copa en bola llena de hojas que caen (las de Grey Haven) */
+	function ghRoundTree( x : Int, y : Int, h : Int, trunk : Int, leaves : Int ) {
+		var height = 8 + rnd.random(3);
+		var top = h + height;
+		for( z in h...top ) set(x, y, z, trunk);
+		var r = 2.4 + rnd.rand() * 0.8, rz = 2.0 + rnd.rand() * 0.5;
+		var cz = top - 1;
+		elipse(r, r, rz, function(dx, dy, dz) {
+			if( dx == 0 && dy == 0 && dz < 1 ) return;
+			oset(x + dx, y + dy, cz + dz, leaves);
+		});
+	}
+
+	/** columnas de cactus de 3 a 5 de alto (tallos y un fruto que alumbra arriba): muchas en el bosque, pocas fuera */
+	function ghCacti() {
+		var stem = alloc(BKubeGreyHavenCactiStem), fruit = alloc(BKubeGreyHavenCactiFruit);
+		for( y in 0...size )
+			for( x in 0...size ) {
+				var p = x + y * size;
+				var h = hval(p);
+				if( !ghGround(p, h) ) continue;
+				var f = ghForest.get(p);
+				if( rnd.rand() >= (f == 0 ? 0.0008 : 0.008) ) continue;
+				if( ghNear(x, y, 2) ) continue;
+				var n = 2 + rnd.random(3);
+				var ok = true;
+				for( z in h...h + n + 1 )
+					if( get(x, y, z) != EMPTY ) ok = false;
+				if( !ok ) continue;
+				ghTaken.set(p, 2);
+				for( z in h...h + n ) set(x, y, z, stem);
+				set(x, y, h + n, fruit);
+			}
+	}
+
+	/** corales en los sitios abiertos (llano y mesetas): grupos de 1 a 4 bloques, alguno de dos de alto; casi ninguno en el bosque */
+	function ghCorals() {
+		var coral = alloc(BKubeGreyHavenLandCoral);
+		for( y in 0...size )
+			for( x in 0...size ) {
+				var p = x + y * size;
+				var h = hval(p);
+				if( !ghGround(p, h) ) continue;
+				if( rnd.rand() >= (ghForest.get(p) == 0 ? 0.0025 : 0.0001) ) continue;
+				for( i in 0...1 + rnd.random(3) ) {
+					var cx = real(x + rnd.random(3) - 1), cy = real(y + rnd.random(3) - 1);
+					var cp = cx + cy * size, ch = hval(cp);
+					if( ch != h || !ghGround(cp, ch) ) continue;
+					set(cx, cy, ch, coral);
+					if( rnd.random(6) == 0 ) oset(cx, cy, ch + 1, coral);
+				}
+			}
+	}
+
+	/**
+	 * Las plantas repartidas un poco por todas partes, mas en unos sitios que en otros (un ruido): las pequenas sobre todo en el
+	 * llano y las altas sobre todo en el bosque; de cada una, la variante con flor de vez en cuando
+	 */
+	function ghPlants() {
+		var plant = alloc(BKubeGreyHavenBasicPlant), plantF = alloc(BKubeGreyHavenBasicPlantFlowering);
+		var tall = alloc(BKubeGreyHavenTallPlant), tallF = alloc(BKubeGreyHavenTallPlantFlowering);
+		initPerlin(6);
+		for( y in 0...size )
+			for( x in 0...size ) {
+				var p = x + y * size;
+				var h = hval(p);
+				if( !ghGround(p, h) ) continue;
+				var patch = perlin2D(x, y);
+				var forest = ghForest.get(p) != 0;
+				var pTall = forest ? 0.045 + 0.03 * patch : 0.01 + 0.008 * patch;
+				var pShort = forest ? 0.06 + 0.04 * patch : 0.12 + 0.06 * patch;
+				var r = rnd.rand();
+				if( r < pTall )
+					set(x, y, h, rnd.random(100) < 35 ? tallF : tall);
+				else if( r < pTall + pShort )
+					set(x, y, h, rnd.random(100) < 30 ? plantF : plant);
+			}
+	}
+
+	/**
+	 * SOIL es la tierra de Grey Haven: al aire se cubre de hierba (BFCover: el suelo de Grey Haven) en coverAll, como la tierra roja.
+	 * Aqui solo el suelo con flores, bloque a bloque (de 2 a 8 % segun un ruido, sin manchas), en la tierra de la superficie (lo
+	 * primero desde arriba sin contar las plantas, los arboles, los cactus y los corales)
+	 */
+	function ghSoilCover() {
+		var flowers = alloc(BKubeGreyHavenFloweringSoil);
+		var skip = [for( id in 0...blocks.length ) id == EMPTY || (btrans[id] && id != WATER)];
+		for( k in [BKubeGreyHavenLeaves, BKubeGreyHavenLeavesEasy, BKubeGreyHavenTreeTrunk, BKubeGreyHavenLandCoral, BKubeGreyHavenCactiStem, BKubeGreyHavenCactiFruit] ) {
+			var id = alloc(k);
+			while( skip.length <= id ) skip.push(false);
+			skip[id] = true;
+		}
+		initPerlin(5);
+		for( y in 0...size )
+			for( x in 0...size ) {
+				var base = (x + y * size) << HBITS;
+				var z = HEIGHT - 1;
+				while( z > 0 && skip[fget(base + z)] ) z--;
+				if( fget(base + z) == SOIL && rnd.rand() < 0.05 + 0.03 * perlin2D(x, y) ) fset(base + z, flowers);
+			}
+	}
+
+	/**
+	 * Las grutas de addCaves se quedan a 5 bloques del aire como poco: por arriba (llegaban a la superficie de las tierras bajas) y
+	 * de lado (si no, abrian ranuras en las paredes de las mesetas). Lo que salia por encima de la superficie se queda en aire
+	 */
+	function ghCaveRoof() {
+		var n = size * size;
+		var low = haxe.io.Bytes.alloc(n);
+		for( y in 0...size )
+			for( x in 0...size ) {
+				var m = 255;
+				for( dy in -2...3 )
+					for( dx in -2...3 ) {
+						var v = height(x + dx, y + dy);
+						if( v < m ) m = v;
+					}
+				low.set(x + y * size, m);
+			}
+		for( p in 0...n ) {
+			var h = hval(p);
+			var a = p << HBITS;
+			var limit = low.get(p) - 5;
+			if( limit < 1 ) limit = 1;
+			for( z in limit...h )
+				if( fget(a + z) == CAVE ) fset(a + z, z >= h - 4 ? SOIL : ROCK);
+			for( z in h...HEIGHT )
+				if( fget(a + z) == CAVE ) fset(a + z, EMPTY);
+		}
+	}
+
+	/**
+	 * Entradas a las grutas, una cada 6400 columnas (24 en un planeta grande): desde el suelo llano de las tierras bajas, una rampa ancha (5 de ancho)
+	 * que baja hasta una gruta que pase de 6 a 14 bloques por debajo, con alguna phosphomousse en sus paredes
+	 */
+	function ghCaveEntrances() {
+		for( i in 0...Math.ceil(size * size / 6400) ) {
+			var ntry = 600;
+			while( ntry-- > 0 ) {
+				var x = rnd.random(size), y = rnd.random(size);
+				var h = height(x, y);
+				if( !ghLowland(h) || !ghFlat(x, y, h) ) continue;
+				var cz = -1;
+				var z = h - 6;
+				while( z > h - 15 && z > 1 ) {
+					if( get(x, y, z) == CAVE ) {
+						cz = z;
+						break;
+					}
+					z--;
+				}
+				if( cz < 0 ) continue;
+				var a = rnd.rand() * Math.PI * 2, dx = Math.cos(a), dy = Math.sin(a);
+				var len = h - cz + 3;
+				// la boca (donde la rampa sale al aire): tierra baja y llana, sin agua a menos de 10 columnas
+				var ox = Math.round(x + dx * (h - cz) * 1.6), oy = Math.round(y + dy * (h - cz) * 1.6), oh = height(ox, oy);
+				if( oh < waterLevel + 3 || !ghLowland(oh) || !ghFlat(ox, oy, oh) ) continue;
+				var wet = false;
+				for( wy in -10...11 )
+					for( wx in -10...11 )
+						if( get(ox + wx, oy + wy, waterLevel) == WATER ) wet = true;
+				if( wet ) continue;
+				for( k in 0...len ) {
+					var px = Math.round(x + dx * k * 1.6), py = Math.round(y + dy * k * 1.6), pz = cz + k;
+					elipse(2.5, 2.5, 1.7, function(ex, ey, ez) {
+						var c = get(px + ex, py + ey, pz + ez);
+						if( c == ROCK || c == SOIL ) set(px + ex, py + ey, pz + ez, CAVE);
+					});
+				}
+				// unas phosphomousses en las paredes de la rampa: se ve de lejos que hay una gruta
+				var glow = alloc(BKubeGreyHavenPhosphomoss);
+				var left = 3;
+				for( t in 0...60 ) {
+					if( left == 0 ) break;
+					var k = 1 + rnd.random(len - 2);
+					var gx = Math.round(x + dx * k * 1.6) + rnd.random(7) - 3, gy = Math.round(y + dy * k * 1.6) + rnd.random(7) - 3, gz = cz + k + rnd.random(3) - 1;
+					var c = get(gx, gy, gz);
+					if( (c == ROCK || c == SOIL) && around(gx, gy, gz, CAVE) ) {
+						set(gx, gy, gz, glow);
+						left--;
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	/**
+	 * La phosphomousse violeta en las paredes, el suelo y el techo de las grutas, en grupitos de 1 a 3 bloques repartidos; en lo
+	 * hondo, algun grupito de phosphomousse del desierto
+	 */
+	function ghCaveGlow() {
+		var purple = alloc(BKubeGreyHavenPhosphomoss), orange = alloc(BKubeDesertPhosphomoss);
+		for( i in 0...Math.ceil(size * size / 600) ) {
+			var ntry = 200;
+			while( ntry-- > 0 ) {
+				var x = rnd.random(size), y = rnd.random(size);
+				var zmax = height(x, y);
+				if( zmax <= 2 ) continue;
+				var z = rnd.random(zmax);
+				if( get(x, y, z) != CAVE ) continue;
+				var b = z < waterLevel - 6 && rnd.random(10) == 0 ? orange : purple;
+				var left = 1 + rnd.random(3);
+				for( k in 0...24 ) {
+					if( left == 0 ) break;
+					var cx = x + rnd.random(5) - 2, cy = y + rnd.random(5) - 2, cz = z + rnd.random(5) - 2;
+					var c = get(cx, cy, cz);
+					if( (c == ROCK || c == SOIL) && around(cx, cy, cz, CAVE) ) {
+						set(cx, cy, cz, b);
+						left--;
+					}
+				}
+				break;
+			}
+		}
+	}
+
+}

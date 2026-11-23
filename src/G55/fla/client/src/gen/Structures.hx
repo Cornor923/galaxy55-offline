@@ -52,10 +52,10 @@ class Structures {
 	 * los planetas de verdad: solo ellos tienen estructuras y cristales de hexalita (bonus, DetailsGenerator.hasStructures). El
 	 * hangar (BIShed) no es un planeta (se construye con shipData), ni el bioma de prueba (BITest) ni las cometas (CometGenerator)
 	 */
-	public static var PLANET_BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest", "BIDeadCity"];
+	public static var PLANET_BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest", "BIDeadCity", "BIGreyHaven"];
 
 	/** biomas con grutas (los que guardan las celdas CAVE: saveCaveMask) */
-	static var CAVE_BIOMES = ["BIAutumn", "BIWinterPeaks", "BIMars"];
+	static var CAVE_BIOMES = ["BIAutumn", "BIWinterPeaks", "BIMars", "BIGreyHaven"];
 
 	public static var ALL : Array<StructureDef> = [
 		// relieves (p de addHeightDetails)

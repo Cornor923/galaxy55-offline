@@ -100,6 +100,24 @@ class DetailsGenerator extends BiomeGenerator {
 	}
 
 	/**
+	 * Grey Haven: la vegetacion al final, despues de todas las anomalias (fuera de las cajas de las de la superficie y 3 columnas
+	 * alrededor) y de la lava y el agua: antes se ponia primero, las anomalias salian cortadas por los arboles y la lava rodeaba las
+	 * plantas
+	 */
+	override function stageDecor() {
+		if( biomeName != "BIGreyHaven" ) return;
+		var mask = haxe.io.Bytes.alloc(size * size);
+		for( p in poses ) {
+			if( p.stage != "Surface" || p.box == null ) continue;
+			var b = p.box;
+			for( dy in b[1] - 3...b[4] + 4 )
+				for( dx in b[0] - 3...b[3] + 4 )
+					mask.set(real(p.x + dx) + real(p.y + dy) * size, 1);
+		}
+		ghDecor(mask);
+	}
+
+	/**
 	 * Las estructuras de una etapa: en cada region, la primera (de la mas rara a la mas comun: Structures.active) que sale con su
 	 * azar de la region (stream(id + "/pick", rx, ry): 1 de p * 4), y se pone con el suyo (pose)
 	 */

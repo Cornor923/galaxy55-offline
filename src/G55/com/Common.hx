@@ -421,6 +421,11 @@ enum BlockKind {
 	BKubeGreyHavenLeavesEasy;
 	BKubeGreyHavenCactiStem;
 	BKubeGreyHavenCactiFruit;
+	BKubeGreyHavenPhosphomoss;
+	BKubeGreyHavenTallPlant;
+	BKubeGreyHavenTallPlantFlowering;
+	BKubeGreyHavenSoil;
+	BKubeGreyHavenFloweringSoil;
 }
 
 enum BlockModel {
@@ -501,6 +506,9 @@ enum BlockFlag {
 	// anadido del port: tableau colgado de una pared (Painting). Son 4 bloques seguidos, uno por pared; turn = cuartos de vuelta
 	// desde el primero, que tiene la pared detras en +y (0: pared en +y, 1: en -x, 2: en -y, 3: en +x). BFSize: la placa en la celda
 	BFOnWall( turn : Int );
+	// anadido del port: como BFCoverable, pero con el bloque que lo cubre al quedar al aire (la hierba): los kubes del editor no van
+	// seguidos en BlockKind (la tierra y el suelo de Grey Haven)
+	BFCover( b : BlockKind );
 }
 
 typedef BlockData = {
@@ -534,6 +542,8 @@ enum BiomeKind {
 	BIDeadCity;
 	// añadidos del port: un bioma por tipo de cometa (Comets, CometGenerator); nunca salen al azar como planeta
 	BICometCinder;
+	// anadido del port: el planeta de los kubes de Grey Haven (se elige en creativo, no sale al azar)
+	BIGreyHaven;
 }
 
 typedef BiomeData = {

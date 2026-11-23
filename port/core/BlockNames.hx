@@ -113,6 +113,9 @@ class BlockNames {
 		"BKubeGreyHavenBasicPlant" => "Grey Haven Basic Plant", "BKubeGreyHavenBasicPlantFlowering" => "Grey Haven Flowering Plant",
 		"BKubeGreyHavenLandCoral" => "Grey Haven Land Coral", "BKubeGreyHavenLeavesEasy" => "Grey Haven Simple Leaves",
 		"BKubeGreyHavenCactiStem" => "Grey Haven Cactus Stem", "BKubeGreyHavenCactiFruit" => "Grey Haven Cactus Fruit",
+		"BKubeGreyHavenPhosphomoss" => "Grey Haven Mushlite", "BKubeGreyHavenTallPlant" => "Grey Haven Tall Plant",
+		"BKubeGreyHavenTallPlantFlowering" => "Grey Haven Tall Flowering Plant", "BKubeGreyHavenSoil" => "Grey Haven Soil",
+		"BKubeGreyHavenFloweringSoil" => "Grey Haven Flowering Soil",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -174,6 +177,9 @@ class BlockNames {
 		"BKubeGreyHavenBasicPlant" => "Planta de Grey Haven", "BKubeGreyHavenBasicPlantFlowering" => "Planta en flor de Grey Haven",
 		"BKubeGreyHavenLandCoral" => "Coral terrestre de Grey Haven", "BKubeGreyHavenLeavesEasy" => "Hojas simples de Grey Haven",
 		"BKubeGreyHavenCactiStem" => "Tallo de cactus de Grey Haven", "BKubeGreyHavenCactiFruit" => "Fruto de cactus de Grey Haven",
+		"BKubeGreyHavenPhosphomoss" => "Fosforium de Grey Haven", "BKubeGreyHavenTallPlant" => "Planta alta de Grey Haven",
+		"BKubeGreyHavenTallPlantFlowering" => "Planta alta en flor de Grey Haven", "BKubeGreyHavenSoil" => "Suelo de Grey Haven",
+		"BKubeGreyHavenFloweringSoil" => "Suelo florido de Grey Haven",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */

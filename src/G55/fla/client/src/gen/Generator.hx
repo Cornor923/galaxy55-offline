@@ -383,7 +383,7 @@ class Generator {
 	/**
 	 * Los pasos del planeta, en un orden fijo (version 1): el terreno del bioma (initBiome; los relieves van dentro de fillSoil),
 	 * las estructuras de las grutas, las de la superficie, los bonus (cristales de hexalita), las del aire, una sola pasada de lo
-	 * que cubre o se propaga (coverAll), el agua (checkWater) y la roca madre
+	 * que cubre o se propaga (coverAll), el agua (checkWater), lo que el bioma pone despues de todo eso (stageDecor) y la roca madre
 	 */
 	public function startGenerate( biome : BiomeKind ) {
 		spentTime = 0;
@@ -401,6 +401,7 @@ class Generator {
 		addStep("air", stageAir);
 		addStep("cover", coverAll);
 		addStep("checkWater", checkWater);
+		addStep("decor", stageDecor);
 		addStep("fillBedrock", fillBedrock);
 		globalScale *= 1 / 180;
 	}
@@ -419,6 +420,13 @@ class Generator {
 	}
 
 	function addBonus() {
+	}
+
+	/**
+	 * Anadido del port: lo que un bioma pone al final, despues de las estructuras (no las corta) y de que la lava y el agua hayan
+	 * corrido (coverAll, checkWater: solo corren por las celdas vacias): la vegetacion de Grey Haven
+	 */
+	function stageDecor() {
 	}
 
 	/** las celdas CAVE al llegar a saveCaveMask (un bit cada una), para la etapa de las grutas (DetailsGenerator.stageCave) */

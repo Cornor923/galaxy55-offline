@@ -278,6 +278,10 @@ class Block {
 					var next = blocks[b.index + 1];
 					b.covered = next;
 					next.uncover = b;
+				case BFCover(k):
+					var c = blocks[Type.enumIndex(k)];
+					b.covered = c;
+					c.uncover = b;
 				case BFLiquid:
 					b.props.unset(PCollide);
 					b.props.set(PLiquid);
