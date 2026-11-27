@@ -3,7 +3,8 @@ import Msg;
 
 /**
  * Banco de pruebas (solo para desarrollo): ejecuta un guion de ordenes sobre una partida nueva, sin ventana a la vista ni teclado.
- *   hl galaxy55.hl --script=guion.txt [--bgbiome=BIAutumn] [--creative] [--blockcount]
+ *   hl galaxy55.hl --script=guion.txt [--bgbiome=BIAutumn] [--creative] [--blockcount] [--date=AAAA-MM-DD]
+ *   (--date: otro dia para los eventos del calendario, CalendarEvents; port/dev/sapin_noel.txt)
  * Una orden por linea, "#" = comentario. Las coordenadas son del planeta salvo las de `tpl`, `setl` y `lookl` (locales a la nave).
  *   wait N                  esperar N actualizaciones
  *   until fade|tele X       esperar (600 actualizaciones como mucho) a que la opacidad del fundido o la carga del
@@ -44,13 +45,17 @@ import Msg;
  *   button N                activar el control N de la ventana de confirmacion o del menu abierto (print menu)
  *   comet force N|time S|speed|stats   cometas (anadido del port): el sistema N con cometa en cualquier franja; quedan S
  *                           segundos en la cometa; velocidad de la nave y tiempo de amarre; cometas de cada sistema (print comet)
- *   licenses clock H|open|credits N|forget   licencias de la ESCorp: adelantar H horas su reloj; abrir su pantalla; dejar N
- *                           creditos; quitar sus datos como en una partida antigua (print licenses)
+ *   rowact N ACCION         en una pantalla de filas (Multijugador, accesos, Liberar una licencia), la accion ACCION de la fila N
+ *                           (release, access, remove...), como al pulsarla (print menu)
+ *   licenses clock H|open|credits N|forget|release   licencias de la ESCorp: adelantar H horas su reloj; abrir su pantalla;
+ *                           dejar N creditos; quitar sus datos como en una partida antigua; abrir Liberar una licencia
+ *                           (print licenses)
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   waitfor COSA [max]      esperar (como mucho max fotogramas, 2000 por defecto) a: map (mapa abierto), sector (la nave fuera
  *                           de los sistemas), window (ventana del mapa
  *                           abierta), system (dentro de un sistema), planet (jugando en un planeta), mother (jugando en la nave nodriza), ready (cargado: jugando
- *                           o en el mapa); si no llega, lo dice
+ *                           o en el mapa), mapready (mapa hecho y conectado), mponN (multijugador: otro jugador en tu planeta
+ *                           N); si no llega, lo dice
  *   waitfor ground          esperar a estar de pie en el suelo (el fotograma del aterrizaje tras una caida)
  *   waitfor jump            esperar a que la nave salte en el mapa (entrada o salida de un sistema); exprsys pulsa el sistema
  *                           abierto mas cercano al robot comerciante; exprinfo dice donde esta el robot y como se dibuja
@@ -86,7 +91,11 @@ import Msg;
  *                           ordenador abierto; escorp hexalite N deja N cargas de hexalita; print upgrades
  *   savegame                guardar la partida (como F5, sin aviso)
  *   genversion N            el planeta actual pasa a ser de la version N del generador (SaveInfo.genVersion; se nota al volver a
- *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados
+ *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados,
+ *                           los eventos del calendario de hoy y del mundo cargado (CalendarEvents) y la zona en la que nieva
+ *                           sobre una anomalia (GalaxyApp.snowArea)
+ *   date AAAA-MM-DD|MM-DD|off otro dia para los eventos del calendario desde ahora (como --date; off = el del reloj): el mundo
+ *                           cargado no cambia, lo que mira la fecha cada vez si (la nieve sobre el Sapin de Noel)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   print prune             poda de los cambios (World.prune): pone una lampara en el suelo delante del jugador y lo vuelve a
@@ -144,6 +153,8 @@ import Msg;
  *                           crea uno de ese color con el borde oscuro, fill N crea N cubos lot-1..N, delete ARCHIVO, clear vacia
  *                           la carpeta, refresh la vuelve a leer como al empezar a jugar. En hand, give, set...: kube:ARCHIVO[/variante]
  *   print edkubes|edsave    kubes del editor cargados / los de la partida guardada en disco (celdas, casillas, de remplazo)
+ *   print anomalies         anomalias del planeta (World.anomalies): numero, tipo, estructura, origen y caja en coordenadas
+ *                           del mundo, y en las que esta el jugador (GameView.anomaliesHere: la tecla F en creativo)
  *   quit
  */
 class Dev {
@@ -764,6 +775,8 @@ class Dev {
 		var playing = Type.enumConstructor(@:privateAccess app.state) == "Playing";
 		return switch( what ) {
 			case "map": g == null && app.explorer != null;
+			// el mapa ya hecho y conectado con la partida (al rehacerse, p. ej. tras SForeign, "map" ya se cumple mientras carga)
+			case "mapready": g == null && app.explorer != null && app.explorer.ready && @:privateAccess app.space != null;
 			// en el sector y con la animacion de salida del sistema ya terminada (mientras dura, el mapa no hace caso)
 			case "sector": app.explorer != null && app.explorer.shipPos() != null && !@:privateAccess app.explorer.locked && !@:privateAccess app.explorer.serverLock;
 			case "window": app.explorer != null && app.explorer.devWindowOpen();
@@ -783,6 +796,8 @@ class Dev {
 			case w if( StringTools.startsWith(w, "mpremotes") ): g != null && g.net != null && g.net.remotes.count() >= Std.parseInt(w.substr(9));
 			case w if( StringTools.startsWith(w, "mpplayers") ): app.mp != null && Lambda.count(app.mp.players) >= Std.parseInt(w.substr(9));
 			case w if( StringTools.startsWith(w, "mpchat") ): app.mp != null && app.mp.chat.length >= Std.parseInt(w.substr(6));
+			// mponN: otro jugador esta en tu planeta N (lo que ve Liberar una licencia)
+			case w if( StringTools.startsWith(w, "mpon") ): @:privateAccess app.playersOn(Std.parseInt(w.substr(4))).length > 0;
 			default: true;
 		}
 	}
@@ -1113,6 +1128,15 @@ class Dev {
 				case "expsys": app.explorer.devClickSystem(Std.parseInt(a[1]));
 				case "expplanet": app.explorer.devClickPlanet(Std.parseInt(a[1]));
 				case "expbutton": app.explorer.devPressButton(a.length > 1 ? Std.parseInt(a[1]) : 0);
+				case "rowact":
+					// rowact N ACCION: la accion ACCION de la fila N de la pantalla abierta (ServerListScreen), como al pulsarla
+					var l = Std.downcast(@:privateAccess app.current, MultiServers.ServerListScreen), i = Std.parseInt(a[1]);
+					var row = l == null || i == null || i < 0 || i >= l.rows.length ? null : l.rows[i];
+					if( row == null || row.actions.indexOf(a[2]) < 0 ) Sys.println("rowact: no hay fila " + a[1] + " con " + a[2]);
+					else {
+						row.action = row.actions.indexOf(a[2]);
+						row.activate();
+					}
 				case "button":
 					// button N: activa el control N de la ventana de confirmacion o del menu abierto (print menu los lista)
 					var s = @:privateAccess (app.modal != null && app.modal.parent != null ? app.modal : app.current);
@@ -1125,6 +1149,7 @@ class Dev {
 					switch( a[1] ) {
 					case "clock": Licenses.devShift += f(a[2]) * 3600;
 					case "open": @:privateAccess app.openLicenses();
+					case "release": @:privateAccess app.openRelease();
 					case "credits": info.credits = Std.parseInt(a[2]);
 					case "forget":
 						var u = info.uni;
@@ -1531,6 +1556,7 @@ class Dev {
 					}
 				case "savegame": @:privateAccess app.saveGame(false); // guardar la partida como F5 (sin aviso)
 				case "genversion": app.curInfo().genVersion = Std.parseInt(a[1]);
+				case "date": CalendarEvents.forcedDay = a[1] == "off" ? null : CalendarEvents.parseDay(a[1]);
 				case "deliver":
 					// deliver i: da lo que llevas a la linea i del tablero; deliver a J: al contrato en curso J (con el panel abierto, como
 					// su boton)
@@ -2208,6 +2234,14 @@ class Dev {
 				Sys.println("cielo: " + (flat == null ? "degradado" : "color " + StringTools.hex(flat.color.toColor() & 0xFFFFFF, 6))
 					+ ", estrellas " + (st != null && st.visible ? "si" : "no"));
 			}
+		case "anomalies":
+			var l = w.anomalies();
+			for( i in 0...l.length ) {
+				var p = l[i], b = p.box;
+				Sys.println("anomalia " + i + " " + p.n + " (" + p.id + ") origen " + p.x + "," + p.y + "," + p.z + " caja x " + (p.x + b[0]) + ".." + (p.x + b[3])
+					+ " y " + (p.y + b[1]) + ".." + (p.y + b[4]) + " z " + b[2] + ".." + b[5]);
+			}
+			Sys.println("aqui: " + (g.anomaliesHere().length == 0 ? "-" : g.anomaliesHere().join(" ")) + (g.creative ? "" : " (no creativo)"));
 		case "found":
 			Sys.println("find: " + (found == null ? "nada" : found.x + " " + found.y + " " + found.z));
 		case "gen":
@@ -2215,6 +2249,12 @@ class Dev {
 			var visited = u == null ? "-" : [for( p in u.planets ) p.id + ":" + SaveData.genVersion(p.genVersion)].join(" ");
 			Sys.println("generador: mundo " + @:privateAccess w.gen.version + " actual " + gen.Generator.VERSION + " partida " + g.info.genVersion
 				+ " planeta " + (u == null ? "-" : "" + u.planetId) + " visitados " + (visited == "" ? "-" : visited));
+			// eventos del calendario (CalendarEvents): los de hoy (o de --date) y los del mundo cargado
+			var ev = @:privateAccess w.gen.events;
+			var sz = app.snowZone;
+			Sys.println("nieve: " + (sz == null ? "no" : "zona " + Math.round(sz.x) + "," + Math.round(sz.y) + "," + Math.round(sz.z) + " r" + sz.r));
+			Sys.println("eventos: dia " + CalendarEvents.today() + " hoy " + (CalendarEvents.active().length == 0 ? "-" : CalendarEvents.active().join(","))
+				+ " mundo " + (ev.length == 0 ? "-" : ev.join(",")));
 		case "biome":
 			// bioma del mundo cargado, el de la partida y el de salida del universo; y el suelo que mas se ve (una columna de cada 8x8)
 			var u = g.info.uni;

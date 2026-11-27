@@ -176,6 +176,8 @@ class Lang {
 		"palette.hint" => ["Clic / A: poner en la casilla elegida   Rueda / LB RB: cambiar de pagina   %palette% / Esc / B: cerrar", "Click / A: put in the selected slot   Wheel / LB RB: change page   %palette% / Esc / B: close", "Clic / A : mettre dans la case choisie   Molette / LB RB : changer de page   %palette% / Échap / B : fermer"],
 		"hud.pilot" => ["Pilotando: %move% mover la nave   Ratón girar la cámara   %leave% / Esc dejar la nave aquí", "Piloting: %move% move the ship   Mouse turn the camera   %leave% / Esc leave the ship here", "Pilotage : %move% déplacer le vaisseau   Souris tourner la caméra   %leave% / Échap laisser le vaisseau ici"],
 		"hud.creative" => ["Creativo: %palette% abre la paleta de bloques", "Creative: %palette% opens the block palette", "Créatif : %palette% ouvre la palette de blocs"],
+		// tecla F en creativo, debajo de las coordenadas: la anomalia en la que se esta (%n% = su nombre del kubindex.json)
+		"hud.anomaly" => ["Anomalía: %n%", "Anomaly: %n%", "Anomalie : %n%"],
 		// pantalla de inventario del modo aventura (InvScreen)
 		"hud.inventory" => ["%palette% abre el inventario", "%palette% opens the inventory", "%palette% ouvre l'inventaire"],
 		"invscreen.title" => ["Inventario", "Inventory", "Inventaire"],
@@ -356,6 +358,15 @@ class Lang {
 		"licenses.ask.paid" => ["Cuesta %n% créditos. Próximo cambio posible dentro de 24 h.", "It costs %n% credits. Next change possible in 24 h.", "Coût : %n% crédits. Prochain changement possible dans 24 h."],
 		"licenses.nocredits" => ["Te faltan créditos: el cambio cuesta %n%.", "Not enough credits: the change costs %n%.", "Pas assez de crédits : le changement coûte %n%."],
 		"licenses.notyours" => ["Ese planeta no puede ser tu planeta principal.", "That planet cannot be your main planet.", "Cette planète ne peut pas devenir ta planète principale."],
+		// Licencias > Liberar una licencia (anadido del port): los planetas con licencia menos el principal y aquel en el que estas
+		"licenses.release" => ["Liberar una licencia", "Release a license", "Libérer une licence"],
+		"release.title" => ["LIBERAR UNA LICENCIA", "RELEASE A LICENSE", "LIBÉRER UNE LICENCE"],
+		"release.help" => ["Pierdes la licencia del planeta y todo lo que hayas cambiado en él, y no podrás volver nunca. Tu planeta principal y aquel en el que estás no se pueden liberar.", "You lose the planet's license and everything you changed there, and you can never go back. Your main planet and the one you are on cannot be released.", "Tu perds la licence de la planète et tout ce que tu y as modifié, et tu ne pourras plus jamais y retourner. Ta planète principale et celle où tu te trouves ne peuvent pas être libérées."],
+		"release.none" => ["No tienes ninguna otra licencia que liberar.", "You have no other license to release.", "Tu n'as aucune autre licence à libérer."],
+		// multijugador: quien esta ahora en el planeta (%n% = sus pseudos)
+		"release.nobody" => ["Nadie en el planeta", "Nobody on the planet", "Personne sur la planète"],
+		"release.players" => ["En el planeta: %n%  ·  quita el acceso para expulsar", "On the planet: %n%  ·  remove access to expel", "Sur la planète : %n%  ·  retire l'accès pour expulser"],
+		"release.ask" => ["¿Liberar la licencia de %name%?", "Release the license of %name%?", "Libérer la licence de %name% ?"],
 		"license.full" => ["No te queda ninguna licencia libre.\nAbandona uno de tus planetas para liberar una.", "You have no free license left.\nAbandon one of your planets to free one.", "Tu n'as plus de licence libre.\nAbandonne une de tes planètes pour en libérer une."],
 		"license.keepmain" => ["No puedes abandonar tu planeta principal.", "You cannot abandon your main planet.", "Tu ne peux pas abandonner ta planète principale."],
 		// Contactar con la ESCorp (anadido del port): submenu del ordenador de a bordo con los contratos y las mejoras (EscorpUpgrades)
@@ -449,7 +460,10 @@ class Lang {
 		"mp.badrecord" => ["La partida que ha mandado el servidor no se puede leer.", "The game sent by the server cannot be read.", "La partie envoyée par le serveur est illisible."],
 		"mp.land.denied" => ["No puedes aterrizar en este planeta.", "You cannot land on this planet.", "Tu ne peux pas atterrir sur cette planète."],
 		"mp.planet.closed" => ["Este planeta se ha cerrado a los exploradores.", "This planet has been closed to explorers.", "Cette planète a été fermée aux explorateurs."],
-		"mp.planet.abandoned" => ["Este planeta ha sido abandonado.", "This planet has been abandoned.", "Cette planète a été abandonnée."],
+		// el propietario te ha quitado el acceso (el planeta sigue abierto a otros)
+		"mp.planet.removed" => ["Te han quitado el acceso a este planeta.", "Your access to this planet has been removed.", "Ton accès à cette planète a été retiré."],
+		// abandonar o liberar la licencia de un planeta con otros jugadores dentro (%n% = sus pseudos)
+		"mp.abandon.occupied" => ["Planeta ocupado (%n%): quita el acceso para expulsar y luego libera la licencia.", "Planet occupied (%n%): remove access to expel, then release the license.", "Planète occupée (%n%) : retire l'accès pour expulser, puis libère la licence."],
 		"mp.invited" => ["%n% te invita a su planeta: ya está en tu mapa.", "%n% invites you to their planet: it is now on your map.", "%n% t'invite sur sa planète : elle est maintenant sur ta carte."],
 		"mp.transfer.full" => ["%n% no tiene licencia libre.", "%n% has no free license.", "%n% n'a pas de licence libre."],
 		"mp.transfer.got" => ["%n% te cede su planeta.", "%n% hands you their planet.", "%n% te cède sa planète."],
@@ -514,6 +528,9 @@ class Lang {
 		"mp.act.explorer" => ["Pasar a explorador", "Make explorer", "Passer explorateur"],
 		"mp.act.visitor" => ["Pasar a visitante", "Make visitor", "Passer visiteur"],
 		"mp.act.remove" => ["Quitar", "Remove", "Retirer"],
+		// filas de Liberar una licencia
+		"mp.act.release" => ["Liberar", "Release", "Libérer"],
+		"mp.act.access" => ["Accesos", "Access", "Accès"],
 		"mp.upnp.ok" => ["Partida abierta en Internet: los demás pueden unirse con la dirección %n%", "Game open to the Internet: others can join with the address %n%", "Partie ouverte sur Internet : les autres peuvent rejoindre avec l'adresse %n%"],
 		"mp.upnp.fail" => ["UPnP no disponible: para abrir la partida en Internet, redirige el puerto %n% (TCP y UDP) en tu router.", "UPnP unavailable: to open the game to the Internet, forward port %n% (TCP and UDP) on your router.", "UPnP indisponible : pour ouvrir la partie sur Internet, redirige le port %n% (TCP et UDP) sur ta box."],
 		"mp.join" => ["%n% ha entrado.", "%n% joined.", "%n% a rejoint la partie."],
