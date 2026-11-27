@@ -411,6 +411,8 @@ enum BlockKind {
 	BKubePortraitWomanTurn1;
 	BKubePortraitWomanTurn2;
 	BKubePortraitWomanTurn3;
+	BChristmasLeaves;
+	BChristmasLeavesCover;
 	BKubeGreyHavenLeaves;
 	BKubeGreyHavenRocks;
 	BKubeGreyHavenDirt;

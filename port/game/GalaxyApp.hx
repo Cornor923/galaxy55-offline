@@ -244,6 +244,9 @@ class GalaxyApp extends hxd.App {
 	var bgCy = 64.;
 	var bgR = 38.;
 	var snow : Snow;
+	/** Dev: la zona de nieve de la ultima imagen (Snow.area; null = ninguna) */
+	public var snowZone(get, never) : { x : Float, y : Float, z : Float, r : Float };
+	function get_snowZone() return snow.visible ? snow.area : null;
 	var loadWorld : World;
 	var loadInfo : SaveInfo;
 	var game : GameView;
@@ -354,6 +357,7 @@ class GalaxyApp extends hxd.App {
 	override function init() {
 		var tInit = haxe.Timer.stamp();
 		GameRng.applyArgs();
+		CalendarEvents.applyArgs();
 		PortRules.apply();
 		for( a in Sys.args() ) {
 			if( StringTools.startsWith(a, "--shot=") ) shotPath = a.substr(7);
@@ -568,6 +572,7 @@ class GalaxyApp extends hxd.App {
 				case "computer": buildComputer();
 				case "mothercomputer": buildMotherComputer();
 				case "licenses": buildLicenses();
+				case "release": buildRelease();
 				case "escorp": buildEscorp();
 				case "upgrades": buildUpgrades();
 				case "kubes": buildKubes();
@@ -1069,12 +1074,18 @@ class GalaxyApp extends hxd.App {
 	var accessState : { pid : Int, open : Bool, allVisitors : Bool, serverVisit : Bool, vr : Int, guests : Array<NetGuest> };
 	var accessPid = -1;
 	var accessName = "";
+	/** Volver de la pantalla de accesos: a las licencias, o a Liberar una licencia si se abrio desde alli */
+	var accessBack : Void -> Void;
 
-	/** Licencias > Abrir a otros exploradores (anadido del port): pide los accesos del planeta pid al servidor y los ensena */
-	function openAccess( pid : Int, name : String ) {
+	/**
+	 * Licencias > Abrir a otros exploradores (anadido del port): pide los accesos del planeta pid al servidor y los ensena. back:
+	 * adonde se vuelve (las licencias si no se dice)
+	 */
+	function openAccess( pid : Int, name : String, ?back : Void -> Void ) {
 		if( mp == null || !mp.isPlaying() ) return;
 		accessPid = pid;
 		accessName = name;
+		accessBack = back != null ? back : function() show("licenses");
 		accessState = null;
 		mp.client.send(CGetAccess(pid));
 		reopenAccess(true);
@@ -1108,7 +1119,7 @@ class GalaxyApp extends hxd.App {
 		var t = Theme.text(s, Lang.t("mp.access.title").split("%name%").join(accessName), 2.8, Theme.TEXT, 0, 44);
 		t.x = (W - t.textWidth * t.scaleX) * 0.5;
 		var back = new Button(s, Lang.t("back"), 300, 48);
-		var leave = function() show("licenses");
+		var leave = function() accessBack();
 		back.onActivate = leave;
 		s.onBack = leave;
 		var a = accessState;
@@ -1177,7 +1188,7 @@ class GalaxyApp extends hxd.App {
 			if( mp != null ) for( p in mp.players ) if( p.id == id ) name = p.name;
 			askConfirm(s, Lang.t("mp.access.transfer.ask").split("%n%").join(name), Lang.t("mp.access.transfer.warn"), Theme.DANGER, function() {
 				if( mp != null ) mp.client.send(CTransfer(pid, id));
-				show("licenses");
+				accessBack();
 			});
 		});
 		return s;
@@ -2184,6 +2195,14 @@ class GalaxyApp extends hxd.App {
 			s.add(ab, px, y);
 			y += 62;
 		}
+		// las demas licencias se liberan desde aqui, sin ir al planeta (Liberar una licencia; sin ninguna, desactivado)
+		y += 6;
+		var rb = new Button(s, Lang.t("licenses.release"), PW - 80, 54);
+		rb.enabled = Licenses.releasable(uni).length > 0;
+		rb.onActivate = openRelease;
+		licensesRelease = rb;
+		s.add(rb, px, y);
+		y += 62;
 		var back = new Button(s, Lang.t("back"));
 		s.add(back, (W - 460) * 0.5, y + 14);
 		var h = Std.int(y + 14 + 54 + 30);
@@ -2194,6 +2213,107 @@ class GalaxyApp extends hxd.App {
 		back.onActivate = leave;
 		s.onBack = leave;
 		return s;
+	}
+
+	/** boton Liberar una licencia de las licencias: al volver de su pantalla, el foco vuelve a el */
+	var licensesRelease : Button;
+
+	/** Licencias > Liberar una licencia: la lista se rehace cada vez (las licencias cambian al liberar) */
+	function openRelease() {
+		if( game == null || Tutorial.active(game.info) ) return;
+		var old = screens.get("release");
+		if( old != null ) old.remove();
+		screens.remove("release");
+		show("release");
+	}
+
+	/** filas de Liberar una licencia: planeta, nombre y su fila (print menu) */
+	var releaseRows : Array<{ pid : Int, name : String, row : ServerRow }> = [];
+
+	/**
+	 * Liberar una licencia (anadido del port), compuesta como la pantalla de accesos: los planetas con licencia salvo el principal
+	 * y aquel en el que estas (Licenses.releasable), con su bioma y, en multijugador, quien esta en cada uno (al dia en cada
+	 * imagen). Liberar pide confirmacion; con alguien dentro no se puede (askRelease) y Accesos abre los del planeta, donde
+	 * quitarle el acceso lo expulsa. Volver o Esc vuelven a las licencias, con el foco en Liberar una licencia
+	 */
+	function buildRelease() : Screen {
+		var s = new ServerListScreen(ui);
+		s.listY = 200;
+		s.VISIBLE = 4;
+		var bg = new h2d.Graphics(s);
+		Theme.fullRect(bg, 0x000000, 0.4);
+		Theme.rect(bg, 110, 30, 1060, 660, Theme.PANEL, 0.96);
+		Theme.rect(bg, 110, 30, 1060, 4, Theme.ACCENT);
+		var t = Theme.text(s, Lang.t("release.title"), 2.8, Theme.TEXT, 0, 44);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var help = Theme.text(s, Lang.t("release.help"), 1.4, Theme.DIM, 132, 100);
+		help.maxWidth = 1016 / help.scaleX;
+		var uni = universe();
+		var planets = Licenses.planets(uni);
+		var multi = mp != null && mp.isPlaying();
+		releaseRows = [];
+		for( id in Licenses.releasable(uni) ) {
+			var pid = id;
+			var p = planets.get(pid);
+			var name = p != null ? p.name : "?";
+			var row = new ServerRow(s, name, p != null ? ExpData.ExpOffline.biomeName(p.biome) : "", multi ? ["release", "access"] : ["release"], false);
+			row.setInfo("", Theme.DIM);
+			row.onAction = function( act ) {
+				if( act == "access" ) openAccess(pid, name, openRelease);
+				else askRelease(s, pid, name);
+			};
+			s.rows.push(row);
+			s.add(row, s.listX, s.listY);
+			releaseRows.push({ pid : pid, name : name, row : row });
+		}
+		s.layout();
+		if( releaseRows.length == 0 ) {
+			var none = Theme.text(s, Lang.t("release.none"), 2.0, Theme.DIM, 0, 330);
+			none.x = (W - none.textWidth * none.scaleX) * 0.5;
+		}
+		// multijugador: quien esta en cada planeta (entran y salen con la pantalla abierta)
+		function occupancy( _ : Float ) {
+			if( !multi ) return;
+			for( r in releaseRows ) {
+				var who = playersOn(r.pid);
+				if( who.length == 0 ) r.row.setInfo(Lang.t("release.nobody"), Theme.DIM);
+				else r.row.setInfo(Lang.t("release.players").split("%n%").join(who.join(", ")), Theme.DANGER);
+			}
+		}
+		occupancy(0);
+		s.onTick = occupancy;
+		var back = new Button(s, Lang.t("back"), 300, 48);
+		s.add(back, (W - 300) * 0.5, 620);
+		var leave = function() {
+			openLicenses();
+			if( licensesRelease != null && licensesRelease.enabled ) current.setFocus(current.widgets.indexOf(licensesRelease));
+		};
+		back.onActivate = leave;
+		s.onBack = leave;
+		return s;
+	}
+
+	/** multijugador: los demas jugadores que estan ahora en el planeta pid de tu galaxia (NetPlayer.place, "propietario|planeta") */
+	function playersOn( pid : Int ) : Array<String> {
+		if( mp == null || !mp.isPlaying() ) return [];
+		var place = mp.myName + "|" + pid;
+		var out = [for( p in mp.players ) if( p.id != mp.myId && p.place == place ) p.name];
+		out.sort(Reflect.compare);
+		return out;
+	}
+
+	/** con otros jugadores en el planeta pid no se libera su licencia (el servidor tampoco lo deja): el aviso dice quienes */
+	function occupiedToast( pid : Int ) : Bool {
+		var who = playersOn(pid);
+		if( who.length == 0 ) return false;
+		showToast(Lang.t("mp.abandon.occupied").split("%n%").join(who.join(", ")), 6);
+		return true;
+	}
+
+	/** Liberar de una fila de Liberar una licencia: con confirmacion, salvo que haya alguien en el planeta */
+	function askRelease( parent : Screen, pid : Int, name : String ) {
+		if( occupiedToast(pid) ) return;
+		askConfirm(parent, Lang.t("release.ask").split("%name%").join(name), Lang.t("abandon.warn"), Theme.DANGER, function() releaseLicense(pid));
 	}
 
 	/** Contactar con la ESCorp desde el ordenador de a bordo: el submenu se rehace cada vez (en el tutorial cambia lo que se abre) */
@@ -2382,32 +2502,62 @@ class GalaxyApp extends hxd.App {
 		});
 	}
 
-	/** boton Abandonar de la ventana de un planeta con licencia: nunca el principal; los demas, con confirmacion */
+	/** boton Abandonar de la ventana de un planeta con licencia: nunca el principal ni con otros jugadores dentro; con confirmacion */
 	function askAbandon( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
 		if( explorer == null || spaceInfo == null ) return;
 		if( Licenses.isMain(universe(), p.id) ) {
 			showToast(Lang.t("license.keepmain"), 5);
 			return;
 		}
+		if( occupiedToast(p.id) ) return;
 		explorer.paused = true;
-		askConfirm(null, Lang.t("abandon.ask").split("%name%").join(p.name), Lang.t("abandon.warn"), Theme.DANGER, function() abandonPlanet(p, s), function() {
+		askConfirm(null, Lang.t("abandon.ask").split("%name%").join(p.name), Lang.t("abandon.warn"), Theme.DANGER, function() releaseLicense(p.id), function() {
 			if( explorer != null ) explorer.paused = false;
 		});
 	}
 
-	/** abandona el planeta (Licenses.abandon), lo muestra en el mapa y guarda enseguida: no se puede deshacer recargando */
-	function abandonPlanet( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
-		var uni = universe();
-		// multijugador: el servidor borra el planeta y quita la licencia de la partida de verdad (SPatch "licenses")
-		if( mp != null && mp.isPlaying() ) mp.client.send(CAbandon(p.id));
-		if( Licenses.abandon(spaceInfo, p, s) ) {
-			explorer.abandoned(p, s.id, ExpData.ExpOffline.replaceSystem(explorer.infos, s.id, Licenses.newSystem(uni)));
-			showToast(Lang.t("abandon.gone"), 7);
-		} else {
-			explorer.abandoned(p);
-			showToast(Lang.t("abandon.freed"), 4);
+	/**
+	 * Abandona el planeta pid, ya confirmado (desde el mapa o desde Liberar una licencia). En solo, enseguida (applyRelease); en
+	 * multijugador lo decide el servidor (CAbandon: no con otros jugadores dentro) y se hace aqui al llegar su SPatch "licenses"
+	 */
+	function releaseLicense( pid : Int ) {
+		if( mp != null ) {
+			if( mp.isPlaying() ) mp.client.send(CAbandon(pid));
+			return;
 		}
+		applyRelease(game != null ? game.info : spaceInfo, pid);
+	}
+
+	/** multijugador: los planetas que el servidor acaba de abandonar (SPatch "licenses" con abandonados nuevos) se abandonan aqui */
+	function releasedByServer( info : SaveInfo, json : String ) {
+		var v : Dynamic = try haxe.Json.parse(json) catch( e : Dynamic ) return;
+		if( v == null || v.abandoned == null || info.uni == null ) return;
+		var before = info.uni.abandoned == null ? [] : info.uni.abandoned.copy();
+		for( x in (v.abandoned : Array<Dynamic>) ) {
+			var id = Std.int(x);
+			if( before.indexOf(id) < 0 ) applyRelease(info, id);
+		}
+	}
+
+	/**
+	 * abandona el planeta pid de la partida (Licenses.abandon) y lo ensena: en el mapa se apaga o su sistema deja sitio a otro, en
+	 * Liberar una licencia se rehace la lista. Se guarda enseguida: no se puede deshacer recargando
+	 */
+	function applyRelease( info : SaveInfo, pid : Int ) {
+		var uni = info.uni;
+		if( uni == null ) return;
+		var onMap = game == null && explorer != null && info == spaceInfo;
+		var d = onMap ? explorer.infos : ExpData.ExpOffline.make(uni.seed, uni.start, null, null, null, uni.gone);
+		var f = ExpData.ExpOffline.planet(d, pid);
+		if( f == null ) return;
+		var gone = Licenses.abandon(info, f.p, f.s);
+		if( onMap ) {
+			if( gone ) explorer.abandoned(f.p, f.s.id, ExpData.ExpOffline.replaceSystem(explorer.infos, f.s.id, Licenses.newSystem(uni)));
+			else explorer.abandoned(f.p);
+		}
+		showToast(Lang.t(gone ? "abandon.gone" : "abandon.freed"), gone ? 7 : 4);
 		saveGame(false);
+		if( currentName == "release" && current != null && current.visible ) openRelease();
 	}
 
 	/** ventana de confirmacion (como askSkip): titulo, aviso (de color col) y No / Si. parent queda inactivo mientras tanto.
@@ -3772,6 +3922,8 @@ class GalaxyApp extends hxd.App {
 		case SPatch(key, json):
 			// un campo de la partida como lo tiene el servidor, tras una compra, un contrato...
 			var info = game != null ? game.info : spaceInfo != null ? spaceInfo : pendingLand != null ? pendingLand : loadInfo;
+			// un abandono que el servidor ha hecho (CAbandon): aqui tambien, antes de tomar sus listas
+			if( info != null && key == "licenses" ) releasedByServer(info, json);
 			if( info != null ) applyPatch(info, key, json);
 			if( shop != null && key == "credits" && game != null ) shop.setCredits(game.info.credits);
 			if( contracts != null ) contracts.serverChanged();
@@ -4218,6 +4370,11 @@ class GalaxyApp extends hxd.App {
 			// ordenador de a bordo y Contactar con la ESCorp: los botones, entre corchetes los desactivados y con VERDE el que marca
 			// el tutorial (markTutoButton)
 			out += "; botones " + [for( w in s.widgets ) (w.enabled ? desc(w) : "[" + desc(w) + "]") + (w.getObjectByName(TUTO_MARK) != null ? " VERDE" : "")].join(" | ");
+		} else if( s == current && currentName == "release" ) {
+			// Liberar una licencia: cada planeta con lo que dice su fila (quien esta en el) y si se ve
+			out += "; filas " + [for( r in releaseRows ) r.pid + " " + r.name + " (" + @:privateAccess r.row.status.text + ")" + (r.row.visible ? "" : " oculta")].join(" | ");
+		} else if( s == current && currentName == "licenses" ) {
+			out += "; botones " + [for( w in s.widgets ) w.enabled ? desc(w) : "[" + desc(w) + "]"].join(" | ");
 		}
 		return out;
 	}
@@ -4271,6 +4428,31 @@ class GalaxyApp extends hxd.App {
 		}
 		// si va retrasado (fotograma lento) no se intenta recuperar
 		nextFrame = (nextFrame <= 0 || now - nextFrame > step) ? now + step : nextFrame + step;
+	}
+
+	/** distancia hasta la que se busca una anomalia que nieva (snowArea): mas alla de su radio, la red de copos no la alcanza */
+	static inline var SNOW_AREA_REACH = 48.;
+
+	/**
+	 * Anadido del port: efecto de una anomalia en su entorno. La zona de nieve (Snow.area) de la anomalia mas cercana a la camara
+	 * cuya estructura nieva (Structures: snow), si su evento del calendario dura hoy (CalendarEvents: el Sapin de Noel deja de
+	 * nevar el 1 de enero aunque el planeta siga cargado); null si no hay ninguna cerca. Su centro es el de su caja (en x, y
+	 * respecto a su origen, sin salto en el borde del planeta: lo mas cerca de la camara; en z alturas del mundo), un poco alto
+	 */
+	function snowArea( w : World ) : { x : Float, y : Float, z : Float, r : Float } {
+		var cam = s3d.camera.pos, best = null, bestD = Math.POSITIVE_INFINITY;
+		for( a in w.anomalies() ) {
+			var def = gen.Structures.get(a.id);
+			if( def == null || def.snow == null || (def.event != null && !CalendarEvents.isActive(def.event)) ) continue;
+			var dx = a.x + (a.box[0] + a.box[3] + 1) * 0.5 - cam.x, dy = a.y + (a.box[1] + a.box[4] + 1) * 0.5 - cam.y;
+			dx -= Math.round(dx / w.size) * w.size;
+			dy -= Math.round(dy / w.size) * w.size;
+			var d = Math.sqrt(dx * dx + dy * dy);
+			if( d > def.snow + SNOW_AREA_REACH || d >= bestD ) continue;
+			bestD = d;
+			best = { x : cam.x + dx, y : cam.y + dy, z : (a.box[2] + a.box[5]) * 0.5 + 3, r : def.snow * 1. };
+		}
+		return best;
 	}
 
 	override function update( dt : Float ) {
@@ -4430,6 +4612,9 @@ class GalaxyApp extends hxd.App {
 				if( chest == null && Keys.pressed("fps") ) showFps = !showFps; // con la cantina abierta no (actionKeys = false)
 				var lines = [];
 				if( showFps ) lines.push(Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps");
+				// anadido del port: en creativo, debajo, la anomalia en la que se esta (GameView.anomaliesHere), si hay una
+				var here = showFps && p.creative ? p.anomaliesHere() : [];
+				if( here.length > 0 ) lines.push(StringTools.replace(Lang.t("hud.anomaly"), "%n%", [for( n in here ) KubData.get().anomalyName(n)].join(", ")));
 				// con la cantina abierta, la ayuda de las teclas del juego no (casi todas estan desactivadas; la ventana tiene la suya)
 				if( Settings.showHelp && chest == null ) lines.push(Keys.fill(p.piloting ? Lang.t("hud.pilot") : Lang.t("hud.help")) + (p.piloting ? "" : "\n" + Keys.fill(Lang.t(p.creative ? "hud.creative" : p.canSwitchMode() ? "hud.survival" : "hud.inventory"))));
 				hud.text = lines.join("\n");
@@ -4461,7 +4646,7 @@ class GalaxyApp extends hxd.App {
 			// la pantalla de licencias sale del ordenador de a bordo y tampoco para el juego (aviso del PR 77)
 			// la conversacion con el robot tampoco: el se mueve y habla mientras la camara lo encuadra
 			// en multijugador la pausa no para el mundo (anadido del port): los demas siguen y lo que pasa llega igual
-			if( (current != null && (currentName == "computer" || currentName == "licenses" || currentName == "robot")) || mpLive() ) {
+			if( (current != null && (currentName == "computer" || currentName == "licenses" || currentName == "release" || currentName == "robot")) || mpLive() ) {
 				if( currentName == "robot" ) updateRobotDialog(dt);
 				game.update(dt, false, pad);
 				if( game == null || state != Paused ) return;
@@ -4528,13 +4713,15 @@ class GalaxyApp extends hxd.App {
 			targetName.y = H - 72;
 		}
 
-		// nieve (solo bioma de invierno): copos fijos en el mundo
+		// nieve (bioma de invierno, o sobre una anomalia con efecto snow: snowArea): copos fijos en el mundo
 		var snowWorld : World = null;
 		if( (state == Playing || state == Paused) && game != null )
 			snowWorld = game.world;
 		else if( (state == Menu || state == Loading) && bgIndex < bgWorlds.length )
 			snowWorld = bgWorlds[bgIndex];
-		snow.visible = snowWorld != null && snowWorld.biomeName == "BIWinterPeaks" && dim.alpha < 0.5;
+		var winter = snowWorld != null && snowWorld.biomeName == "BIWinterPeaks";
+		snow.area = snowWorld == null || winter ? null : snowArea(snowWorld);
+		snow.visible = (winter || snow.area != null) && dim.alpha < 0.5;
 		// dentro de la nave no nieva (la nave flota sobre el planeta)
 		if( snow.visible && (state == Playing || state == Paused) && game != null && game.pz >= World.SHIP_Z - 1 ) snow.visible = false;
 		// dentro de un liquido: velo de su color y sin nieve (reporte de Sekhmet: nevaba bajo el agua)

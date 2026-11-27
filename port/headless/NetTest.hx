@@ -307,14 +307,16 @@ class NetTest {
 	/**
 	 * Accesos: otro jugador no entra en un planeta cerrado; abierto e invitado, lo ve en su mapa (SForeign), entra, los dos se ven
 	 * (SStates) y lo que rompe el invitado le llega al propietario; visitante, no rompe; cerrado, sale; cesion (el que cede se
-	 * queda de explorador) y abandono (todos fuera).
+	 * queda de explorador), abandono (no con otro jugador dentro: quitarle el acceso lo expulsa) y liberar una licencia de su
+	 * galaxia (el principal no).
 	 */
 	static function access( w : TestClient, inst : PlanetInstance, pid : Int, sp : { x : Float, y : Float, z : Float }, bx : Int, by : Int, bz : Int ) {
 		var x = add(new TestClient("Xavier", secret(10)));
 		x.tcp(55098);
 		check("acceso: llega otro jugador", until(() -> x.welcome != null), x.lastEvent());
 		x.client.send(CNewGame(false));
-		until(() -> x.has(m -> m.match(SRecord(_))));
+		var xrec : Dynamic = null;
+		until(() -> { for( m in x.msgs ) switch( m ) { case SRecord(d): xrec = haxe.Json.parse(NetZip.unpackString(d, 1 << 24)); default: } xrec != null; });
 		var wuid = server.db.findIdentity("ed25519", Identity.fromSecret(secret(9)).keysFor(server.publicKey()).pk.toHex());
 		var wpub = server.db.pubOf(wuid);
 		x.client.send(CLand(wpub, pid));
@@ -366,8 +368,32 @@ class NetTest {
 		w.client.send(CLand("", pid));
 		until(() -> w.has(m -> m.match(SPlanetData(_, _, _, _, _, _, _, "Xavier", _))));
 		check("acceso: el que cede sigue entrando (explorador)", w.has(m -> switch( m ) { case SPlanetData(_, _, _, _, _, _, _, "Xavier", r): r == Rights.EXPLORER; default: false; }));
+		// con Wanda dentro no se abandona (el aviso dice quien esta); quitarle el acceso la expulsa, y entonces si
 		x.client.send(CAbandon(pid));
-		check("acceso: abandono, todos fuera", until(() -> w.has(m -> m.match(SPlanetLost("mp.planet.abandoned")))) && server.db.getPlanet(wuid + ":" + pid) == null);
+		check("acceso: no se abandona con otro jugador dentro", until(() -> x.has(m -> m.match(SNotice("mp.abandon.occupied", ["Wanda"]))))
+			&& server.db.getPlanet(wuid + ":" + pid) != null);
+		x.client.send(CGuest(pid, wpub, -1));
+		check("acceso: quitarle el acceso la expulsa", until(() -> w.has(m -> m.match(SPlanetLost("mp.planet.removed")))));
+		x.client.send(CAbandon(pid));
+		check("acceso: ya sin nadie, se abandona", until(() -> server.db.getPlanet(wuid + ":" + pid) == null));
+		// su galaxia: el primer planeta es el principal y no se libera; otro si, desde el principal (SPatch con el abandonado)
+		var xuid = server.db.findIdentity("ed25519", Identity.fromSecret(secret(10)).keysFor(server.publicKey()).pk.toHex());
+		var own = [for( sy in ExpData.ExpOffline.make(xrec.uni.seed, xrec.uni.start).systems ) for( p in sy.planets ) p.id];
+		var a = own[0], b = own[1];
+		for( q in [a, b, a] ) {
+			x.msgs = [];
+			x.client.send(CLand("", q));
+			until(() -> x.has(m -> m.match(SPlanetData(_, _, _, _, _, _, _, _, _))));
+		}
+		x.client.send(CAbandon(a));
+		x.client.send(CAbandon(b));
+		check("liberar: otro planeta de su galaxia", until(() -> x.has(m -> switch( m ) {
+			case SPatch("licenses", j):
+				var v : Dynamic = haxe.Json.parse(j);
+				v.abandoned != null && (v.abandoned : Array<Int>).indexOf(b) >= 0 && (v.licenses : Array<Int>).indexOf(b) < 0;
+			default: false;
+		})) && server.db.getPlanet(xuid + ":" + b) == null);
+		check("liberar: el principal no", server.db.getPlanet(xuid + ":" + a) != null);
 		x.client.close();
 	}
 
@@ -548,6 +574,7 @@ class NetTest {
 		p.client.send(CChestClose);
 		p.client.send(CBreak(12, cx, cy, cz, Block.get(BChest).index));
 		check("objetos: romper la cantina suelta lo que tenia", until(() -> Lambda.exists([for( l in loots(p) ) l], l -> l.gi == rock.index && l.n == 6)));
+		variantsTest(p, ps, w, bx, by, bz);
 		var qinv0 = count(lastInv(q), rock.index);
 		ps.record.inv.t[0] = { k : rock.index, n : 5 };
 		server.worlds.items.sendInv(ps);
@@ -585,6 +612,57 @@ class NetTest {
 		check("objetos: tras volver a arrancar, el inventario sigue", until(() -> lastInv(q2) != null) && count(lastInv(q2), rock.index) == keep);
 		server.stop();
 		clients = [];
+	}
+
+	/** el ok de la respuesta del servidor (SSetResult) a la orden seq de c; null si aun no ha llegado */
+	static function result( c : TestClient, seq : Int ) : Null<Bool> {
+		var r : Null<Bool> = null;
+		for( m in c.msgs ) switch( m ) { case SSetResult(s, ok, _) if( s == seq ): r = ok; default: }
+		return r;
+	}
+
+	/**
+	 * Variantes giradas (la puerta blindada en Y por BFFlip, un tableau en sus giros por BFOnWall): el inventario tiene el bloque
+	 * principal (getMain, el que se recoge) y el cliente manda la variante que pone (GameView.placedBlock). Se pone gastando el
+	 * principal; la variante de otro bloque no; romperla suelta el principal.
+	 */
+	static function variantsTest( p : TestClient, ps : GameServer.Session, w : WorldData, bx : Int, by : Int, bz : Int ) {
+		var door = Block.get(BShipDoor), doorY = Block.get(BShipDoorY), rock = Block.get(BRock);
+		var paint = Block.get(BKubePaintingYellowFlowers), other = Block.get(BKubePaintingSculptureTurn1);
+		ps.record.inv.t[5] = { k : door.index, n : 1 };
+		ps.record.inv.t[6] = { k : paint.index, n : 3 };
+		ps.record.inv.t[7] = { k : rock.index, n : 1 };
+		server.worlds.items.sendInv(ps);
+		until(() -> count(lastInv(p), door.index) == 1 && count(lastInv(p), paint.index) == 3);
+		// a la altura de sus pies (no en lo alto de la columna: un arbol la deja fuera de su alcance)
+		function cell( x : Int, y : Int ) : Int {
+			var z = bz + 1;
+			while( w.block(x, y, z) != null && !w.block(x, y, z).canOverride() ) z++;
+			return z;
+		}
+		function place( seq : Int, x : Int, y : Int, z : Int, b : Block, slot : Int ) : Null<Bool> {
+			p.client.send(CPlace(seq, x, y, z, b.index, 0, slot));
+			until(() -> result(p, seq) != null);
+			return result(p, seq);
+		}
+		var vx = bx - 2, z0 = cell(vx, by);
+		check("variantes: la puerta en Y no sale de una casilla de rocas", place(20, vx, by, z0, doorY, 8) == false
+			&& w.block(vx, by, z0) != doorY && count(lastInv(p), rock.index) == 1);
+		check("variantes: el giro de otro tableau no sale de este", place(21, vx, by, z0, other, 7) == false
+			&& w.block(vx, by, z0) != other && count(lastInv(p), paint.index) == 3);
+		check("variantes: la puerta en Y sale de la casilla de la puerta", place(22, vx, by, z0, doorY, 6) == true
+			&& w.block(vx, by, z0) == doorY && until(() -> count(lastInv(p), door.index) == 0));
+		for( t in 1...4 ) {
+			var turned = Block.all[paint.index + t], z = cell(vx - t, by);
+			check("variantes: el tableau girado " + t + " sale de la casilla del tableau", turned.getMain() == paint
+				&& place(22 + t, vx - t, by, z, turned, 7) == true && w.block(vx - t, by, z) == turned);
+		}
+		check("variantes: los 3 giros gastan los 3 tableaux", until(() -> count(lastInv(p), paint.index) == 0));
+		p.client.send(CBreak(26, vx, by, z0, doorY.index));
+		check("variantes: romper la puerta en Y suelta la puerta", until(() -> Lambda.exists([for( l in loots(p) ) l], l -> l.gi == door.index)));
+		ps.record.inv.t[7] = null;
+		server.worlds.items.sendInv(ps);
+		until(() -> count(lastInv(p), rock.index) == 0);
 	}
 
 	static function patched( c : TestClient, key : String ) : Dynamic {
@@ -744,6 +822,17 @@ class NetTest {
 		var n0 = Lambda.count(ship.loot);
 		f.client.send(CThrow(10, ts, 3));
 		check("nave: lo tirado a bordo es un suelto de la nave", until(() -> f.has(m -> m.match(SInventory(10, _)))) && count(lastInv(f), wood.index) == 0 && Lambda.count(ship.loot) == n0 + 1);
+		// la puerta blindada puesta en Y (BFFlip) sale de la casilla de la puerta, como en el planeta (variantsTest)
+		var door = Block.get(BShipDoor), doorY = Block.get(BShipDoorY);
+		server.worlds.items.devGive(fs, door, 1);
+		until(() -> count(lastInv(f), door.index) == 1);
+		var ds = -1;
+		var di = lastInv(f);
+		for( i in 0...di.t.length ) if( di.t[i] != null && di.t[i].k == door.index ) ds = i + 1;
+		var dz = ship.world.block(x, y, z);
+		f.client.send(CShipSet(11, x, y, z, dz == null ? 0 : dz.index, doorY.index, ds));
+		check("nave: la puerta en Y sale de la casilla de la puerta", until(() -> result(f, 11) != null) && result(f, 11) == true
+			&& ship.world.block(x, y, z) == doorY && until(() -> count(lastInv(f), door.index) == 0));
 		server.stop();
 	}
 
